@@ -8,7 +8,7 @@ LIBFT = libft
 
 $(NAME):	$(OBJS)
 	$(MAKE) -C ./libraries/libft
-	$(MAKE) -C ./libraries/libft
+	$(MAKE) bonus -C ./libraries/libft
 	cp ./libraries/libft/$(LIBFT).a ./$(NAME).a
 	ar -rcs $(NAME).a $(OBJS)
 
