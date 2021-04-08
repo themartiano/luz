@@ -6,11 +6,11 @@
 /*   By: ejuliao- <ejuliao-@42lisboa.com>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/02/11 14:47:51 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/02/17 14:37:39 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/08 16:54:10 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-int		ft_isalpha(int c)
+int	ft_isalpha(int c)
 {
 	if (c >= 65 && c <= 90)
 	{

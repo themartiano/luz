@@ -6,13 +6,13 @@
 /*   By: ejuliao- <ejuliao-@42lisboa.com>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/02/11 15:26:01 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/02/24 10:08:31 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/08 17:39:19 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "libft.h"
 
-char		*ft_strchr(const char *s, int c)
+char	*ft_strchr(const char *s, int c)
 {
 	while (*s)
 	{

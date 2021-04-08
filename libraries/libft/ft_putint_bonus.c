@@ -6,7 +6,7 @@
 /*   By: ejuliao- <ejuliao-@42lisboa.com>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/03/08 09:58:01 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/03/17 11:05:44 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/08 17:38:42 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,9 +38,9 @@ static void	ft_putint_rec(int n, int *bytes, bool sign)
 		*bytes += ft_putchar(n + 48);
 }
 
-int			ft_putint(int n, bool sign)
+int	ft_putint(int n, bool sign)
 {
-	int bytes;
+	int	bytes;
 
 	bytes = 0;
 	ft_putint_rec(n, &bytes, sign);

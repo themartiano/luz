@@ -6,11 +6,11 @@
 /*   By: ejuliao- <ejuliao-@42lisboa.com>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/02/11 14:19:48 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/02/20 16:45:32 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/08 16:55:50 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-int		ft_isascii(int c)
+int	ft_isascii(int c)
 {
 	return (c >= 0 && c <= 127);
 }

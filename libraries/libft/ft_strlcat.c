@@ -6,13 +6,13 @@
 /*   By: ejuliao- <ejuliao-@42lisboa.com>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/02/15 12:00:59 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/02/20 17:05:48 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/08 17:39:39 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "libft.h"
 
-size_t		ft_strlcat(char *dst, const char *src, size_t size)
+size_t	ft_strlcat(char *dst, const char *src, size_t size)
 {
 	char		*i_dst;
 	const char	*i_src;

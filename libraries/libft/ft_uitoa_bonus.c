@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   ft_uitoa.c                                         :+:      :+:    :+:   */
+/*   ft_uitoa_bonus.c                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: ejuliao- <ejuliao-@42lisboa.com>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/03/22 11:36:38 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/03/22 11:43:26 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/08 17:41:14 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,7 +27,7 @@ static void	uitoa_rec(unsigned int nbr, char *str, int *i)
 	}
 }
 
-char		*ft_uitoa(unsigned int n)
+char	*ft_uitoa(unsigned int n)
 {
 	char	*str;
 	int		i;

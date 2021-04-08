@@ -6,7 +6,7 @@
 /*   By: ejuliao- <ejuliao-@42lisboa.com>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/02/18 11:44:19 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/02/18 15:28:48 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/08 16:56:03 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@
 
 t_list	*ft_lstnew(void *content)
 {
-	t_list *new_lst;
+	t_list	*new_lst;
 
 	new_lst = (t_list *)malloc(sizeof(*new_lst));
 	if (new_lst == NULL)

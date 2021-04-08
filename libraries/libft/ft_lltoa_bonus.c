@@ -6,7 +6,7 @@
 /*   By: ejuliao- <ejuliao-@42lisboa.com>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/03/27 14:30:08 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/03/29 09:59:54 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/08 16:55:00 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,7 +27,7 @@ static void	lltoa_rec(unsigned long long nbr, char *str, int *i)
 	}
 }
 
-char		*ft_lltoa(long long n)
+char	*ft_lltoa(long long n)
 {
 	char				*str;
 	int					i;

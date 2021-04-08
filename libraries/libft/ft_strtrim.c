@@ -6,13 +6,13 @@
 /*   By: ejuliao- <ejuliao-@42lisboa.com>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/02/08 15:44:04 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/03/08 10:36:33 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/08 17:40:52 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "libft.h"
 
-char		*ft_strtrim(const char *s1, const char *set)
+char	*ft_strtrim(const char *s1, const char *set)
 {
 	char	*trim_str;
 	size_t	i;

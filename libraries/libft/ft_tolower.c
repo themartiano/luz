@@ -6,11 +6,11 @@
 /*   By: ejuliao- <ejuliao-@42lisboa.com>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/02/11 11:37:41 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/02/17 14:32:02 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/08 17:40:58 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-int		ft_tolower(int c)
+int	ft_tolower(int c)
 {
 	if (c >= 65 && c <= 90)
 	{

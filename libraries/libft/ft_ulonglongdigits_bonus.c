@@ -6,15 +6,15 @@
 /*   By: ejuliao- <ejuliao-@42lisboa.com>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/03/29 09:57:18 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/03/29 09:57:38 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/08 17:41:31 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "libft.h"
 
-int		ft_ulonglongdigits(unsigned long long n)
+int	ft_ulonglongdigits(unsigned long long n)
 {
-	int count;
+	int	count;
 
 	if (n == 0)
 		return (1);

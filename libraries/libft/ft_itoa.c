@@ -6,7 +6,7 @@
 /*   By: ejuliao- <ejuliao-@42lisboa.com>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/02/09 13:56:38 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/03/22 11:39:47 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/08 16:54:55 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,7 +27,7 @@ static void	itoa_rec(unsigned int nbr, char *str, int *i)
 	}
 }
 
-char		*ft_itoa(int n)
+char	*ft_itoa(int n)
 {
 	char			*str;
 	int				i;

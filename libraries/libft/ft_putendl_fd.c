@@ -6,7 +6,7 @@
 /*   By: ejuliao- <ejuliao-@42lisboa.com>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/02/10 10:51:51 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/02/24 11:02:37 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/08 17:38:30 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@
 
 void	ft_putendl_fd(char *s, int fd)
 {
-	int i;
+	int	i;
 
 	if (s == NULL)
 		return ;

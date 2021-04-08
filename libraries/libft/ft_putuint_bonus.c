@@ -6,7 +6,7 @@
 /*   By: ejuliao- <ejuliao-@42lisboa.com>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/03/08 09:58:01 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/03/10 17:06:33 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/08 17:39:05 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,9 +25,9 @@ static void	ft_putuint_rec(unsigned int n, int *bytes)
 	}
 }
 
-int			ft_putuint(unsigned int n)
+int	ft_putuint(unsigned int n)
 {
-	int bytes;
+	int	bytes;
 
 	bytes = 0;
 	ft_putuint_rec(n, &bytes);
