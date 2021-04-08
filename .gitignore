@@ -2,3 +2,6 @@
 *.swo
 *.o
 *.a
+*.out
+*.dSYM
+miniRT
