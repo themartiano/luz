@@ -6,15 +6,15 @@
 /*   By: ejuliao- <ejuliao-@42lisboa.com>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/03/29 09:56:48 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/03/29 09:56:55 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/08 16:55:12 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "libft.h"
 
-int		ft_longlongdigits(long long n)
+int	ft_longlongdigits(long long n)
 {
-	int count;
+	int	count;
 
 	count = 0;
 	if (n == 0)

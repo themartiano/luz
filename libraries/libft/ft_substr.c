@@ -6,7 +6,7 @@
 /*   By: ejuliao- <ejuliao-@42lisboa.com>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/02/08 14:16:04 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/02/24 11:11:10 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/08 17:44:11 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,7 +21,8 @@ char	*ft_substr(const char *s, unsigned int start, size_t len)
 	if (s == NULL)
 		return (NULL);
 	i = ft_strlen(s);
-	(i > len) ? (i = len) : 1;
+	if (i > len)
+		i = len;
 	substr = malloc((i + 1) * sizeof(char));
 	if (substr == NULL)
 		return (NULL);

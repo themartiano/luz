@@ -6,11 +6,11 @@
 /*   By: ejuliao- <ejuliao-@42lisboa.com>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/02/11 14:47:56 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/02/20 16:45:39 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/08 16:54:38 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-int		ft_isdigit(int c)
+int	ft_isdigit(int c)
 {
 	return (c >= 48 && c <= 57);
 }

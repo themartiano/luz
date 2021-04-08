@@ -6,13 +6,13 @@
 /*   By: ejuliao- <ejuliao-@42lisboa.com>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/03/08 09:58:35 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/03/09 14:23:57 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/08 16:56:50 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "libft.h"
 
-int		ft_putchar(const char c)
+int	ft_putchar(const char c)
 {
 	write(1, &c, 1);
 	return (1);

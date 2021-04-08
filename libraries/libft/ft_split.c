@@ -6,7 +6,7 @@
 /*   By: ejuliao- <ejuliao-@42lisboa.com>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/02/08 17:04:32 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/02/24 12:11:18 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/08 17:39:14 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,7 +57,7 @@ static char	**split(const char *str, char c, int occs, char **split_strs)
 	return (split_strs);
 }
 
-char		**ft_split(const char *s, char c)
+char	**ft_split(const char *s, char c)
 {
 	int		occ;
 	char	**split_strs;

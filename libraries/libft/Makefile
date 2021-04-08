@@ -6,7 +6,7 @@
 #    By: ejuliao- <ejuliao-@42lisboa.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2021/02/08 14:16:30 by ejuliao-          #+#    #+#              #
-#    Updated: 2021/03/29 09:58:43 by ejuliao-         ###   ########.fr        #
+#    Updated: 2021/04/08 17:47:18 by ejuliao-         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -26,7 +26,7 @@ BOBJS = $(BSRCS:.c=.o)
 NAME =	libft.a
 SO =	libft.so
 
-all:		$(NAME)
+all:	$(NAME)
 
 $(NAME):
 	gcc -Wall -Wextra -Werror -c $(SRCS)
@@ -38,17 +38,17 @@ clean:
 soclean:	clean
 	rm -f $(SO)
 
-fclean:		clean
+fclean:	clean
 	rm -f $(NAME)
 	rm -f $(SO)
 
-re:			fclean all
+re:	fclean all
 
 bonus:
 	gcc -Wall -Wextra -Werror -c $(BSRCS)
 	ar -rcs $(NAME) $(BOBJS)
 
-so:			$(OBJS) $(BOBJS)
+so:	$(OBJS) $(BOBJS)
 	gcc -shared -o $(SO) $(OBJS) $(BOBJS)
 
 .PHONY: so bonus re fclean soclean clean all

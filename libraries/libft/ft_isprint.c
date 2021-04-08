@@ -6,11 +6,11 @@
 /*   By: ejuliao- <ejuliao-@42lisboa.com>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/02/11 11:54:56 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/02/20 16:45:47 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/08 16:54:42 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-int		ft_isprint(int c)
+int	ft_isprint(int c)
 {
 	return (c >= 32 && c < 127);
 }
