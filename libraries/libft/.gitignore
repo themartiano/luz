@@ -1,0 +1,13 @@
+.vscode
+*_dev.c
+*.o
+*.txt
+libft.a
+libft.so
+a.out
+file.txt
+deepthought
+main.c
+en.subject.pdf
+*.swp
+*.swo
