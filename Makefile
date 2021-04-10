@@ -6,20 +6,18 @@
 #    By: ejuliao- <ejuliao-@42lisboa.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2021/04/08 15:31:37 by ejuliao-          #+#    #+#              #
-#    Updated: 2021/04/08 15:38:59 by ejuliao-         ###   ########.fr        #
+#    Updated: 2021/04/10 14:49:31 by ejuliao-         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
-SRCS =
+SRCS = miniRT.c
 OBJS = $(SRCS:.c=.o)
 NAME = miniRT
 
-INCLUDES = -Ilibraries/libft -Ilibraries/minilibx_opengl
+INCLUDES = -I. -Ilibraries/libft -Ilibraries/minilibx_opengl
+MLX_FLAGS = -framework OpenGL -framework AppKit
 
-%.o: %.c
-	gcc -Wall -Wextra -Werror -I. -c -o $@ $<
-
-$(NAME):	$(OBJS)
+$(NAME):
 	# Compiles libft
 	$(MAKE) -C ./libraries/libft
 	$(MAKE) bonus -C ./libraries/libft
@@ -30,15 +28,19 @@ $(NAME):	$(OBJS)
 	cp ./libraries/minilibx_opengl/libmlx.a ./libmlx.a
 
 	# Compiles miniRT
-	gcc -Wall -Wextra -Werror $(INCLUDES) miniRT.c libft.a libmlx.a -o miniRT
+	gcc -Wall -Wextra -Werror $(INCLUDES) $(MLX_FLAGS) $(SRCS) libft.a libmlx.a -o miniRT
 
 all:	$(NAME)
 
+libclean:
+	$(MAKE) fclean -C ./libraries/libft
+	$(MAKE) clean -C ./libraries/minilibx_opengl
+
 clean:
-	rm -rf $(OBJS)
+	rm -f $(OBJS)
 
 fclean:	clean
-	rm -rf $(NAME).a
+	rm -rf $(NAME)
 
 re:	fclean all
 
