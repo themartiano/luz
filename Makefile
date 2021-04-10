@@ -6,11 +6,11 @@
 #    By: ejuliao- <ejuliao-@42lisboa.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2021/04/08 15:31:37 by ejuliao-          #+#    #+#              #
-#    Updated: 2021/04/10 14:49:31 by ejuliao-         ###   ########.fr        #
+#    Updated: 2021/04/10 14:51:34 by ejuliao-         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
-SRCS = miniRT.c
+SRCS = ./miniRT.c ./utils.c
 OBJS = $(SRCS:.c=.o)
 NAME = miniRT
 

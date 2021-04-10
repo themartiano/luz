@@ -1,36 +1,22 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   miniRT.h                                           :+:      :+:    :+:   */
+/*   utils.c                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: ejuliao- <ejuliao-@42lisboa.com>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2021/04/08 15:16:25 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/10 14:54:34 by ejuliao-         ###   ########.fr       */
+/*   Created: 2021/04/10 14:51:57 by ejuliao-          #+#    #+#             */
+/*   Updated: 2021/04/10 14:55:41 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef MINIRT_H
-# define MINIRT_H
+#include "miniRT.h"
 
-// Includes
-# include "libft.h"
-# include "mlx.h"
-
-// Macros
-# define WINDOW_TITLE "ejuliao-'s miniRT"
-
-// Structs
-typedef struct s_img_data
+void	put_pixel(t_img_data *img_data, int x, int y, int color)
 {
-	void	*img;
-	char	*addr;
-	int		bits_per_pixel;
-	int		line_length;
-	int		endian;
-}				t_img_data;
+	char	*dst;
 
-// Function prototypes
-void	put_pixel(t_img_data *img_data, int x, int y, int color);
-
-#endif
+	dst = img_data->addr + (y * img_data->line_length + x
+			* (img_data->bits_per_pixel / 8));
+	*(unsigned int *)dst = color;
+}
