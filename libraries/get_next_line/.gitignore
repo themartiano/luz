@@ -1,0 +1,10 @@
+a.out
+*.o
+file.txt
+file2.txt
+main.c
+.vscode
+a.out.dSYM
+en.subject.pdf
+get_next_line
+main
