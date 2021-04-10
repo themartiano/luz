@@ -6,7 +6,7 @@
 /*   By: ejuliao- <ejuliao-@42lisboa.com>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:16:25 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/10 14:54:34 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/10 15:18:23 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,5 +32,6 @@ typedef struct s_img_data
 
 // Function prototypes
 void	put_pixel(t_img_data *img_data, int x, int y, int color);
+void	fill_image(t_img_data *img_data, int width, int height, int color);
 
 #endif

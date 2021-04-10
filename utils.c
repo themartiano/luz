@@ -6,7 +6,7 @@
 /*   By: ejuliao- <ejuliao-@42lisboa.com>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/10 14:51:57 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/10 14:55:41 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/10 15:22:12 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,4 +19,22 @@ void	put_pixel(t_img_data *img_data, int x, int y, int color)
 	dst = img_data->addr + (y * img_data->line_length + x
 			* (img_data->bits_per_pixel / 8));
 	*(unsigned int *)dst = color;
+}
+
+void	fill_image(t_img_data *img_data, int width, int height, int color)
+{
+	int	x;
+	int	y;
+
+	y = 0;
+	while (y < height)
+	{
+		x = 0;
+		while (x < width)
+		{
+			put_pixel(img_data, x, y, color);
+			x++;
+		}
+		y++;
+	}
 }

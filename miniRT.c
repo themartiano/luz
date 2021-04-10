@@ -6,7 +6,7 @@
 /*   By: ejuliao- <ejuliao-@42lisboa.com>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:12:09 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/10 14:55:26 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/10 15:21:31 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,7 +23,7 @@ int	main(int argc, char *argv[])
 	img_data.img = mlx_new_image(mlx, 1920, 1080);
 	img_data.addr = mlx_get_data_addr(img_data.img,
 			&img_data.bits_per_pixel, &img_data.line_length, &img_data.endian);
-	put_pixel(&img_data, 5, 5, 0x00FF0000);
+	fill_image(&img_data, 1920, 1080, 0x0000FF00);
 	mlx_put_image_to_window(mlx, mlx_window, img_data.img, 0, 0);
 	mlx_loop(mlx);
 	(void)argc;

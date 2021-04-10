@@ -6,7 +6,7 @@
 #    By: ejuliao- <ejuliao-@42lisboa.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2021/04/08 15:31:37 by ejuliao-          #+#    #+#              #
-#    Updated: 2021/04/10 14:51:34 by ejuliao-         ###   ########.fr        #
+#    Updated: 2021/04/10 14:58:57 by ejuliao-         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -16,19 +16,19 @@ NAME = miniRT
 
 INCLUDES = -I. -Ilibraries/libft -Ilibraries/minilibx_opengl
 MLX_FLAGS = -framework OpenGL -framework AppKit
+LIBFT_PATH = ./libraries/libft/libft.a
+MLX_PATH = ./libraries/minilibx_opengl/libmlx.a
 
 $(NAME):
 	# Compiles libft
 	$(MAKE) -C ./libraries/libft
 	$(MAKE) bonus -C ./libraries/libft
-	cp ./libraries/libft/libft.a ./libft.a
 
 	# Compiles minilibx
 	$(MAKE) -C ./libraries/minilibx_opengl
-	cp ./libraries/minilibx_opengl/libmlx.a ./libmlx.a
 
 	# Compiles miniRT
-	gcc -Wall -Wextra -Werror $(INCLUDES) $(MLX_FLAGS) $(SRCS) libft.a libmlx.a -o miniRT
+	gcc -Wall -Wextra -Werror $(INCLUDES) $(MLX_FLAGS) $(SRCS) $(LIBFT_PATH) $(MLX_PATH) -o miniRT
 
 all:	$(NAME)
 
