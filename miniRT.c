@@ -12,27 +12,33 @@
 
 #include "miniRT.h"
 
-void	start_mlx(int fd, bool save)
+int	window_key_callback(int keycode, t_holder *holder)
 {
-	void		*mlx;
-	t_window	window;
-	t_img_data	img_data;
+	if (keycode == 53)
+		mlx_destroy_window(holder->mlx, holder->window);
+	return (0);
+}
 
-	read_scene(fd, &window);
-	mlx = mlx_init();
-	window.mlx_window = mlx_new_window(mlx, window.width, window.height,
+void	start_mlx(t_holder *holder, int fd, bool save)
+{
+	read_scene(fd, holder);
+	holder->mlx = mlx_init();
+	holder->window = mlx_new_window(holder->mlx, holder->width, holder->height,
 			WINDOW_TITLE);
-	img_data.img = mlx_new_image(mlx, window.width, window.height);
-	img_data.addr = mlx_get_data_addr(img_data.img,
-			&img_data.bits_per_pixel, &img_data.line_length, &img_data.endian);
-	fill_image(&img_data, window.width, window.height, 0x0000FF00);
-	mlx_put_image_to_window(mlx, window.mlx_window, img_data.img, 0, 0);
-	mlx_loop(mlx);
+	holder->img.img = mlx_new_image(holder->mlx, holder->width, holder->height);
+	holder->img.addr = mlx_get_data_addr(holder->img.img,
+			&holder->img.bits_per_pixel, &holder->img.line_length, &holder->img
+			.endian);
+	fill_image(&holder->img, holder->width, holder->height, 0x0000FF00);
+	mlx_put_image_to_window(holder->mlx, holder->window, holder->img.img, 0, 0);
+	mlx_key_hook(holder->window, window_key_callback, holder);
+	mlx_loop(holder->mlx);
 	(void)save;
 }
 
 int	main(int argc, char *argv[])
 {
+	t_holder	holder;
 	bool	save;
 	int		fd;
 
@@ -46,9 +52,9 @@ int	main(int argc, char *argv[])
 		else
 			save = true;
 	}
-	fd = open(argv[1], O_RDWR);
+	fd = open(argv[1], O_RDONLY);
 	if (fd == -1)
 		return (exit_error("Incorrect scene path."));
-	start_mlx(fd, save);
+	start_mlx(&holder, fd, save);
 	return (0);
 }

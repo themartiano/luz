@@ -12,7 +12,7 @@
 
 #include "miniRT.h"
 
-void	read_scene(int fd, t_window *window)
+void	read_scene(int fd, t_holder *holder)
 {
 	char	*line;
 	char	**values;
@@ -24,8 +24,8 @@ void	read_scene(int fd, t_window *window)
 		values = ft_split(line, ' ');
 		if (ft_memcmp(values[0], "R", 1) == 0)
 		{
-			window->width = ft_atoi(values[1]);
-			window->height = ft_atoi(values[2]);
+			holder->width = ft_atoi(values[1]);
+			holder->height = ft_atoi(values[2]);
 		}
 	}
 }

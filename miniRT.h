@@ -23,26 +23,28 @@
 # define WINDOW_TITLE "ejuliao-'s miniRT"
 
 // Structs
-typedef struct s_img_data
+typedef struct s_img
 {
 	void	*img;
 	char	*addr;
 	int		bits_per_pixel;
 	int		line_length;
 	int		endian;
-}				t_img_data;
+}				t_img;
 
-typedef struct s_window
+typedef struct s_holder
 {
-	void	*mlx_window;
+	void	*mlx;
+	void	*window;
+	t_img	img;
 	int		width;
-	int		height;
-}				t_window;
+	int 	height;
+}				t_holder;
 
 // Function prototypes
 int		exit_error(char *message);
-void	put_pixel(t_img_data *img_data, int x, int y, int color);
-void	fill_image(t_img_data *img_data, int width, int height, int color);
-void	read_scene(int fd, t_window *window);
+void	put_pixel(t_img *img_data, int x, int y, int color);
+void	fill_image(t_img *img_data, int width, int height, int color);
+void	read_scene(int fd, t_holder *window);
 
 #endif
