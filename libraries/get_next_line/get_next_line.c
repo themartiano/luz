@@ -12,6 +12,21 @@
 
 #include "get_next_line.h"
 
+int	check_rd(int curr_rd)
+{
+	int	rd;
+
+	if (curr_rd != 0)
+	{
+		rd = 1;
+	}
+	else
+	{
+		rd = 0;
+	}
+	return (rd);
+}
+
 int	get_next_line(int fd, char **line)
 {
 	static char	*strg[1024];
@@ -38,9 +53,7 @@ int	get_next_line(int fd, char **line)
 	free(str);
 	*line = prev_nl(strg[fd]);
 	strg[fd] = pos_nl(strg[fd]);
-	if (rd != 0)
-		rd = 1;
-	return (rd);
+	return (check_rd(rd));
 }
 
 char	*prev_nl(char *str)
