@@ -19,7 +19,7 @@ int	exit_error(char *message)
 	return (1);
 }
 
-void	put_pixel(t_img_data *img_data, int x, int y, int color)
+void	put_pixel(t_img *img_data, int x, int y, int color)
 {
 	char	*dst;
 
@@ -28,7 +28,7 @@ void	put_pixel(t_img_data *img_data, int x, int y, int color)
 	*(unsigned int *)dst = color;
 }
 
-void	fill_image(t_img_data *img_data, int width, int height, int color)
+void	fill_image(t_img *img_data, int width, int height, int color)
 {
 	int	x;
 	int	y;
