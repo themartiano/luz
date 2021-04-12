@@ -26,8 +26,6 @@ int	main(int argc, char *argv[])
 	fill_image(&img_data, 1920, 1080, 0x0000FF00);
 	mlx_put_image_to_window(mlx, mlx_window, img_data.img, 0, 0);
 	mlx_loop(mlx);
-	(void)argc;
-	(void)argv;
 	ft_putstr("Show");
 	return (0);
 }
