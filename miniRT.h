@@ -14,6 +14,7 @@
 # define MINIRT_H
 
 // Includes
+# include <fcntl.h>
 # include "libft.h"
 # include "mlx.h"
 # include "get_next_line.h"
@@ -31,8 +32,17 @@ typedef struct s_img_data
 	int		endian;
 }				t_img_data;
 
+typedef struct s_window
+{
+	void	*mlx_window;
+	int		width;
+	int		height;
+}				t_window;
+
 // Function prototypes
+int		exit_error(char *message);
 void	put_pixel(t_img_data *img_data, int x, int y, int color);
 void	fill_image(t_img_data *img_data, int width, int height, int color);
+void	read_scene(int fd, t_window *window);
 
 #endif
