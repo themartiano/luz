@@ -15,12 +15,18 @@
 
 // Includes
 # include <fcntl.h>
+# include <stdio.h>
 # include "libft.h"
 # include "mlx.h"
 # include "get_next_line.h"
 
 // Macros
+# ifndef DEBUG
+#  define DEBUG true
+# endif
+
 # define WINDOW_TITLE "ejuliao-'s miniRT"
+# define KEY_ESC 53
 
 // Structs
 typedef struct s_img

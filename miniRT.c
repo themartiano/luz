@@ -14,8 +14,13 @@
 
 int	window_key_callback(int keycode, t_holder *holder)
 {
-	if (keycode == 53)
+	if (DEBUG)
+		printf("KEY PRESSED: %d\n", keycode);
+	if (keycode == KEY_ESC)
+	{
 		mlx_destroy_window(holder->mlx, holder->window);
+		exit(0);
+	}
 	return (0);
 }
 
