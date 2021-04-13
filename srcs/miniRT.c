@@ -12,13 +12,19 @@
 
 #include "miniRT.h"
 
+int	clean_exit(t_holder *holder)
+{
+	(void)holder;
+	exit(0);
+}
+
 int	window_key_callback(int keycode, t_holder *holder)
 {
 	printf("KEY PRESSED: %d\n", keycode);
 	if (keycode == KEY_ESC)
 	{
 		mlx_destroy_window(holder->mlx, holder->window);
-		exit(0);
+		clean_exit(holder);
 	}
 	return (0);
 }
@@ -43,6 +49,8 @@ void	start_mlx(t_holder *holder, int fd, bool save)
 	holder->mlx = mlx_init();
 	holder->window = mlx_new_window(holder->mlx, holder->scene.x_res,
 			holder->scene.y_res, WINDOW_TITLE);
+	mlx_hook(holder->window, 17, 0L, clean_exit, holder);
+	mlx_key_hook(holder->window, window_key_callback, holder);
 	holder->img.img = mlx_new_image(holder->mlx, holder->scene.x_res,
 			holder->scene.y_res);
 	holder->img.addr = mlx_get_data_addr(holder->img.img,
@@ -51,7 +59,6 @@ void	start_mlx(t_holder *holder, int fd, bool save)
 	fill_image(&holder->img, holder->scene.x_res, holder->scene.y_res,
 		0x0000FF00);
 	mlx_put_image_to_window(holder->mlx, holder->window, holder->img.img, 0, 0);
-	mlx_key_hook(holder->window, window_key_callback, holder);
 	mlx_loop(holder->mlx);
 	(void)save;
 }
