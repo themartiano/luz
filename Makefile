@@ -30,7 +30,7 @@ $(NAME):
 	$(MAKE) -C ./libraries/minilibx_opengl
 
 	# Compiles miniRT
-	gcc -Wall -Wextra -Werror $(INCLUDES) $(MLX_FLAGS) $(SRCS) $(GNL_SRCS) $(LIBFT_PATH) $(MLX_PATH) -o $(NAME)
+	gcc -Wall -Wextra -Werror $(INCLUDES) $(MLX_FLAGS) $(SRCS) $(GNL_SRCS) $(LIBFT_PATH) $(MLX_PATH) $(DEBUG) -o $(NAME)
 
 all:	$(NAME)
 

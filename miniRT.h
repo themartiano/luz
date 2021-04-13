@@ -19,6 +19,7 @@
 # include "libft.h"
 # include "mlx.h"
 # include "get_next_line.h"
+# include "typedefs.h"
 
 // Macros
 # ifndef DEBUG
@@ -27,25 +28,6 @@
 
 # define WINDOW_TITLE "ejuliao-'s miniRT"
 # define KEY_ESC 53
-
-// Structs
-typedef struct s_img
-{
-	void	*img;
-	char	*addr;
-	int		bits_per_pixel;
-	int		line_length;
-	int		endian;
-}				t_img;
-
-typedef struct s_holder
-{
-	void	*mlx;
-	void	*window;
-	t_img	img;
-	int		width;
-	int 	height;
-}				t_holder;
 
 // Function prototypes
 int		exit_error(char *message);
