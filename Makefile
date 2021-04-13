@@ -10,7 +10,7 @@
 #                                                                              #
 # **************************************************************************** #
 
-SRCS = ./miniRT.c ./utils.c ./scene_reader.c
+SRCS = ./miniRT.c ./utils.c ./scene_reader.c ./conversions.c ./readers.c
 OBJS = $(SRCS:.c=.o)
 NAME = miniRT
 

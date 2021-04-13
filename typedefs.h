@@ -74,7 +74,7 @@ typedef struct s_triangle
 typedef struct s_objects
 {
 	void		*object;
-	char 		*type;
+	char		*type;
 	void		*next;
 }				t_objects;
 
