@@ -10,13 +10,13 @@
 #                                                                              #
 # **************************************************************************** #
 
-SRCS = ./miniRT.c ./utils.c ./scene_reader.c ./conversions.c ./readers.c
+SRCS = ./srcs/miniRT.c ./srcs/utils.c ./srcs/scene_reader.c ./srcs/conversions.c ./srcs/readers.c
 OBJS = $(SRCS:.c=.o)
 NAME = miniRT
 
 GNL_SRCS = ./libraries/get_next_line/get_next_line.c ./libraries/get_next_line/get_next_line_utils.c
 
-INCLUDES = -I. -Ilibraries/libft -Ilibraries/get_next_line -Ilibraries/minilibx_opengl
+INCLUDES = -Iincludes -Ilibraries/libft -Ilibraries/get_next_line -Ilibraries/minilibx_opengl
 MLX_FLAGS = -framework OpenGL -framework AppKit
 LIBFT_PATH = ./libraries/libft/libft.a
 MLX_PATH = ./libraries/minilibx_opengl/libmlx.a
