@@ -15,7 +15,7 @@
 t_xyz	parse_xyz(char *str)
 {
 	t_xyz	values;
-	char 	**input;
+	char	**input;
 
 	input = ft_split(str, ',');
 	values.x = ft_atoi(input[0]);
@@ -60,7 +60,7 @@ bool	read_l(char **values, t_holder *holder)
 	if (ft_memcmp(values[0], "l", 1) == 0)
 	{
 		holder->scene.lights.light.transform.position = parse_xyz
-				(values[1]);
+			(values[1]);
 		holder->scene.lights.light.brightness = ft_atoi(values[2]);
 		parsed = parse_xyz(values[3]);
 		holder->scene.lights.light.color.r = parsed.x;

@@ -16,11 +16,11 @@
 typedef struct s_xyz
 {
 	int	x;
-	int y;
-	int z;
+	int	y;
+	int	z;
 }				t_xyz;
 
-typedef struct	s_transform
+typedef struct s_transform
 {
 	t_xyz	position;
 	t_xyz	rotation;
@@ -29,16 +29,16 @@ typedef struct	s_transform
 
 typedef struct s_color
 {
-	int r;
-	int g;
+	int	r;
+	int	g;
 	int	b;
-	int a;
+	int	a;
 }				t_color;
 
 typedef struct s_sphere
 {
 	t_transform	transform;
-	int 		diameter;
+	int			diameter;
 	t_color		color;
 }				t_sphere;
 
@@ -51,9 +51,17 @@ typedef struct s_plane
 typedef struct s_square
 {
 	t_transform	transform;
-	int 		side_size;
+	int			side_size;
 	t_color		color;
 }				t_square;
+
+typedef struct s_cylinder
+{
+	t_transform	transform;
+	int			diameter;
+	int			height;
+	t_color		color;
+}				t_cylinder;
 
 typedef struct s_triangle
 {
@@ -65,21 +73,21 @@ typedef struct s_triangle
 
 typedef struct s_objects
 {
-	void 	*object;
-	void 	*next;
+	void		*object;
+	void		*next;
 }				t_objects;
 
 typedef struct s_camera
 {
 	t_transform	transform;
-	int 		fov;
+	int			fov;
 }				t_camera;
 
 typedef struct s_light
 {
 	t_transform	transform;
-	int 		brightness;
-	t_color 	color;
+	int			brightness;
+	t_color		color;
 }				t_light;
 
 typedef struct s_lights
@@ -90,8 +98,8 @@ typedef struct s_lights
 
 typedef struct s_scene
 {
-	int 		x_res;
-	int 		y_res;
+	int			x_res;
+	int			y_res;
 	t_light		ambient_clr;
 	t_camera	camera;
 	t_lights	lights;
