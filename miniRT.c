@@ -26,6 +26,20 @@ int	window_key_callback(int keycode, t_holder *holder)
 void	start_mlx(t_holder *holder, int fd, bool save)
 {
 	read_scene(fd, holder);
+	/* DEBUG test */
+	while (true)
+	{
+		if (holder->scene.objects.object != NULL)
+		{
+			t_triangle *triangle = holder->scene.objects.object;
+			printf("Type: %s -- X: %d - Y: %d - Z: %d\n", holder->scene.objects.type, triangle->p1.x, triangle->p1.y, triangle->p1.z);
+		}
+		if (holder->scene.objects.next == NULL)
+			break ;
+		t_objects *next = holder->scene.objects.next;
+		holder->scene.objects = *next;
+	}
+	/* end DEBUG test */
 	holder->mlx = mlx_init();
 	holder->window = mlx_new_window(holder->mlx, holder->scene.x_res,
 			holder->scene.y_res, WINDOW_TITLE);
