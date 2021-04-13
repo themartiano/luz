@@ -12,22 +12,8 @@
 
 #include "miniRT.h"
 
-t_xyz	parse_xyz(char *str)
-{
-	t_xyz	values;
-	char	**input;
-
-	input = ft_split(str, ',');
-	values.x = ft_atoi(input[0]);
-	values.y = ft_atoi(input[1]);
-	values.z = ft_atoi(input[2]);
-	return (values);
-}
-
 bool 	read_rac(char **values, t_holder *holder)
 {
-	t_xyz	parsed;
-
 	if (ft_memcmp(values[0], "R", 1) == 0)
 	{
 		holder->scene.x_res = ft_atoi(values[1]);
@@ -37,10 +23,7 @@ bool 	read_rac(char **values, t_holder *holder)
 	else if (ft_memcmp(values[0], "A", 1) == 0)
 	{
 		holder->scene.ambient_clr.brightness = ft_atoi(values[1]);
-		parsed = parse_xyz(values[2]);
-		holder->scene.ambient_clr.color.r = parsed.x;
-		holder->scene.ambient_clr.color.g = parsed.y;
-		holder->scene.ambient_clr.color.b = parsed.z;
+		holder->scene.ambient_clr.color = xyz_to_rgb(parse_xyz(values[2]));
 		return (true);
 	}
 	else if (ft_memcmp(values[0], "c", 1) == 0)
@@ -53,19 +36,76 @@ bool 	read_rac(char **values, t_holder *holder)
 	return (false);
 }
 
-bool	read_l(char **values, t_holder *holder)
+bool	read_lsp(char **values, t_holder *holder)
 {
-	t_xyz	parsed;
+	t_sphere	sphere;
 
 	if (ft_memcmp(values[0], "l", 1) == 0)
 	{
 		holder->scene.lights.light.transform.position = parse_xyz
 			(values[1]);
 		holder->scene.lights.light.brightness = ft_atoi(values[2]);
-		parsed = parse_xyz(values[3]);
-		holder->scene.lights.light.color.r = parsed.x;
-		holder->scene.lights.light.color.g = parsed.y;
-		holder->scene.lights.light.color.b = parsed.z;
+		holder->scene.lights.light.color = xyz_to_rgb(parse_xyz(values[3]));
+		return (true);
+	}
+	else if (ft_memcmp(values[0], "sp", 2) == 0)
+	{
+		sphere.transform.position = parse_xyz(values[1]);
+		sphere.diameter = ft_atoi(values[2]);
+		sphere.color = xyz_to_rgb(parse_xyz(values[3]));
+		holder->scene.objects.object = &sphere;
+		return (true);
+	}
+	return (false);
+}
+
+bool	read_plsq(char **values, t_holder *holder)
+{
+	t_plane		plane;
+	t_square	square;
+
+	if (ft_memcmp(values[0], "pl", 2) == 0)
+	{
+		plane.transform.position = parse_xyz(values[1]);
+		plane.transform.rotation = parse_xyz(values[2]);
+		plane.color = xyz_to_rgb(parse_xyz(values[3]));
+		holder->scene.objects.object = &plane;
+		return (true);
+	}
+	else if (ft_memcmp(values[0], "sq", 2) == 0)
+	{
+		square.transform.position = parse_xyz(values[1]);
+		square.transform.rotation = parse_xyz(values[2]);
+		square.side_size = ft_atoi(values[3]);
+		square.color = xyz_to_rgb(parse_xyz(values[4]));
+		holder->scene.objects.object = &square;
+		return (true);
+	}
+	return (false);
+}
+
+bool	read_cytr(char **values, t_holder *holder)
+{
+	t_cylinder	cylinder;
+	t_triangle	triangle;
+
+	if (ft_memcmp(values[0], "cy", 2) == 0)
+	{
+		cylinder.transform.position = parse_xyz(values[1]);
+		cylinder.transform.rotation = parse_xyz(values[2]);
+		cylinder.diameter = ft_atoi(values[3]);
+		cylinder.height = ft_atoi(values[4]);
+		cylinder.color = xyz_to_rgb(parse_xyz(values[5]));
+		holder->scene.objects.object = &cylinder;
+		return (true);
+	}
+	else if (ft_memcmp(values[0], "tr", 2) == 0)
+	{
+		triangle.p1 = parse_xyz(values[1]);
+		triangle.p2 = parse_xyz(values[2]);
+		triangle.p3 = parse_xyz(values[3]);
+		triangle.color = xyz_to_rgb(parse_xyz(values[4]));
+		holder->scene.objects.object = &triangle;
 		return (true);
 	}
 	return (false);
@@ -85,7 +125,9 @@ void	read_scene(int fd, t_holder *holder)
 		{
 			values = ft_split(line, ' ');
 			read_rac(values, holder);
-			read_l(values, holder);
+			read_lsp(values, holder);
+			read_plsq(values, holder);
+			read_cytr(values, holder);
 		}
 		free(line);
 	}

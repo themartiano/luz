@@ -26,6 +26,8 @@
 # define KEY_ESC 53
 
 // Function prototypes
+t_xyz	parse_xyz(char *str);
+t_color	xyz_to_rgb(t_xyz xyz);
 int		exit_error(char *message);
 void	put_pixel(t_img *img_data, int x, int y, int color);
 void	fill_image(t_img *img_data, int width, int height, int color);
