@@ -22,10 +22,6 @@
 # include "typedefs.h"
 
 // Macros
-# ifndef DEBUG
-#  define DEBUG true
-# endif
-
 # define WINDOW_TITLE "ejuliao-'s miniRT"
 # define KEY_ESC 53
 
