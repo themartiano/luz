@@ -71,13 +71,6 @@ typedef struct s_triangle
 	t_color	color;
 }				t_triangle;
 
-typedef struct s_objects
-{
-	void		*object;
-	char		*type;
-	void		*next;
-}				t_objects;
-
 typedef struct s_camera
 {
 	t_transform	transform;
@@ -104,8 +97,11 @@ typedef struct s_scene
 	t_light		ambient_clr;
 	t_camera	camera;
 	t_lights	lights;
+	t_plane		plane;
 	t_sphere	sphere;
-	t_objects	objects;
+	t_square	square;
+	t_cylinder	cylinder;
+	t_triangle	triangle;
 }				t_scene;
 
 typedef struct s_img
