@@ -39,7 +39,7 @@ bool 	read_rac(char **values, t_holder *holder)
 
 bool	read_lsp(char **values, t_holder *holder)
 {
-	t_sphere	*sphere;
+	t_sphere	sphere;
 
 	if (ft_memcmp(values[0], "l", 1) == 0)
 	{
@@ -51,11 +51,11 @@ bool	read_lsp(char **values, t_holder *holder)
 	}
 	else if (ft_memcmp(values[0], "sp", 2) == 0)
 	{
-		sphere = (t_sphere *)malloc(sizeof(*sphere));
-		sphere->transform.position = parse_xyz(values[1]);
-		sphere->diameter = ft_atoi(values[2]);
-		sphere->color = vec3_to_rgb(parse_xyz(values[3]));
-		holder->scene.sphere = *sphere;
+		sphere = *(t_sphere *)malloc(sizeof(sphere));
+		sphere.transform.position = parse_xyz(values[1]);
+		sphere.diameter = ft_atoi(values[2]);
+		sphere.color = vec3_to_rgb(parse_xyz(values[3]));
+		holder->scene.sphere = sphere;
 		return (true);
 	}
 	return (false);
@@ -68,7 +68,6 @@ void	read_scene(int fd, t_holder *holder)
 	int		rv;
 
 	rv = 1;
-	holder->scene.objects.object = NULL;
 	while (rv == 1)
 	{
 		rv = get_next_line(fd, &line);

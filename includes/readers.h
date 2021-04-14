@@ -13,7 +13,6 @@
 #ifndef READERS_H
 # define READERS_H
 
-t_objects	*allc_end(t_holder *holder);
 bool		read_pl(char **values, t_holder *holder);
 bool		read_sq(char **values, t_holder *holder);
 bool		read_cy(char **values, t_holder *holder);
