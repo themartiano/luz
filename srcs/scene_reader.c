@@ -40,7 +40,6 @@ bool 	read_rac(char **values, t_holder *holder)
 bool	read_lsp(char **values, t_holder *holder)
 {
 	t_sphere	*sphere;
-	t_objects	*tmp_objects;
 
 	if (ft_memcmp(values[0], "l", 1) == 0)
 	{
@@ -56,11 +55,7 @@ bool	read_lsp(char **values, t_holder *holder)
 		sphere->transform.position = parse_xyz(values[1]);
 		sphere->diameter = ft_atoi(values[2]);
 		sphere->color = xyz_to_rgb(parse_xyz(values[3]));
-		tmp_objects = allc_end(holder);
-		tmp_objects->object = sphere;
-		free(sphere);
-		tmp_objects->type = "sp";
-		tmp_objects->next = NULL;
+		holder->scene.sphere = *sphere;
 		return (true);
 	}
 	return (false);

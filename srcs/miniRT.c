@@ -38,7 +38,7 @@ void	start_mlx(t_holder *holder, int fd, bool save)
 		if (holder->scene.objects.object != NULL)
 		{
 			t_triangle *triangle = holder->scene.objects.object;
-			printf("Type: %s -- X: %d - Y: %d - Z: %d\n", holder->scene.objects.type, triangle->p1.x, triangle->p1.y, triangle->p1.z);
+			printf("Type: %s -- X: %f - Y: %f - Z: %f\n", holder->scene.objects.type, triangle->p1.x, triangle->p1.y, triangle->p1.z);
 		}
 		if (holder->scene.objects.next == NULL)
 			break ;
@@ -57,7 +57,7 @@ void	start_mlx(t_holder *holder, int fd, bool save)
 			&holder->img.bits_per_pixel, &holder->img.line_length, &holder->img
 			.endian);
 	fill_image(&holder->img, holder->scene.x_res, holder->scene.y_res,
-		0x0000FF00);
+		holder); // 0x0000FF00
 	mlx_put_image_to_window(holder->mlx, holder->window, holder->img.img, 0, 0);
 	mlx_loop(holder->mlx);
 	(void)save;

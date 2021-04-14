@@ -15,9 +15,9 @@
 
 typedef struct s_xyz
 {
-	int	x;
-	int	y;
-	int	z;
+	float	x;
+	float	y;
+	float	z;
 }				t_xyz;
 
 typedef struct s_transform
@@ -104,6 +104,7 @@ typedef struct s_scene
 	t_light		ambient_clr;
 	t_camera	camera;
 	t_lights	lights;
+	t_sphere	sphere;
 	t_objects	objects;
 }				t_scene;
 
@@ -123,5 +124,11 @@ typedef struct s_holder
 	t_img	img;
 	t_scene	scene;
 }				t_holder;
+
+typedef struct s_ray
+{
+	t_xyz	origin;
+	t_xyz	direction;
+}				t_ray;
 
 #endif
