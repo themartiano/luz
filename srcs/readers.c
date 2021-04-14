@@ -20,7 +20,7 @@ bool	read_pl(char **values, t_holder *holder)
 	{
 		plane = *(t_plane *)malloc(sizeof(plane));
 		plane.transform.position = parse_xyz(values[1]);
-		plane.transform.rotation = parse_xyz(values[2]);
+		plane.transform.orientation = parse_xyz(values[2]);
 		plane.color = vec3_to_rgb(parse_xyz(values[3]));
 		holder->scene.plane = plane;
 		return (true);
@@ -36,7 +36,7 @@ bool	read_sq(char **values, t_holder *holder)
 	{
 		square = *(t_square *)malloc(sizeof(square));
 		square.transform.position = parse_xyz(values[1]);
-		square.transform.rotation = parse_xyz(values[2]);
+		square.transform.orientation = parse_xyz(values[2]);
 		square.side_size = ft_atoi(values[3]);
 		square.color = vec3_to_rgb(parse_xyz(values[4]));
 		holder->scene.square = square;
@@ -53,7 +53,7 @@ bool	read_cy(char **values, t_holder *holder)
 	{
 		cylinder = *(t_cylinder *)malloc(sizeof(cylinder));
 		cylinder.transform.position = parse_xyz(values[1]);
-		cylinder.transform.rotation = parse_xyz(values[2]);
+		cylinder.transform.orientation = parse_xyz(values[2]);
 		cylinder.diameter = ft_atoi(values[3]);
 		cylinder.height = ft_atoi(values[4]);
 		cylinder.color = vec3_to_rgb(parse_xyz(values[5]));

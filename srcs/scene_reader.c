@@ -30,7 +30,7 @@ bool 	read_rac(char **values, t_holder *holder)
 	else if (ft_memcmp(values[0], "c", 1) == 0)
 	{
 		holder->scene.camera.transform.position = parse_xyz(values[1]);
-		holder->scene.camera.transform.rotation = parse_xyz(values[2]);
+		holder->scene.camera.transform.orientation = parse_xyz(values[2]);
 		holder->scene.camera.fov = ft_atoi(values[3]);
 		return (true);
 	}

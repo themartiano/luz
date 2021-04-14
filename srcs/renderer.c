@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "miniRT.h"
+#include "../includes/typedefs.h"
 
 float	hit_sphere(t_sphere sphere, t_ray ray)
 {
@@ -33,17 +34,19 @@ float	hit_sphere(t_sphere sphere, t_ray ray)
 		return ((-b - sqrt(d)) / (2.0f * a));
 }
 
-t_ray	gen_ray(float u, float v, int width, int height)
+t_ray	gen_ray(t_camera camera, float u, float v, int width, int height)
 {
 	t_ray	ray;
 
-	ray.origin.x = 0;
-	ray.origin.y = 0;
-	ray.origin.z = 0;
-	ray.direction.x = -((float)width / (float)height) + (u
-			* ((float)width / (float)height) * 2.0f);
-	ray.direction.y = -1.0f + (v * 2.0f);
-	ray.direction.z = -1;
+	ray.origin.x = camera.transform.position.x;
+	ray.origin.y = camera.transform.position.y;
+	ray.origin.z = camera.transform.position.z;
+	ray.origin.z = -(ray.origin.z);
+	ray.direction.x = -((float)width / (float)height) +
+			camera.transform.orientation.x + (u * ((float)width
+			/ (float)height) * 2.0f);
+	ray.direction.y = -1.0f + camera.transform.orientation.y + (v * 2.0f);
+	ray.direction.z = -1.0f + camera.transform.orientation.z;
 	return (ray);
 }
 
@@ -86,8 +89,8 @@ void	render(t_img *img_data, int width, int height, t_holder *holder)
 		while (x < width)
 		{
 			set_color(&hit_color, 255, 255, 255);
-			ray = gen_ray((float)x / (float)width, (float)y / (float)height,
-					width, height);
+			ray = gen_ray(holder->scene.camera, (float)x / (float)width,
+					(float)y / (float)height, width, height);
 			check_ray_hits(holder, ray, &hit_color);
 			put_pixel(img_data, x, y, rgba_to_hex(hit_color));
 			x++;

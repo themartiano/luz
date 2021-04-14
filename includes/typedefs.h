@@ -23,7 +23,7 @@ typedef struct s_vec3
 typedef struct s_transform
 {
 	t_vec3	position;
-	t_vec3	rotation;
+	t_vec3	orientation;
 	t_vec3	scale;
 }				t_transform;
 
