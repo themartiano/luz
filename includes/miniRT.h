@@ -29,14 +29,15 @@
 # define KEY_ESC 53
 
 // Function prototypes
-t_xyz			parse_xyz(char *str);
-t_color			xyz_to_rgb(t_xyz xyz);
-int				exit_error(char *message);
+t_vec3			parse_xyz(char *str);
+t_color			vec3_to_rgb(t_vec3 xyz);
 void			put_pixel(t_img *img_data, int x, int y, int color);
 void			render(t_img *img_data, int width, int height,
 					t_holder *holder);
 void			read_scene(int fd, t_holder *window);
 unsigned long	rgba_to_hex(t_color rgba);
-float			dot(t_xyz u, t_xyz v);
+float			dot(t_vec3 u, t_vec3 v);
+t_vec3			normalize(t_vec3 vector);
+void			set_color(t_color *color, int r, int g, int b);
 
 #endif

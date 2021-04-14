@@ -18,13 +18,13 @@ typedef struct s_vec3
 	float	x;
 	float	y;
 	float	z;
-}				t_xyz;
+}				t_vec3;
 
 typedef struct s_transform
 {
-	t_xyz	position;
-	t_xyz	rotation;
-	t_xyz	scale;
+	t_vec3	position;
+	t_vec3	rotation;
+	t_vec3	scale;
 }				t_transform;
 
 typedef struct s_color
@@ -65,9 +65,9 @@ typedef struct s_cylinder
 
 typedef struct s_triangle
 {
-	t_xyz	p1;
-	t_xyz	p2;
-	t_xyz	p3;
+	t_vec3	p1;
+	t_vec3	p2;
+	t_vec3	p3;
 	t_color	color;
 }				t_triangle;
 
@@ -127,8 +127,8 @@ typedef struct s_holder
 
 typedef struct s_ray
 {
-	t_xyz	origin;
-	t_xyz	direction;
+	t_vec3	origin;
+	t_vec3	direction;
 }				t_ray;
 
 #endif

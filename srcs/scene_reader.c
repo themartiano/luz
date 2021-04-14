@@ -24,7 +24,7 @@ bool 	read_rac(char **values, t_holder *holder)
 	else if (ft_memcmp(values[0], "A", 1) == 0)
 	{
 		holder->scene.ambient_clr.brightness = ft_atoi(values[1]);
-		holder->scene.ambient_clr.color = xyz_to_rgb(parse_xyz(values[2]));
+		holder->scene.ambient_clr.color = vec3_to_rgb(parse_xyz(values[2]));
 		return (true);
 	}
 	else if (ft_memcmp(values[0], "c", 1) == 0)
@@ -46,7 +46,7 @@ bool	read_lsp(char **values, t_holder *holder)
 		holder->scene.lights.light.transform.position = parse_xyz
 			(values[1]);
 		holder->scene.lights.light.brightness = ft_atoi(values[2]);
-		holder->scene.lights.light.color = xyz_to_rgb(parse_xyz(values[3]));
+		holder->scene.lights.light.color = vec3_to_rgb(parse_xyz(values[3]));
 		return (true);
 	}
 	else if (ft_memcmp(values[0], "sp", 2) == 0)
@@ -54,7 +54,7 @@ bool	read_lsp(char **values, t_holder *holder)
 		sphere = (t_sphere *)malloc(sizeof(*sphere));
 		sphere->transform.position = parse_xyz(values[1]);
 		sphere->diameter = ft_atoi(values[2]);
-		sphere->color = xyz_to_rgb(parse_xyz(values[3]));
+		sphere->color = vec3_to_rgb(parse_xyz(values[3]));
 		holder->scene.sphere = *sphere;
 		return (true);
 	}
