@@ -50,7 +50,7 @@ void	put_pixel(t_img *img_data, int x, int y, int color)
 	*(unsigned int *)dst = color;
 }
 
-unsigned long rgba_to_hex(t_color rgba)
+unsigned long	rgba_to_hex(t_color rgba)
 {
 	rgba.a = 0;
 	return (rgba.a << 24 | rgba.r << 16 | rgba.g << 8 | rgba.b);
@@ -59,59 +59,4 @@ unsigned long rgba_to_hex(t_color rgba)
 float	dot(t_xyz u, t_xyz v)
 {
 	return ((u.x * v.x) + (u.y * v.y) + (u.z * u.y));
-}
-
-bool	hit_sphere(t_sphere sphere, t_ray ray)
-{
-	t_xyz	oc;
-	float	a;
-	float	b;
-	float	c;
-	float	d;
-
-	oc.x = ray.origin.x - sphere.transform.position.x;
-	oc.y = ray.origin.y - sphere.transform.position.y;
-	oc.z = ray.origin.z - sphere.transform.position.z;
-	a = dot(ray.direction, ray.direction);
-	b = 2.0f * dot(oc, ray.direction);
-	c = dot(oc, oc) - (sphere.diameter / 2.0f) * (sphere.diameter / 2.0f);
-	d = b * b - 4 * a * c;
-	return (d < 0);
-}
-
-void	fill_image(t_img *img_data, int width, int height, t_holder *holder)
-{
-	int			x;
-	int			y;
-	t_color		new_color;
-	t_sphere	sphere;
-	t_ray		ray;
-
-	y = 0;
-	while (y < height)
-	{
-		x = 0;
-		while (x < width)
-		{
-			float	u = (float)x / (float)width;
-			float	v = (float)y / (float)height;
-
-			new_color.r = 255;
-			new_color.g = 255;
-			new_color.b = 255;
-			ray.origin.x = 0;
-			ray.origin.y = 0;
-			ray.origin.z = 0;
-			ray.direction.x = -2.0f + (u * 4.0f);
-			ray.direction.y = -1.0f + v * 2.0f;
-			ray.direction.z = -1;
-			sphere = holder->scene.sphere;
-			if (hit_sphere(sphere, ray))
-				new_color = sphere.color;
-			int temp = rgba_to_hex(new_color);
-			put_pixel(img_data, x, y, temp);
-			x++;
-		}
-		y++;
-	}
 }

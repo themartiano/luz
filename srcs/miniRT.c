@@ -32,20 +32,6 @@ int	window_key_callback(int keycode, t_holder *holder)
 void	start_mlx(t_holder *holder, int fd, bool save)
 {
 	read_scene(fd, holder);
-	/* DEBUG test */
-	while (true)
-	{
-		if (holder->scene.objects.object != NULL)
-		{
-			t_triangle *triangle = holder->scene.objects.object;
-			printf("Type: %s -- X: %f - Y: %f - Z: %f\n", holder->scene.objects.type, triangle->p1.x, triangle->p1.y, triangle->p1.z);
-		}
-		if (holder->scene.objects.next == NULL)
-			break ;
-		t_objects *next = holder->scene.objects.next;
-		holder->scene.objects = *next;
-	}
-	/* end DEBUG test */
 	holder->mlx = mlx_init();
 	holder->window = mlx_new_window(holder->mlx, holder->scene.x_res,
 			holder->scene.y_res, WINDOW_TITLE);
@@ -56,8 +42,7 @@ void	start_mlx(t_holder *holder, int fd, bool save)
 	holder->img.addr = mlx_get_data_addr(holder->img.img,
 			&holder->img.bits_per_pixel, &holder->img.line_length, &holder->img
 			.endian);
-	fill_image(&holder->img, holder->scene.x_res, holder->scene.y_res,
-		holder); // 0x0000FF00
+	render(&holder->img, holder->scene.x_res, holder->scene.y_res, holder);
 	mlx_put_image_to_window(holder->mlx, holder->window, holder->img.img, 0, 0);
 	mlx_loop(holder->mlx);
 	(void)save;

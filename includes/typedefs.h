@@ -13,7 +13,7 @@
 #ifndef TYPEDEFS_H
 # define TYPEDEFS_H
 
-typedef struct s_xyz
+typedef struct s_vec3
 {
 	float	x;
 	float	y;
