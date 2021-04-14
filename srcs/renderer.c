@@ -47,7 +47,7 @@ t_ray	gen_ray(float u, float v, int width, int height)
 	return (ray);
 }
 
-void	gen_pixel_clr(t_holder *holder, t_ray ray, t_color *hit_color, float t)
+void	gen_pixel_clr(t_ray ray, t_color *hit_color, float t)
 {
 	t_vec3	n;
 
@@ -55,17 +55,27 @@ void	gen_pixel_clr(t_holder *holder, t_ray ray, t_color *hit_color, float t)
 	n.y = ray.origin.y + t * ray.direction.y;
 	n.z = ray.origin.z + t * ray.direction.z;
 	n = normalize(n);
-	*hit_color = holder->scene.sphere.color;
 	t = (0.5f * n.z + 1.0f) * 255.0f;
 	set_color(hit_color, hit_color->r - t, hit_color->g - t,
 		   hit_color->b - t);
+}
+
+void	check_ray_hits(t_holder *holder, t_ray ray, t_color *hit_color)
+{
+	float	t;
+
+	t = hit_sphere(holder->scene.sphere, ray);
+	if (t < -1.0f)
+	{
+		*hit_color = holder->scene.sphere.color;
+		gen_pixel_clr(ray, hit_color, t);
+	}
 }
 
 void	render(t_img *img_data, int width, int height, t_holder *holder)
 {
 	int		x;
 	int		y;
-	float	t;
 	t_color	hit_color;
 	t_ray	ray;
 
@@ -78,9 +88,7 @@ void	render(t_img *img_data, int width, int height, t_holder *holder)
 			set_color(&hit_color, 255, 255, 255);
 			ray = gen_ray((float)x / (float)width, (float)y / (float)height,
 					width, height);
-			t = hit_sphere(holder->scene.sphere, ray);
-			if (t < -1.0f)
-				gen_pixel_clr(holder, ray, &hit_color, t);
+			check_ray_hits(holder, ray, &hit_color);
 			put_pixel(img_data, x, y, rgba_to_hex(hit_color));
 			x++;
 		}
