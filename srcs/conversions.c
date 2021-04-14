@@ -12,9 +12,9 @@
 
 #include "miniRT.h"
 
-t_xyz	parse_xyz(char *str)
+t_vec3	parse_xyz(char *str)
 {
-	t_xyz	values;
+	t_vec3	values;
 	char	**input;
 
 	input = ft_split(str, ',');
@@ -24,7 +24,7 @@ t_xyz	parse_xyz(char *str)
 	return (values);
 }
 
-t_color	xyz_to_rgb(t_xyz xyz)
+t_color	vec3_to_rgb(t_vec3 xyz)
 {
 	t_color	color;
 

@@ -11,18 +11,23 @@
 /* ************************************************************************** */
 
 #include "miniRT.h"
-#include "../includes/typedefs.h"
 
-int	exit_error(char *message)
+void	set_color(t_color *color, int r, int g, int b)
 {
-	ft_putstr("Error\n");
-	ft_putstr(message);
-	return (1);
+	if (r < 0)
+		r = 0;
+	if (g < 0)
+		g = 0;
+	if (b < 0)
+		b = 0;
+	color->r = r;
+	color->g = g;
+	color->b = b;
 }
 
-t_xyz	normalize(t_xyz vector)
+t_vec3	normalize(t_vec3 vector)
 {
-	t_xyz	new_vector;
+	t_vec3	new_vector;
 	float	w;
 
 	w = sqrt(vector.x * vector.x + vector.y * vector.y + vector.z * vector.z);
@@ -56,7 +61,7 @@ unsigned long	rgba_to_hex(t_color rgba)
 	return (rgba.a << 24 | rgba.r << 16 | rgba.g << 8 | rgba.b);
 }
 
-float	dot(t_xyz u, t_xyz v)
+float	dot(t_vec3 u, t_vec3 v)
 {
-	return ((u.x * v.x) + (u.y * v.y) + (u.z * u.y));
+	return ((u.x * v.x) + (u.y * v.y) + (u.z * v.z));
 }

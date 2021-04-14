@@ -34,7 +34,7 @@ bool	read_pl(char **values, t_holder *holder)
 		plane = (t_plane *)malloc(sizeof(*plane));
 		plane->transform.position = parse_xyz(values[1]);
 		plane->transform.rotation = parse_xyz(values[2]);
-		plane->color = xyz_to_rgb(parse_xyz(values[3]));
+		plane->color = vec3_to_rgb(parse_xyz(values[3]));
 		tmp_objects = allc_end(holder);
 		tmp_objects->object = plane;
 		free(plane);
@@ -56,7 +56,7 @@ bool	read_sq(char **values, t_holder *holder)
 		square->transform.position = parse_xyz(values[1]);
 		square->transform.rotation = parse_xyz(values[2]);
 		square->side_size = ft_atoi(values[3]);
-		square->color = xyz_to_rgb(parse_xyz(values[4]));
+		square->color = vec3_to_rgb(parse_xyz(values[4]));
 		tmp_objects = allc_end(holder);
 		tmp_objects->object = square;
 		free(square);
@@ -79,7 +79,7 @@ bool	read_cy(char **values, t_holder *holder)
 		cylinder->transform.rotation = parse_xyz(values[2]);
 		cylinder->diameter = ft_atoi(values[3]);
 		cylinder->height = ft_atoi(values[4]);
-		cylinder->color = xyz_to_rgb(parse_xyz(values[5]));
+		cylinder->color = vec3_to_rgb(parse_xyz(values[5]));
 		tmp_objects = allc_end(holder);
 		tmp_objects->object = cylinder;
 		free(cylinder);
@@ -101,7 +101,7 @@ bool	read_tr(char **values, t_holder *holder)
 		triangle->p1 = parse_xyz(values[1]);
 		triangle->p2 = parse_xyz(values[2]);
 		triangle->p3 = parse_xyz(values[3]);
-		triangle->color = xyz_to_rgb(parse_xyz(values[4]));
+		triangle->color = vec3_to_rgb(parse_xyz(values[4]));
 		tmp_objects = allc_end(holder);
 		tmp_objects->object = triangle;
 		free(triangle);

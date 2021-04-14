@@ -12,6 +12,13 @@
 
 #include "miniRT.h"
 
+int	exit_error(char *message)
+{
+	ft_putstr("Error\n");
+	ft_putstr(message);
+	return (1);
+}
+
 int	clean_exit(t_holder *holder)
 {
 	(void)holder;
