@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   utils.c                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ejuliao- <ejuliao-@42lisboa.com>           +#+  +:+       +#+        */
+/*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/10 14:51:57 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/10 15:22:12 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/15 13:39:02 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,23 +27,22 @@ void	set_color(t_color *color, int r, int g, int b)
 
 t_vec3	normalize(t_vec3 vector)
 {
-	t_vec3	new_vector;
 	float	w;
 
 	w = sqrt(vector.x * vector.x + vector.y * vector.y + vector.z * vector.z);
 	if (vector.x == 0)
-		new_vector.x = 0;
+		vector.x = 0;
 	else
-		new_vector.x /= w;
+		vector.x /= w;
 	if (vector.y == 0)
-		new_vector.y = 0;
+		vector.y = 0;
 	else
-		new_vector.y /= w;
+		vector.y /= w;
 	if (vector.z == 0)
-		new_vector.z = 0;
+		vector.z = 0;
 	else
-		new_vector.z /= w;
-	return (new_vector);
+		vector.z /= w;
+	return (vector);
 }
 
 void	put_pixel(t_img *img_data, int x, int y, int color)
