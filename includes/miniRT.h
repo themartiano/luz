@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   miniRT.h                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ejuliao- <ejuliao-@42lisboa.com>           +#+  +:+       +#+        */
+/*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:16:25 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/10 15:28:38 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/15 19:52:31 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,7 +26,19 @@
 
 // Macros
 # define WINDOW_TITLE "ejuliao-'s miniRT"
-# define KEY_ESC 53
+
+# ifndef OS
+#  define OS 1
+# endif
+
+// MacOS = 1
+// Linux = 2
+
+# if OS == 1
+#  define KEY_ESC 53
+# elif OS == 2
+#  define KEY_ESC 65307
+# endif
 
 // Function prototypes
 t_vec3			parse_xyz(char *str);

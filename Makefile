@@ -6,7 +6,7 @@
 #    By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2021/04/08 15:31:37 by ejuliao-          #+#    #+#              #
-#    Updated: 2021/04/15 19:25:12 by ejuliao-         ###   ########.fr        #
+#    Updated: 2021/04/15 19:52:16 by ejuliao-         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -21,11 +21,11 @@ INCLUDES = -Iincludes -Ilibraries/libft -Ilibraries/get_next_line -Ilibraries/mi
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Linux)
 	CURR_MLX = minilibx_linux
-	MLX_FLAGS = -lbsd -Llibraries/$(CURR_MLX) -lmlx -lXext -lX11 -lm
+	MLX_FLAGS = -lbsd -Llibraries/$(CURR_MLX) -lmlx -lXext -lX11 -lm -DOS=2
 endif
 ifeq ($(UNAME_S),Darwin)
 	CURR_MLX = minilibx_opengl
-	MLX_FLAGS = -Ilibraries/$(CURR_MLX) -framework OpenGL -framework AppKit
+	MLX_FLAGS = -Ilibraries/$(CURR_MLX) -framework OpenGL -framework AppKit -DOS=1
 endif
 
 LIBFT_PATH = ./libraries/libft/libft.a
