@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: ejuliao- <ejuliao-@42lisboa.com>           +#+  +:+       +#+         #
+#    By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2021/04/08 15:31:37 by ejuliao-          #+#    #+#              #
-#    Updated: 2021/04/10 15:29:04 by ejuliao-         ###   ########.fr        #
+#    Updated: 2021/04/15 19:25:12 by ejuliao-         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -17,9 +17,19 @@ NAME = miniRT
 GNL_SRCS = ./libraries/get_next_line/get_next_line.c ./libraries/get_next_line/get_next_line_utils.c
 
 INCLUDES = -Iincludes -Ilibraries/libft -Ilibraries/get_next_line -Ilibraries/minilibx_opengl
-MLX_FLAGS = -framework OpenGL -framework AppKit
+
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Linux)
+	CURR_MLX = minilibx_linux
+	MLX_FLAGS = -lbsd -Llibraries/$(CURR_MLX) -lmlx -lXext -lX11 -lm
+endif
+ifeq ($(UNAME_S),Darwin)
+	CURR_MLX = minilibx_opengl
+	MLX_FLAGS = -Ilibraries/$(CURR_MLX) -framework OpenGL -framework AppKit
+endif
+
 LIBFT_PATH = ./libraries/libft/libft.a
-MLX_PATH = ./libraries/minilibx_opengl/libmlx.a
+MLX_PATH = ./libraries/$(CURR_MLX)/libmlx.a
 
 $(NAME):
 	# Compiles libft
@@ -27,10 +37,10 @@ $(NAME):
 	$(MAKE) bonus -C ./libraries/libft
 
 	# Compiles minilibx
-	$(MAKE) -C ./libraries/minilibx_opengl
+	$(MAKE) -C ./libraries/$(CURR_MLX)
 
 	# Compiles miniRT
-	gcc -Wall -Wextra -Werror $(INCLUDES) $(MLX_FLAGS) $(SRCS) $(GNL_SRCS) $(LIBFT_PATH) $(MLX_PATH) $(DEBUG) -o $(NAME)
+	gcc -Wall -Wextra -Werror $(INCLUDES) $(SRCS) $(GNL_SRCS) $(MLX_FLAGS) $(LIBFT_PATH) $(MLX_PATH) $(DEBUG) -o $(NAME)
 
 all:	$(NAME)
 
