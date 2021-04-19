@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/14 11:55:19 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/19 11:25:29 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/19 12:48:41 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,13 +66,22 @@ void	gen_pixel_clr(t_ray ray, t_color *hit_color, float t)
 void	check_ray_hits(t_holder *holder, t_ray ray, t_color *hit_color)
 {
 	float	t;
-
-	t = hit_sphere(*holder->scene.sphere, ray);
-	if (t < -1.0f)
+	
+	while (true)
 	{
-		*hit_color = holder->scene.sphere->color;
-		gen_pixel_clr(ray, hit_color, t);
+		t = hit_sphere(*holder->scene.sphere, ray);
+		if (t < -1.0f)
+		{
+			*hit_color = holder->scene.sphere->color;
+			gen_pixel_clr(ray, hit_color, t);
+		}
+		if (holder->scene.sphere->next == NULL)
+			break ;
+		else
+			holder->scene.sphere = holder->scene.sphere->next;
 	}
+	while (holder->scene.sphere->prev != NULL)
+		holder->scene.sphere = holder->scene.sphere->prev;
 }
 
 void	render(t_img *img_data, int width, int height, t_holder *holder)

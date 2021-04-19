@@ -6,14 +6,14 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/12 11:04:06 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/15 19:42:13 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/19 12:44:15 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "miniRT.h"
 #include "readers.h"
 
-bool 	read_rac(char **values, t_holder *holder)
+bool	read_rac(char **values, t_holder *holder)
 {
 	if (ft_memcmp(values[0], "R", 1) == 0)
 	{
@@ -43,19 +43,31 @@ bool	read_lsp(char **values, t_holder *holder)
 
 	if (ft_memcmp(values[0], "l", 1) == 0)
 	{
-		holder->scene.lights.light.transform.position = parse_xyz
+		holder->scene.light.transform.position = parse_xyz
 			(values[1]);
-		holder->scene.lights.light.brightness = ft_atoi(values[2]);
-		holder->scene.lights.light.color = vec3_to_rgb(parse_xyz(values[3]));
+		holder->scene.light.brightness = ft_atoi(values[2]);
+		holder->scene.light.color = vec3_to_rgb(parse_xyz(values[3]));
 		return (true);
 	}
 	else if (ft_memcmp(values[0], "sp", 2) == 0)
 	{
 		sphere = (t_sphere *)malloc(sizeof(*sphere));
+		sphere->prev = NULL;
+		sphere->next = NULL;
 		sphere->transform.position = parse_xyz(values[1]);
 		sphere->diameter = ft_atoi(values[2]);
 		sphere->color = vec3_to_rgb(parse_xyz(values[3]));
-		holder->scene.sphere = sphere;
+		if (holder->scene.sphere == NULL)
+			holder->scene.sphere = sphere;
+		else
+		{
+			while (holder->scene.sphere->next != NULL)
+				holder->scene.sphere = holder->scene.sphere->next;
+			sphere->prev = holder->scene.sphere;
+			holder->scene.sphere->next = sphere;
+			while (holder->scene.sphere->prev != NULL)
+				holder->scene.sphere = holder->scene.sphere->prev;
+		}
 		return (true);
 	}
 	return (false);
