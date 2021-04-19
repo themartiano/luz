@@ -51,5 +51,7 @@ unsigned long	rgba_to_hex(t_color rgba);
 float			dot(t_vec3 u, t_vec3 v);
 t_vec3			normalize(t_vec3 vector);
 void			set_color(t_color *color, int r, int g, int b);
+int				exit_error(char *message);
+int				clean_exit(t_holder *holder);
 
 #endif

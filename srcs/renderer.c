@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/14 11:55:19 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/15 20:00:43 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/19 11:25:29 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,10 +67,10 @@ void	check_ray_hits(t_holder *holder, t_ray ray, t_color *hit_color)
 {
 	float	t;
 
-	t = hit_sphere(holder->scene.sphere, ray);
+	t = hit_sphere(*holder->scene.sphere, ray);
 	if (t < -1.0f)
 	{
-		*hit_color = holder->scene.sphere.color;
+		*hit_color = holder->scene.sphere->color;
 		gen_pixel_clr(ray, hit_color, t);
 	}
 }

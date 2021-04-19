@@ -6,11 +6,11 @@
 #    By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2021/04/08 15:31:37 by ejuliao-          #+#    #+#              #
-#    Updated: 2021/04/15 20:08:45 by ejuliao-         ###   ########.fr        #
+#    Updated: 2021/04/19 11:27:59 by ejuliao-         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
-SRCS = ./srcs/miniRT.c ./srcs/utils.c ./srcs/scene_reader.c ./srcs/conversions.c ./srcs/readers.c ./srcs/renderer.c
+SRCS = ./srcs/miniRT.c ./srcs/utils.c ./srcs/scene_reader.c ./srcs/conversions.c ./srcs/readers.c ./srcs/renderer.c ./srcs/exit.c
 OBJS = $(SRCS:.c=.o)
 NAME = miniRT
 
@@ -31,6 +31,10 @@ endif
 LIBFT_PATH = ./libraries/libft/libft.a
 MLX_PATH = ./libraries/$(CURR_MLX)/libmlx.a
 
+ifeq ($(DEBUG),1)
+	DEBUG_FLAGS = -g
+endif
+
 $(NAME):
 	# Compiles libft
 	$(MAKE) -C ./libraries/libft
@@ -40,7 +44,7 @@ $(NAME):
 	$(MAKE) -C ./libraries/$(CURR_MLX)
 
 	# Compiles miniRT
-	gcc -Wall -Wextra -Werror $(INCLUDES) $(SRCS) $(GNL_SRCS) $(MLX_FLAGS) $(LIBFT_PATH) $(MLX_PATH) $(DEBUG) -o $(NAME)
+	gcc -Wall -Wextra -Werror $(INCLUDES) $(DEBUG_FLAGS) $(SRCS) $(GNL_SRCS) $(MLX_FLAGS) $(LIBFT_PATH) $(MLX_PATH) -o $(NAME)
 
 all:	$(NAME)
 

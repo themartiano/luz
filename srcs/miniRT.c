@@ -6,23 +6,20 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:12:09 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/15 20:02:19 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/19 11:23:41 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "miniRT.h"
 
-int	exit_error(char *message)
+void	init_holder(t_holder *holder)
 {
-	ft_putstr("Error\n");
-	ft_putstr(message);
-	return (1);
-}
-
-int	clean_exit(t_holder *holder)
-{
+	//holder->scene.plane->next = NULL;
+	//holder->scene.sphere->next = NULL;
+	//holder->scene.square->next = NULL;
+	//holder->scene.cylinder->next = NULL;
+	//holder->scene.triangle->next = NULL;
 	(void)holder;
-	exit(0);
 }
 
 int	window_key_callback(int keycode, t_holder *holder)
@@ -74,6 +71,7 @@ int	main(int argc, char *argv[])
 	fd = open(argv[1], O_RDONLY);
 	if (fd == -1)
 		return (exit_error("Incorrect scene path."));
+	init_holder(&holder);
 	start_mlx(&holder, fd, save);
 	return (0);
 }
