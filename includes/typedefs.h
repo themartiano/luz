@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/13 08:38:41 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/19 14:46:11 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/19 19:06:03 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -131,5 +131,15 @@ typedef struct s_ray
 	t_vec3	origin;
 	t_vec3	direction;
 }				t_ray;
+
+typedef struct s_hit_record
+{
+	float	t;
+	t_ray	ray;
+	t_vec3	p;
+	float	t_min;
+	float	t_max;
+	t_vec3	normal;
+}				t_hit_record;
 
 #endif
