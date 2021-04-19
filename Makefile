@@ -6,7 +6,7 @@
 #    By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2021/04/08 15:31:37 by ejuliao-          #+#    #+#              #
-#    Updated: 2021/04/19 11:34:34 by ejuliao-         ###   ########.fr        #
+#    Updated: 2021/04/19 18:12:44 by ejuliao-         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -44,7 +44,7 @@ $(NAME):
 	$(MAKE) -C ./libraries/$(CURR_MLX)
 
 	# Compiles miniRT
-	gcc -Wall -Wextra -Werror $(INCLUDES) $(DEBUG_FLAGS) $(SRCS) $(GNL_SRCS) $(MLX_FLAGS) $(LIBFT_PATH) $(MLX_PATH) -o $(NAME)
+	gcc $(INCLUDES) $(DEBUG_FLAGS) $(SRCS) $(GNL_SRCS) $(MLX_FLAGS) $(LIBFT_PATH) $(MLX_PATH) -o $(NAME)
 
 all:	$(NAME)
 
