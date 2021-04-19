@@ -3,7 +3,7 @@
 /*                                                        :::      ::::::::   */
 /*   ft_lstclear.c                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ejuliao- <ejuliao-@42lisboa.com>           +#+  +:+       +#+        */
+/*   By: ejuliao- <martinez@brhaka.com>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/02/18 15:11:29 by ejuliao-          #+#    #+#             */
 /*   Updated: 2021/02/18 15:30:56 by ejuliao-         ###   ########.fr       */

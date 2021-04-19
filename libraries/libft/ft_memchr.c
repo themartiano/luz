@@ -3,7 +3,7 @@
 /*                                                        :::      ::::::::   */
 /*   ft_memchr.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ejuliao- <ejuliao-@42lisboa.com>           +#+  +:+       +#+        */
+/*   By: ejuliao- <martinez@brhaka.com>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/02/15 16:58:52 by ejuliao-          #+#    #+#             */
 /*   Updated: 2021/02/18 11:22:04 by ejuliao-         ###   ########.fr       */

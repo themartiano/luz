@@ -3,7 +3,7 @@
 /*                                                        :::      ::::::::   */
 /*   ft_lstdelone.c                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ejuliao- <ejuliao-@42lisboa.com>           +#+  +:+       +#+        */
+/*   By: ejuliao- <martinez@brhaka.com>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/02/18 15:07:12 by ejuliao-          #+#    #+#             */
 /*   Updated: 2021/02/18 15:30:59 by ejuliao-         ###   ########.fr       */

@@ -3,7 +3,7 @@
 /*                                                        :::      ::::::::   */
 /*   ft_charinset_bonus.c                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ejuliao- <ejuliao-@42lisboa.com>           +#+  +:+       +#+        */
+/*   By: ejuliao- <martinez@brhaka.com>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/03/08 10:34:21 by ejuliao-          #+#    #+#             */
 /*   Updated: 2021/03/09 12:01:47 by ejuliao-         ###   ########.fr       */

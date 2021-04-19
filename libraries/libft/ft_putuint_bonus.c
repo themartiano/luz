@@ -3,7 +3,7 @@
 /*                                                        :::      ::::::::   */
 /*   ft_putuint_bonus.c                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ejuliao- <ejuliao-@42lisboa.com>           +#+  +:+       +#+        */
+/*   By: ejuliao- <martinez@brhaka.com>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/03/08 09:58:01 by ejuliao-          #+#    #+#             */
 /*   Updated: 2021/04/08 17:39:05 by ejuliao-         ###   ########.fr       */

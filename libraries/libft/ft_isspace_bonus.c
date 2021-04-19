@@ -3,7 +3,7 @@
 /*                                                        :::      ::::::::   */
 /*   ft_isspace_bonus.c                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ejuliao- <ejuliao-@42lisboa.com>           +#+  +:+       +#+        */
+/*   By: ejuliao- <martinez@brhaka.com>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/03/08 10:03:03 by ejuliao-          #+#    #+#             */
 /*   Updated: 2021/03/09 12:01:45 by ejuliao-         ###   ########.fr       */

@@ -3,7 +3,7 @@
 /*                                                        :::      ::::::::   */
 /*   ft_longlongdigits_bonus.c                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ejuliao- <ejuliao-@42lisboa.com>           +#+  +:+       +#+        */
+/*   By: ejuliao- <martinez@brhaka.com>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/03/29 09:56:48 by ejuliao-          #+#    #+#             */
 /*   Updated: 2021/04/08 16:55:12 by ejuliao-         ###   ########.fr       */

@@ -3,7 +3,7 @@
 /*                                                        :::      ::::::::   */
 /*   ft_ltoa_bonus.c                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ejuliao- <ejuliao-@42lisboa.com>           +#+  +:+       +#+        */
+/*   By: ejuliao- <martinez@brhaka.com>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/03/27 14:02:23 by ejuliao-          #+#    #+#             */
 /*   Updated: 2021/04/08 16:56:25 by ejuliao-         ###   ########.fr       */
