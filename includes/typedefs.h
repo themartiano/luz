@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/13 08:38:41 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/15 19:42:16 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/19 11:20:55 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,40 +35,45 @@ typedef struct s_color
 	int	a;
 }				t_color;
 
-typedef struct s_sphere
-{
-	t_transform	transform;
-	int			diameter;
-	t_color		color;
-}				t_sphere;
-
 typedef struct s_plane
 {
-	t_transform	transform;
-	t_color		color;
+	t_transform		transform;
+	t_color			color;
+	struct s_plane	*next;
 }				t_plane;
+
+typedef struct s_sphere
+{
+	t_transform		transform;
+	int				diameter;
+	t_color			color;
+	struct s_sphere	*next;
+}				t_sphere;
 
 typedef struct s_square
 {
-	t_transform	transform;
-	int			side_size;
-	t_color		color;
+	t_transform		transform;
+	int				side_size;
+	t_color			color;
+	struct s_square	*next;
 }				t_square;
 
 typedef struct s_cylinder
 {
-	t_transform	transform;
-	int			diameter;
-	int			height;
-	t_color		color;
+	t_transform			transform;
+	int					diameter;
+	int					height;
+	t_color				color;
+	struct s_cylinder	*next;
 }				t_cylinder;
 
 typedef struct s_triangle
 {
-	t_vec3	p1;
-	t_vec3	p2;
-	t_vec3	p3;
-	t_color	color;
+	t_vec3			p1;
+	t_vec3			p2;
+	t_vec3			p3;
+	t_color			color;
+	struct s_triangle	*next;
 }				t_triangle;
 
 typedef struct s_camera
@@ -97,11 +102,11 @@ typedef struct s_scene
 	t_light		ambient_clr;
 	t_camera	camera;
 	t_lights	lights;
-	t_plane		plane;
-	t_sphere	sphere;
-	t_square	square;
-	t_cylinder	cylinder;
-	t_triangle	triangle;
+	t_plane		*plane;
+	t_sphere	*sphere;
+	t_square	*square;
+	t_cylinder	*cylinder;
+	t_triangle	*triangle;
 }				t_scene;
 
 typedef struct s_img
