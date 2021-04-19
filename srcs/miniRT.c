@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:12:09 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/19 12:15:06 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/19 15:59:58 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@ void	init_holder(t_holder *holder)
 	holder->scene.plane = NULL;
 	holder->scene.sphere = NULL;
 	holder->scene.square = NULL;
-	holder->scene.cylinder = NULL;	
+	holder->scene.cylinder = NULL;
 	holder->scene.triangle = NULL;
 }
 

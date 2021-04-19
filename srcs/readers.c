@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/13 13:13:02 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/19 11:52:24 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/19 14:46:43 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,7 +54,7 @@ bool	read_cy(char **values, t_holder *holder)
 		cylinder = (t_cylinder *)malloc(sizeof(*cylinder));
 		cylinder->transform.position = parse_xyz(values[1]);
 		cylinder->transform.orientation = parse_xyz(values[2]);
-		cylinder->diameter = ft_atoi(values[3]);
+		cylinder->radius = ft_atoi(values[3]) / 2;
 		cylinder->height = ft_atoi(values[4]);
 		cylinder->color = vec3_to_rgb(parse_xyz(values[5]));
 		holder->scene.cylinder = cylinder;

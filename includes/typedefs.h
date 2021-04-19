@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/13 08:38:41 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/19 12:15:04 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/19 14:46:11 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,7 +46,7 @@ typedef struct s_plane
 typedef struct s_sphere
 {
 	t_transform		transform;
-	int				diameter;
+	int				radius;
 	t_color			color;
 	struct s_sphere	*prev;
 	struct s_sphere	*next;
@@ -64,7 +64,7 @@ typedef struct s_square
 typedef struct s_cylinder
 {
 	t_transform			transform;
-	int					diameter;
+	int					radius;
 	int					height;
 	t_color				color;
 	struct s_cylinder	*prev;

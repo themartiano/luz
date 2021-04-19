@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/12 11:04:06 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/19 12:44:15 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/19 14:46:34 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,7 +55,7 @@ bool	read_lsp(char **values, t_holder *holder)
 		sphere->prev = NULL;
 		sphere->next = NULL;
 		sphere->transform.position = parse_xyz(values[1]);
-		sphere->diameter = ft_atoi(values[2]);
+		sphere->radius = ft_atoi(values[2]) / 2;
 		sphere->color = vec3_to_rgb(parse_xyz(values[3]));
 		if (holder->scene.sphere == NULL)
 			holder->scene.sphere = sphere;
