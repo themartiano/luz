@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/14 11:55:19 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/20 11:21:18 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/20 12:22:31 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -100,6 +100,7 @@ void	check_ray_hits(t_holder *holder, t_ray ray, t_color *hit_color)
 		{
 			*hit_color = holder->scene.sphere->color;
 			gen_pixel_clr(ray, hit_color, hit_record.t);
+			closest = hit_record.t;
 		}
 		if (holder->scene.sphere->next == NULL)
 			break ;
