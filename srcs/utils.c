@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/10 14:51:57 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/19 19:01:55 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/20 11:08:06 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,15 +34,15 @@ t_vec3	normalize(t_vec3 vector)
 	if (vector.x == 0)
 		new_vector.x = 0;
 	else
-		new_vector.x /= w;
+		new_vector.x = vector.x / w;
 	if (vector.y == 0)
 		new_vector.y = 0;
 	else
-		new_vector.y /= w;
+		new_vector.y = vector.y / w;
 	if (vector.z == 0)
 		new_vector.z = 0;
 	else
-		new_vector.z /= w;
+		new_vector.z = vector.z / w;
 	return (new_vector);
 }
 
@@ -55,8 +55,14 @@ void	put_pixel(t_img *img_data, int x, int y, int color)
 	*(unsigned int *)dst = color;
 }
 
-unsigned long	rgba_to_hex(t_color rgba)
+int	rgba_to_hex(t_color rgba)
 {
+	if (rgba.r > 255)
+		rgba.r = 255;
+	if (rgba.g > 255)
+		rgba.g = 255;
+	if (rgba.b > 255)
+		rgba.b = 255;
 	rgba.a = 0;
 	return (rgba.a << 24 | rgba.r << 16 | rgba.g << 8 | rgba.b);
 }

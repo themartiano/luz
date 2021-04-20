@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/13 08:38:41 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/19 19:06:03 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/20 10:32:35 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -99,6 +99,8 @@ typedef struct s_scene
 {
 	int			x_res;
 	int			y_res;
+	float		t_min;
+	float		t_max;
 	t_light		ambient_clr;
 	t_camera	camera;
 	t_light		light;
@@ -137,8 +139,6 @@ typedef struct s_hit_record
 	float	t;
 	t_ray	ray;
 	t_vec3	p;
-	float	t_min;
-	float	t_max;
 	t_vec3	normal;
 }				t_hit_record;
 
