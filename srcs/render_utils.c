@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/21 11:58:52 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/21 12:01:38 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/21 14:50:18 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,7 +34,7 @@ void	gen_pixel_clr(t_ray ray, t_color *hit_color, float t)
 	n = set(ray.origin.x + t * ray.direction.x, ray.origin.y + t
 			* ray.direction.y, ray.origin.z + t * ray.direction.z);
 	n = normalize(n);
-	t = (0.5f * n.z + 0.3f) * 255.0f;
+	t = (0.5f * n.z + 0.1f) * 255.0f;
 	set_color(hit_color, hit_color->r - t, hit_color->g - t, hit_color->b - t);
 }
 
