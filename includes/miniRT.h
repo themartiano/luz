@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:16:25 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/20 11:12:54 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/21 09:31:58 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,10 +36,8 @@
 
 # if OS == 1
 #  define KEY_ESC 53
-#  define OS_BRIGHTNESS_FACTOR 1.0f
 # elif OS == 2
 #  define KEY_ESC 65307
-#  define OS_BRIGHTNESS_FACTOR 0.3f
 # endif
 
 // Function prototypes

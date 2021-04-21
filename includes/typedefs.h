@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/13 08:38:41 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/20 10:32:35 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/21 09:34:29 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -101,6 +101,7 @@ typedef struct s_scene
 	int			y_res;
 	float		t_min;
 	float		t_max;
+	int			aa_samples;
 	t_light		ambient_clr;
 	t_camera	camera;
 	t_light		light;
