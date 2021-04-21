@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/10 14:51:57 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/21 09:30:57 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/21 15:39:28 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,5 +69,5 @@ int	rgba_to_hex(t_color rgba)
 
 float	dot(t_vec3 u, t_vec3 v)
 {
-	return ((u.x * v.x) + (u.y * v.y) + (u.z * v.z));
+	return (u.x * v.x + u.y * v.y + u.z * v.z);
 }

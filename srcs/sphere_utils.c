@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/21 12:38:12 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/21 12:44:37 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/21 18:20:28 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,6 +34,7 @@ float t_max)
 	float	a;
 	float	b;
 	float	c;
+	float	d;
 
 	oc.x = ray->origin.x - scene.sphere->transform.position.x;
 	oc.y = ray->origin.y - scene.sphere->transform.position.y;
@@ -41,12 +42,18 @@ float t_max)
 	a = dot(ray->direction, ray->direction);
 	b = dot(oc, ray->direction);
 	c = dot(oc, oc) - scene.sphere->radius * scene.sphere->radius;
-	if (b * b - a * c)
+	if (b * b - a * c > 0)
 	{
-		a = (-b - sqrt(b * b - a * c)) / a;
-		if (a < t_max && a > scene.t_min)
+		d = (-b - sqrt(b * b - a * c)) / a;
+		if (d < t_max && d > scene.t_min)
 		{
-			update_hit_record(hit_record, scene, ray, a);
+			update_hit_record(hit_record, scene, ray, d);
+			return (true);
+		}
+		d = (-b + sqrt(b * b - a * c)) / a;
+		if (d < t_max && d > scene.t_min)
+		{
+			update_hit_record(hit_record, scene, ray, d);
 			return (true);
 		}
 	}
