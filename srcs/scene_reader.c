@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/12 11:04:06 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/19 18:23:16 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/21 12:11:21 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,10 +37,8 @@ bool	read_rac(char **values, t_holder *holder)
 	return (false);
 }
 
-bool	read_lsp(char **values, t_holder *holder)
+bool	read_l(char **values, t_holder *holder)
 {
-	t_sphere	*sphere;
-
 	if (ft_memcmp(values[0], "l", 1) == 0)
 	{
 		holder->scene.light.transform.position = parse_xyz
@@ -49,7 +47,14 @@ bool	read_lsp(char **values, t_holder *holder)
 		holder->scene.light.color = vec3_to_rgb(parse_xyz(values[3]));
 		return (true);
 	}
-	else if (ft_memcmp(values[0], "sp", 2) == 0)
+	return (false);
+}
+
+bool	read_sp(char **values, t_holder *holder)
+{
+	t_sphere	*sphere;
+
+	if (ft_memcmp(values[0], "sp", 2) == 0)
 	{
 		sphere = (t_sphere *)malloc(sizeof(*sphere));
 		sphere->prev = NULL;
@@ -85,7 +90,8 @@ void	read_scene(int fd, t_holder *holder)
 		rv = get_next_line(fd, &line);
 		values = ft_split(line, ' ');
 		read_rac(values, holder);
-		read_lsp(values, holder);
+		read_l(values, holder);
+		read_sp(values, holder);
 		read_pl(values, holder);
 		read_sq(values, holder);
 		read_cy(values, holder);

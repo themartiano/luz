@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:12:09 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/21 10:47:46 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/21 11:31:15 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,7 +48,7 @@ void	start_mlx(t_holder *holder, int fd, bool save)
 	holder->img.addr = mlx_get_data_addr(holder->img.img,
 			&holder->img.bits_per_pixel, &holder->img.line_length, &holder->img
 			.endian);
-	render(&holder->img, holder->scene.x_res, holder->scene.y_res, holder);
+	start_render(holder);
 	mlx_put_image_to_window(holder->mlx, holder->window, holder->img.img, 0, 0);
 	mlx_loop(holder->mlx);
 	(void)save;
