@@ -6,13 +6,14 @@
 #    By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2021/04/08 15:31:37 by ejuliao-          #+#    #+#              #
-#    Updated: 2021/04/21 10:01:10 by ejuliao-         ###   ########.fr        #
+#    Updated: 2021/04/21 12:44:06 by ejuliao-         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
-SRCS = ./srcs/miniRT.c ./srcs/utils.c ./srcs/scene_reader.c ./srcs/conversions.c ./srcs/readers.c ./srcs/renderer.c ./srcs/exit.c
-OBJS = $(SRCS:.c=.o)
-NAME = miniRT
+SRCS =	./srcs/miniRT.c ./srcs/utils.c ./srcs/scene_reader.c ./srcs/conversions.c ./srcs/readers.c ./srcs/renderer.c ./srcs/exit.c	\
+		./srcs/vector_utils.c ./srcs/render_utils.c ./srcs/sphere_utils.c
+OBJS =	$(SRCS:.c=.o)
+NAME =	miniRT
 
 GNL_SRCS = ./libraries/get_next_line/get_next_line.c ./libraries/get_next_line/get_next_line_utils.c
 
