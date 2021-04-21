@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/14 11:55:19 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/21 12:38:05 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/21 20:01:13 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,7 +26,7 @@ t_hit_record *hit_record)
 		{
 			hit = true;
 			*hit_color = holder->scene.sphere->color;
-			gen_pixel_clr(ray, hit_color, hit_record->t);
+			gen_pixel_clr(holder, ray, hit_color, hit_record->t);
 			closest = hit_record->t;
 		}
 		if (holder->scene.sphere->next == NULL)
@@ -77,6 +77,7 @@ void	render_loop(t_holder *holder, t_color *hit_color, int x, int y)
 	aa_s = 0;
 	while (aa_s < holder->scene.aa_samples)
 	{
+		//set_color(&tmp_color, holder->scene.amb_light.color.r, holder->scene.amb_light.color.g, holder->scene.amb_light.color.b);
 		set_color(&tmp_color, 255, 255, 255);
 		get_hit_color(holder, &hit_record, &tmp_color, current_pixel);
 		set_color(hit_color, hit_color->r + tmp_color.r,

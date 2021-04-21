@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/21 11:58:52 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/21 14:50:18 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/21 20:02:54 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,15 +27,21 @@ t_vec3	random_in_unit_sphere(void)
 	return (p);
 }
 
-void	gen_pixel_clr(t_ray ray, t_color *hit_color, float t)
+void	gen_pixel_clr(t_holder *holder, t_ray ray, t_color *hit_color, float t)
 {
+	t_light	amb_light;
 	t_vec3	n;
 
+	amb_light = holder->scene.amb_light;
 	n = set(ray.origin.x + t * ray.direction.x, ray.origin.y + t
 			* ray.direction.y, ray.origin.z + t * ray.direction.z);
 	n = normalize(n);
 	t = (0.5f * n.z + 0.1f) * 255.0f;
-	set_color(hit_color, hit_color->r - t, hit_color->g - t, hit_color->b - t);
+	set_color(hit_color,
+		(hit_color->r - t) + (amb_light.color.r * amb_light.brightness),
+		(hit_color->g - t) + (amb_light.color.g * amb_light.brightness),
+		(hit_color->b - t) + (amb_light.color.b * amb_light.brightness));
+	(void)holder;
 }
 
 t_ray	gen_ray(t_scene scene, t_vec3 uv, t_vec3 origin, t_vec3 dir)
