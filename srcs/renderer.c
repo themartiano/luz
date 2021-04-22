@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/14 11:55:19 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/22 17:41:02 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/22 18:10:59 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -128,7 +128,7 @@ void	render(t_holder *holder)
 int	start_render(t_holder *holder)
 {
 	static unsigned int	frame = 0;
-	static int	s = 0;
+	static int			s = 0;
 
 	if (frame == 0)
 	{
