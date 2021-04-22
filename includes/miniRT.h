@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:16:25 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/22 12:15:11 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/22 12:46:40 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,7 +44,7 @@
 t_vec3	parse_xyz(char *str);
 t_color	vec3_to_rgb(t_vec3 xyz);
 void	put_pixel(t_img *img_data, int x, int y, int color);
-void	start_render(t_holder *holder);
+void	render(t_holder *holder);
 void	read_scene(int fd, t_holder *window);
 int		rgba_to_hex(t_color rgba);
 float	dot(t_vec3 u, t_vec3 v);
