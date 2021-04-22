@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/21 11:58:52 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/22 10:55:43 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/22 11:08:20 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,9 +34,12 @@ void	gen_pixel_clr(t_holder *holder, t_ray ray, t_color *hit_color, float t)
 	n = normalize(n);
 	t = (0.5f * n.z + 0.1f) * 255.0f;
 	set_color(hit_color,
-		((float)hit_color->r - t) + ((float)holder->scene.amb_light.color.r * holder->scene.amb_light.brightness),
-		((float)hit_color->g - t) + ((float)holder->scene.amb_light.color.g * holder->scene.amb_light.brightness),
-		((float)hit_color->b - t) + ((float)holder->scene.amb_light.color.b * holder->scene.amb_light.brightness));
+		((float)hit_color->r - t) + ((float)holder->scene.amb_light.color.r
+			* holder->scene.amb_light.brightness),
+		((float)hit_color->g - t) + ((float)holder->scene.amb_light.color.g
+			* holder->scene.amb_light.brightness),
+		((float)hit_color->b - t) + ((float)holder->scene.amb_light.color.b
+			* holder->scene.amb_light.brightness));
 }
 
 t_ray	gen_ray(t_scene scene, t_vec3 uv, t_vec3 origin, t_vec3 dir)
