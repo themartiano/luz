@@ -6,24 +6,24 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/21 12:38:12 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/22 11:22:57 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/22 11:52:31 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "miniRT.h"
 
 bool	update_hit_record(t_hit_record *hit_record, t_scene scene, t_ray *ray,
-float a)
+float d)
 {
-	hit_record->t = a;
+	hit_record->t = d;
 	hit_record->p.x = ray->origin.x + hit_record->t * ray->direction.x;
 	hit_record->p.y = ray->origin.y + hit_record->t * ray->direction.y;
 	hit_record->p.z = ray->origin.z + hit_record->t * ray->direction.z;
-	a = scene.sphere->radius;
 	hit_record->normal = set((hit_record->p.x
-				- scene.sphere->transform.position.x) / a, (hit_record->p.y
-				- scene.sphere->transform.position.y) / a, (hit_record->p.z
-				- scene.sphere->transform.position.z) / a);
+				- scene.sphere->transform.position.x) / scene.sphere->radius,
+			(hit_record->p.y - scene.sphere->transform.position.y)
+			/ scene.sphere->radius, (hit_record->p.z
+				- scene.sphere->transform.position.z) / scene.sphere->radius);
 	return (true);
 }
 

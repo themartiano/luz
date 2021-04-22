@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/14 11:55:19 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/22 10:53:42 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/22 11:56:26 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,11 +39,35 @@ t_hit_record *hit_record)
 	return (hit);
 }
 
-void	get_hit_color(t_holder *holder, t_hit_record *hit_record,
-t_color *tmp_color, t_vec3 crnt_pxl)
+void	light_bouncer(t_holder *holder, t_vec3 uv, t_color *tmp_color,
+t_hit_record *hit_record)
 {
 	t_vec3	tmp_vec3;
 	t_vec3	target;
+	int		bounces;
+
+	bounces = 0;
+	while (bounces < holder->scene.max_bounces)
+	{
+		target = random_in_unit();
+		tmp_vec3.x = hit_record->p.x + hit_record->normal.x + target.x;
+		tmp_vec3.y = hit_record->p.y + hit_record->normal.y + target.y;
+		tmp_vec3.z = hit_record->p.z + hit_record->normal.z + target.z;
+		target.x = tmp_vec3.x - hit_record->p.x;
+		target.y = tmp_vec3.y - hit_record->p.y;
+		target.z = tmp_vec3.z - hit_record->p.z;
+		if (!check_ray_hits(holder, gen_ray(holder->scene, uv,
+					hit_record->p, target), tmp_color, hit_record))
+		{
+			break ;
+		}
+		bounces++;
+	}
+}
+
+void	get_hit_color(t_holder *holder, t_hit_record *hit_record,
+t_color *tmp_color, t_vec3 crnt_pxl)
+{
 	t_vec3	uv;
 
 	uv.x = (float)(crnt_pxl.x + drand48()) / (float)holder->scene.x_res;
@@ -53,15 +77,7 @@ t_color *tmp_color, t_vec3 crnt_pxl)
 				holder->scene.camera.transform.orientation), tmp_color,
 			hit_record))
 	{
-		target = random_in_unit();
-		tmp_vec3.x = hit_record->p.x + hit_record->normal.x + target.x;
-		tmp_vec3.y = hit_record->p.y + hit_record->normal.y + target.y;
-		tmp_vec3.z = hit_record->p.z + hit_record->normal.z + target.z;
-		target.x = tmp_vec3.x - hit_record->p.x;
-		target.y = tmp_vec3.y - hit_record->p.y;
-		target.z = tmp_vec3.z - hit_record->p.z;
-		check_ray_hits(holder, gen_ray(holder->scene, uv,
-				hit_record->p, target), tmp_color, hit_record);
+		light_bouncer(holder, uv, tmp_color, hit_record);
 	}
 }
 
