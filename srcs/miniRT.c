@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:12:09 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/22 13:15:37 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/22 16:31:03 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,7 +21,7 @@ void	init_holder(t_holder *holder)
 	holder->scene.triangle = NULL;
 	holder->scene.t_min = 0.001f;
 	holder->scene.t_max = FLT_MAX;
-	holder->scene.samples = 4;
+	holder->scene.samples = 8;
 	holder->scene.min_bounces = 1;
 	holder->scene.max_bounces = 8;
 }
@@ -34,25 +34,6 @@ int	window_key_callback(int keycode, t_holder *holder)
 		mlx_destroy_window(holder->mlx, holder->window);
 		clean_exit(holder);
 	}
-	return (0);
-}
-
-int	start_render(t_holder *holder)
-{
-	static unsigned int	frame = 0;
-
-	if (frame == 0)
-	{
-		mlx_string_put(holder->mlx, holder->window, 20, 20, 0x00FFFFFF,
-			"Rendering...");
-	}
-	if (frame == 2)
-	{
-		render(holder);
-		mlx_put_image_to_window(holder->mlx, holder->window, holder->img.img,
-			0, 0);
-	}
-	frame++;
 	return (0);
 }
 

@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/10 14:51:57 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/21 15:39:28 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/22 16:15:19 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,27 +25,6 @@ void	set_color(t_color *color, int r, int g, int b)
 	color->b = b;
 }
 
-t_vec3	normalize(t_vec3 vector)
-{
-	t_vec3	new_vector;
-	float	w;
-
-	w = sqrt(vector.x * vector.x + vector.y * vector.y + vector.z * vector.z);
-	if (vector.x == 0)
-		new_vector.x = 0;
-	else
-		new_vector.x = vector.x / w;
-	if (vector.y == 0)
-		new_vector.y = 0;
-	else
-		new_vector.y = vector.y / w;
-	if (vector.z == 0)
-		new_vector.z = 0;
-	else
-		new_vector.z = vector.z / w;
-	return (new_vector);
-}
-
 void	put_pixel(t_img *img_data, int x, int y, int color)
 {
 	char	*dst;
@@ -55,16 +34,24 @@ void	put_pixel(t_img *img_data, int x, int y, int color)
 	*(unsigned int *)dst = color;
 }
 
-int	rgba_to_hex(t_color rgba)
+t_color	get_pixel(t_img *img_data, int x, int y)
 {
-	if (rgba.r > 255)
-		rgba.r = 255;
-	if (rgba.g > 255)
-		rgba.g = 255;
-	if (rgba.b > 255)
-		rgba.b = 255;
-	rgba.a = 0;
-	return (rgba.a << 24 | rgba.r << 16 | rgba.g << 8 | rgba.b);
+	char	*dst;
+
+	dst = img_data->addr + (y * img_data->line_length + x
+			* (img_data->bits_per_pixel / 8));
+	return (hex_to_rgba(*(unsigned int *)dst));
+}
+
+t_vec3	normalize(t_vec3 vector)
+{
+	float	w;
+
+	w = sqrt(vector.x * vector.x + vector.y * vector.y + vector.z * vector.z);
+	vector.x /= w;
+	vector.y /= w;
+	vector.z /= w;
+	return (vector);
 }
 
 float	dot(t_vec3 u, t_vec3 v)
