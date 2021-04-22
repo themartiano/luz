@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:12:09 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/22 18:09:14 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/22 19:16:36 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,7 +23,7 @@ void	init_holder(t_holder *holder)
 	holder->scene.t_max = FLT_MAX;
 	holder->scene.samples = 4;
 	holder->scene.min_bounces = 2;
-	holder->scene.max_bounces = 8;
+	holder->scene.max_bounces = 32;
 }
 
 int	window_key_callback(int keycode, t_holder *holder)
@@ -74,6 +74,7 @@ int	main(int argc, char *argv[])
 	fd = open(argv[1], O_RDONLY);
 	if (fd == -1)
 		return (exit_error("Incorrect scene path."));
+	printf("\n");
 	init_holder(&holder);
 	start_mlx(&holder, fd, save);
 	return (0);

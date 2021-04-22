@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/14 11:55:19 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/22 18:56:01 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/22 19:15:16 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -138,12 +138,14 @@ int	start_render(t_holder *holder)
 	}
 	if (frame >= 2 && s < holder->scene.samples)
 	{
+		printf("\rRendering sample [ %d ] of %d", s + 1, holder->scene.samples);
+		fflush(stdout);
 		render(holder, s);
 		mlx_put_image_to_window(holder->mlx, holder->window, holder->img.img,
 			0, 0);
 		s++;
 		if (s == holder->scene.samples)
-			printf("Rendering done.\n");
+			printf("\n\nRendering done.\n");
 	}
 	frame++;
 	return (0);
