@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/12 11:04:06 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/21 19:35:54 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/22 10:13:23 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,7 +23,7 @@ bool	read_rac(char **values, t_holder *holder)
 	}
 	else if (ft_memcmp(values[0], "A", 1) == 0)
 	{
-		holder->scene.amb_light.brightness = ft_atoi(values[1]);
+		holder->scene.amb_light.brightness = ft_atof(values[1]) / 6.4f;
 		holder->scene.amb_light.color = vec3_to_rgb(parse_xyz(values[2]));
 		return (true);
 	}
@@ -42,7 +42,7 @@ bool	read_l(char **values, t_holder *holder)
 	if (ft_memcmp(values[0], "l", 1) == 0)
 	{
 		holder->scene.light.transform.position = parse_xyz (values[1]);
-		holder->scene.light.brightness = ft_atoi(values[2]);
+		holder->scene.light.brightness = ft_atof(values[2]);
 		holder->scene.light.color = vec3_to_rgb(parse_xyz(values[3]));
 		return (true);
 	}

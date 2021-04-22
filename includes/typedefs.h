@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/13 08:38:41 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/21 19:35:57 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/22 09:47:54 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -90,8 +90,9 @@ typedef struct s_camera
 typedef struct s_light
 {
 	t_transform		transform;
-	int				brightness;
+	float			brightness;
 	t_color			color;
+	struct s_light	*prev;
 	struct s_light	*next;
 }				t_light;
 
