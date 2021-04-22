@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/10 14:51:57 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/22 16:15:19 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/22 18:52:22 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,22 +25,22 @@ void	set_color(t_color *color, int r, int g, int b)
 	color->b = b;
 }
 
-void	put_pixel(t_img *img_data, int x, int y, int color)
+void	put_pixel(t_img *img, int x, int y, int color)
 {
 	char	*dst;
 
-	dst = img_data->addr + (y * img_data->line_length + x
-			* (img_data->bits_per_pixel / 8));
+	dst = img->addr + (y * img->line_length + x
+			* (img->bits_per_pixel / 8));
 	*(unsigned int *)dst = color;
 }
 
-t_color	get_pixel(t_img *img_data, int x, int y)
+t_color	get_pixel(t_img *img, int x, int y)
 {
-	char	*dst;
+	char	*ptr;
 
-	dst = img_data->addr + (y * img_data->line_length + x
-			* (img_data->bits_per_pixel / 8));
-	return (hex_to_rgba(*(unsigned int *)dst));
+	ptr = img->addr + (y * img->line_length + x
+			* (img->bits_per_pixel / 8));
+	return (hex_to_rgba(*(unsigned int *)ptr));
 }
 
 t_vec3	normalize(t_vec3 vector)

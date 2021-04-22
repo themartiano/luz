@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/14 11:55:19 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/22 18:10:59 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/22 18:56:01 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -88,28 +88,27 @@ t_color *hit_color, t_vec3 crnt_pxl)
 		return (false);
 }
 
-void	render_loop(t_holder *holder, t_color *hit_color, int x, int y)
+void	render_loop(t_holder *holder, t_color *hit_color, t_vec3 current_pixel, int s)
 {
 	t_hit_record	hit_rec;
-	t_vec3			current_pixel;
 	t_color			pxl_color;
 
-	current_pixel.x = x;
-	current_pixel.y = y;
 	set_color(hit_color, 255, 255, 255);
-	if (get_hit_color(holder, &hit_rec, hit_color, current_pixel))
+	if (get_hit_color(holder, &hit_rec, hit_color, current_pixel)
+		&& s > 0)
 	{
-		pxl_color = get_pixel(holder->img.img, x, y);
+		pxl_color = get_pixel(&holder->img, current_pixel.x, current_pixel.y);
 		set_color(hit_color, (hit_color->r + pxl_color.r) / 2,
 			(hit_color->g + pxl_color.g) / 2, (hit_color->b + pxl_color.b) / 2);
 	}
 }
 
-void	render(t_holder *holder)
+void	render(t_holder *holder, int s)
 {
 	int		x;
 	int		y;
 	t_color	hit_color;
+	t_vec3	current_pixel;
 
 	y = 0;
 	while (y < holder->scene.y_res)
@@ -117,7 +116,9 @@ void	render(t_holder *holder)
 		x = 0;
 		while (x < holder->scene.x_res)
 		{
-			render_loop(holder, &hit_color, x, y);
+			current_pixel.x = x;
+			current_pixel.y = y;
+			render_loop(holder, &hit_color, current_pixel, s);
 			put_pixel(&holder->img, x, y, rgba_to_hex(hit_color));
 			x++;
 		}
@@ -137,7 +138,7 @@ int	start_render(t_holder *holder)
 	}
 	if (frame >= 2 && s < holder->scene.samples)
 	{
-		render(holder);
+		render(holder, s);
 		mlx_put_image_to_window(holder->mlx, holder->window, holder->img.img,
 			0, 0);
 		s++;
