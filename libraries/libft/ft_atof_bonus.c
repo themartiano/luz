@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/22 08:46:20 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/22 10:09:50 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/22 10:37:12 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,8 @@ float	ft_atof(const char *nptr)
 	float	f_decimal;
 	float	sign;
 
+	integer = 0.0f;
+	decimal = 0.0f;
 	sign = 1.0f;
 	while (ft_isspace(*nptr))
 		nptr++;
