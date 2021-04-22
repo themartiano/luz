@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:12:09 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/22 12:04:59 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/22 12:47:52 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,6 +37,22 @@ int	window_key_callback(int keycode, t_holder *holder)
 	return (0);
 }
 
+int	start_render(void *p_holder)
+{
+	static bool	rendered = false;
+	t_holder	*holder;
+
+	holder = p_holder;
+	if (rendered == false)
+	{
+		render(holder);
+		mlx_put_image_to_window(holder->mlx, holder->window, holder->img.img,
+			0, 0);
+		rendered = true;
+	}
+	return (0);
+}
+
 void	start_mlx(t_holder *holder, int fd, bool save)
 {
 	read_scene(fd, holder);
@@ -50,8 +66,8 @@ void	start_mlx(t_holder *holder, int fd, bool save)
 	holder->img.addr = mlx_get_data_addr(holder->img.img,
 			&holder->img.bits_per_pixel, &holder->img.line_length, &holder->img
 			.endian);
-	start_render(holder);
-	mlx_put_image_to_window(holder->mlx, holder->window, holder->img.img, 0, 0);
+	mlx_pixel_put(holder->mlx, holder->window, 0, 0, 0x00000000);
+	mlx_loop_hook(holder->mlx, start_render, holder);
 	mlx_loop(holder->mlx);
 	(void)save;
 }

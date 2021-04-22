@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/14 11:55:19 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/22 12:16:16 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/22 12:46:48 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -107,7 +107,7 @@ void	render_loop(t_holder *holder, t_color *hit_color, int x, int y)
 		hit_color->b / s);
 }
 
-void	start_render(t_holder *holder)
+void	render(t_holder *holder)
 {
 	int		x;
 	int		y;
