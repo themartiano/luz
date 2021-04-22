@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/14 11:55:19 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/21 20:01:13 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/22 10:44:50 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -70,22 +70,22 @@ void	render_loop(t_holder *holder, t_color *hit_color, int x, int y)
 	t_hit_record	hit_record;
 	t_vec3			current_pixel;
 	t_color			tmp_color;
-	int				aa_s;
+	int				s;
 
 	current_pixel.x = x;
 	current_pixel.y = y;
-	aa_s = 0;
-	while (aa_s < holder->scene.aa_samples)
+	s = 0;
+	while (s < holder->scene.samples)
 	{
 		//set_color(&tmp_color, holder->scene.amb_light.color.r, holder->scene.amb_light.color.g, holder->scene.amb_light.color.b);
 		set_color(&tmp_color, 255, 255, 255);
 		get_hit_color(holder, &hit_record, &tmp_color, current_pixel);
 		set_color(hit_color, hit_color->r + tmp_color.r,
 			hit_color->g + tmp_color.g, hit_color->b + tmp_color.b);
-		aa_s++;
+		s++;
 	}
-	set_color(hit_color, hit_color->r / aa_s, hit_color->g / aa_s,
-		hit_color->b / aa_s);
+	set_color(hit_color, hit_color->r / s, hit_color->g / s,
+		hit_color->b / s);
 }
 
 void	start_render(t_holder *holder)
