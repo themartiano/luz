@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/14 11:55:19 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/22 10:44:50 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/22 10:53:42 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,13 +47,13 @@ t_color *tmp_color, t_vec3 crnt_pxl)
 	t_vec3	uv;
 
 	uv.x = (float)(crnt_pxl.x + drand48()) / (float)holder->scene.x_res;
-	uv.y = (float)(crnt_pxl.y + drand48()) / (float) holder->scene.y_res;
+	uv.y = (float)(crnt_pxl.y + drand48()) / (float)holder->scene.y_res;
 	if (check_ray_hits(holder, gen_ray(holder->scene, uv,
 				holder->scene.camera.transform.position,
 				holder->scene.camera.transform.orientation), tmp_color,
 			hit_record))
 	{
-		target = random_in_unit_sphere();
+		target = random_in_unit();
 		tmp_vec3.x = hit_record->p.x + hit_record->normal.x + target.x;
 		tmp_vec3.y = hit_record->p.y + hit_record->normal.y + target.y;
 		tmp_vec3.z = hit_record->p.z + hit_record->normal.z + target.z;
@@ -77,7 +77,6 @@ void	render_loop(t_holder *holder, t_color *hit_color, int x, int y)
 	s = 0;
 	while (s < holder->scene.samples)
 	{
-		//set_color(&tmp_color, holder->scene.amb_light.color.r, holder->scene.amb_light.color.g, holder->scene.amb_light.color.b);
 		set_color(&tmp_color, 255, 255, 255);
 		get_hit_color(holder, &hit_record, &tmp_color, current_pixel);
 		set_color(hit_color, hit_color->r + tmp_color.r,
