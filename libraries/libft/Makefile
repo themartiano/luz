@@ -21,7 +21,7 @@ BSRCS =	./ft_lstnew.c ./ft_lstadd_front.c ./ft_lstsize.c ./ft_lstlast.c ./ft_lst
 		./ft_putint_bonus.c ./ft_putuint_bonus.c ./ft_charinset_bonus.c ./ft_intdigits_bonus.c ./ft_uintdigits_bonus.c	\
 		./ft_putnstr_bonus.c ./ft_uitoa_bonus.c ./ft_longdigits_bonus.c ./ft_ulongdigits_bonus.c ./ft_ltoa_bonus.c		\
 		./ft_ultoa_bonus.c ./ft_longlongdigits_bonus.c ./ft_ulonglongdigits_bonus.c ./ft_lltoa_bonus.c					\
-		./ft_ulltoa_bonus.c
+		./ft_ulltoa_bonus.c ./ft_atof_bonus.c
 BOBJS = $(BSRCS:.c=.o)
 NAME =	libft.a
 SO =	libft.so
