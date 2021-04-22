@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:12:09 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/22 19:16:36 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/22 19:20:25 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,14 +21,14 @@ void	init_holder(t_holder *holder)
 	holder->scene.triangle = NULL;
 	holder->scene.t_min = 0.001f;
 	holder->scene.t_max = FLT_MAX;
-	holder->scene.samples = 4;
+	holder->scene.samples = 128;
 	holder->scene.min_bounces = 2;
 	holder->scene.max_bounces = 32;
 }
 
 int	window_key_callback(int keycode, t_holder *holder)
 {
-	printf("KEY PRESSED: %d\n", keycode);
+	printf("\nKEY PRESSED: %d\n", keycode);
 	if (keycode == KEY_ESC)
 	{
 		mlx_destroy_window(holder->mlx, holder->window);
