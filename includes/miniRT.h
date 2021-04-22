@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:16:25 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/22 10:53:42 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/22 12:15:11 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,12 +52,13 @@ t_vec3	normalize(t_vec3 vector);
 void	set_color(t_color *color, int r, int g, int b);
 int		exit_error(char *message);
 int		clean_exit(t_holder *holder);
-t_vec3	sum(t_vec3 a, t_vec3 b);
+t_vec3	sum(t_vec3 vec1, t_vec3 vec2);
+t_vec3	sub(t_vec3 vec1, t_vec3 vec2);
 t_vec3	set(float x, float y, float z);
 t_vec3	random_in_unit(void);
 void	gen_pixel_clr(t_holder *holder, t_ray ray, t_color *hit_color, float t);
 t_ray	gen_ray(t_scene scene, t_vec3 uv, t_vec3 origin, t_vec3 dir);
-bool	hit_sphere(t_scene scene, t_ray *ray, t_hit_record *hit_record,
+bool	hit_sphere(t_scene scene, t_ray *ray, t_hit_record *hit_rec,
 			float t_max);
 
 #endif
