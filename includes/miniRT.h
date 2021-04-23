@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:16:25 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/23 10:05:02 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/23 10:30:34 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,7 +57,7 @@ t_vec3		sum(t_vec3 vec1, t_vec3 vec2);
 t_vec3		sub(t_vec3 vec1, t_vec3 vec2);
 t_vec3		set(float x, float y, float z);
 t_vec3		random_in_unit(void);
-void		gen_pixel_clr(t_holder *holder, t_ray ray, t_color *hit_color,
+void		gen_pixel_clr(t_scene scene, t_ray ray, t_color *hit_color,
 				float t);
 t_ray		gen_ray(t_scene scene, t_vec3 uv, t_vec3 origin, t_vec3 dir);
 bool		hit_sphere(t_scene scene, t_ray *ray, t_hit_record *hit_rec,
@@ -65,7 +65,7 @@ bool		hit_sphere(t_scene scene, t_ray *ray, t_hit_record *hit_rec,
 int			start_render(t_holder *holder);
 t_sphere	*get_sphere(t_scene scene);
 void		store_object(t_holder *holder, t_object *object);
-bool		check_ray_hits(t_holder *holder, t_ray ray, t_color *hit_color,
+bool		check_ray_hits(t_scene scene, t_ray ray, t_color *hit_color,
 				t_hit_record *hit_rec);
 
 #endif

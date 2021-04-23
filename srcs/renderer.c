@@ -6,13 +6,13 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/14 11:55:19 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/23 10:04:44 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/23 10:26:22 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "miniRT.h"
 
-void	light_bouncer(t_holder *holder, t_vec3 uv, t_color *hit_color,
+void	light_bouncer(t_scene scene, t_vec3 uv, t_color *hit_color,
 t_hit_record *hit_rec)
 {
 	t_vec3	tmp_vec3;
@@ -22,15 +22,15 @@ t_hit_record *hit_rec)
 
 	bounces = 0;
 	attempts = 0;
-	while (bounces < holder->scene.max_bounces)
+	while (bounces < scene.max_bounces)
 	{
 		tmp_vec3 = sum(sum(hit_rec->p, hit_rec->normal), random_in_unit());
 		target = sub(tmp_vec3, hit_rec->p);
-		if (!check_ray_hits(holder, gen_ray(holder->scene, uv,
+		if (!check_ray_hits(scene, gen_ray(scene, uv,
 					hit_rec->p, target), hit_color, hit_rec))
 		{
-			if (bounces >= holder->scene.min_bounces
-				|| attempts >= holder->scene.min_bounces * 2)
+			if (bounces >= scene.min_bounces
+				|| attempts >= scene.min_bounces * 2)
 				break ;
 			else
 			{
@@ -42,19 +42,19 @@ t_hit_record *hit_rec)
 	}
 }
 
-bool	get_hit_color(t_holder *holder, t_hit_record *hit_rec,
+bool	get_hit_color(t_scene scene, t_hit_record *hit_rec,
 t_color *hit_color, t_vec3 crnt_pxl)
 {
 	t_vec3	uv;
 
-	uv.x = (float)(crnt_pxl.x + drand48()) / (float)holder->scene.x_res;
-	uv.y = (float)(crnt_pxl.y + drand48()) / (float)holder->scene.y_res;
-	if (check_ray_hits(holder, gen_ray(holder->scene, uv,
-				holder->scene.camera.transform.position,
-				holder->scene.camera.transform.orientation), hit_color,
+	uv.x = (float)(crnt_pxl.x + drand48()) / (float)scene.x_res;
+	uv.y = (float)(crnt_pxl.y + drand48()) / (float)scene.y_res;
+	if (check_ray_hits(scene, gen_ray(scene, uv,
+				scene.camera.transform.position,
+				scene.camera.transform.orientation), hit_color,
 			hit_rec))
 	{
-		light_bouncer(holder, uv, hit_color, hit_rec);
+		light_bouncer(scene, uv, hit_color, hit_rec);
 		return (true);
 	}
 	else
@@ -68,7 +68,7 @@ int s)
 	t_color			pxl_color;
 
 	set_color(hit_color, 255, 255, 255);
-	if (get_hit_color(holder, &hit_rec, hit_color, current_pixel)
+	if (get_hit_color(holder->scene, &hit_rec, hit_color, current_pixel)
 		&& s > 0)
 	{
 		pxl_color = get_pixel(&holder->img, current_pixel.x, current_pixel.y);
