@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/14 11:55:19 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/23 10:26:22 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/23 12:54:39 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -79,10 +79,10 @@ int s)
 
 void	render(t_holder *holder, int s)
 {
-	int		x;
-	int		y;
 	t_color	hit_color;
 	t_vec3	current_pixel;
+	int		x;
+	int		y;
 
 	y = 0;
 	while (y < holder->scene.y_res)

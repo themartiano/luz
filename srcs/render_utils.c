@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/21 11:58:52 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/23 10:28:10 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/23 13:27:06 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,20 +45,29 @@ void	gen_pixel_clr(t_scene scene, t_ray ray, t_color *hit_color, float t)
 t_ray	gen_ray(t_scene scene, t_vec3 uv, t_vec3 origin, t_vec3 dir)
 {
 	t_ray	ray;
+	t_vec3	view_up;
 	float	theta;
 	float	half_height;
 	float	half_width;
+	t_vec3	w;
+	t_vec3	u;
+	t_vec3	v;
 
+	view_up = set(0, 1, 0);
+	w = unit_vector(sub(origin, dir));
+	u = unit_vector(cross(view_up, w));
+	v = cross(w, u);
 	theta = scene.camera.fov * M_PI / 180;
 	half_height = tan(theta / 2);
 	half_width = ((float)scene.x_res / (float)scene.y_res) * half_height;
 	ray.origin.x = origin.x;
 	ray.origin.y = origin.y;
 	ray.origin.z = origin.z;
-	ray.direction.x = -half_width + dir.x + (uv.x * half_width * 2.0f);
-	ray.direction.y = -half_height + dir.y + (uv.y * half_height * 2.0f);
+	ray.direction.x = -half_width +(uv.x * u.x * half_width * 2.0f);
+	ray.direction.y = -half_height + (uv.y * v.y * half_height * 2.0f);
 	ray.direction.z = -1.0f + dir.z;
 	ray.direction.y = -ray.direction.y;
+	(void)uv;
 	return (ray);
 }
 

@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:16:25 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/23 10:35:00 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/23 11:41:23 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,22 +44,24 @@
 // -------------------
 
 // Utils
-t_vec3		parse_xyz(char *str);
 t_color		vec3_to_rgb(t_vec3 xyz);
-void		put_pixel(t_img *img_data, int x, int y, int color);
-t_color		get_pixel(t_img *img_data, int x, int y);
 int			rgba_to_hex(t_color rgba);
 t_color		hex_to_rgba(int hex);
+void		put_pixel(t_img *img_data, int x, int y, int color);
+t_color		get_pixel(t_img *img_data, int x, int y);
 float		dot(t_vec3 u, t_vec3 v);
+t_vec3		cross(t_vec3 vec1, t_vec3 vec2);
 t_vec3		normalize(t_vec3 vector);
+t_vec3		unit_vector(t_vec3 vector);
 void		set_color(t_color *color, int r, int g, int b);
-int			exit_error(char *message);
-int			clean_exit(t_holder *holder);
 t_vec3		sum(t_vec3 vec1, t_vec3 vec2);
 t_vec3		sub(t_vec3 vec1, t_vec3 vec2);
 t_vec3		set(float x, float y, float z);
+int			exit_error(char *message);
+int			clean_exit(t_holder *holder);
 
 // Scene reading
+t_vec3		parse_xyz(char *str);
 void		read_scene(int fd, t_holder *window);
 void		store_object(t_holder *holder, t_object *object);
 
