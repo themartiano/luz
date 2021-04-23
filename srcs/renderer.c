@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/14 11:55:19 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/23 12:54:39 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/23 21:14:39 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,10 +18,8 @@ t_hit_record *hit_rec)
 	t_vec3	tmp_vec3;
 	t_vec3	target;
 	int		bounces;
-	int		attempts;
 
 	bounces = 0;
-	attempts = 0;
 	while (bounces < scene.max_bounces)
 	{
 		tmp_vec3 = sum(sum(hit_rec->p, hit_rec->normal), random_in_unit());
@@ -29,14 +27,7 @@ t_hit_record *hit_rec)
 		if (!check_ray_hits(scene, gen_ray(scene, uv,
 					hit_rec->p, target), hit_color, hit_rec))
 		{
-			if (bounces >= scene.min_bounces
-				|| attempts >= scene.min_bounces * 2)
-				break ;
-			else
-			{
-				attempts++;
-				continue ;
-			}
+			break ;
 		}
 		bounces++;
 	}
