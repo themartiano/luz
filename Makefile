@@ -6,25 +6,28 @@
 #    By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2021/04/08 15:31:37 by ejuliao-          #+#    #+#              #
-#    Updated: 2021/04/23 19:51:08 by ejuliao-         ###   ########.fr        #
+#    Updated: 2021/04/23 21:04:00 by ejuliao-         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 SRCS =	./srcs/miniRT.c ./srcs/utils.c ./srcs/scene_reader.c ./srcs/conversions.c ./srcs/readers.c ./srcs/renderer.c ./srcs/exit.c	\
 		./srcs/vector_utils.c ./srcs/render_utils.c ./srcs/sphere_utils.c
-OBJS =	$(SRCS:.c=.o)
 NAME =	miniRT
 
 GNL_SRCS = ./libraries/get_next_line/get_next_line.c ./libraries/get_next_line/get_next_line_utils.c
 
-INCLUDES = -Iincludes -Ilibraries/libft -Ilibraries/get_next_line -Ilibraries/minilibx_opengl
+INCLUDES = -Iincludes -Ilibraries/libft -Ilibraries/get_next_line
 
-UNAME_S := $(shell uname -s)
-ifeq ($(UNAME_S),Linux)
+ifneq ($(FLAGS),0)
+	FLAGS = -Wall -Wextra -Werror
+endif
+
+OS_NAME := $(shell uname -s)
+ifeq ($(OS_NAME),Linux)
 	CURR_MLX = minilibx_linux
 	MLX_FLAGS = -lbsd -Llibraries/$(CURR_MLX) -lmlx -lXext -lX11 -lm -DOS=2
 endif
-ifeq ($(UNAME_S),Darwin)
+ifeq ($(OS_NAME),Darwin)
 	CURR_MLX = minilibx_opengl
 	MLX_FLAGS = -Ilibraries/$(CURR_MLX) -framework OpenGL -framework AppKit -DOS=1
 endif
@@ -53,17 +56,14 @@ $(NAME):
 
 all:	$(NAME)
 
-libclean:
+clean:
+	rm -f $(NAME)
+
+fclean:	clean
 	$(MAKE) fclean -C ./libraries/libft
 	$(MAKE) clean -C ./libraries/minilibx_opengl
 	$(MAKE) clean -C ./libraries/minilibx_linux
 
-clean:
-	rm -f $(OBJS)
-
-fclean:	clean
-	rm -rf $(NAME)
-
-re:	fclean all
+re:	clean all
 
 .PHONY: re fclean clean all
