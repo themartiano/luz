@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/21 11:58:52 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/23 13:27:06 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/23 15:58:40 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,11 +28,13 @@ t_vec3	random_in_unit(void)
 void	gen_pixel_clr(t_scene scene, t_ray ray, t_color *hit_color, float t)
 {
 	t_vec3	n;
+	float	shadow_level;
 
+	shadow_level = 0.3f;
 	n = set(ray.origin.x + t * ray.direction.x, ray.origin.y + t
 			* ray.direction.y, ray.origin.z + t * ray.direction.z);
 	n = normalize(n);
-	t = (0.5f * n.z + 0.1f) * 255.0f;
+	t = (0.5f * n.z + shadow_level) * 255.0f;
 	set_color(hit_color,
 		((float)hit_color->r - t) + ((float)scene.amb_light.color.r
 			* scene.amb_light.brightness),
