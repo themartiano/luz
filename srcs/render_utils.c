@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/21 11:58:52 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/23 10:05:52 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/23 10:20:52 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,9 +57,8 @@ t_ray	gen_ray(t_scene scene, t_vec3 uv, t_vec3 origin, t_vec3 dir)
 	ray.origin.z = origin.z;
 	ray.direction.x = -half_width + dir.x + (uv.x * half_width * 2.0f);
 	ray.direction.y = -half_height + dir.y + (uv.y * half_height * 2.0f);
-	ray.direction.z = 1.0f + dir.z;
-	ray.direction.x = ray.direction.x * -1.0f;
-	ray.direction.y = ray.direction.y * -1.0f;
+	ray.direction.z = -1.0f + dir.z;
+	ray.direction.y = -ray.direction.y;
 	return (ray);
 }
 
