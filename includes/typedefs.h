@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/13 08:38:41 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/23 09:55:41 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/23 10:35:56 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -86,7 +86,7 @@ typedef struct s_light
 	struct s_light	*next;
 }				t_light;
 
-/* ******************** **\
+/* ******************** *\
 	| Object types:  |
 	|----------------|
 	| Sphere:		0|
@@ -95,7 +95,7 @@ typedef struct s_light
 	| Cylinder:		3|
 	| Triangle:		4|
 	|----------------|
-\** ******************** */
+\* ******************** */
 
 typedef struct s_object
 {
