@@ -6,12 +6,27 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/12 11:04:06 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/22 11:04:35 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/23 10:01:46 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "miniRT.h"
 #include "readers.h"
+
+void	store_object(t_holder *holder, t_object *object)
+{
+	if (holder->scene.objects == NULL)
+		holder->scene.objects = object;
+	else
+	{
+		while (holder->scene.objects->next != NULL)
+			holder->scene.objects = holder->scene.objects->next;
+		object->prev = holder->scene.objects;
+		holder->scene.objects->next = object;
+		while (holder->scene.objects->prev != NULL)
+			holder->scene.objects = holder->scene.objects->prev;
+	}
+}
 
 bool	read_rac(char **values, t_holder *holder)
 {
@@ -52,26 +67,20 @@ bool	read_l(char **values, t_holder *holder)
 bool	read_sp(char **values, t_holder *holder)
 {
 	t_sphere	*sphere;
+	t_object	*object;
 
 	if (ft_memcmp(values[0], "sp", 2) == 0)
 	{
+		object = (t_object *)malloc(sizeof(*object));
 		sphere = (t_sphere *)malloc(sizeof(*sphere));
-		sphere->prev = NULL;
-		sphere->next = NULL;
 		sphere->transform.position = parse_xyz(values[1]);
-		sphere->radius = ft_atoi(values[2]) / 2;
+		sphere->radius = ft_atof(values[2]) / 2.0f;
 		sphere->color = vec3_to_rgb(parse_xyz(values[3]));
-		if (holder->scene.sphere == NULL)
-			holder->scene.sphere = sphere;
-		else
-		{
-			while (holder->scene.sphere->next != NULL)
-				holder->scene.sphere = holder->scene.sphere->next;
-			sphere->prev = holder->scene.sphere;
-			holder->scene.sphere->next = sphere;
-			while (holder->scene.sphere->prev != NULL)
-				holder->scene.sphere = holder->scene.sphere->prev;
-		}
+		object->object = sphere;
+		object->type = 0;
+		object->next = NULL;
+		object->prev = NULL;
+		store_object(holder, object);
 		return (true);
 	}
 	return (false);

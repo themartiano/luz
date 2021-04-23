@@ -6,38 +6,11 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/14 11:55:19 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/22 19:15:16 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/23 10:04:44 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "miniRT.h"
-
-bool	check_ray_hits(t_holder *holder, t_ray ray, t_color *hit_color,
-t_hit_record *hit_rec)
-{
-	float	closest;
-	bool	hit;
-
-	hit = false;
-	closest = holder->scene.t_max;
-	while (true)
-	{
-		if (hit_sphere(holder->scene, &ray, hit_rec, closest))
-		{
-			hit = true;
-			*hit_color = holder->scene.sphere->color;
-			gen_pixel_clr(holder, ray, hit_color, hit_rec->t);
-			closest = hit_rec->t;
-		}
-		if (holder->scene.sphere->next == NULL)
-			break ;
-		else
-			holder->scene.sphere = holder->scene.sphere->next;
-	}
-	while (holder->scene.sphere->prev != NULL)
-		holder->scene.sphere = holder->scene.sphere->prev;
-	return (hit);
-}
 
 void	light_bouncer(t_holder *holder, t_vec3 uv, t_color *hit_color,
 t_hit_record *hit_rec)
@@ -88,7 +61,8 @@ t_color *hit_color, t_vec3 crnt_pxl)
 		return (false);
 }
 
-void	render_loop(t_holder *holder, t_color *hit_color, t_vec3 current_pixel, int s)
+void	render_loop(t_holder *holder, t_color *hit_color, t_vec3 current_pixel,
+int s)
 {
 	t_hit_record	hit_rec;
 	t_color			pxl_color;

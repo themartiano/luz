@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/21 11:58:52 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/22 18:45:51 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/23 10:05:52 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,10 +45,13 @@ void	gen_pixel_clr(t_holder *holder, t_ray ray, t_color *hit_color, float t)
 t_ray	gen_ray(t_scene scene, t_vec3 uv, t_vec3 origin, t_vec3 dir)
 {
 	t_ray	ray;
+	float	theta;
+	float	half_height;
+	float	half_width;
 
-	float theta = scene.camera.fov * M_PI / 180;
-	float half_height = tan(theta / 2);
-	float half_width = ((float)scene.x_res / (float)scene.y_res) * half_height;
+	theta = scene.camera.fov * M_PI / 180;
+	half_height = tan(theta / 2);
+	half_width = ((float)scene.x_res / (float)scene.y_res) * half_height;
 	ray.origin.x = origin.x;
 	ray.origin.y = origin.y;
 	ray.origin.z = origin.z;
@@ -58,4 +61,32 @@ t_ray	gen_ray(t_scene scene, t_vec3 uv, t_vec3 origin, t_vec3 dir)
 	ray.direction.x = ray.direction.x * -1.0f;
 	ray.direction.y = ray.direction.y * -1.0f;
 	return (ray);
+}
+
+bool	check_ray_hits(t_holder *holder, t_ray ray, t_color *hit_color,
+t_hit_record *hit_rec)
+{
+	float	closest;
+	bool	hit;
+
+	hit = false;
+	closest = holder->scene.t_max;
+	while (true)
+	{
+		if (holder->scene.objects->type == 0
+			&& hit_sphere(holder->scene, &ray, hit_rec, closest))
+		{
+			hit = true;
+			*hit_color = get_sphere(holder->scene)->color;
+			gen_pixel_clr(holder, ray, hit_color, hit_rec->t);
+			closest = hit_rec->t;
+		}
+		if (holder->scene.objects->next == NULL)
+			break ;
+		else
+			holder->scene.objects = holder->scene.objects->next;
+	}
+	while (holder->scene.objects->prev != NULL)
+		holder->scene.objects = holder->scene.objects->prev;
+	return (hit);
 }

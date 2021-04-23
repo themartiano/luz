@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/13 08:38:41 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/22 13:05:42 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/23 09:55:41 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,8 +39,6 @@ typedef struct s_plane
 {
 	t_transform		transform;
 	t_color			color;
-	struct s_plane	*prev;
-	struct s_plane	*next;
 }				t_plane;
 
 typedef struct s_sphere
@@ -48,8 +46,6 @@ typedef struct s_sphere
 	t_transform		transform;
 	int				radius;
 	t_color			color;
-	struct s_sphere	*prev;
-	struct s_sphere	*next;
 }				t_sphere;
 
 typedef struct s_square
@@ -57,8 +53,6 @@ typedef struct s_square
 	t_transform		transform;
 	int				side_size;
 	t_color			color;
-	struct s_square	*prev;
-	struct s_square	*next;
 }				t_square;
 
 typedef struct s_cylinder
@@ -67,8 +61,6 @@ typedef struct s_cylinder
 	int					radius;
 	int					height;
 	t_color				color;
-	struct s_cylinder	*prev;
-	struct s_cylinder	*next;
 }				t_cylinder;
 
 typedef struct s_triangle
@@ -77,8 +69,6 @@ typedef struct s_triangle
 	t_vec3				p2;
 	t_vec3				p3;
 	t_color				color;
-	struct s_triangle	*prev;
-	struct s_triangle	*next;
 }				t_triangle;
 
 typedef struct s_camera
@@ -96,6 +86,25 @@ typedef struct s_light
 	struct s_light	*next;
 }				t_light;
 
+/* ******************** **\
+	| Object types:  |
+	|----------------|
+	| Sphere:		0|
+	| Plane:		1|
+	| Square:		2|
+	| Cylinder:		3|
+	| Triangle:		4|
+	|----------------|
+\** ******************** */
+
+typedef struct s_object
+{
+	void	*object;
+	int		type;
+	void	*prev;
+	void	*next;
+}				t_object;
+
 typedef struct s_scene
 {
 	int			x_res;
@@ -108,11 +117,7 @@ typedef struct s_scene
 	t_light		amb_light;
 	t_camera	camera;
 	t_light		light;
-	t_plane		*plane;
-	t_sphere	*sphere;
-	t_square	*square;
-	t_cylinder	*cylinder;
-	t_triangle	*triangle;
+	t_object	*objects;
 }				t_scene;
 
 typedef struct s_img
