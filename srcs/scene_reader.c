@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/12 11:04:06 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/23 10:07:54 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/23 19:45:27 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -93,6 +93,7 @@ void	read_scene(int fd, t_holder *holder)
 	int		rv;
 
 	rv = 1;
+	line = NULL;
 	while (rv == 1)
 	{
 		free(line);

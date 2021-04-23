@@ -6,7 +6,7 @@
 #    By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2021/04/08 15:31:37 by ejuliao-          #+#    #+#              #
-#    Updated: 2021/04/22 15:51:42 by ejuliao-         ###   ########.fr        #
+#    Updated: 2021/04/23 19:51:08 by ejuliao-         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -34,6 +34,10 @@ MLX_PATH = ./libraries/$(CURR_MLX)/libmlx.a
 
 ifeq ($(DEBUG),1)
 	DEBUG_FLAGS = -g
+endif
+
+ifeq ($(SANITIZE),1)
+	DEBUG_FLAGS = -fsanitize=address -g
 endif
 
 $(NAME):
