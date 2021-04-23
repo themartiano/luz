@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/13 13:13:02 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/23 09:39:02 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/23 10:13:22 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,15 +15,19 @@
 bool	read_pl(char **values, t_holder *holder)
 {
 	t_plane		*plane;
+	t_object	*object;
 
-	(void)holder;
 	if (ft_memcmp(values[0], "pl", 2) == 0)
 	{
+		object = (t_object *)malloc(sizeof(*object));
+		plane = (t_plane *)malloc(sizeof(*plane));
 		plane = (t_plane *)malloc(sizeof(*plane));
 		plane->transform.position = parse_xyz(values[1]);
 		plane->transform.orientation = parse_xyz(values[2]);
 		plane->color = vec3_to_rgb(parse_xyz(values[3]));
-		//holder->scene.plane = plane;
+		object->object = plane;
+		object->type = 1;
+		store_object(holder, object);
 		return (true);
 	}
 	return (false);
@@ -32,16 +36,19 @@ bool	read_pl(char **values, t_holder *holder)
 bool	read_sq(char **values, t_holder *holder)
 {
 	t_square	*square;
+	t_object	*object;
 
-	(void)holder;
 	if (ft_memcmp(values[0], "sq", 2) == 0)
 	{
+		object = (t_object *)malloc(sizeof(*object));
 		square = (t_square *)malloc(sizeof(*square));
 		square->transform.position = parse_xyz(values[1]);
 		square->transform.orientation = parse_xyz(values[2]);
 		square->side_size = ft_atoi(values[3]);
 		square->color = vec3_to_rgb(parse_xyz(values[4]));
-		//holder->scene.square = square;
+		object->object = square;
+		object->type = 2;
+		store_object(holder, object);
 		return (true);
 	}
 	return (false);
@@ -50,17 +57,20 @@ bool	read_sq(char **values, t_holder *holder)
 bool	read_cy(char **values, t_holder *holder)
 {
 	t_cylinder	*cylinder;
+	t_object	*object;
 
-	(void)holder;
 	if (ft_memcmp(values[0], "cy", 2) == 0)
 	{
+		object = (t_object *)malloc(sizeof(*object));
 		cylinder = (t_cylinder *)malloc(sizeof(*cylinder));
 		cylinder->transform.position = parse_xyz(values[1]);
 		cylinder->transform.orientation = parse_xyz(values[2]);
 		cylinder->radius = ft_atoi(values[3]) / 2;
 		cylinder->height = ft_atoi(values[4]);
 		cylinder->color = vec3_to_rgb(parse_xyz(values[5]));
-		//holder->scene.cylinder = cylinder;
+		object->object = cylinder;
+		object->type = 3;
+		store_object(holder, object);
 		return (true);
 	}
 	return (false);
@@ -69,16 +79,19 @@ bool	read_cy(char **values, t_holder *holder)
 bool	read_tr(char **values, t_holder *holder)
 {
 	t_triangle	*triangle;
+	t_object	*object;
 
-	(void)holder;
 	if (ft_memcmp(values[0], "tr", 2) == 0)
 	{
+		object = (t_object *)malloc(sizeof(*object));
 		triangle = (t_triangle *)malloc(sizeof(*triangle));
 		triangle->p1 = parse_xyz(values[1]);
 		triangle->p2 = parse_xyz(values[2]);
 		triangle->p3 = parse_xyz(values[3]);
 		triangle->color = vec3_to_rgb(parse_xyz(values[4]));
-		//holder->scene.triangle = triangle;
+		object->object = triangle;
+		object->type = 4;
+		store_object(holder, object);
 		return (true);
 	}
 	return (false);

@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/12 11:04:06 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/23 10:01:46 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/23 10:07:54 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,8 @@
 
 void	store_object(t_holder *holder, t_object *object)
 {
+	object->next = NULL;
+	object->prev = NULL;
 	if (holder->scene.objects == NULL)
 		holder->scene.objects = object;
 	else
@@ -78,8 +80,6 @@ bool	read_sp(char **values, t_holder *holder)
 		sphere->color = vec3_to_rgb(parse_xyz(values[3]));
 		object->object = sphere;
 		object->type = 0;
-		object->next = NULL;
-		object->prev = NULL;
 		store_object(holder, object);
 		return (true);
 	}
