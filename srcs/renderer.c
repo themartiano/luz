@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/14 11:55:19 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/23 21:14:39 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/23 21:34:12 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,6 +37,8 @@ bool	get_hit_color(t_scene scene, t_hit_record *hit_rec,
 t_color *hit_color, t_vec3 crnt_pxl)
 {
 	t_vec3	uv;
+	float	brightness;
+	float	random;
 
 	uv.x = (float)(crnt_pxl.x + drand48()) / (float)scene.x_res;
 	uv.y = (float)(crnt_pxl.y + drand48()) / (float)scene.y_res;
@@ -45,7 +47,11 @@ t_color *hit_color, t_vec3 crnt_pxl)
 				scene.camera.transform.orientation), hit_color,
 			hit_rec))
 	{
-		light_bouncer(scene, uv, hit_color, hit_rec);
+		brightness = (get_sphere(scene)->color.r+ get_sphere(scene)->color.g
+				+ get_sphere(scene)->color.b) / 765.0f;
+		random = drand48();
+		if (brightness < random - 0.001f || brightness > random + 0.001f)
+			light_bouncer(scene, uv, hit_color, hit_rec);
 		return (true);
 	}
 	else
@@ -63,7 +69,7 @@ int s)
 		&& s > 0)
 	{
 		pxl_color = get_pixel(&holder->img, current_pixel.x, current_pixel.y);
-		set_color(hit_color, (hit_color->r + pxl_color.r) / 2,
+	 	set_color(hit_color, (hit_color->r + pxl_color.r) / 2,
 			(hit_color->g + pxl_color.g) / 2, (hit_color->b + pxl_color.b) / 2);
 	}
 }
