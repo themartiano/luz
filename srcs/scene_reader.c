@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/12 11:04:06 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/24 19:03:07 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/24 19:30:35 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,6 +55,9 @@ bool	read_c(char **values, t_holder *holder)
 	{
 		holder->scene.camera.transform.position = parse_xyz(values[1]);
 		holder->scene.camera.transform.orientation = parse_xyz(values[2]);
+		if (holder->scene.camera.transform.orientation.z == 0)
+			holder->scene.camera.transform.orientation.z = -1.0f;
+		holder->scene.camera.transform.orientation.y *= -1;
 		holder->scene.camera.fov = ft_atoi(values[3]);
 		theta = holder->scene.camera.fov * M_PI / 180;
 		holder->scene.camera.half_width = tan(theta / 2);
