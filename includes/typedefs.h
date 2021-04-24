@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/13 08:38:41 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/23 21:14:49 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/24 18:48:19 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -75,6 +75,8 @@ typedef struct s_camera
 {
 	t_transform	transform;
 	int			fov;
+	float		half_width;
+	float		half_height;
 }				t_camera;
 
 typedef struct s_light

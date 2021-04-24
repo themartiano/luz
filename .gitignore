@@ -8,3 +8,4 @@ miniRT
 .idea
 .DS_Store
 .vscode
+libraries/minilibx_linux/test/mlx-test

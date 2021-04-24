@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/12 11:04:06 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/23 19:45:27 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/24 19:03:07 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,7 +30,7 @@ void	store_object(t_holder *holder, t_object *object)
 	}
 }
 
-bool	read_rac(char **values, t_holder *holder)
+bool	read_ra(char **values, t_holder *holder)
 {
 	if (ft_memcmp(values[0], "R", 1) == 0)
 	{
@@ -44,11 +44,23 @@ bool	read_rac(char **values, t_holder *holder)
 		holder->scene.amb_light.color = vec3_to_rgb(parse_xyz(values[2]));
 		return (true);
 	}
-	else if (ft_memcmp(values[0], "c", 1) == 0)
+	return (false);
+}
+
+bool	read_c(char **values, t_holder *holder)
+{
+	float	theta;
+
+	if (ft_memcmp(values[0], "c", 1) == 0)
 	{
 		holder->scene.camera.transform.position = parse_xyz(values[1]);
 		holder->scene.camera.transform.orientation = parse_xyz(values[2]);
 		holder->scene.camera.fov = ft_atoi(values[3]);
+		theta = holder->scene.camera.fov * M_PI / 180;
+		holder->scene.camera.half_width = tan(theta / 2);
+		holder->scene.camera.half_height = ((float)holder->scene.y_res
+				/ (float)holder->scene.x_res)
+			* holder->scene.camera.half_width;
 		return (true);
 	}
 	return (false);
@@ -61,26 +73,6 @@ bool	read_l(char **values, t_holder *holder)
 		holder->scene.light.transform.position = parse_xyz (values[1]);
 		holder->scene.light.brightness = ft_atof(values[2]);
 		holder->scene.light.color = vec3_to_rgb(parse_xyz(values[3]));
-		return (true);
-	}
-	return (false);
-}
-
-bool	read_sp(char **values, t_holder *holder)
-{
-	t_sphere	*sphere;
-	t_object	*object;
-
-	if (ft_memcmp(values[0], "sp", 2) == 0)
-	{
-		object = (t_object *)malloc(sizeof(*object));
-		sphere = (t_sphere *)malloc(sizeof(*sphere));
-		sphere->transform.position = parse_xyz(values[1]);
-		sphere->radius = ft_atof(values[2]) / 2.0f;
-		sphere->color = vec3_to_rgb(parse_xyz(values[3]));
-		object->object = sphere;
-		object->type = 0;
-		store_object(holder, object);
 		return (true);
 	}
 	return (false);
@@ -99,17 +91,9 @@ void	read_scene(int fd, t_holder *holder)
 		free(line);
 		rv = get_next_line(fd, &line);
 		values = ft_split(line, ' ');
-		if (read_rac(values, holder))
-			continue ;
-		if (read_l(values, holder))
-			continue ;
-		if (read_sp(values, holder))
-			continue ;
-		if (read_pl(values, holder))
-			continue ;
-		if (read_sq(values, holder))
-			continue ;
-		if (read_cy(values, holder))
+		if (read_ra(values, holder) || read_c(values, holder)
+			|| read_l(values, holder) || read_sp(values, holder)
+			|| read_sq(values, holder) || read_cy(values, holder))
 			continue ;
 		read_tr(values, holder);
 	}

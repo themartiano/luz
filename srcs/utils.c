@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/10 14:51:57 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/23 21:34:47 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/24 19:07:47 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,15 +34,6 @@ void	put_pixel(t_img *img, int x, int y, int color)
 	*(unsigned int *)dst = color;
 }
 
-t_color	get_pixel(t_img *img, int x, int y)
-{
-	char	*ptr;
-
-	ptr = img->addr + (y * img->line_length + x
-			* (img->bits_per_pixel / 8));
-	return (hex_to_rgba(*(unsigned int *)ptr));
-}
-
 t_vec3	normalize(t_vec3 vector)
 {
 	float	w;
@@ -66,18 +57,5 @@ t_vec3	cross(t_vec3 vec1, t_vec3 vec2)
 	result.x = vec1.y * vec2.z - vec1.z * vec2.y;
 	result.y = -(vec1.x * vec2.z - vec1.z * vec2.x);
 	result.z = vec1.x * vec2.y - vec1.y * vec2.x;
-	return (result);
-}
-
-t_vec3	unit_vector(t_vec3 vector)
-{
-	t_vec3	result;
-	float	k;
-
-	k = 1.0f / sqrt(vector.x * vector.x + vector.y * vector.y
-			+ vector.z * vector.z);
-	result.x = vector.x * k;
-	result.y = vector.y * k;
-	result.z = vector.z * k;
 	return (result);
 }
