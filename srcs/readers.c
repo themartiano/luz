@@ -6,13 +6,13 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/13 13:13:02 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/24 19:03:15 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/24 19:59:25 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "miniRT.h"
 
-bool	read_sp(char **values, t_holder *holder)
+bool	read_sp(char **values, t_scene *scene)
 {
 	t_sphere	*sphere;
 	t_object	*object;
@@ -26,13 +26,13 @@ bool	read_sp(char **values, t_holder *holder)
 		sphere->color = vec3_to_rgb(parse_xyz(values[3]));
 		object->object = sphere;
 		object->type = 0;
-		store_object(holder, object);
+		store_object(scene, object);
 		return (true);
 	}
 	return (false);
 }
 
-bool	read_pl(char **values, t_holder *holder)
+bool	read_pl(char **values, t_scene *scene)
 {
 	t_plane		*plane;
 	t_object	*object;
@@ -47,13 +47,13 @@ bool	read_pl(char **values, t_holder *holder)
 		plane->color = vec3_to_rgb(parse_xyz(values[3]));
 		object->object = plane;
 		object->type = 1;
-		store_object(holder, object);
+		store_object(scene, object);
 		return (true);
 	}
 	return (false);
 }
 
-bool	read_sq(char **values, t_holder *holder)
+bool	read_sq(char **values, t_scene *scene)
 {
 	t_square	*square;
 	t_object	*object;
@@ -68,13 +68,13 @@ bool	read_sq(char **values, t_holder *holder)
 		square->color = vec3_to_rgb(parse_xyz(values[4]));
 		object->object = square;
 		object->type = 2;
-		store_object(holder, object);
+		store_object(scene, object);
 		return (true);
 	}
 	return (false);
 }
 
-bool	read_cy(char **values, t_holder *holder)
+bool	read_cy(char **values, t_scene *scene)
 {
 	t_cylinder	*cylinder;
 	t_object	*object;
@@ -90,13 +90,13 @@ bool	read_cy(char **values, t_holder *holder)
 		cylinder->color = vec3_to_rgb(parse_xyz(values[5]));
 		object->object = cylinder;
 		object->type = 3;
-		store_object(holder, object);
+		store_object(scene, object);
 		return (true);
 	}
 	return (false);
 }
 
-bool	read_tr(char **values, t_holder *holder)
+bool	read_tr(char **values, t_scene *scene)
 {
 	t_triangle	*triangle;
 	t_object	*object;
@@ -111,7 +111,7 @@ bool	read_tr(char **values, t_holder *holder)
 		triangle->color = vec3_to_rgb(parse_xyz(values[4]));
 		object->object = triangle;
 		object->type = 4;
-		store_object(holder, object);
+		store_object(scene, object);
 		return (true);
 	}
 	return (false);
