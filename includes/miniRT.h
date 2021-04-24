@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:16:25 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/24 12:24:14 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/24 20:00:27 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -63,9 +63,10 @@ int			exit_error(char *message);
 int			clean_exit(t_holder *holder);
 
 // Scene reading
+// *****************
 t_vec3		parse_xyz(char *str);
 void		read_scene(int fd, t_holder *window);
-void		store_object(t_holder *holder, t_object *object);
+void		store_object(t_scene *scene, t_object *object);
 
 // Rendering
 int			start_render(t_holder *holder);
@@ -81,6 +82,6 @@ bool		hit_sphere(t_scene scene, t_ray *ray, t_hit_record *hit_rec,
 				float t_max);
 t_sphere	*get_sphere(t_scene scene);
 
-// -------------------
+// *****************
 
 #endif

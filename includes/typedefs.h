@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/13 08:38:41 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/24 18:48:19 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/24 19:52:47 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -84,8 +84,6 @@ typedef struct s_light
 	t_transform		transform;
 	float			brightness;
 	t_color			color;
-	struct s_light	*prev;
-	struct s_light	*next;
 }				t_light;
 
 /* ******************** *\
@@ -96,6 +94,7 @@ typedef struct s_light
 	| Square:		2|
 	| Cylinder:		3|
 	| Triangle:		4|
+	| Light:		5|
 	|----------------|
 \* ******************** */
 
@@ -117,8 +116,8 @@ typedef struct s_scene
 	int			max_bounces;
 	t_light		amb_light;
 	t_camera	camera;
-	t_light		light;
 	t_object	*objects;
+	t_object	*lights;
 }				t_scene;
 
 typedef struct s_img
