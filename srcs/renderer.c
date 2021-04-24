@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/14 11:55:19 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/24 17:17:31 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/24 19:08:34 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,7 +47,7 @@ t_color *hit_color, t_vec3 crnt_pxl)
 				scene.camera.transform.orientation), hit_color,
 			hit_rec))
 	{
-		brightness = (get_sphere(scene)->color.r+ get_sphere(scene)->color.g
+		brightness = (get_sphere(scene)->color.r + get_sphere(scene)->color.g
 				+ get_sphere(scene)->color.b) / 765.0f;
 		random = drand48();
 		if (brightness < random - 0.001f || brightness > random + 0.001f)
@@ -112,12 +112,9 @@ int	start_render(t_holder *holder)
 	}
 	if (rendered == false && frame >= 2)
 	{
-		//printf("\rRendering sample [ %d ] of %d", s + 1, holder->scene.samples);
-		//fflush(stdout);
 		render(holder);
 		mlx_put_image_to_window(holder->mlx, holder->window, holder->img.img,
 			0, 0);
-		printf("\n\nRendering done.\n");
 		rendered = true;
 	}
 	frame++;

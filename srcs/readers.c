@@ -6,11 +6,31 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/13 13:13:02 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/23 10:13:22 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/24 19:03:15 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "miniRT.h"
+
+bool	read_sp(char **values, t_holder *holder)
+{
+	t_sphere	*sphere;
+	t_object	*object;
+
+	if (ft_memcmp(values[0], "sp", 2) == 0)
+	{
+		object = (t_object *)malloc(sizeof(*object));
+		sphere = (t_sphere *)malloc(sizeof(*sphere));
+		sphere->transform.position = parse_xyz(values[1]);
+		sphere->radius = ft_atof(values[2]) / 2.0f;
+		sphere->color = vec3_to_rgb(parse_xyz(values[3]));
+		object->object = sphere;
+		object->type = 0;
+		store_object(holder, object);
+		return (true);
+	}
+	return (false);
+}
 
 bool	read_pl(char **values, t_holder *holder)
 {
