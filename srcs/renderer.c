@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/14 11:55:19 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/24 19:28:29 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/24 20:58:17 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,17 +61,17 @@ t_color *hit_color, t_vec3 crnt_pxl)
 		return (false);
 }
 
-void	render_loop(t_holder *holder, t_color *hit_color, t_vec3 current_pixel)
+void	render_loop(t_scene scene, t_color *hit_color, t_vec3 current_pixel)
 {
 	t_hit_record	hit_rec;
 	t_color			tmp_color;
 	int				s;
 
 	s = 0;
-	while (s < holder->scene.samples)
+	while (s < scene.samples)
 	{
 		set_color(&tmp_color, 255, 255, 255);
-		get_hit_color(holder->scene, &hit_rec, &tmp_color, current_pixel);
+		get_hit_color(scene, &hit_rec, &tmp_color, current_pixel);
 		set_color(hit_color, hit_color->r + tmp_color.r,
 			hit_color->g + tmp_color.g, hit_color->b + tmp_color.b);
 		s++;
@@ -95,7 +95,7 @@ void	render(t_holder *holder)
 		{
 			current_pixel.x = x;
 			current_pixel.y = y;
-			render_loop(holder, &hit_color, current_pixel);
+			render_loop(holder->scene, &hit_color, current_pixel);
 			put_pixel(&holder->img, x, y, rgba_to_hex(hit_color));
 			x++;
 		}
@@ -111,7 +111,7 @@ int	start_render(t_holder *holder)
 	if (frame == 0)
 	{
 		mlx_string_put(holder->mlx, holder->window, 20, 20, 0x00FFFFFF,
-			"Rendering...");
+			RENDERING_MSG);
 	}
 	if (rendered == false && frame >= 2)
 	{

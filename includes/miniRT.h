@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:16:25 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/24 20:00:27 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/24 20:58:11 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,7 @@
 
 // Macros
 # define WINDOW_TITLE "ejuliao-'s miniRT"
+# define RENDERING_MSG "Rendering..."
 
 # ifndef OS
 #  define OS 1
@@ -70,6 +71,7 @@ void		store_object(t_scene *scene, t_object *object);
 
 // Rendering
 int			start_render(t_holder *holder);
+void		render(t_holder *holder);
 t_vec3		random_in_unit(void);
 void		gen_pixel_clr(t_scene scene, t_ray ray, t_color *hit_color,
 				float t);
