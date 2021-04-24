@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/14 11:55:19 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/23 21:34:12 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/24 17:17:31 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,23 +58,26 @@ t_color *hit_color, t_vec3 crnt_pxl)
 		return (false);
 }
 
-void	render_loop(t_holder *holder, t_color *hit_color, t_vec3 current_pixel,
-int s)
+void	render_loop(t_holder *holder, t_color *hit_color, t_vec3 current_pixel)
 {
 	t_hit_record	hit_rec;
-	t_color			pxl_color;
+	t_color			tmp_color;
+	int				s;
 
-	set_color(hit_color, 255, 255, 255);
-	if (get_hit_color(holder->scene, &hit_rec, hit_color, current_pixel)
-		&& s > 0)
+	s = 0;
+	while (s < holder->scene.samples)
 	{
-		pxl_color = get_pixel(&holder->img, current_pixel.x, current_pixel.y);
-	 	set_color(hit_color, (hit_color->r + pxl_color.r) / 2,
-			(hit_color->g + pxl_color.g) / 2, (hit_color->b + pxl_color.b) / 2);
+		set_color(&tmp_color, 255, 255, 255);
+		get_hit_color(holder->scene, &hit_rec, &tmp_color, current_pixel);
+		set_color(hit_color, hit_color->r + tmp_color.r,
+			hit_color->g + tmp_color.g, hit_color->b + tmp_color.b);
+		s++;
 	}
+	set_color(hit_color, hit_color->r / s, hit_color->g / s,
+		hit_color->b / s);
 }
 
-void	render(t_holder *holder, int s)
+void	render(t_holder *holder)
 {
 	t_color	hit_color;
 	t_vec3	current_pixel;
@@ -89,7 +92,7 @@ void	render(t_holder *holder, int s)
 		{
 			current_pixel.x = x;
 			current_pixel.y = y;
-			render_loop(holder, &hit_color, current_pixel, s);
+			render_loop(holder, &hit_color, current_pixel);
 			put_pixel(&holder->img, x, y, rgba_to_hex(hit_color));
 			x++;
 		}
@@ -100,23 +103,22 @@ void	render(t_holder *holder, int s)
 int	start_render(t_holder *holder)
 {
 	static unsigned int	frame = 0;
-	static int			s = 0;
+	static bool			rendered = false;
 
 	if (frame == 0)
 	{
 		mlx_string_put(holder->mlx, holder->window, 20, 20, 0x00FFFFFF,
 			"Rendering...");
 	}
-	if (frame >= 2 && s < holder->scene.samples)
+	if (rendered == false && frame >= 2)
 	{
-		printf("\rRendering sample [ %d ] of %d", s + 1, holder->scene.samples);
-		fflush(stdout);
-		render(holder, s);
+		//printf("\rRendering sample [ %d ] of %d", s + 1, holder->scene.samples);
+		//fflush(stdout);
+		render(holder);
 		mlx_put_image_to_window(holder->mlx, holder->window, holder->img.img,
 			0, 0);
-		s++;
-		if (s == holder->scene.samples)
-			printf("\n\nRendering done.\n");
+		printf("\n\nRendering done.\n");
+		rendered = true;
 	}
 	frame++;
 	return (0);
