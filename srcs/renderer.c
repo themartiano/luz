@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/14 11:55:19 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/24 19:08:34 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/24 19:28:29 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,9 @@ t_hit_record *hit_rec)
 	{
 		tmp_vec3 = sum(sum(hit_rec->p, hit_rec->normal), random_in_unit());
 		target = sub(tmp_vec3, hit_rec->p);
+		target.x = 0;
+		target.y = 0;
+		target.z -= 1.0f;
 		if (!check_ray_hits(scene, gen_ray(scene, uv,
 					hit_rec->p, target), hit_color, hit_rec))
 		{

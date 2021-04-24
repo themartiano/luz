@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/21 11:58:52 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/24 19:08:43 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/24 19:27:23 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,11 +59,12 @@ t_ray	gen_ray(t_scene scene, t_vec3 uv, t_vec3 origin, t_vec3 dir)
 	ray.origin.x = origin.x;
 	ray.origin.y = origin.y;
 	ray.origin.z = origin.z;
-	ray.direction.x = -scene.camera.half_width +(uv.x * u.x
+	ray.direction.x = -scene.camera.half_width + dir.x + (uv.x * u.x
 			* scene.camera.half_width * 2.0f);
-	ray.direction.y = -scene.camera.half_height + (uv.y * v.y
+	ray.direction.y = -scene.camera.half_height + dir.y + (uv.y * v.y
 			* scene.camera.half_height * 2.0f);
-	ray.direction.z = -1.0f + dir.z;
+	ray.direction.z = dir.z;
+	ray.direction = normalize(ray.direction);
 	ray.direction.y = -ray.direction.y;
 	(void)uv;
 	return (ray);

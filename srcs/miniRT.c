@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:12:09 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/24 17:11:08 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/24 19:19:34 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,8 +17,8 @@ void	init_holder(t_holder *holder)
 	holder->scene.objects = NULL;
 	holder->scene.t_min = 0.001f;
 	holder->scene.t_max = FLT_MAX;
-	holder->scene.samples = 4;
-	holder->scene.max_bounces = 16;
+	holder->scene.samples = 2;
+	holder->scene.max_bounces = 2;
 }
 
 int	window_key_callback(int keycode, t_holder *holder)
