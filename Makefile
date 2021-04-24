@@ -6,7 +6,7 @@
 #    By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2021/04/08 15:31:37 by ejuliao-          #+#    #+#              #
-#    Updated: 2021/04/23 21:04:00 by ejuliao-         ###   ########.fr        #
+#    Updated: 2021/04/24 10:50:05 by ejuliao-         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -18,8 +18,10 @@ GNL_SRCS = ./libraries/get_next_line/get_next_line.c ./libraries/get_next_line/g
 
 INCLUDES = -Iincludes -Ilibraries/libft -Ilibraries/get_next_line
 
-ifneq ($(FLAGS),0)
-	FLAGS = -Wall -Wextra -Werror
+COMP_FLAGS = -Wall -Wextra -Werror
+
+ifeq ($(FLAGS),0)
+	COMP_FLAGS =
 endif
 
 OS_NAME := $(shell uname -s)
@@ -52,7 +54,7 @@ $(NAME):
 	$(MAKE) -C ./libraries/$(CURR_MLX)
 
 	# Compiles miniRT
-	gcc -Wall -Wextra -Werror $(INCLUDES) $(DEBUG_FLAGS) $(SRCS) $(GNL_SRCS) $(MLX_FLAGS) $(LIBFT_PATH) $(MLX_PATH) -o $(NAME)
+	gcc $(COMP_FLAGS) $(INCLUDES) $(DEBUG_FLAGS) $(SRCS) $(GNL_SRCS) $(MLX_FLAGS) $(LIBFT_PATH) $(MLX_PATH) -o $(NAME)
 
 all:	$(NAME)
 
