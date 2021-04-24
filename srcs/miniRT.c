@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:12:09 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/24 20:01:27 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/24 20:58:43 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,19 +35,26 @@ int	window_key_callback(int keycode, t_holder *holder)
 void	start_mlx(t_holder *holder, int fd, bool save)
 {
 	read_scene(fd, holder);
-	holder->mlx = mlx_init();
-	holder->window = mlx_new_window(holder->mlx, holder->scene.x_res,
-			holder->scene.y_res, WINDOW_TITLE);
-	mlx_hook(holder->window, DESTROYNOTIFY, 0L, clean_exit, holder);
-	mlx_key_hook(holder->window, window_key_callback, holder);
-	holder->img.img = mlx_new_image(holder->mlx, holder->scene.x_res,
-			holder->scene.y_res);
-	holder->img.addr = mlx_get_data_addr(holder->img.img,
-			&holder->img.bits_per_pixel, &holder->img.line_length, &holder->img
-			.endian);
-	mlx_loop_hook(holder->mlx, start_render, holder);
-	mlx_loop(holder->mlx);
-	(void)save;
+	if (save == true)
+	{
+		printf("\n" RENDERING_MSG "\n");
+		render(holder);
+	}
+	else
+	{
+		holder->mlx = mlx_init();
+		holder->window = mlx_new_window(holder->mlx, holder->scene.x_res,
+				holder->scene.y_res, WINDOW_TITLE);
+		mlx_hook(holder->window, DESTROYNOTIFY, 0L, clean_exit, holder);
+		mlx_key_hook(holder->window, window_key_callback, holder);
+		holder->img.img = mlx_new_image(holder->mlx, holder->scene.x_res,
+				holder->scene.y_res);
+		holder->img.addr = mlx_get_data_addr(holder->img.img,
+				&holder->img.bits_per_pixel, &holder->img.line_length, &holder->img
+				.endian);
+		mlx_loop_hook(holder->mlx, start_render, holder);
+		mlx_loop(holder->mlx);
+	}
 }
 
 int	main(int argc, char *argv[])
