@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/13 08:38:41 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/24 19:52:47 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/26 17:17:26 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -105,6 +105,11 @@ typedef struct s_object
 	void	*prev;
 	void	*next;
 }				t_object;
+
+typedef struct s_generic_object
+{
+	t_color	color;
+}				t_generic_object;
 
 typedef struct s_scene
 {
