@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:12:09 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/26 09:49:59 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/26 12:40:27 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,7 +46,7 @@ void	start_mlx(t_holder *holder, int fd, bool save)
 		printf("\n" RENDERING_MSG "\n");
 		render(holder);
 		printf("Writing .bmp file...\n");
-		if (write_bmp(holder, "test") == -1)
+		if (write_bmp(holder->scene, holder->img, "test") == -1)
 			printf("An error occurred while writing the .bmp file.\n");
 		else
 			printf("File ready.\n");
