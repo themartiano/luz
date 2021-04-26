@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   libft.h                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ejuliao- <martinez@brhaka.com>           +#+  +:+       +#+        */
+/*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/02/08 14:16:23 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/08 17:43:29 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/26 16:12:16 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,6 +69,8 @@ int				ft_ulonglongdigits(unsigned long long n);
 char			*ft_lltoa(long long n);
 char			*ft_ulltoa(unsigned long long n);
 float			ft_atof(const char *nptr);
+int				ft_indexof(const char *s, char c);
+int				ft_last_indexof(const char *s, char c);
 
 char			*ft_substr(const char *s, unsigned int start, size_t len);
 char			*ft_strjoin(const char *s1, const char *s2);

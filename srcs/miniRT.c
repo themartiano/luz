@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:12:09 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/26 12:40:27 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/26 17:08:58 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,8 +17,19 @@ void	init_holder(t_holder *holder)
 	holder->scene.objects = NULL;
 	holder->scene.t_min = 0.001f;
 	holder->scene.t_max = FLT_MAX;
-	holder->scene.samples = 2;
-	holder->scene.max_bounces = 1;
+	holder->scene.samples = 4;
+	holder->scene.max_bounces = 8;
+}
+
+void	init_mlx(t_holder *holder, int fd)
+{
+	read_scene(fd, holder);
+	holder->mlx = mlx_init();
+	holder->img.img = mlx_new_image(holder->mlx, holder->scene.x_res,
+			holder->scene.y_res);
+	holder->img.addr = mlx_get_data_addr(holder->img.img,
+			&holder->img.bits_per_pixel, &holder->img.line_length, &holder->img
+			.endian);
 }
 
 int	window_key_callback(int keycode, t_holder *holder)
@@ -32,24 +43,22 @@ int	window_key_callback(int keycode, t_holder *holder)
 	return (0);
 }
 
-void	start_mlx(t_holder *holder, int fd, bool save)
+void	start_miniRT(t_holder *holder, int fd, bool save, char *file)
 {
-	read_scene(fd, holder);
-	holder->mlx = mlx_init();
-	holder->img.img = mlx_new_image(holder->mlx, holder->scene.x_res,
-			holder->scene.y_res);
-	holder->img.addr = mlx_get_data_addr(holder->img.img,
-			&holder->img.bits_per_pixel, &holder->img.line_length, &holder->img
-			.endian);
+	char	*file_no_ext;
+
+	init_mlx(holder, fd);
 	if (save == true)
 	{
 		printf("\n" RENDERING_MSG "\n");
+		file_no_ext = get_file_no_ext(file);
 		render(holder);
 		printf("Writing .bmp file...\n");
-		if (write_bmp(holder->scene, holder->img, "test") == -1)
+		if (write_bmp(holder->scene, holder->img, file_no_ext) == -1)
 			printf("An error occurred while writing the .bmp file.\n");
 		else
 			printf("File ready.\n");
+		free(file_no_ext);
 	}
 	else
 	{
@@ -83,6 +92,6 @@ int	main(int argc, char *argv[])
 		return (exit_error("Incorrect scene path."));
 	printf("\n");
 	init_holder(&holder);
-	start_mlx(&holder, fd, save);
+	start_miniRT(&holder, fd, save, argv[1]);
 	return (0);
 }

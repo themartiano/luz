@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/26 11:13:09 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/26 12:07:17 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/26 15:47:52 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@
 
 typedef struct s_file_h
 {
-	int				type;
+	short int		type;
 	int				size;
 	int				reserved;
 	unsigned int	offset;
@@ -28,8 +28,8 @@ typedef struct s_info_h
 	unsigned int	size;
 	int				width;
 	int				height;
-	int				planes;
-	int				bits_per_pxl;
+	short int		planes;
+	short int		bits_per_pxl;
 	unsigned int	compression;
 	unsigned int	image_size;
 	int				pxls_per_meter_x;

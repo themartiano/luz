@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/21 11:08:33 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/24 19:07:49 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/26 17:09:30 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,4 +53,15 @@ t_vec3	unit_vector(t_vec3 vector)
 	result.y = vector.y * k;
 	result.z = vector.z * k;
 	return (result);
+}
+
+t_vec3	normalize(t_vec3 vector)
+{
+	float	w;
+
+	w = sqrt(vector.x * vector.x + vector.y * vector.y + vector.z * vector.z);
+	vector.x /= w;
+	vector.y /= w;
+	vector.z /= w;
+	return (vector);
 }

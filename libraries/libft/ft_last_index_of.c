@@ -1,28 +1,26 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   ft_putendl_fd.c                                    :+:      :+:    :+:   */
+/*   ft_last_index_of.c                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2021/02/10 10:51:51 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/26 16:00:15 by ejuliao-         ###   ########.fr       */
+/*   Created: 2021/04/26 16:10:30 by ejuliao-          #+#    #+#             */
+/*   Updated: 2021/04/26 16:14:14 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "libft.h"
 
-void	ft_putendl_fd(char *s, int fd)
+int	ft_last_indexof(const char *s, char c)
 {
-	int	i;
+	int	index;
 
-	if (s == NULL)
-		return ;
-	i = 0;
-	while (s[i])
+	index = ft_strlen(s);
+	while (--index >= 0)
 	{
-		write(fd, &s[i], 1);
-		i++;
+		if (s[index] == c)
+			return (index);
 	}
-	write(fd, "\n", 1);
+	return (-1);
 }
