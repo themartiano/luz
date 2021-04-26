@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/12 11:04:06 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/24 20:02:43 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/26 17:26:29 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,7 +30,7 @@ void	store_object(t_scene *scene, t_object *object)
 	}
 }
 
-bool	read_ra(char **values, t_scene *scene)
+static bool	read_ra(char **values, t_scene *scene)
 {
 	if (ft_memcmp(values[0], "R", 1) == 0)
 	{
@@ -47,7 +47,7 @@ bool	read_ra(char **values, t_scene *scene)
 	return (false);
 }
 
-bool	read_c(char **values, t_scene *scene)
+static bool	read_c(char **values, t_scene *scene)
 {
 	float	theta;
 
@@ -69,7 +69,7 @@ bool	read_c(char **values, t_scene *scene)
 	return (false);
 }
 
-bool	read_l(char **values, t_scene *scene)
+static bool	read_l(char **values, t_scene *scene)
 {
 	t_light		*light;
 	t_object	*object;

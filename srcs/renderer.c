@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/14 11:55:19 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/26 09:40:47 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/26 17:27:23 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,32 +36,34 @@ t_hit_record *hit_rec)
 	}
 }
 
-bool	get_hit_color(t_scene scene, t_hit_record *hit_rec,
-t_color *hit_color, t_vec3 crnt_pxl)
+t_ray	gen_ray(t_scene scene, t_vec3 uv, t_vec3 origin, t_vec3 dir)
 {
-	t_vec3	uv;
-	float	brightness;
-	float	random;
+	t_ray	ray;
+	t_vec3	view_up;
+	t_vec3	w;
+	t_vec3	u;
+	t_vec3	v;
 
-	uv.x = (float)(crnt_pxl.x + drand48()) / (float)scene.x_res;
-	uv.y = (float)(crnt_pxl.y + drand48()) / (float)scene.y_res;
-	if (check_ray_hits(scene, gen_ray(scene, uv,
-				scene.camera.transform.position,
-				scene.camera.transform.orientation), hit_color,
-			hit_rec))
-	{
-		brightness = (get_sphere(scene)->color.r + get_sphere(scene)->color.g
-				+ get_sphere(scene)->color.b) / 765.0f;
-		random = drand48();
-		if (brightness < random - 0.001f || brightness > random + 0.001f)
-			light_bouncer(scene, uv, hit_color, hit_rec);
-		return (true);
-	}
-	else
-		return (false);
+	view_up = set(0, 1, 0);
+	w = unit_vector(sub(origin, dir));
+	u = unit_vector(cross(view_up, w));
+	v = cross(w, u);
+	ray.origin.x = origin.x;
+	ray.origin.y = origin.y;
+	ray.origin.z = origin.z;
+	ray.direction.x = -scene.camera.half_width + dir.x + (uv.x * u.x
+			* scene.camera.half_width * 2.0f);
+	ray.direction.y = -scene.camera.half_height + dir.y + (uv.y * v.y
+			* scene.camera.half_height * 2.0f);
+	ray.direction.z = dir.z;
+	ray.direction = normalize(ray.direction);
+	ray.direction.y = -ray.direction.y;
+	(void)uv;
+	return (ray);
 }
 
-void	render_loop(t_scene scene, t_color *hit_color, t_vec3 current_pixel)
+
+static void	render_loop(t_scene scene, t_color *hit_color, t_vec3 current_pixel)
 {
 	t_hit_record	hit_rec;
 	t_color			tmp_color;
@@ -103,7 +105,7 @@ void	render(t_holder *holder)
 	}
 }
 
-int	start_render(t_holder *holder)
+int	manage_frames(t_holder *holder)
 {
 	static unsigned int	frame = 0;
 	static bool			rendered = false;

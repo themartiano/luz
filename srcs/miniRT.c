@@ -6,22 +6,22 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:12:09 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/26 17:08:58 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/26 17:27:44 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "miniRT.h"
 
-void	init_holder(t_holder *holder)
+static void	init_holder(t_holder *holder)
 {
 	holder->scene.objects = NULL;
 	holder->scene.t_min = 0.001f;
 	holder->scene.t_max = FLT_MAX;
-	holder->scene.samples = 4;
+	holder->scene.samples = 3;
 	holder->scene.max_bounces = 8;
 }
 
-void	init_mlx(t_holder *holder, int fd)
+static void	init_mlx(t_holder *holder, int fd)
 {
 	read_scene(fd, holder);
 	holder->mlx = mlx_init();
@@ -66,7 +66,7 @@ void	start_miniRT(t_holder *holder, int fd, bool save, char *file)
 				holder->scene.y_res, WINDOW_TITLE);
 		mlx_hook(holder->window, DESTROYNOTIFY, 0L, clean_exit, holder);
 		mlx_key_hook(holder->window, window_key_callback, holder);
-		mlx_loop_hook(holder->mlx, start_render, holder);
+		mlx_loop_hook(holder->mlx, manage_frames, holder);
 		mlx_loop(holder->mlx);
 	}
 }

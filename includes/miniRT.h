@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:16:25 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/26 17:02:54 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/26 17:27:34 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,18 +69,23 @@ void		read_scene(int fd, t_holder *window);
 void		store_object(t_scene *scene, t_object *object);
 
 // Rendering
-int			start_render(t_holder *holder);
+int			manage_frames(t_holder *holder);
 void		render(t_holder *holder);
 t_vec3		random_in_unit(void);
-void		gen_pixel_clr(t_scene scene, t_ray ray, t_color *hit_color,
-				float t);
 t_ray		gen_ray(t_scene scene, t_vec3 uv, t_vec3 origin, t_vec3 dir);
 bool		check_ray_hits(t_scene scene, t_ray ray, t_color *hit_color,
 				t_hit_record *hit_rec);
+void		light_bouncer(t_scene scene, t_vec3 uv, t_color *hit_color,
+				t_hit_record *hit_rec);
+bool		get_hit_color(t_scene scene, t_hit_record *hit_rec,
+				t_color *hit_color, t_vec3 crnt_pxl);
 
-// Object-specific utils
+// Object utils
 bool		hit_sphere(t_scene scene, t_ray *ray, t_hit_record *hit_rec,
 				float t_max);
 t_sphere	*get_sphere(t_scene scene);
+bool		hit_plane(t_scene scene, t_ray *ray, t_hit_record *hit_rec,
+				float t_max);
+t_plane		*get_plane(t_scene scene);
 
 #endif

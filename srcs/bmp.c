@@ -6,14 +6,14 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/24 21:21:48 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/26 15:48:38 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/26 17:24:24 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "miniRT.h"
 #include "bmp.h"
 
-int	write_headers(t_scene scene, int fd)
+static int	write_headers(t_scene scene, int fd)
 {
 	t_file_h	file_h;
 	t_info_h	info_h;
