@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:16:25 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/24 20:58:11 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/26 10:02:48 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,7 @@
 
 // Includes
 # include <fcntl.h>
+# include <sys/stat.h>
 # include <stdio.h>
 # include <stdbool.h>
 # include <float.h>
@@ -43,9 +44,6 @@
 #  define DESTROYNOTIFY 33
 # endif
 
-// Function prototypes
-// -------------------
-
 // Utils
 t_color		vec3_to_rgb(t_vec3 xyz);
 int			rgba_to_hex(t_color rgba);
@@ -62,9 +60,9 @@ t_vec3		sub(t_vec3 vec1, t_vec3 vec2);
 t_vec3		set(float x, float y, float z);
 int			exit_error(char *message);
 int			clean_exit(t_holder *holder);
+int			write_bmp(t_holder *holder, const char *file_name);
 
 // Scene reading
-// *****************
 t_vec3		parse_xyz(char *str);
 void		read_scene(int fd, t_holder *window);
 void		store_object(t_scene *scene, t_object *object);
@@ -83,7 +81,5 @@ bool		check_ray_hits(t_scene scene, t_ray ray, t_color *hit_color,
 bool		hit_sphere(t_scene scene, t_ray *ray, t_hit_record *hit_rec,
 				float t_max);
 t_sphere	*get_sphere(t_scene scene);
-
-// *****************
 
 #endif
