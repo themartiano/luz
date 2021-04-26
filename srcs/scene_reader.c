@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/12 11:04:06 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/26 17:26:29 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/26 18:17:54 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -104,6 +104,7 @@ void	read_scene(int fd, t_holder *holder)
 		values = ft_split(line, ' ');
 		if (read_ra(values, &holder->scene) || read_c(values, &holder->scene)
 			|| read_l(values, &holder->scene) || read_sp(values, &holder->scene)
+			|| read_pl(values, &holder->scene)
 			|| read_sq(values, &holder->scene)
 			|| read_cy(values, &holder->scene)
 			|| read_tr(values, &holder->scene))

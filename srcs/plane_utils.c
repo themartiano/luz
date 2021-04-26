@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/26 17:14:24 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/26 17:24:15 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/26 18:08:40 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,27 +41,10 @@ float d)
 bool	hit_plane(t_scene scene, t_ray *ray, t_hit_record *hit_rec,
 float t_max)
 {
-	t_vec3	oc;
-	float	a;
-	float	b;
-	float	d;
-	float	tmp;
-
-	oc.x = ray->origin.x - get_sphere(scene)->transform.position.x;
-	oc.y = ray->origin.y - get_sphere(scene)->transform.position.y;
-	oc.z = ray->origin.z - get_sphere(scene)->transform.position.z;
-	a = dot(ray->direction, ray->direction);
-	b = dot(oc, ray->direction);
-	tmp = b * b - a * (dot(oc, oc) - get_sphere(scene)->radius
-			* get_sphere(scene)->radius);
-	if (tmp > 0)
+	if (ray->direction.x < get_plane(scene)->transform.orientation.x)
 	{
-		d = (-b - sqrt(tmp)) / a;
-		if (d < t_max && d > scene.t_min)
-			return (update_hit_record(hit_rec, scene, ray, d));
-		d = (-b + sqrt(tmp)) / a;
-		if (d < t_max && d > scene.t_min)
-			return (update_hit_record(hit_rec, scene, ray, d));
+		return (update_hit_record(hit_rec, scene, ray, 1.0f));
 	}
+	(void)t_max;
 	return (false);
 }
