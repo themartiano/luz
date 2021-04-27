@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/12 11:04:06 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/27 16:07:49 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/27 17:42:01 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,10 +32,18 @@ void	store_object(t_scene *scene, t_object *object)
 
 static bool	read_ra(char **values, t_scene *scene)
 {
+	int	screen_width;
+	int	screen_height;
+
 	if (ft_memcmp(values[0], "R", 1) == 0)
 	{
 		scene->x_res = ft_atoi(values[1]);
 		scene->y_res = ft_atoi(values[2]);
+		mlx_get_screen_size(scene->mlx, &screen_width, &screen_height);
+		if (scene->x_res > screen_width)
+			scene->x_res = screen_width;
+		if (scene->y_res > screen_height)
+			scene->y_res = screen_height;
 		return (true);
 	}
 	else if (ft_memcmp(values[0], "A", 1) == 0)
