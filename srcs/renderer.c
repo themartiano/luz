@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/14 11:55:19 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/27 11:24:34 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/27 11:52:44 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -105,6 +105,7 @@ void	*render(void *vscene)
 		}
 		y++;
 	}
+	printf(COLOR_LIGHT_GREEN "Render done!\n\n" COLOR_NC);
 	write_bmp(scene);
 	return (NULL);
 }
@@ -114,7 +115,11 @@ int	manage_frames(t_scene *scene)
 	static pthread_t	thread_id = 0;
 
 	if (thread_id == 0)
+	{
+		printf(COLOR_YELLOW "Starting rendering thread...\n");
 		pthread_create(&thread_id, NULL, render, scene);
+		printf("Rendering...\n" COLOR_NC);
+	}
 	mlx_put_image_to_window(scene->mlx, scene->window, scene->img.img, 0, 0);
 	return (0);
 }

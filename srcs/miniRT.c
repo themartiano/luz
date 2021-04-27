@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:12:09 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/27 11:29:41 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/27 11:52:28 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,9 +34,10 @@ static void	init_mlx(t_scene *scene, int fd)
 
 int	window_key_callback(int keycode, t_scene *scene)
 {
-	printf("\nKEY PRESSED: %d\n", keycode);
+	printf(COLOR_LIGHT_BLUE "KEY PRESSED: " COLOR_NC "%d\n", keycode);
 	if (keycode == KEY_ESC)
 	{
+		printf(COLOR_CYAN "\nExiting...\n" COLOR_NC);
 		mlx_destroy_window(scene->mlx, scene->window);
 		clean_exit(scene);
 	}
@@ -70,17 +71,17 @@ int	main(int argc, char *argv[])
 
 	save = false;
 	if (argc <= 1)
-		return (exit_error("Scene not specified."));
+		exit_error(COLOR_LIGHT_RED "Scene not specified." COLOR_NC);
 	else if (argc == 3)
 	{
 		if (ft_memcmp(argv[2], "--save", 6) != 0)
-			return (exit_error("Incorrect save argument."));
+			exit_error(COLOR_LIGHT_RED "Incorrect save argument." COLOR_NC);
 		else
 			save = true;
 	}
 	fd = open(argv[1], O_RDONLY);
 	if (fd == -1)
-		return (exit_error("Incorrect scene path."));
+		exit_error(COLOR_LIGHT_RED "Incorrect scene path." COLOR_NC);
 	printf("\n");
 	init_scene(&scene);
 	start_miniRT(&scene, fd, save, argv[1]);
