@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/14 11:55:19 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/27 18:05:20 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/27 18:54:55 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -122,14 +122,17 @@ int	render_manager(t_scene *scene)
 
 	if (created == false)
 	{
-		printf(COLOR_YELLOW "Starting rendering thread...\n");
+		printf(COLOR_YELLOW "Starting rendering thread...\n" COLOR_NC);
 		pthread_attr_init(&thread_attr);
 		if (scene->window != NULL)
 			pthread_attr_setdetachstate(&thread_attr, PTHREAD_CREATE_DETACHED);
+		printf(COLOR_YELLOW "Rendering...\n" COLOR_NC);
 		pthread_create(&thread_id, &thread_attr, render, scene);
-		printf("Rendering...\n" COLOR_NC);
 		if (scene->window == NULL)
+		{
 			pthread_join(thread_id, NULL);
+			clean_exit(scene);
+		}
 		created = true;
 	}
 	if (scene->mlx != NULL && scene->window != NULL)
