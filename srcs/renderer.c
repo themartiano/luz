@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/14 11:55:19 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/26 17:27:23 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/27 09:36:09 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -82,13 +82,15 @@ static void	render_loop(t_scene scene, t_color *hit_color, t_vec3 current_pixel)
 		hit_color->b / s);
 }
 
-void	render(t_holder *holder)
+void	*render(void *vargp)
 {
-	t_color	hit_color;
-	t_vec3	current_pixel;
-	int		x;
-	int		y;
+	t_holder	*holder;
+	t_color		hit_color;
+	t_vec3		current_pixel;
+	int			x;
+	int			y;
 
+	holder = (t_holder *)vargp;
 	y = 0;
 	while (y < holder->scene.y_res)
 	{
@@ -103,25 +105,30 @@ void	render(t_holder *holder)
 		}
 		y++;
 	}
+	time_t rawtime;
+	struct tm * timeinfo;
+
+	time ( &rawtime );
+	timeinfo = localtime ( &rawtime );
+	printf ( "Render done at: %s", asctime (timeinfo) );
+	return (NULL);
 }
 
 int	manage_frames(t_holder *holder)
 {
-	static unsigned int	frame = 0;
-	static bool			rendered = false;
+	static pthread_t	thread_id = 0;
 
-	if (frame == 0)
+	if (thread_id == 0)
 	{
-		mlx_string_put(holder->mlx, holder->window, 20, 20, 0x00FFFFFF,
-			RENDERING_MSG);
+		time_t rawtime;
+		struct tm * timeinfo;
+
+		time ( &rawtime );
+		timeinfo = localtime ( &rawtime );
+		printf ( "Render started at: %s", asctime (timeinfo) );
+		pthread_create(&thread_id, NULL, render, holder);
 	}
-	if (rendered == false && frame >= 2)
-	{
-		render(holder);
-		mlx_put_image_to_window(holder->mlx, holder->window, holder->img.img,
-			0, 0);
-		rendered = true;
-	}
-	frame++;
+	mlx_put_image_to_window(holder->mlx, holder->window, holder->img.img, 0, 0);
+
 	return (0);
 }

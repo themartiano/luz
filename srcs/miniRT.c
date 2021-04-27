@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:12:09 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/26 17:27:44 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/27 09:40:41 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,8 +17,8 @@ static void	init_holder(t_holder *holder)
 	holder->scene.objects = NULL;
 	holder->scene.t_min = 0.001f;
 	holder->scene.t_max = FLT_MAX;
-	holder->scene.samples = 3;
-	holder->scene.max_bounces = 8;
+	holder->scene.samples = 20;
+	holder->scene.max_bounces = 12;
 }
 
 static void	init_mlx(t_holder *holder, int fd)
