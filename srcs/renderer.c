@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/14 11:55:19 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/27 11:04:22 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/27 11:24:34 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -105,6 +105,7 @@ void	*render(void *vscene)
 		}
 		y++;
 	}
+	write_bmp(scene);
 	return (NULL);
 }
 
