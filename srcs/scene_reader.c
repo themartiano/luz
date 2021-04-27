@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/12 11:04:06 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/27 17:42:01 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/27 18:12:44 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -109,24 +109,17 @@ void	read_scene(int fd, t_scene *scene)
 	values = NULL;
 	while (rv == 1)
 	{
+		rv = get_next_line(fd, &line);
+		values = ft_split(line, ' ');
+		if (read_ra(values, scene) || read_c(values, scene)
+			|| read_l(values, scene) || read_sp(values, scene)
+			|| read_pl(values, scene) || read_sq(values, scene)
+			|| read_cy(values, scene) || read_tr(values, scene))
+			i = 0;
 		free(line);
 		i = 0;
 		while (values != NULL && values[i])
 			free(values[i++]);
 		free(values);
-		rv = get_next_line(fd, &line);
-		values = ft_split(line, ' ');
-		if (read_ra(values, scene) || read_c(values, scene)
-			|| read_l(values, scene) || read_sp(values, scene)
-			|| read_pl(values, scene)
-			|| read_sq(values, scene)
-			|| read_cy(values, scene)
-			|| read_tr(values, scene))
-			continue ;
 	}
-	free(line);
-	i = 0;
-	while (values != NULL && values[i])
-		free(values[i++]);
-	free(values);
 }

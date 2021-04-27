@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/14 11:55:19 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/27 17:21:27 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/27 18:05:20 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -114,7 +114,7 @@ void	*render(void *vscene)
 	return (NULL);
 }
 
-int	manage_frames(t_scene *scene)
+int	render_manager(t_scene *scene)
 {
 	static pthread_t		thread_id;
 	static pthread_attr_t	thread_attr;
@@ -124,11 +124,16 @@ int	manage_frames(t_scene *scene)
 	{
 		printf(COLOR_YELLOW "Starting rendering thread...\n");
 		pthread_attr_init(&thread_attr);
-		pthread_attr_setdetachstate(&thread_attr, PTHREAD_CREATE_DETACHED);
+		if (scene->window != NULL)
+			pthread_attr_setdetachstate(&thread_attr, PTHREAD_CREATE_DETACHED);
 		pthread_create(&thread_id, &thread_attr, render, scene);
-		created = true;
 		printf("Rendering...\n" COLOR_NC);
+		if (scene->window == NULL)
+			pthread_join(thread_id, NULL);
+		created = true;
 	}
-	mlx_put_image_to_window(scene->mlx, scene->window, scene->img.img, 0, 0);
+	if (scene->mlx != NULL && scene->window != NULL)
+		mlx_put_image_to_window(scene->mlx, scene->window, scene->img.img,
+			0, 0);
 	return (0);
 }
