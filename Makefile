@@ -6,7 +6,7 @@
 #    By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2021/04/08 15:31:37 by ejuliao-          #+#    #+#              #
-#    Updated: 2021/04/26 17:31:07 by ejuliao-         ###   ########.fr        #
+#    Updated: 2021/04/27 10:22:36 by ejuliao-         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -18,7 +18,7 @@ GNL_SRCS = ./libraries/get_next_line/get_next_line.c ./libraries/get_next_line/g
 
 INCLUDES = -Iincludes -Ilibraries/libft -Ilibraries/get_next_line
 
-COMP_FLAGS = -Wall -Wextra -Werror
+COMP_FLAGS = -Wall -Wextra -Werror -pthread -O3
 
 ifeq ($(FLAGS),0)
 	COMP_FLAGS =

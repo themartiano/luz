@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:16:25 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/26 17:32:41 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/27 09:16:45 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,10 @@
 # include <stdio.h>
 # include <stdbool.h>
 # include <float.h>
+# include <unistd.h>
 # include <math.h>
+# include <stdlib.h>
+# include <pthread.h>
 # include "libft.h"
 # include "mlx.h"
 # include "get_next_line.h"
@@ -70,7 +73,7 @@ void		store_object(t_scene *scene, t_object *object);
 
 // Rendering
 int			manage_frames(t_holder *holder);
-void		render(t_holder *holder);
+void		*render(void *vargp);
 t_vec3		random_in_unit(void);
 t_ray		gen_ray(t_scene scene, t_vec3 uv, t_vec3 origin, t_vec3 dir);
 bool		check_ray_hits(t_scene scene, t_ray ray, t_color *hit_color,

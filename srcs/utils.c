@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/10 14:51:57 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/26 17:09:28 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/27 10:32:09 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,10 +56,10 @@ char	*get_file_no_ext(const char *path)
 	int		i;
 
 	name = ft_strtrim(path, ".rt");
-	i = ft_last_indexof(name, '/');
+	i = ft_last_index_of(name, '/');
 	if (i == -1)
 	{
-		i = ft_last_indexof(name, '\\');
+		i = ft_last_index_of(name, '\\');
 		if (i == -1)
 			return (name);
 	}
