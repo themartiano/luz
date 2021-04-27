@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:12:09 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/27 11:02:31 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/27 11:29:41 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,27 +48,18 @@ void	start_miniRT(t_scene *scene, int fd, bool save, char *file)
 	char	*file_no_ext;
 
 	init_mlx(scene, fd);
+	scene->window = mlx_new_window(scene->mlx, scene->x_res,
+			scene->y_res, WINDOW_TITLE);
+	mlx_hook(scene->window, DESTROYNOTIFY, 0L, clean_exit, scene);
+	mlx_key_hook(scene->window, window_key_callback, scene);
+	mlx_loop_hook(scene->mlx, manage_frames, scene);
 	if (save == true)
 	{
-		printf("\n" RENDERING_MSG "\n");
 		file_no_ext = get_file_no_ext(file);
-		render(scene);
-		printf("Writing .bmp file...\n");
-		if (write_bmp(scene, file_no_ext) == -1)
-			printf("An error occurred while writing the .bmp file.\n");
-		else
-			printf("File ready.\n");
-		free(file_no_ext);
+		save_bmp(true);
+		bmp_name(file_no_ext);
 	}
-	else
-	{
-		scene->window = mlx_new_window(scene->mlx, scene->x_res,
-				scene->y_res, WINDOW_TITLE);
-		mlx_hook(scene->window, DESTROYNOTIFY, 0L, clean_exit, scene);
-		mlx_key_hook(scene->window, window_key_callback, scene);
-		mlx_loop_hook(scene->mlx, manage_frames, scene);
-		mlx_loop(scene->mlx);
-	}
+	mlx_loop(scene->mlx);
 }
 
 int	main(int argc, char *argv[])
