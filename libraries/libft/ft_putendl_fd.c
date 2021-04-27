@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/02/10 10:51:51 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/26 16:00:15 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/27 10:27:11 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,14 +15,16 @@
 void	ft_putendl_fd(char *s, int fd)
 {
 	int	i;
+	int	rtrn;
 
 	if (s == NULL)
 		return ;
 	i = 0;
 	while (s[i])
 	{
-		write(fd, &s[i], 1);
+		rtrn = write(fd, &s[i], 1);
 		i++;
 	}
-	write(fd, "\n", 1);
+	rtrn = write(fd, "\n", 1);
+	(void)rtrn;
 }

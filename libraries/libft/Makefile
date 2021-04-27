@@ -6,7 +6,7 @@
 #    By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2021/02/08 14:16:30 by ejuliao-          #+#    #+#              #
-#    Updated: 2021/04/26 16:12:46 by ejuliao-         ###   ########.fr        #
+#    Updated: 2021/04/27 10:25:21 by ejuliao-         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -30,7 +30,7 @@ SO =	libft.so
 all:	$(NAME)
 
 $(NAME):
-	gcc -Wall -Wextra -Werror -c $(SRCS)
+	gcc -Wall -Wextra -Werror -O3 -c $(SRCS)
 	ar -rcs $(NAME) $(OBJS)
 
 clean:
@@ -46,7 +46,7 @@ fclean:	clean
 re:	fclean all
 
 bonus:
-	gcc -Wall -Wextra -Werror -c $(BSRCS)
+	gcc -Wall -Wextra -Werror -O3 -c $(BSRCS)
 	ar -rcs $(NAME) $(BOBJS)
 
 so:	$(OBJS) $(BOBJS)

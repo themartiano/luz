@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/03/08 09:58:35 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/26 16:00:15 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/27 10:29:32 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,9 @@
 
 int	ft_putchar(const char c)
 {
-	write(1, &c, 1);
+	int	rtrn;
+
+	rtrn = write(1, &c, 1);
+	(void)rtrn;
 	return (1);
 }

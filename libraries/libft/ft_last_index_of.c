@@ -6,13 +6,13 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/26 16:10:30 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/26 16:14:14 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/27 10:24:11 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "libft.h"
 
-int	ft_last_indexof(const char *s, char c)
+int	ft_last_index_of(const char *s, char c)
 {
 	int	index;
 
