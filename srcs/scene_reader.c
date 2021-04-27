@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/12 11:04:06 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/26 18:17:54 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/27 11:00:28 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -89,7 +89,7 @@ static bool	read_l(char **values, t_scene *scene)
 	return (false);
 }
 
-void	read_scene(int fd, t_holder *holder)
+void	read_scene(int fd, t_scene *scene)
 {
 	char	*line;
 	char	**values;
@@ -102,12 +102,12 @@ void	read_scene(int fd, t_holder *holder)
 		free(line);
 		rv = get_next_line(fd, &line);
 		values = ft_split(line, ' ');
-		if (read_ra(values, &holder->scene) || read_c(values, &holder->scene)
-			|| read_l(values, &holder->scene) || read_sp(values, &holder->scene)
-			|| read_pl(values, &holder->scene)
-			|| read_sq(values, &holder->scene)
-			|| read_cy(values, &holder->scene)
-			|| read_tr(values, &holder->scene))
+		if (read_ra(values, scene) || read_c(values, scene)
+			|| read_l(values, scene) || read_sp(values, scene)
+			|| read_pl(values, scene)
+			|| read_sq(values, scene)
+			|| read_cy(values, scene)
+			|| read_tr(values, scene))
 			continue ;
 	}
 	free(line);

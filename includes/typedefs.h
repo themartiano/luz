@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/13 08:38:41 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/26 17:59:50 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/27 10:58:27 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -111,8 +111,20 @@ typedef struct s_gnrc_obj
 	t_color	color;
 }				t_gnrc_obj;
 
+typedef struct s_img
+{
+	void	*img;
+	char	*addr;
+	int		bits_per_pixel;
+	int		line_length;
+	int		endian;
+}				t_img;
+
 typedef struct s_scene
 {
+	void		*mlx;
+	void		*window;
+	t_img		img;
 	int			x_res;
 	int			y_res;
 	float		t_min;
@@ -124,23 +136,6 @@ typedef struct s_scene
 	t_object	*objects;
 	t_object	*lights;
 }				t_scene;
-
-typedef struct s_img
-{
-	void	*img;
-	char	*addr;
-	int		bits_per_pixel;
-	int		line_length;
-	int		endian;
-}				t_img;
-
-typedef struct s_holder
-{
-	void	*mlx;
-	void	*window;
-	t_img	img;
-	t_scene	scene;
-}				t_holder;
 
 typedef struct s_ray
 {

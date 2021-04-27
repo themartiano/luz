@@ -6,27 +6,28 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/21 11:58:52 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/26 18:00:01 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/27 11:02:17 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "miniRT.h"
 
-bool	get_hit_color(t_scene scene, t_hit_record *hit_rec,
+bool	get_hit_color(t_scene *scene, t_hit_record *hit_rec,
 t_color *hit_color, t_vec3 crnt_pxl)
 {
 	t_vec3	uv;
 	float	brightness;
 	float	random;
 
-	uv.x = (float)(crnt_pxl.x + drand48()) / (float)scene.x_res;
-	uv.y = (float)(crnt_pxl.y + drand48()) / (float)scene.y_res;
+	uv.x = (float)(crnt_pxl.x + drand48()) / (float)scene->x_res;
+	uv.y = (float)(crnt_pxl.y + drand48()) / (float)scene->y_res;
 	if (check_ray_hits(scene, gen_ray(scene, uv,
-				scene.camera.transform.position,
-				scene.camera.transform.orientation), hit_color,
+				scene->camera.transform.position,
+				scene->camera.transform.orientation), hit_color,
 			hit_rec))
 	{
-		brightness = (get_gnrc_obj(scene)->color.r + get_gnrc_obj(scene)->color.g
+		brightness = (get_gnrc_obj(scene)->color.r
+				+ get_gnrc_obj(scene)->color.g
 				+ get_gnrc_obj(scene)->color.b) / 765.0f;
 		random = drand48();
 		if (brightness < random - 0.001f || brightness > random + 0.001f)
@@ -37,7 +38,8 @@ t_color *hit_color, t_vec3 crnt_pxl)
 		return (false);
 }
 
-static void	gen_pixel_clr(t_scene scene, t_ray ray, t_color *hit_color, float t)
+static void	gen_pixel_clr(t_scene *scene, t_ray ray, t_color *hit_color,
+float t)
 {
 	t_vec3	n;
 	float	shadow_level;
@@ -48,15 +50,15 @@ static void	gen_pixel_clr(t_scene scene, t_ray ray, t_color *hit_color, float t)
 	n = normalize(n);
 	t = (0.5f * n.z + shadow_level) * 255.0f;
 	set_color(hit_color,
-		((float)hit_color->r - t) + ((float)scene.amb_light.color.r
-			* scene.amb_light.brightness),
-		((float)hit_color->g - t) + ((float)scene.amb_light.color.g
-			* scene.amb_light.brightness),
-		((float)hit_color->b - t) + ((float)scene.amb_light.color.b
-			* scene.amb_light.brightness));
+		((float)hit_color->r - t) + ((float)scene->amb_light.color.r
+			* scene->amb_light.brightness),
+		((float)hit_color->g - t) + ((float)scene->amb_light.color.g
+			* scene->amb_light.brightness),
+		((float)hit_color->b - t) + ((float)scene->amb_light.color.b
+			* scene->amb_light.brightness));
 }
 
-static int	manage_hit(t_scene scene, t_ray ray, t_color *hit_color,
+static int	manage_hit(t_scene *scene, t_ray ray, t_color *hit_color,
 t_hit_record *hit_rec)
 {
 	hit_rec->hit = true;
@@ -65,26 +67,26 @@ t_hit_record *hit_rec)
 	return (hit_rec->t);
 }
 
-bool	check_ray_hits(t_scene scene, t_ray ray, t_color *hit_color,
+bool	check_ray_hits(t_scene *scene, t_ray ray, t_color *hit_color,
 t_hit_record *hit_rec)
 {
 	float	closest;
 
 	hit_rec->hit = false;
-	closest = scene.t_max;
+	closest = scene->t_max;
 	while (true)
 	{
-		if ((scene.objects->type == 0
-			&& hit_sphere(scene, &ray, hit_rec, closest))
-			|| (scene.objects->type == 1
-			&& hit_plane(scene, &ray, hit_rec, closest)))
+		if ((scene->objects->type == 0
+				&& hit_sphere(scene, &ray, hit_rec, closest))
+			|| (scene->objects->type == 1
+				&& hit_plane(scene, &ray, hit_rec, closest)))
 			closest = manage_hit(scene, ray, hit_color, hit_rec);
-		if (scene.objects->next == NULL)
+		if (scene->objects->next == NULL)
 			break ;
 		else
-			scene.objects = scene.objects->next;
+			scene->objects = scene->objects->next;
 	}
-	while (scene.objects->prev != NULL)
-		scene.objects = scene.objects->prev;
+	while (scene->objects->prev != NULL)
+		scene->objects = scene->objects->prev;
 	return (hit_rec->hit);
 }

@@ -6,55 +6,55 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:12:09 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/27 09:40:41 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/27 11:02:31 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "miniRT.h"
 
-static void	init_holder(t_holder *holder)
+static void	init_scene(t_scene *scene)
 {
-	holder->scene.objects = NULL;
-	holder->scene.t_min = 0.001f;
-	holder->scene.t_max = FLT_MAX;
-	holder->scene.samples = 20;
-	holder->scene.max_bounces = 12;
+	scene->objects = NULL;
+	scene->t_min = 0.001f;
+	scene->t_max = FLT_MAX;
+	scene->samples = 16;
+	scene->max_bounces = 8;
 }
 
-static void	init_mlx(t_holder *holder, int fd)
+static void	init_mlx(t_scene *scene, int fd)
 {
-	read_scene(fd, holder);
-	holder->mlx = mlx_init();
-	holder->img.img = mlx_new_image(holder->mlx, holder->scene.x_res,
-			holder->scene.y_res);
-	holder->img.addr = mlx_get_data_addr(holder->img.img,
-			&holder->img.bits_per_pixel, &holder->img.line_length, &holder->img
+	read_scene(fd, scene);
+	scene->mlx = mlx_init();
+	scene->img.img = mlx_new_image(scene->mlx, scene->x_res,
+			scene->y_res);
+	scene->img.addr = mlx_get_data_addr(scene->img.img,
+			&scene->img.bits_per_pixel, &scene->img.line_length, &scene->img
 			.endian);
 }
 
-int	window_key_callback(int keycode, t_holder *holder)
+int	window_key_callback(int keycode, t_scene *scene)
 {
 	printf("\nKEY PRESSED: %d\n", keycode);
 	if (keycode == KEY_ESC)
 	{
-		mlx_destroy_window(holder->mlx, holder->window);
-		clean_exit(holder);
+		mlx_destroy_window(scene->mlx, scene->window);
+		clean_exit(scene);
 	}
 	return (0);
 }
 
-void	start_miniRT(t_holder *holder, int fd, bool save, char *file)
+void	start_miniRT(t_scene *scene, int fd, bool save, char *file)
 {
 	char	*file_no_ext;
 
-	init_mlx(holder, fd);
+	init_mlx(scene, fd);
 	if (save == true)
 	{
 		printf("\n" RENDERING_MSG "\n");
 		file_no_ext = get_file_no_ext(file);
-		render(holder);
+		render(scene);
 		printf("Writing .bmp file...\n");
-		if (write_bmp(holder->scene, holder->img, file_no_ext) == -1)
+		if (write_bmp(scene, file_no_ext) == -1)
 			printf("An error occurred while writing the .bmp file.\n");
 		else
 			printf("File ready.\n");
@@ -62,20 +62,20 @@ void	start_miniRT(t_holder *holder, int fd, bool save, char *file)
 	}
 	else
 	{
-		holder->window = mlx_new_window(holder->mlx, holder->scene.x_res,
-				holder->scene.y_res, WINDOW_TITLE);
-		mlx_hook(holder->window, DESTROYNOTIFY, 0L, clean_exit, holder);
-		mlx_key_hook(holder->window, window_key_callback, holder);
-		mlx_loop_hook(holder->mlx, manage_frames, holder);
-		mlx_loop(holder->mlx);
+		scene->window = mlx_new_window(scene->mlx, scene->x_res,
+				scene->y_res, WINDOW_TITLE);
+		mlx_hook(scene->window, DESTROYNOTIFY, 0L, clean_exit, scene);
+		mlx_key_hook(scene->window, window_key_callback, scene);
+		mlx_loop_hook(scene->mlx, manage_frames, scene);
+		mlx_loop(scene->mlx);
 	}
 }
 
 int	main(int argc, char *argv[])
 {
-	t_holder	holder;
-	bool		save;
-	int			fd;
+	t_scene	scene;
+	bool	save;
+	int		fd;
 
 	save = false;
 	if (argc <= 1)
@@ -91,7 +91,7 @@ int	main(int argc, char *argv[])
 	if (fd == -1)
 		return (exit_error("Incorrect scene path."));
 	printf("\n");
-	init_holder(&holder);
-	start_miniRT(&holder, fd, save, argv[1]);
+	init_scene(&scene);
+	start_miniRT(&scene, fd, save, argv[1]);
 	return (0);
 }

@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:16:25 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/27 09:16:45 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/27 10:59:45 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,34 +62,34 @@ t_vec3		sum(t_vec3 vec1, t_vec3 vec2);
 t_vec3		sub(t_vec3 vec1, t_vec3 vec2);
 t_vec3		set(float x, float y, float z);
 int			exit_error(char *message);
-int			clean_exit(t_holder *holder);
-int			write_bmp(t_scene scene, t_img img, const char *file_name);
+int			clean_exit(t_scene *scene);
+int			write_bmp(t_scene *scene, const char *file_name);
 char		*get_file_no_ext(const char *path);
 
 // Scene reading
 t_vec3		parse_xyz(char *str);
-void		read_scene(int fd, t_holder *window);
+void		read_scene(int fd, t_scene *scene);
 void		store_object(t_scene *scene, t_object *object);
 
 // Rendering
-int			manage_frames(t_holder *holder);
-void		*render(void *vargp);
+int			manage_frames(t_scene *scene);
+void		*render(void *vscene);
 t_vec3		random_in_unit(void);
-t_ray		gen_ray(t_scene scene, t_vec3 uv, t_vec3 origin, t_vec3 dir);
-bool		check_ray_hits(t_scene scene, t_ray ray, t_color *hit_color,
+t_ray		gen_ray(t_scene *scene, t_vec3 uv, t_vec3 origin, t_vec3 dir);
+bool		check_ray_hits(t_scene *scene, t_ray ray, t_color *hit_color,
 				t_hit_record *hit_rec);
-void		light_bouncer(t_scene scene, t_vec3 uv, t_color *hit_color,
+void		light_bouncer(t_scene *scene, t_vec3 uv, t_color *hit_color,
 				t_hit_record *hit_rec);
-bool		get_hit_color(t_scene scene, t_hit_record *hit_rec,
+bool		get_hit_color(t_scene *scene, t_hit_record *hit_rec,
 				t_color *hit_color, t_vec3 crnt_pxl);
 
 // Object utils
-bool		hit_sphere(t_scene scene, t_ray *ray, t_hit_record *hit_rec,
+bool		hit_sphere(t_scene *scene, t_ray *ray, t_hit_record *hit_rec,
 				float t_max);
-t_sphere	*get_sphere(t_scene scene);
-bool		hit_plane(t_scene scene, t_ray *ray, t_hit_record *hit_rec,
+t_sphere	*get_sphere(t_scene *scene);
+bool		hit_plane(t_scene *scene, t_ray *ray, t_hit_record *hit_rec,
 				float t_max);
-t_plane		*get_plane(t_scene scene);
-t_gnrc_obj	*get_gnrc_obj(t_scene scene);
+t_plane		*get_plane(t_scene *scene);
+t_gnrc_obj	*get_gnrc_obj(t_scene *scene);
 
 #endif
