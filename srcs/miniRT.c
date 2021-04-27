@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:12:09 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/27 11:52:28 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/27 15:43:21 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@ static void	init_scene(t_scene *scene)
 	scene->objects = NULL;
 	scene->t_min = 0.001f;
 	scene->t_max = FLT_MAX;
-	scene->samples = 16;
+	scene->samples = 3;
 	scene->max_bounces = 8;
 }
 

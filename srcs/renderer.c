@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/14 11:55:19 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/27 11:52:44 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/27 17:21:27 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -63,13 +63,16 @@ t_ray	gen_ray(t_scene *scene, t_vec3 uv, t_vec3 origin, t_vec3 dir)
 }
 
 static void	render_loop(t_scene *scene, t_color *hit_color,
-t_vec3 current_pixel)
+int x, int y)
 {
 	t_hit_record	hit_rec;
 	t_color			tmp_color;
+	t_vec3			current_pixel;
 	int				s;
 
 	s = 0;
+	current_pixel.x = x;
+	current_pixel.y = y;
 	while (s < scene->samples)
 	{
 		set_color(&tmp_color, 255, 255, 255);
@@ -78,28 +81,29 @@ t_vec3 current_pixel)
 			hit_color->g + tmp_color.g, hit_color->b + tmp_color.b);
 		s++;
 	}
-	set_color(hit_color, hit_color->r / s, hit_color->g / s,
-		hit_color->b / s);
+	if (s > 0)
+		set_color(hit_color, hit_color->r / s, hit_color->g / s,
+			hit_color->b / s);
 }
 
 void	*render(void *vscene)
 {
 	t_scene		*scene;
 	t_color		hit_color;
-	t_vec3		current_pixel;
 	int			x;
 	int			y;
 
 	scene = (t_scene *)vscene;
+	hit_color.r = 0;
+	hit_color.g = 0;
+	hit_color.b = 0;
 	y = 0;
 	while (y < scene->y_res)
 	{
 		x = 0;
 		while (x < scene->x_res)
 		{
-			current_pixel.x = x;
-			current_pixel.y = y;
-			render_loop(scene, &hit_color, current_pixel);
+			render_loop(scene, &hit_color, x, y);
 			put_pixel(&scene->img, x, y, rgba_to_hex(hit_color));
 			x++;
 		}
@@ -112,12 +116,17 @@ void	*render(void *vscene)
 
 int	manage_frames(t_scene *scene)
 {
-	static pthread_t	thread_id = 0;
+	static pthread_t		thread_id;
+	static pthread_attr_t	thread_attr;
+	static bool				created = false;
 
-	if (thread_id == 0)
+	if (created == false)
 	{
 		printf(COLOR_YELLOW "Starting rendering thread...\n");
-		pthread_create(&thread_id, NULL, render, scene);
+		pthread_attr_init(&thread_attr);
+		pthread_attr_setdetachstate(&thread_attr, PTHREAD_CREATE_DETACHED);
+		pthread_create(&thread_id, &thread_attr, render, scene);
+		created = true;
 		printf("Rendering...\n" COLOR_NC);
 	}
 	mlx_put_image_to_window(scene->mlx, scene->window, scene->img.img, 0, 0);

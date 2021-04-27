@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/13 13:06:23 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/23 10:02:26 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/27 16:24:53 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,11 +16,19 @@ t_vec3	parse_xyz(char *str)
 {
 	t_vec3	values;
 	char	**input;
+	int		i;
 
 	input = ft_split(str, ',');
-	values.x = ft_atof(input[0]);
-	values.y = ft_atof(input[1]);
-	values.z = ft_atof(input[2]);
+	if (input != NULL)
+	{
+		values.x = ft_atof(input[0]);
+		values.y = ft_atof(input[1]);
+		values.z = ft_atof(input[2]);
+		i = 0;
+		while (input[i])
+			free(input[i++]);
+	}
+	free(input);
 	return (values);
 }
 

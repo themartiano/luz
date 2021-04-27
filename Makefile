@@ -6,7 +6,7 @@
 #    By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2021/04/08 15:31:37 by ejuliao-          #+#    #+#              #
-#    Updated: 2021/04/27 10:22:36 by ejuliao-         ###   ########.fr        #
+#    Updated: 2021/04/27 17:29:31 by ejuliao-         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -18,10 +18,12 @@ GNL_SRCS = ./libraries/get_next_line/get_next_line.c ./libraries/get_next_line/g
 
 INCLUDES = -Iincludes -Ilibraries/libft -Ilibraries/get_next_line
 
-COMP_FLAGS = -Wall -Wextra -Werror -pthread -O3
+WWW_FLAGS = -Wall -Wextra -Werror
+
+OPT_FLAGS = -O3
 
 ifeq ($(FLAGS),0)
-	COMP_FLAGS =
+	WWW_FLAGS =
 endif
 
 OS_NAME := $(shell uname -s)
@@ -39,10 +41,12 @@ MLX_PATH = ./libraries/$(CURR_MLX)/libmlx.a
 
 ifeq ($(DEBUG),1)
 	DEBUG_FLAGS = -g
+	OPT_FLAGS =
 endif
 
 ifeq ($(SANITIZE),1)
 	DEBUG_FLAGS = -fsanitize=address -g
+	OPT_FLAGS =
 endif
 
 $(NAME):
@@ -54,7 +58,7 @@ $(NAME):
 	$(MAKE) -C ./libraries/$(CURR_MLX)
 
 	# Compiles miniRT
-	gcc $(COMP_FLAGS) $(INCLUDES) $(DEBUG_FLAGS) $(SRCS) $(GNL_SRCS) $(MLX_FLAGS) $(LIBFT_PATH) $(MLX_PATH) -o $(NAME)
+	gcc $(WWW_FLAGS) $(OPT_FLAGS) $(DEBUG_FLAGS) -pthread $(INCLUDES) $(SRCS) $(GNL_SRCS) $(MLX_FLAGS) $(LIBFT_PATH) $(MLX_PATH) -o $(NAME)
 
 all:	$(NAME)
 

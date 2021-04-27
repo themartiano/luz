@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/12 11:04:06 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/27 11:00:28 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/27 16:07:49 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -94,12 +94,18 @@ void	read_scene(int fd, t_scene *scene)
 	char	*line;
 	char	**values;
 	int		rv;
+	int		i;
 
 	rv = 1;
 	line = NULL;
+	values = NULL;
 	while (rv == 1)
 	{
 		free(line);
+		i = 0;
+		while (values != NULL && values[i])
+			free(values[i++]);
+		free(values);
 		rv = get_next_line(fd, &line);
 		values = ft_split(line, ' ');
 		if (read_ra(values, scene) || read_c(values, scene)
@@ -111,4 +117,8 @@ void	read_scene(int fd, t_scene *scene)
 			continue ;
 	}
 	free(line);
+	i = 0;
+	while (values != NULL && values[i])
+		free(values[i++]);
+	free(values);
 }
