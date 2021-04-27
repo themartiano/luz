@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:16:25 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/27 11:47:01 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/27 17:57:03 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -91,7 +91,7 @@ void		read_scene(int fd, t_scene *scene);
 void		store_object(t_scene *scene, t_object *object);
 
 // Rendering
-int			manage_frames(t_scene *scene);
+int			render_manager(t_scene *scene);
 void		*render(void *vscene);
 t_vec3		random_in_unit(void);
 t_ray		gen_ray(t_scene *scene, t_vec3 uv, t_vec3 origin, t_vec3 dir);
