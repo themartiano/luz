@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/24 21:21:48 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/27 11:31:20 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/27 11:33:20 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -77,11 +77,9 @@ int	write_bmp(t_scene *scene)
 			return (-1);
 		while (--scene->y_res >= 0)
 		{
-			if (write(fd, &scene->img.addr[scene->y_res * scene->img.line_length],
-					scene->img.line_length) < 0)
-			{
+			if (write(fd, &scene->img.addr[scene->y_res
+						* scene->img.line_length], scene->img.line_length) < 0)
 				return (-1);
-			}
 		}
 		close(fd);
 		free(file);
