@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:12:09 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/27 15:43:21 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/27 17:44:35 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,14 +17,14 @@ static void	init_scene(t_scene *scene)
 	scene->objects = NULL;
 	scene->t_min = 0.001f;
 	scene->t_max = FLT_MAX;
-	scene->samples = 3;
-	scene->max_bounces = 8;
+	scene->samples = 20;
+	scene->max_bounces = 12;
 }
 
 static void	init_mlx(t_scene *scene, int fd)
 {
-	read_scene(fd, scene);
 	scene->mlx = mlx_init();
+	read_scene(fd, scene);
 	scene->img.img = mlx_new_image(scene->mlx, scene->x_res,
 			scene->y_res);
 	scene->img.addr = mlx_get_data_addr(scene->img.img,
