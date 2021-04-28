@@ -6,11 +6,21 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/21 11:08:33 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/26 17:09:30 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/28 10:42:33 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "miniRT.h"
+
+float	length_sqrt(t_vec3 v)
+{
+	return (v.x * v.x + v.y * v.y + v.z * v.z);
+}
+
+float	length(t_vec3 v)
+{
+	return (sqrt(length_sqrt(v)));
+}
 
 t_vec3	set(float x, float y, float z)
 {
@@ -20,6 +30,11 @@ t_vec3	set(float x, float y, float z)
 	result.y = y;
 	result.z = z;
 	return (result);
+}
+
+t_vec3	scale(t_vec3 v, float f)
+{
+	return (set(f * v.x, f * v.y, f * v.z));
 }
 
 t_vec3	sum(t_vec3 vec1, t_vec3 vec2)
@@ -42,26 +57,25 @@ t_vec3	sub(t_vec3 vec1, t_vec3 vec2)
 	return (result);
 }
 
-t_vec3	unit_vector(t_vec3 vector)
+t_vec3	unit_vector(t_vec3 v)
 {
 	t_vec3	result;
 	float	k;
 
-	k = 1.0f / sqrt(vector.x * vector.x + vector.y * vector.y
-			+ vector.z * vector.z);
-	result.x = vector.x * k;
-	result.y = vector.y * k;
-	result.z = vector.z * k;
+	k = 1.0f / length(v);
+	result.x = v.x * k;
+	result.y = v.y * k;
+	result.z = v.z * k;
 	return (result);
 }
 
-t_vec3	normalize(t_vec3 vector)
+t_vec3	normalize(t_vec3 v)
 {
 	float	w;
 
-	w = sqrt(vector.x * vector.x + vector.y * vector.y + vector.z * vector.z);
-	vector.x /= w;
-	vector.y /= w;
-	vector.z /= w;
-	return (vector);
+	w = length(v);
+	v.x /= w;
+	v.y /= w;
+	v.z /= w;
+	return (v);
 }

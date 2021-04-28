@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/21 11:58:52 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/27 11:02:17 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/28 10:43:48 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,7 +58,7 @@ float t)
 			* scene->amb_light.brightness));
 }
 
-static int	manage_hit(t_scene *scene, t_ray ray, t_color *hit_color,
+static float	manage_hit(t_scene *scene, t_ray ray, t_color *hit_color,
 t_hit_record *hit_rec)
 {
 	hit_rec->hit = true;

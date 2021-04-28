@@ -6,11 +6,11 @@
 #    By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2021/04/08 15:31:37 by ejuliao-          #+#    #+#              #
-#    Updated: 2021/04/27 17:29:31 by ejuliao-         ###   ########.fr        #
+#    Updated: 2021/04/28 09:23:47 by ejuliao-         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
-SRCS =	./srcs/miniRT.c ./srcs/utils.c ./srcs/scene_reader.c ./srcs/conversions.c ./srcs/readers.c ./srcs/renderer.c ./srcs/exit.c	\
+SRCS =	./srcs/minirt.c ./srcs/utils.c ./srcs/scene_reader.c ./srcs/conversions.c ./srcs/readers.c ./srcs/renderer.c ./srcs/exit.c	\
 		./srcs/vector_utils.c ./srcs/render_utils.c ./srcs/sphere_utils.c ./srcs/bmp.c ./srcs/plane_utils.c ./srcs/object_utils.c
 NAME =	miniRT
 

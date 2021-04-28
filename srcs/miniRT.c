@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:12:09 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/27 18:39:02 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/28 09:34:56 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,8 +19,8 @@ static void	init_scene(t_scene *scene)
 	scene->objects = NULL;
 	scene->t_min = 0.001f;
 	scene->t_max = FLT_MAX;
-	scene->samples = 2;
-	scene->max_bounces = 1;
+	scene->samples = 16;
+	scene->max_bounces = 8;
 }
 
 int	window_key_callback(int keycode, t_scene *scene)
@@ -35,7 +35,7 @@ int	window_key_callback(int keycode, t_scene *scene)
 	return (0);
 }
 
-static void	start_miniRT(t_scene *scene, bool save, bool window, char *file)
+static void	start_minirt(t_scene *scene, bool save, bool window, char *file)
 {
 	char	*file_no_ext;
 
@@ -88,6 +88,6 @@ int	main(int argc, char *argv[])
 		exit_error("The specified scene file could not be opened.\n");
 	init_scene(&scene);
 	read_scene(fd, &scene);
-	start_miniRT(&scene, save, show_window, argv[1]);
+	start_minirt(&scene, save, show_window, argv[1]);
 	return (0);
 }
