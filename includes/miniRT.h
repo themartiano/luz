@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:16:25 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/27 18:55:13 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/28 10:42:37 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -78,6 +78,8 @@ void		set_color(t_color *color, int r, int g, int b);
 t_vec3		sum(t_vec3 vec1, t_vec3 vec2);
 t_vec3		sub(t_vec3 vec1, t_vec3 vec2);
 t_vec3		set(float x, float y, float z);
+float		length(t_vec3 v);
+t_vec3		scale(t_vec3 v, float f);
 int			exit_error(char *message);
 int			clean_exit(t_scene *scene);
 int			write_bmp(t_scene *scene);

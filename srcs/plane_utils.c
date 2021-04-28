@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/26 17:14:24 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/27 10:58:27 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/28 10:57:22 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,31 +20,29 @@ t_plane	*get_plane(t_scene *scene)
 	return (plane);
 }
 
-static bool	update_hit_record(t_hit_record *hit_rec, t_scene *scene, t_ray *ray,
-float d)
-{
-	t_sphere	*sphere;
-
-	sphere = get_sphere(scene);
-	hit_rec->t = d;
-	hit_rec->p.x = ray->origin.x + hit_rec->t * ray->direction.x;
-	hit_rec->p.y = ray->origin.y + hit_rec->t * ray->direction.y;
-	hit_rec->p.z = ray->origin.z + hit_rec->t * ray->direction.z;
-	hit_rec->normal = set((hit_rec->p.x
-				- sphere->transform.position.x) / sphere->radius,
-			(hit_rec->p.y - sphere->transform.position.y)
-			/ sphere->radius, (hit_rec->p.z
-				- sphere->transform.position.z) / sphere->radius);
-	return (true);
-}
-
 bool	hit_plane(t_scene *scene, t_ray *ray, t_hit_record *hit_rec,
 float t_max)
 {
-	if (ray->direction.x < get_plane(scene)->transform.orientation.x)
+	t_plane	*plane;
+	float	d;
+	float	t;
+
+	plane = get_plane(scene);
+	d = dot(ray->direction, plane->transform.position);
+	if (!d)
+		return (false);
+	t = dot(sub(plane->transform.orientation, ray->origin), ray->direction) / d;
+	if (t < t_max && t > scene->t_min)
 	{
-		return (update_hit_record(hit_rec, scene, ray, 1.0f));
+		hit_rec->t = t;
+		hit_rec->p.x = ray->origin.x + hit_rec->t * ray->direction.x;
+		hit_rec->p.y = ray->origin.y + hit_rec->t * ray->direction.y;
+		hit_rec->p.z = ray->origin.z + hit_rec->t * ray->direction.z;
+		if (dot(ray->direction, plane->transform.orientation) > 0)
+			hit_rec->normal = scale(plane->transform.orientation, -1.0f);
+		else
+			hit_rec->normal = plane->transform.orientation;
+		return (true);
 	}
-	(void)t_max;
 	return (false);
 }

@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/21 12:38:12 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/27 10:58:27 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/28 10:52:18 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,9 +47,7 @@ float t_max)
 	float	d;
 	float	tmp;
 
-	oc.x = ray->origin.x - get_sphere(scene)->transform.position.x;
-	oc.y = ray->origin.y - get_sphere(scene)->transform.position.y;
-	oc.z = ray->origin.z - get_sphere(scene)->transform.position.z;
+	oc = sub(ray->origin, get_sphere(scene)->transform.position);
 	a = dot(ray->direction, ray->direction);
 	b = dot(oc, ray->direction);
 	tmp = b * b - a * (dot(oc, oc) - get_sphere(scene)->radius
