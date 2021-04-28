@@ -6,14 +6,13 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/21 11:58:52 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/28 10:43:48 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/28 11:31:14 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "miniRT.h"
 
-bool	get_hit_color(t_scene *scene, t_hit_record *hit_rec,
-t_color *hit_color, t_vec3 crnt_pxl)
+bool	get_hit_color(t_scene *scene, t_hit_record *hit_rec, t_vec3 crnt_pxl)
 {
 	t_vec3	uv;
 	float	brightness;
@@ -23,7 +22,7 @@ t_color *hit_color, t_vec3 crnt_pxl)
 	uv.y = (float)(crnt_pxl.y + drand48()) / (float)scene->y_res;
 	if (check_ray_hits(scene, gen_ray(scene, uv,
 				scene->camera.transform.position,
-				scene->camera.transform.orientation), hit_color,
+				scene->camera.transform.orientation),
 			hit_rec))
 	{
 		brightness = (get_gnrc_obj(scene)->color.r
@@ -31,7 +30,7 @@ t_color *hit_color, t_vec3 crnt_pxl)
 				+ get_gnrc_obj(scene)->color.b) / 765.0f;
 		random = drand48();
 		if (brightness < random - 0.001f || brightness > random + 0.001f)
-			light_bouncer(scene, uv, hit_color, hit_rec);
+			light_bouncer(scene, uv, hit_rec);
 		return (true);
 	}
 	else
@@ -58,17 +57,14 @@ float t)
 			* scene->amb_light.brightness));
 }
 
-static float	manage_hit(t_scene *scene, t_ray ray, t_color *hit_color,
-t_hit_record *hit_rec)
+static float	manage_hit(t_scene *scene, t_ray ray, t_hit_record *hit_rec)
 {
 	hit_rec->hit = true;
-	*hit_color = get_gnrc_obj(scene)->color;
-	gen_pixel_clr(scene, ray, hit_color, hit_rec->t);
+	gen_pixel_clr(scene, ray, &hit_rec->color, hit_rec->t);
 	return (hit_rec->t);
 }
 
-bool	check_ray_hits(t_scene *scene, t_ray ray, t_color *hit_color,
-t_hit_record *hit_rec)
+bool	check_ray_hits(t_scene *scene, t_ray ray, t_hit_record *hit_rec)
 {
 	float	closest;
 
@@ -80,7 +76,7 @@ t_hit_record *hit_rec)
 				&& hit_sphere(scene, &ray, hit_rec, closest))
 			|| (scene->objects->type == 1
 				&& hit_plane(scene, &ray, hit_rec, closest)))
-			closest = manage_hit(scene, ray, hit_color, hit_rec);
+			closest = manage_hit(scene, ray, hit_rec);
 		if (scene->objects->next == NULL)
 			break ;
 		else

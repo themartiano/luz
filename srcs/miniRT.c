@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:12:09 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/28 09:34:56 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/28 11:34:56 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,7 +20,7 @@ static void	init_scene(t_scene *scene)
 	scene->t_min = 0.001f;
 	scene->t_max = FLT_MAX;
 	scene->samples = 16;
-	scene->max_bounces = 8;
+	scene->max_bounces = 0;
 }
 
 int	window_key_callback(int keycode, t_scene *scene)

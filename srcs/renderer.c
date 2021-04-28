@@ -6,14 +6,13 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/14 11:55:19 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/27 18:54:55 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/28 12:12:39 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "miniRT.h"
 
-void	light_bouncer(t_scene *scene, t_vec3 uv, t_color *hit_color,
-t_hit_record *hit_rec)
+void	light_bouncer(t_scene *scene, t_vec3 uv, t_hit_record *hit_rec)
 {
 	t_vec3	tmp_vec3;
 	t_vec3	target;
@@ -28,7 +27,7 @@ t_hit_record *hit_rec)
 		target.y = 0;
 		target.z -= 1.0f;
 		if (!check_ray_hits(scene, gen_ray(scene, uv,
-					hit_rec->p, target), hit_color, hit_rec))
+					hit_rec->p, target), hit_rec))
 		{
 			break ;
 		}
@@ -45,8 +44,8 @@ t_ray	gen_ray(t_scene *scene, t_vec3 uv, t_vec3 origin, t_vec3 dir)
 	t_vec3	v;
 
 	view_up = set(0, 1, 0);
-	w = unit_vector(sub(origin, dir));
-	u = unit_vector(cross(view_up, w));
+	w = normalize(sub(origin, dir));
+	u = normalize(cross(view_up, w));
 	v = cross(w, u);
 	ray.origin.x = origin.x;
 	ray.origin.y = origin.y;
@@ -58,7 +57,6 @@ t_ray	gen_ray(t_scene *scene, t_vec3 uv, t_vec3 origin, t_vec3 dir)
 	ray.direction.z = dir.z;
 	ray.direction = normalize(ray.direction);
 	ray.direction.y = -ray.direction.y;
-	(void)uv;
 	return (ray);
 }
 
@@ -66,7 +64,6 @@ static void	render_loop(t_scene *scene, t_color *hit_color,
 int x, int y)
 {
 	t_hit_record	hit_rec;
-	t_color			tmp_color;
 	t_vec3			current_pixel;
 	int				s;
 
@@ -75,10 +72,10 @@ int x, int y)
 	current_pixel.y = y;
 	while (s < scene->samples)
 	{
-		set_color(&tmp_color, 255, 255, 255);
-		get_hit_color(scene, &hit_rec, &tmp_color, current_pixel);
-		set_color(hit_color, hit_color->r + tmp_color.r,
-			hit_color->g + tmp_color.g, hit_color->b + tmp_color.b);
+		set_color(&hit_rec.color, 255, 255, 255);
+		get_hit_color(scene, &hit_rec, current_pixel);
+		set_color(hit_color, hit_color->r + hit_rec.color.r,
+			hit_color->g + hit_rec.color.g, hit_color->b + hit_rec.color.b);
 		s++;
 	}
 	if (s > 0)

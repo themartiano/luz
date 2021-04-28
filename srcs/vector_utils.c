@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/21 11:08:33 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/28 10:42:33 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/28 12:12:43 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,18 +54,6 @@ t_vec3	sub(t_vec3 vec1, t_vec3 vec2)
 	result.x = vec1.x - vec2.x;
 	result.y = vec1.y - vec2.y;
 	result.z = vec1.z - vec2.z;
-	return (result);
-}
-
-t_vec3	unit_vector(t_vec3 v)
-{
-	t_vec3	result;
-	float	k;
-
-	k = 1.0f / length(v);
-	result.x = v.x * k;
-	result.y = v.y * k;
-	result.z = v.z * k;
 	return (result);
 }
 
