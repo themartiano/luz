@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:16:25 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/28 16:24:43 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/28 19:02:40 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -101,8 +101,7 @@ t_vec3		random_in_unit(void);
 t_ray		gen_ray(t_scene *scene, t_vec3 uv, t_vec3 origin, t_vec3 dir);
 bool		check_ray_hits(t_scene *scene, t_ray ray, t_hit_record *hit_rec);
 void		light_bouncer(t_scene *scene, t_vec3 uv, t_hit_record *hit_rec);
-bool		get_hit_color(t_scene *scene, t_hit_record *hit_rec,
-				t_vec3 crnt_pxl);
+bool		get_hit_color(t_scene *scene, t_hit_record *hit_rec, int x, int y);
 
 // Object utils
 bool		hit_sphere(t_scene *scene, t_ray *ray, t_hit_record *hit_rec,

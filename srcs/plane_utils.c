@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/26 17:14:24 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/28 16:27:10 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/28 19:38:36 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,7 +31,8 @@ float t_max)
 	d = dot(ray->direction, plane->transform.orientation);
 	if (!d)
 		return (false);
-	t = dot(sub(plane->transform.position, ray->origin), plane->transform.orientation) / d;
+	t = dot(sub(plane->transform.position, ray->origin),
+			plane->transform.orientation) / d;
 	if (t < t_max && t > scene->t_min)
 	{
 		hit_rec->t = t;
@@ -42,7 +43,8 @@ float t_max)
 			hit_rec->normal = scale(plane->transform.orientation, -1.0f);
 		else
 			hit_rec->normal = plane->transform.orientation;
-		hit_rec->color = divide_color(sum_colors(hit_rec->color, plane->color), 2);
+		hit_rec->color = divide_color(
+				sum_colors(hit_rec->color, plane->color), 2);
 		return (true);
 	}
 	return (false);

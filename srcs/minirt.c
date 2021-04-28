@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:12:09 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/28 16:30:05 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/28 19:30:32 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,13 +19,14 @@ static void	init_scene(t_scene *scene)
 	scene->objects = NULL;
 	scene->t_min = 0.001f;
 	scene->t_max = FLT_MAX;
-	scene->samples = 50;
-	scene->max_bounces = 16;
+	scene->samples = 48;
+	scene->max_bounces = 12;
 }
 
 int	window_key_callback(int keycode, t_scene *scene)
 {
-	printf(COLOR_LIGHT_BLUE "KEY PRESSED: " COLOR_NC "%d\n", keycode);
+	printf(COLOR_PURPLE "\nKEY PRESSED: " COLOR_WHITE "%d\n" COLOR_NC,
+		keycode);
 	if (keycode == KEY_ESC)
 	{
 		printf(COLOR_CYAN "\nExiting...\n" COLOR_NC);
@@ -63,6 +64,30 @@ static void	start_minirt(t_scene *scene, bool save, bool window, char *file)
 		render_manager(scene);
 }
 
+static void	read_arguments(t_scene *scene, int argc, char *argv[])
+{
+	int		i;
+
+	if (argc >= 3)
+	{
+		i = 2;
+		while (argv[i])
+		{
+			if (ft_memcmp(argv[i], "-s", 2) == 0)
+			{
+				argv[i] += 2;
+				scene->samples = ft_atoi(argv[i]);
+			}
+			else if (ft_memcmp(argv[i], "-mb", 3) == 0)
+			{
+				argv[i] += 3;
+				scene->max_bounces = ft_atoi(argv[i]);
+			}
+			i++;
+		}
+	}
+}
+
 int	main(int argc, char *argv[])
 {
 	t_scene	scene;
@@ -78,8 +103,6 @@ int	main(int argc, char *argv[])
 	{
 		if (ft_memcmp(argv[2], "--save", 6) == 0)
 			save = true;
-		else
-			exit_error("Incorrect save argument.\n");
 		if (argc >= 4 && ft_memcmp(argv[3], "--no-window", 11) == 0)
 			show_window = false;
 	}
@@ -88,6 +111,7 @@ int	main(int argc, char *argv[])
 		exit_error("The specified scene file could not be opened.\n");
 	init_scene(&scene);
 	read_scene(fd, &scene);
+	read_arguments(&scene, argc, argv);
 	start_minirt(&scene, save, show_window, argv[1]);
 	return (0);
 }

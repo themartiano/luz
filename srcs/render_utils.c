@@ -6,20 +6,20 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/21 11:58:52 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/28 16:23:45 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/28 19:35:26 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minirt.h"
 
-bool	get_hit_color(t_scene *scene, t_hit_record *hit_rec, t_vec3 crnt_pxl)
+bool	get_hit_color(t_scene *scene, t_hit_record *hit_rec, int x, int y)
 {
 	t_vec3	uv;
 	float	brightness;
 	float	random;
 
-	uv.x = (float)(crnt_pxl.x + drand48()) / (float)scene->x_res;
-	uv.y = (float)(crnt_pxl.y + drand48()) / (float)scene->y_res;
+	uv.x = (float)(x + drand48()) / (float)scene->x_res;
+	uv.y = (float)(y + drand48()) / (float)scene->y_res;
 	if (check_ray_hits(scene, gen_ray(scene, uv,
 				scene->camera.transform.position,
 				scene->camera.transform.orientation),
@@ -49,12 +49,12 @@ float t)
 	n = normalize(n);
 	t = (0.5f * n.z + shadow_level) * 255.0f;
 	*hit_color = set_color(
-		((float)hit_color->r - t) + ((float)scene->amb_light.color.r
-			* scene->amb_light.brightness),
-		((float)hit_color->g - t) + ((float)scene->amb_light.color.g
-			* scene->amb_light.brightness),
-		((float)hit_color->b - t) + ((float)scene->amb_light.color.b
-			* scene->amb_light.brightness));
+			((float)hit_color->r - t) + ((float)scene->amb_light.color.r
+				* scene->amb_light.brightness),
+			((float)hit_color->g - t) + ((float)scene->amb_light.color.g
+				* scene->amb_light.brightness),
+			((float)hit_color->b - t) + ((float)scene->amb_light.color.b
+				* scene->amb_light.brightness));
 }
 
 static float	manage_hit(t_scene *scene, t_ray ray, t_hit_record *hit_rec)

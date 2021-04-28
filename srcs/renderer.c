@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/14 11:55:19 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/28 16:24:21 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/28 19:58:20 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,26 +64,23 @@ static void	render_loop(t_scene *scene, t_color *hit_color,
 int x, int y)
 {
 	t_hit_record	hit_rec;
-	t_vec3			current_pixel;
 	int				s;
 
 	s = 0;
-	current_pixel.x = x;
-	current_pixel.y = y;
 	hit_color->r = 255;
 	hit_color->g = 255;
 	hit_color->b = 255;
 	while (s < scene->samples)
 	{
 		hit_rec.color = set_color(255, 255, 255);
-		get_hit_color(scene, &hit_rec, current_pixel);
+		get_hit_color(scene, &hit_rec, x, y);
 		*hit_color = set_color(hit_color->r + hit_rec.color.r,
-			hit_color->g + hit_rec.color.g, hit_color->b + hit_rec.color.b);
+				hit_color->g + hit_rec.color.g, hit_color->b + hit_rec.color.b);
 		s++;
 	}
 	if (s++ > 0)
 		*hit_color = set_color(hit_color->r / s, hit_color->g / s,
-			hit_color->b / s);
+				hit_color->b / s);
 }
 
 void	*render(void *vscene)
@@ -123,7 +120,9 @@ int	render_manager(t_scene *scene)
 		pthread_attr_init(&thread_attr);
 		if (scene->window != NULL)
 			pthread_attr_setdetachstate(&thread_attr, PTHREAD_CREATE_DETACHED);
-		printf(COLOR_YELLOW "Rendering...\n" COLOR_NC);
+		printf(COLOR_YELLOW "Rendering..." COLOR_YELLOW " (" COLOR_WHITE "%d "
+			COLOR_CYAN"samples, "COLOR_WHITE"%d"COLOR_CYAN" max light bounces"
+			COLOR_YELLOW ")\n" COLOR_NC, scene->samples, scene->max_bounces);
 		pthread_create(&thread_id, &thread_attr, render, scene);
 		if (scene->window == NULL)
 		{
