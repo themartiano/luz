@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:16:25 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/28 13:02:59 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/28 13:28:36 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -109,6 +109,5 @@ t_sphere	*get_sphere(t_scene *scene);
 bool		hit_plane(t_scene *scene, t_ray *ray, t_hit_record *hit_rec,
 				float t_max);
 t_plane		*get_plane(t_scene *scene);
-t_gnrc_obj	*get_gnrc_obj(t_scene *scene);
 
 #endif

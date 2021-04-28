@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/26 17:30:29 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/28 13:09:22 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/28 13:28:44 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,12 +23,4 @@ t_vec3	random_in_unit(void)
 			break ;
 	}
 	return (set(f, f, f));
-}
-
-t_gnrc_obj	*get_gnrc_obj(t_scene *scene)
-{
-	t_gnrc_obj	*gnrc_obj;
-
-	gnrc_obj = scene->objects->object;
-	return (gnrc_obj);
 }

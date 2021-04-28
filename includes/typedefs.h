@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/13 08:38:41 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/28 11:15:10 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/28 13:28:59 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -105,11 +105,6 @@ typedef struct s_object
 	void	*prev;
 	void	*next;
 }				t_object;
-
-typedef struct s_gnrc_obj
-{
-	t_color	color;
-}				t_gnrc_obj;
 
 typedef struct s_img
 {

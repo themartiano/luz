@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/21 11:58:52 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/28 11:31:14 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/28 13:28:24 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,9 +25,9 @@ bool	get_hit_color(t_scene *scene, t_hit_record *hit_rec, t_vec3 crnt_pxl)
 				scene->camera.transform.orientation),
 			hit_rec))
 	{
-		brightness = (get_gnrc_obj(scene)->color.r
-				+ get_gnrc_obj(scene)->color.g
-				+ get_gnrc_obj(scene)->color.b) / 765.0f;
+		brightness = (hit_rec->color.r
+				+ hit_rec->color.g
+				+ hit_rec->color.b) / 765.0f;
 		random = drand48();
 		if (brightness < random - 0.001f || brightness > random + 0.001f)
 			light_bouncer(scene, uv, hit_rec);
