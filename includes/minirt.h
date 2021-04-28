@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   miniRT.h                                           :+:      :+:    :+:   */
+/*   minirt.h                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:16:25 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/28 13:28:36 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/28 16:24:43 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -73,7 +73,9 @@ t_color		get_pixel(t_img *img_data, int x, int y);
 float		dot(t_vec3 u, t_vec3 v);
 t_vec3		cross(t_vec3 vec1, t_vec3 vec2);
 t_vec3		normalize(t_vec3 vector);
-void		set_color(t_color *color, int r, int g, int b);
+t_color		set_color(int r, int g, int b);
+t_color		sum_colors(t_color clr1, t_color clr2);
+t_color		divide_color(t_color clr, float f);
 t_vec3		sum(t_vec3 vec1, t_vec3 vec2);
 t_vec3		sub(t_vec3 vec1, t_vec3 vec2);
 t_vec3		set(float x, float y, float z);
