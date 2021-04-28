@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/26 17:30:29 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/27 10:58:27 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/28 13:09:22 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,15 +14,15 @@
 
 t_vec3	random_in_unit(void)
 {
-	float	tmp;
+	float	f;
 
 	while (true)
 	{
-		tmp = 2.0f * drand48() - 1.0f;
-		if (tmp * tmp + tmp * tmp + tmp * tmp >= 1.0f)
+		f = 2.0f * drand48() - 1.0f;
+		if (f * f + f * f + f * f < 1.0f)
 			break ;
 	}
-	return (set(tmp, tmp, tmp));
+	return (set(f, f, f));
 }
 
 t_gnrc_obj	*get_gnrc_obj(t_scene *scene)
