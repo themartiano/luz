@@ -6,11 +6,11 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/24 21:21:48 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/27 15:23:22 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/28 16:19:13 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "miniRT.h"
+#include "minirt.h"
 #include "bmp.h"
 
 char	*bmp_name(char *file)

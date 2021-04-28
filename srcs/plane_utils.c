@@ -6,11 +6,11 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/26 17:14:24 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/28 12:18:25 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/28 16:27:10 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "miniRT.h"
+#include "minirt.h"
 
 t_plane	*get_plane(t_scene *scene)
 {
@@ -42,7 +42,7 @@ float t_max)
 			hit_rec->normal = scale(plane->transform.orientation, -1.0f);
 		else
 			hit_rec->normal = plane->transform.orientation;
-		hit_rec->color = plane->color;
+		hit_rec->color = divide_color(sum_colors(hit_rec->color, plane->color), 2);
 		return (true);
 	}
 	return (false);

@@ -6,11 +6,11 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/13 13:13:02 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/27 10:58:27 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/28 16:19:13 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "miniRT.h"
+#include "minirt.h"
 
 bool	read_sp(char **values, t_scene *scene)
 {

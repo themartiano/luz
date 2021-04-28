@@ -1,16 +1,16 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   miniRT.c                                           :+:      :+:    :+:   */
+/*   minirt.c                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:12:09 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/28 13:37:32 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/28 16:30:05 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "miniRT.h"
+#include "minirt.h"
 
 static void	init_scene(t_scene *scene)
 {
@@ -19,8 +19,8 @@ static void	init_scene(t_scene *scene)
 	scene->objects = NULL;
 	scene->t_min = 0.001f;
 	scene->t_max = FLT_MAX;
-	scene->samples = 8;
-	scene->max_bounces = 8;
+	scene->samples = 50;
+	scene->max_bounces = 16;
 }
 
 int	window_key_callback(int keycode, t_scene *scene)

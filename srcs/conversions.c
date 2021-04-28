@@ -6,11 +6,11 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/13 13:06:23 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/28 09:18:08 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/28 16:19:13 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "miniRT.h"
+#include "minirt.h"
 
 t_vec3	parse_xyz(char *str)
 {

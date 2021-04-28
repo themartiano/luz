@@ -6,11 +6,11 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/19 10:41:02 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/27 18:55:08 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/28 16:19:13 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "miniRT.h"
+#include "minirt.h"
 
 int	exit_error(char *message)
 {

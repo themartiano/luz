@@ -6,11 +6,11 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/21 11:58:52 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/28 13:28:24 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/28 16:23:45 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "miniRT.h"
+#include "minirt.h"
 
 bool	get_hit_color(t_scene *scene, t_hit_record *hit_rec, t_vec3 crnt_pxl)
 {
@@ -48,7 +48,7 @@ float t)
 			* ray.direction.y, ray.origin.z + t * ray.direction.z);
 	n = normalize(n);
 	t = (0.5f * n.z + shadow_level) * 255.0f;
-	set_color(hit_color,
+	*hit_color = set_color(
 		((float)hit_color->r - t) + ((float)scene->amb_light.color.r
 			* scene->amb_light.brightness),
 		((float)hit_color->g - t) + ((float)scene->amb_light.color.g
