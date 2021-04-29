@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/13 08:38:41 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/28 13:28:59 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/29 09:12:10 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -120,6 +120,7 @@ typedef struct s_scene
 	void		*mlx;
 	void		*window;
 	t_img		img;
+	pthread_t	thread;
 	int			x_res;
 	int			y_res;
 	float		t_min;

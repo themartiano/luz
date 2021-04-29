@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/14 11:55:19 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/28 19:58:20 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/29 09:40:00 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -105,12 +105,12 @@ void	*render(void *vscene)
 	}
 	printf(COLOR_LIGHT_GREEN "Render done!\n\n" COLOR_NC);
 	write_bmp(scene);
+	scene->thread = NULL;
 	return (NULL);
 }
 
 int	render_manager(t_scene *scene)
 {
-	static pthread_t		thread_id;
 	static pthread_attr_t	thread_attr;
 	static bool				created = false;
 
@@ -123,10 +123,10 @@ int	render_manager(t_scene *scene)
 		printf(COLOR_YELLOW "Rendering..." COLOR_YELLOW " (" COLOR_WHITE "%d "
 			COLOR_CYAN"samples, "COLOR_WHITE"%d"COLOR_CYAN" max light bounces"
 			COLOR_YELLOW ")\n" COLOR_NC, scene->samples, scene->max_bounces);
-		pthread_create(&thread_id, &thread_attr, render, scene);
+		pthread_create(&scene->thread, &thread_attr, render, scene);
 		if (scene->window == NULL)
 		{
-			pthread_join(thread_id, NULL);
+			pthread_join(scene->thread, NULL);
 			clean_exit(scene);
 		}
 		created = true;

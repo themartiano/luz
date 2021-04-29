@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   minirt.c                                           :+:      :+:    :+:   */
+/*   miniRT.c                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:12:09 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/28 19:30:32 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/29 09:39:42 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,7 @@ static void	init_scene(t_scene *scene)
 {
 	scene->mlx = mlx_init();
 	scene->window = NULL;
+	scene->thread = NULL;
 	scene->objects = NULL;
 	scene->t_min = 0.001f;
 	scene->t_max = FLT_MAX;
@@ -29,7 +30,6 @@ int	window_key_callback(int keycode, t_scene *scene)
 		keycode);
 	if (keycode == KEY_ESC)
 	{
-		printf(COLOR_CYAN "\nExiting...\n" COLOR_NC);
 		mlx_destroy_window(scene->mlx, scene->window);
 		clean_exit(scene);
 	}
