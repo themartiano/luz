@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/24 21:21:48 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/28 16:19:13 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/29 10:53:51 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,8 +53,8 @@ static int	write_headers(t_scene *scene, int fd)
 	info_h.image_size = 0;
 	info_h.pxls_per_meter_x = 0;
 	info_h.pxls_per_meter_y = 0;
-	info_h.COLOR_used = 0;
-	info_h.COLOR_important = 0;
+	info_h.color_used = 0;
+	info_h.color_important = 0;
 	if (write(fd, (void *)&info_h, 40) < 0)
 		return (-1);
 	return (0);

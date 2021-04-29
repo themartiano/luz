@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/29 09:46:57 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/29 10:27:45 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/29 10:56:16 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,8 +24,8 @@ bool	hit_cylinder(t_scene *scene, t_ray *ray, t_hit_record *hit_rec,
 float t_max)
 {
 	t_cylinder	*cylinder;
-	float	d;
-	float	t;
+	float		d;
+	float		t;
 
 	cylinder = get_cylinder(scene);
 	d = dot(ray->direction, cylinder->transform.orientation);
