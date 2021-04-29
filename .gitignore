@@ -10,3 +10,4 @@ miniRT
 .vscode
 libraries/minilibx_linux/test/mlx-test
 *.bmp
+libmlx.dylib
