@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:16:25 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/29 09:48:00 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/29 15:24:35 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -78,6 +78,7 @@ t_color		sum_colors(t_color clr1, t_color clr2);
 t_color		divide_color(t_color clr, float f);
 t_vec3		sum(t_vec3 vec1, t_vec3 vec2);
 t_vec3		sub(t_vec3 vec1, t_vec3 vec2);
+t_vec3		mul(t_vec3 vec, float m);
 t_vec3		set(float x, float y, float z);
 float		length_sqrt(t_vec3 v);
 float		length(t_vec3 v);
@@ -109,6 +110,8 @@ bool		hit_sphere(t_scene *scene, t_ray *ray, t_hit_record *hit_rec,
 t_sphere	*get_sphere(t_scene *scene);
 bool		hit_plane(t_scene *scene, t_ray *ray, t_hit_record *hit_rec,
 				float t_max);
+bool		intersect_plane(t_plane *plane, t_ray *ray, t_hit_record *hit_rec,
+				float t_max, float t_min);
 t_plane		*get_plane(t_scene *scene);
 bool		hit_cylinder(t_scene *scene, t_ray *ray, t_hit_record *hit_rec,
 				float t_max);

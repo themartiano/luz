@@ -6,7 +6,7 @@
 #    By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2021/04/08 15:31:37 by ejuliao-          #+#    #+#              #
-#    Updated: 2021/04/29 12:38:56 by ejuliao-         ###   ########.fr        #
+#    Updated: 2021/04/29 12:47:51 by ejuliao-         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -46,17 +46,17 @@ ifeq ($(SANITIZE),1)
 endif
 
 $(NAME):
-	@# Compiling libft
+	@# Compiles libft
 	@printf "\e[1;34m\nCompiling libft:\e[0m\n\n"
 	$(MAKE) -C ./libraries/libft
 	$(MAKE) bonus -C ./libraries/libft
 
-	@# Compiling minilibx
+	@# Compiles minilibx
 	@printf "\e[1;34m\nCompiling minilibx:\e[0m\n\n"
 	$(MAKE) -C ./libraries/$(CURR_MLX)
 	$(CP_CMD)
 
-	@# Compiling miniRT
+	@# Compiles miniRT
 	@printf "\e[1;34m\nCompiling miniRT:\e[0m\n\n"
 	gcc $(WWW_FLAGS) $(OPT_FLAGS) $(DEBUG_FLAGS) -pthread $(INCLUDES) $(SRCS) $(GNL_SRCS) $(MLX_FLAGS) $(LIBFT_PATH) -o $(NAME)
 	

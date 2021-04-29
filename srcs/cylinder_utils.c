@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/29 09:46:57 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/29 10:56:16 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/29 17:11:13 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,32 +20,70 @@ t_cylinder	*get_cylinder(t_scene *scene)
 	return (cylinder);
 }
 
+static void	plane(t_cylinder *cylinder, t_hit_record *hit_rec)
+{
+	float t;
+
+	float a = dot(sub(hit_rec->p, cylinder->transform.position) ,cylinder->transform.orientation);
+	float b = dot(cylinder->transform.orientation, cylinder->transform.orientation);
+	if (b == 0 || (a < 0 && b < 0) || (a > 0 && b > 0))
+		return ;
+	t = -a / b;
+	if (t < 0 || hit_rec->t < t)
+		return ;
+	hit_rec->t = t;
+	hit_rec->normal = set((hit_rec->p.x
+				- cylinder->transform.position.x) / cylinder->radius,
+			(hit_rec->p.y - cylinder->transform.position.y)
+			/ cylinder->radius, (hit_rec->p.z
+				- cylinder->transform.position.z) / cylinder->radius);
+}
+
+static bool	intersect_cylinder(t_scene *scene, t_ray *ray, t_hit_record *hit_rec, float t)
+{
+	t_cylinder	*cylinder;
+	float		holder;
+
+	cylinder = get_cylinder(scene);
+	hit_rec->t = t;
+	hit_rec->p = sum(ray->origin, mul(ray->direction, hit_rec->t));
+	holder = hit_rec->t;
+	plane(cylinder, hit_rec);
+	if (hit_rec->t <= cylinder->height / 2.0f)
+		return (true);
+	cylinder->transform.orientation = mul(cylinder->transform.orientation, -1);
+	plane(cylinder, hit_rec);
+	if (hit_rec->t <= cylinder->height / 2.0f)
+		return (true);
+	hit_rec->t = holder;
+	return (false);
+}
+
 bool	hit_cylinder(t_scene *scene, t_ray *ray, t_hit_record *hit_rec,
 float t_max)
 {
-	t_cylinder	*cylinder;
-	float		d;
-	float		t;
+	t_vec3	cross1;
+	t_vec3	cross2;
+	float	d;
+	float	tmp;
 
-	cylinder = get_cylinder(scene);
-	d = dot(ray->direction, cylinder->transform.orientation);
-	if (!d)
-		return (false);
-	t = dot(sub(cylinder->transform.position, ray->origin),
-			cylinder->transform.orientation) / d;
-	if (t < t_max && t > scene->t_min)
+	cross1 = cross(ray->direction, get_cylinder(scene)->transform.orientation);
+	t_vec3 sub1 = sub(ray->origin, get_cylinder(scene)->transform.position);
+	cross2 = cross(sub1, get_cylinder(scene)->transform.orientation);
+	float a = dot(cross1, cross1);
+	float b = dot(cross1, cross2);
+	float c = dot(cross2, cross2) - (get_cylinder(scene)->radius * get_cylinder(scene)->radius
+					* dot(get_cylinder(scene)->transform.orientation,
+				get_cylinder(scene)->transform.orientation));
+	tmp = b * b - a * c;
+	if (tmp > 0)
 	{
-		hit_rec->t = t;
-		hit_rec->p.x = ray->origin.x + hit_rec->t * ray->direction.x;
-		hit_rec->p.y = ray->origin.y + hit_rec->t * ray->direction.y;
-		hit_rec->p.z = ray->origin.z + hit_rec->t * ray->direction.z;
-		if (dot(ray->direction, cylinder->transform.orientation) > 0)
-			hit_rec->normal = scale(cylinder->transform.orientation, -1.0f);
-		else
-			hit_rec->normal = cylinder->transform.orientation;
-		hit_rec->color = divide_color(
-				sum_colors(hit_rec->color, cylinder->color), 2);
-		return (true);
+		d = (-b - sqrt(tmp)) / a;
+		if (d < t_max && d > scene->t_min)
+			return (intersect_cylinder(scene, ray, hit_rec, d));
+		d = (-b + sqrt(tmp)) / a;
+		if (d < t_max && d > scene->t_min)
+			return (intersect_cylinder(scene, ray, hit_rec, d));
 	}
 	return (false);
 }

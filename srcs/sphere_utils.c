@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/21 12:38:12 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/28 16:28:13 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/29 15:05:40 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,9 +27,7 @@ float d)
 
 	sphere = get_sphere(scene);
 	hit_rec->t = d;
-	hit_rec->p.x = ray->origin.x + hit_rec->t * ray->direction.x;
-	hit_rec->p.y = ray->origin.y + hit_rec->t * ray->direction.y;
-	hit_rec->p.z = ray->origin.z + hit_rec->t * ray->direction.z;
+	hit_rec->p = sum(ray->origin, mul(ray->direction, hit_rec->t));
 	hit_rec->normal = set((hit_rec->p.x
 				- sphere->transform.position.x) / sphere->radius,
 			(hit_rec->p.y - sphere->transform.position.y)
