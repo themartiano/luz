@@ -6,21 +6,11 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/21 11:08:33 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/28 16:19:13 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/29 09:01:33 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minirt.h"
-
-float	length_sqrt(t_vec3 v)
-{
-	return (v.x * v.x + v.y * v.y + v.z * v.z);
-}
-
-float	length(t_vec3 v)
-{
-	return (sqrt(length_sqrt(v)));
-}
 
 t_vec3	set(float x, float y, float z)
 {
