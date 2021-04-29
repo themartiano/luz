@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/13 08:38:41 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/29 09:12:10 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/29 10:00:02 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,7 +24,6 @@ typedef struct s_transform
 {
 	t_vec3	position;
 	t_vec3	orientation;
-	t_vec3	scale;
 }				t_transform;
 
 typedef struct s_color
@@ -37,38 +36,38 @@ typedef struct s_color
 
 typedef struct s_plane
 {
-	t_color			color;
-	t_transform		transform;
+	t_color		color;
+	t_transform	transform;
 }				t_plane;
 
 typedef struct s_sphere
 {
-	t_color			color;
-	t_transform		transform;
-	int				radius;
+	t_color		color;
+	t_transform	transform;
+	int			radius;
 }				t_sphere;
 
 typedef struct s_square
 {
-	t_color			color;
-	t_transform		transform;
-	int				side_size;
+	t_color		color;
+	t_transform	transform;
+	int			side_size;
 }				t_square;
 
 typedef struct s_cylinder
 {
-	t_color				color;
-	t_transform			transform;
-	int					radius;
-	int					height;
+	t_color		color;
+	t_transform	transform;
+	int			radius;
+	int			height;
 }				t_cylinder;
 
 typedef struct s_triangle
 {
-	t_color				color;
-	t_vec3				p1;
-	t_vec3				p2;
-	t_vec3				p3;
+	t_color	color;
+	t_vec3	p1;
+	t_vec3	p2;
+	t_vec3	p3;
 }				t_triangle;
 
 typedef struct s_camera
@@ -81,9 +80,9 @@ typedef struct s_camera
 
 typedef struct s_light
 {
-	t_color			color;
-	t_transform		transform;
-	float			brightness;
+	t_color		color;
+	t_transform	transform;
+	float		brightness;
 }				t_light;
 
 /* ******************** *\

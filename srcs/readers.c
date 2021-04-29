@@ -6,18 +6,18 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/13 13:13:02 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/28 16:19:13 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/29 10:25:34 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minirt.h"
 
-bool	read_sp(char **values, t_scene *scene)
+bool	read_sp(char **values, char *line, t_scene *scene)
 {
 	t_sphere	*sphere;
 	t_object	*object;
 
-	if (ft_memcmp(values[0], "sp", 2) == 0)
+	if (ft_memcmp(line, "sp ", 3) == 0)
 	{
 		object = (t_object *)malloc(sizeof(*object));
 		sphere = (t_sphere *)malloc(sizeof(*sphere));
@@ -32,15 +32,14 @@ bool	read_sp(char **values, t_scene *scene)
 	return (false);
 }
 
-bool	read_pl(char **values, t_scene *scene)
+bool	read_pl(char **values, char *line, t_scene *scene)
 {
 	t_plane		*plane;
 	t_object	*object;
 
-	if (ft_memcmp(values[0], "pl", 2) == 0)
+	if (ft_memcmp(line, "pl ", 3) == 0)
 	{
 		object = (t_object *)malloc(sizeof(*object));
-		plane = (t_plane *)malloc(sizeof(*plane));
 		plane = (t_plane *)malloc(sizeof(*plane));
 		plane->transform.position = parse_xyz(values[1]);
 		plane->transform.orientation = parse_xyz(values[2]);
@@ -53,12 +52,12 @@ bool	read_pl(char **values, t_scene *scene)
 	return (false);
 }
 
-bool	read_sq(char **values, t_scene *scene)
+bool	read_sq(char **values, char *line, t_scene *scene)
 {
 	t_square	*square;
 	t_object	*object;
 
-	if (ft_memcmp(values[0], "sq", 2) == 0)
+	if (ft_memcmp(line, "sq ", 3) == 0)
 	{
 		object = (t_object *)malloc(sizeof(*object));
 		square = (t_square *)malloc(sizeof(*square));
@@ -74,19 +73,19 @@ bool	read_sq(char **values, t_scene *scene)
 	return (false);
 }
 
-bool	read_cy(char **values, t_scene *scene)
+bool	read_cy(char **values, char *line, t_scene *scene)
 {
 	t_cylinder	*cylinder;
 	t_object	*object;
 
-	if (ft_memcmp(values[0], "cy", 2) == 0)
+	if (ft_memcmp(line, "cy ", 3) == 0)
 	{
 		object = (t_object *)malloc(sizeof(*object));
 		cylinder = (t_cylinder *)malloc(sizeof(*cylinder));
 		cylinder->transform.position = parse_xyz(values[1]);
 		cylinder->transform.orientation = parse_xyz(values[2]);
-		cylinder->radius = ft_atoi(values[3]) / 2;
-		cylinder->height = ft_atoi(values[4]);
+		cylinder->radius = ft_atof(values[3]) / 2.0f;
+		cylinder->height = ft_atof(values[4]);
 		cylinder->color = vec3_to_rgb(parse_xyz(values[5]));
 		object->object = cylinder;
 		object->type = 3;
@@ -96,12 +95,12 @@ bool	read_cy(char **values, t_scene *scene)
 	return (false);
 }
 
-bool	read_tr(char **values, t_scene *scene)
+bool	read_tr(char **values, char *line, t_scene *scene)
 {
 	t_triangle	*triangle;
 	t_object	*object;
 
-	if (ft_memcmp(values[0], "tr", 2) == 0)
+	if (ft_memcmp(line, "tr ", 3) == 0)
 	{
 		object = (t_object *)malloc(sizeof(*object));
 		triangle = (t_triangle *)malloc(sizeof(*triangle));
