@@ -6,14 +6,12 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/26 11:13:09 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/29 10:53:51 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/29 11:36:17 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef BMP_H
 # define BMP_H
-
-# pragma pack(push, 1)
 
 typedef struct s_file_h
 {
@@ -37,7 +35,5 @@ typedef struct s_info_h
 	unsigned int	color_used;
 	unsigned int	color_important;
 }				t_info_h;
-
-# pragma pack(pop)
 
 #endif

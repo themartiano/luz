@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/24 21:21:48 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/29 10:53:51 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/29 11:40:37 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,29 +33,46 @@ bool	save_bmp(bool save)
 	return (false);
 }
 
+static void	init_headers(t_scene *scene, t_file_h *file_h, t_info_h *info_h)
+{
+	file_h->type = 0x4D42;
+	file_h->size = 54 + 4 * scene->x_res * scene->y_res;
+	file_h->reserved = 0;
+	file_h->offset = 54;
+	info_h->size = 40;
+	info_h->width = scene->x_res;
+	info_h->height = scene->y_res;
+	info_h->planes = 1;
+	info_h->bits_per_pxl = 32;
+	info_h->compression = 0;
+	info_h->image_size = 0;
+	info_h->pxls_per_meter_x = 0;
+	info_h->pxls_per_meter_y = 0;
+	info_h->color_used = 0;
+	info_h->color_important = 0;
+}
+
 static int	write_headers(t_scene *scene, int fd)
 {
 	t_file_h	file_h;
 	t_info_h	info_h;
 
-	file_h.type = 0x4D42;
-	file_h.size = 54 + 4 * scene->x_res * scene->y_res;
-	file_h.reserved = 0;
-	file_h.offset = 54;
-	if (write(fd, (void *)&file_h, 14) < 0)
-		return (-1);
-	info_h.size = 40;
-	info_h.width = scene->x_res;
-	info_h.height = scene->y_res;
-	info_h.planes = 1;
-	info_h.bits_per_pxl = 32;
-	info_h.compression = 0;
-	info_h.image_size = 0;
-	info_h.pxls_per_meter_x = 0;
-	info_h.pxls_per_meter_y = 0;
-	info_h.color_used = 0;
-	info_h.color_important = 0;
-	if (write(fd, (void *)&info_h, 40) < 0)
+	init_headers(scene, &file_h, &info_h);
+	if (write(fd, (void *)&file_h.type, 2) < 0
+		|| write(fd, (void *)&file_h.size, 4) < 0
+		|| write(fd, (void *)&file_h.reserved, 4) < 0
+		|| write(fd, (void *)&file_h.offset, 4) < 0
+		|| write(fd, (void *)&info_h.size, 4) < 0
+		|| write(fd, (void *)&info_h.width, 4) < 0
+		|| write(fd, (void *)&info_h.height, 4) < 0
+		|| write(fd, (void *)&info_h.planes, 2) < 0
+		|| write(fd, (void *)&info_h.bits_per_pxl, 2) < 0
+		|| write(fd, (void *)&info_h.compression, 4) < 0
+		|| write(fd, (void *)&info_h.image_size, 4) < 0
+		|| write(fd, (void *)&info_h.pxls_per_meter_x, 4) < 0
+		|| write(fd, (void *)&info_h.pxls_per_meter_y, 4) < 0
+		|| write(fd, (void *)&info_h.color_used, 4) < 0
+		|| write(fd, (void *)&info_h.color_important, 4) < 0)
 		return (-1);
 	return (0);
 }
