@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/26 11:13:09 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/27 11:46:43 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/29 10:53:51 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,8 +34,8 @@ typedef struct s_info_h
 	unsigned int	image_size;
 	int				pxls_per_meter_x;
 	int				pxls_per_meter_y;
-	unsigned int	COLOR_used;
-	unsigned int	COLOR_important;
+	unsigned int	color_used;
+	unsigned int	color_important;
 }				t_info_h;
 
 # pragma pack(pop)
