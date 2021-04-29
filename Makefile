@@ -6,7 +6,7 @@
 #    By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2021/04/08 15:31:37 by ejuliao-          #+#    #+#              #
-#    Updated: 2021/04/29 09:01:54 by ejuliao-         ###   ########.fr        #
+#    Updated: 2021/04/29 09:03:38 by ejuliao-         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -32,6 +32,7 @@ endif
 ifeq ($(OS_NAME),Darwin)
 	CURR_MLX = minilibx_mms
 	MLX_FLAGS = -Ilibraries/$(CURR_MLX) -Llibraries/$(CURR_MLX) -lmlx -DOS=1
+	CP_CMD = cp ./libraries/$(CURR_MLX)/libmlx.dylib ./
 endif
 
 ifeq ($(DEBUG),1)
@@ -51,7 +52,7 @@ $(NAME):
 
 	# Compiles minilibx
 	$(MAKE) -C ./libraries/$(CURR_MLX)
-	cp ./libraries/$(CURR_MLX)/libmlx.dylib ./
+	$(CP_CMD)
 
 	# Compiles miniRT
 	gcc $(WWW_FLAGS) $(OPT_FLAGS) $(DEBUG_FLAGS) -pthread $(INCLUDES) $(SRCS) $(GNL_SRCS) $(MLX_FLAGS) $(LIBFT_PATH) -o $(NAME)
