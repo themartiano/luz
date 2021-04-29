@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/19 10:41:02 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/28 16:19:13 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/29 09:40:57 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,21 +14,26 @@
 
 int	exit_error(char *message)
 {
-	ft_putstr(COLOR_RED "Error\n" COLOR_NC);
-	ft_putstr(COLOR_LIGHT_RED);
-	ft_putstr(message);
-	ft_putstr(COLOR_NC);
+	printf(COLOR_RED "Error\n" COLOR_NC);
+	printf(COLOR_LIGHT_RED "%s" COLOR_NC, message);
 	exit(1);
 }
 
 int	clean_exit(t_scene *scene)
 {
-	while (scene->objects->next != NULL)
+	printf(COLOR_CYAN "\nExiting..." COLOR_NC "\n");
+	if (scene->objects != NULL)
 	{
-		free(scene->objects->object);
-		free(scene->objects->prev);
-		scene->objects = scene->objects->next;
+		while (scene->objects->next != NULL)
+		{
+			if (scene->objects->object != NULL)
+				free(scene->objects->object);
+			if (scene->objects->prev != NULL)
+				free(scene->objects->prev);
+			scene->objects = scene->objects->next;
+		}
+		if (scene->objects->prev != NULL)
+			free(scene->objects->prev);
 	}
-	free(scene->objects->prev);
 	exit(0);
 }
