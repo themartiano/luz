@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/12 11:04:06 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/29 08:57:24 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/29 10:25:23 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,12 +30,12 @@ void	store_object(t_scene *scene, t_object *object)
 	}
 }
 
-static bool	read_ra(char **values, t_scene *scene)
+static bool	read_ra(char **values, char *line, t_scene *scene)
 {
 	int	screen_width;
 	int	screen_height;
 
-	if (ft_memcmp(values[0], "R", 1) == 0)
+	if (ft_memcmp(line, "R ", 2) == 0)
 	{
 		scene->x_res = ft_atoi(values[1]);
 		scene->y_res = ft_atoi(values[2]);
@@ -46,7 +46,7 @@ static bool	read_ra(char **values, t_scene *scene)
 			scene->y_res = screen_height;
 		return (true);
 	}
-	else if (ft_memcmp(values[0], "A", 1) == 0)
+	else if (ft_memcmp(line, "A ", 2) == 0)
 	{
 		scene->amb_light.brightness = ft_atof(values[1]) / 6.4f;
 		scene->amb_light.color = vec3_to_rgb(parse_xyz(values[2]));
@@ -55,11 +55,11 @@ static bool	read_ra(char **values, t_scene *scene)
 	return (false);
 }
 
-static bool	read_c(char **values, t_scene *scene)
+static bool	read_c(char **values, char *line, t_scene *scene)
 {
 	float	theta;
 
-	if (ft_memcmp(values[0], "c", 1) == 0)
+	if (ft_memcmp(line, "c ", 2) == 0)
 	{
 		scene->camera.transform.position = parse_xyz(values[1]);
 		scene->camera.transform.orientation = parse_xyz(values[2]);
@@ -77,12 +77,12 @@ static bool	read_c(char **values, t_scene *scene)
 	return (false);
 }
 
-static bool	read_l(char **values, t_scene *scene)
+static bool	read_l(char **values, char *line, t_scene *scene)
 {
 	t_light		*light;
 	t_object	*object;
 
-	if (ft_memcmp(values[0], "l", 1) == 0)
+	if (ft_memcmp(line, "l ", 2) == 0)
 	{
 		object = (t_object *)malloc(sizeof(*object));
 		light = (t_light *)malloc(sizeof(*light));
@@ -111,10 +111,10 @@ void	read_scene(int fd, t_scene *scene)
 	{
 		rv = get_next_line(fd, &line);
 		values = ft_split(line, ' ');
-		if (read_ra(values, scene) || read_c(values, scene)
-			|| read_l(values, scene) || read_sp(values, scene)
-			|| read_pl(values, scene) || read_sq(values, scene)
-			|| read_cy(values, scene) || read_tr(values, scene))
+		if (read_ra(values, line, scene) || read_c(values, line, scene)
+			|| read_l(values, line, scene) || read_sp(values, line, scene)
+			|| read_pl(values, line, scene) || read_sq(values, line, scene)
+			|| read_cy(values, line, scene) || read_tr(values, line, scene))
 			i = 0;
 		free(line);
 		i = 0;

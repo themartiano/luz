@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/21 11:58:52 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/28 19:35:26 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/29 10:08:17 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -72,10 +72,12 @@ bool	check_ray_hits(t_scene *scene, t_ray ray, t_hit_record *hit_rec)
 	closest = scene->t_max;
 	while (true)
 	{
-		if ((scene->objects->type == 0
+		if (scene->objects != NULL && ((scene->objects->type == 0
 				&& hit_sphere(scene, &ray, hit_rec, closest))
 			|| (scene->objects->type == 1
-				&& hit_plane(scene, &ray, hit_rec, closest)))
+				&& hit_plane(scene, &ray, hit_rec, closest))
+			|| (scene->objects->type == 3
+				&& hit_cylinder(scene, &ray, hit_rec, closest))))
 			closest = manage_hit(scene, ray, hit_rec);
 		if (scene->objects->next == NULL)
 			break ;

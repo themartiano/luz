@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   minirt.h                                           :+:      :+:    :+:   */
+/*   miniRT.h                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:16:25 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/28 19:02:40 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/04/29 09:48:00 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -110,5 +110,8 @@ t_sphere	*get_sphere(t_scene *scene);
 bool		hit_plane(t_scene *scene, t_ray *ray, t_hit_record *hit_rec,
 				float t_max);
 t_plane		*get_plane(t_scene *scene);
+bool		hit_cylinder(t_scene *scene, t_ray *ray, t_hit_record *hit_rec,
+				float t_max);
+t_cylinder	*get_cylinder(t_scene *scene);
 
 #endif
