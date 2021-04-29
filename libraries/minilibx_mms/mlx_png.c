@@ -11,9 +11,9 @@
 
 #include "zlib.h"
 
-#include <OpenGL/gl3.h>
-#include	"mlx_int.h"
+#include "mlx.h"
 
+#define UNIQ_BPP 4
 
 #define	PNG_MAGIC_SIZE	8
 unsigned char magic[PNG_MAGIC_SIZE] = {137, 80, 78, 71, 13, 10, 26, 10};
@@ -33,6 +33,7 @@ unsigned char magic[PNG_MAGIC_SIZE] = {137, 80, 78, 71, 13, 10, 26, 10};
 #define	ERR_ZLIB	10
 #define	ERR_DATA_MISMATCH	11
 #define	ERR_DATA_FILTER	12
+#define ERR_MALLOC	13
 char *(mipng_err[]) =
 {
   "No error",
@@ -47,7 +48,8 @@ char *(mipng_err[]) =
   "Missing header/dat/end chunk(s)",
   "Zlib inflate error",
   "Inflated data size mismatch",
-  "Unknown scanline filter"
+  "Unknown scanline filter",
+  "Can't malloc"
 };
 
 typedef struct png_info_s
@@ -105,7 +107,7 @@ unsigned char (*(mipng_defilter[]))(unsigned char *buff, int pos, int a, int b, 
 };
 
 // only work for mlx mac or img 32bpp
-int	mipng_fill_img(mlx_img_list_t *img, unsigned char *buf, png_info_t *pi)
+int	mipng_fill_img(void *img, unsigned char *buf, png_info_t *pi)
 {
   unsigned int	current_filter;
   int	ipos;
@@ -113,32 +115,40 @@ int	mipng_fill_img(mlx_img_list_t *img, unsigned char *buf, png_info_t *pi)
   int	ilen;
   int	iline;
   int	blen;
+  int   bpp;
+  int   endian;
   unsigned char tmp;
   unsigned char *ibuf;
 
-  ibuf = (unsigned char *)img->buffer;
-  iline = img->width * UNIQ_BPP;
-  ilen = img->width * img->height * UNIQ_BPP;
-  blen = img->width * img->height * pi->bpp + img->height;
+  ibuf = (unsigned char *)mlx_get_data_addr(img, &bpp, &iline, &endian);
+  //  iline = img->width * UNIQ_BPP;
+  // ilen = img->width * img->height * UNIQ_BPP;
+  ilen = iline*pi->height;
   ipos = 0;
+  blen = pi->width * pi->height * pi->bpp + pi->height;  // ??? why + pi->height ??
   bpos = 0;
   while (ipos < ilen && bpos < blen)
     {
-      if ((ipos % iline) == 0)
+      if (ipos % iline == 0)
 	{
+	  // printf("ipos %d iline %d pi->width %d bpos %d\n", ipos, iline, pi->width, bpos);
 	  if ((current_filter = buf[bpos++]) > 4)
+	    {  
 	    return (ERR_DATA_FILTER);
+	    }
 	}
       ibuf[ipos] = mipng_defilter[current_filter](buf, bpos,
-				 ipos%iline>3?ibuf[ipos-UNIQ_BPP]:0,
+						  ipos%iline>3?ibuf[ipos-UNIQ_BPP]:0,
 				 (ipos>=iline)?ibuf[ipos-iline]:0,
-				 (ipos>=iline && ipos%iline>3)?ibuf[ipos-iline-UNIQ_BPP]:0);
+						  (ipos>=iline && ipos%iline>3)?ibuf[ipos-iline-UNIQ_BPP]:0);
       ipos ++;
       bpos ++;
       if (pi->depth == 16)
 	bpos ++;
       if (ipos % 4 == 3 && pi->color == 2)  // no alpha
-	img->buffer[ipos++] = 0xFF;
+	ibuf[ipos++] = 0xFF;
+      if (ipos % iline == pi->width * 4)
+	ipos += iline-pi->width*4;
     }
   if (ipos != ilen || bpos != blen)
     {
@@ -158,7 +168,7 @@ int	mipng_fill_img(mlx_img_list_t *img, unsigned char *buf, png_info_t *pi)
 }
 
 
-int	mipng_data(mlx_img_list_t *img, unsigned char *dat, png_info_t *pi)
+int	mipng_data(void *img, unsigned char *dat, png_info_t *pi)
 {
   unsigned int	len;
   int		b_pos;
@@ -170,8 +180,8 @@ int	mipng_data(mlx_img_list_t *img, unsigned char *dat, png_info_t *pi)
   unsigned char z_out[Z_CHUNK];
 
   b_pos = 0;
-  if (!(buffer = malloc((long long)img->width*(long long)img->height*(long long)pi->bpp + img->height)))
-    err(1, "Can't malloc");
+  if (!(buffer = malloc((long long)pi->width*(long long)pi->height*(long long)pi->bpp + pi->height)))
+    return (ERR_MALLOC);
   z_strm.zalloc = Z_NULL;
   z_strm.zfree = Z_NULL;
   z_strm.opaque = Z_NULL;
@@ -179,7 +189,10 @@ int	mipng_data(mlx_img_list_t *img, unsigned char *dat, png_info_t *pi)
   z_strm.next_in = Z_NULL;
   z_ret = inflateInit(&z_strm);
   if (z_ret != Z_OK)
-    return (ERR_ZLIB);
+    {
+      free(buffer);
+      return (ERR_ZLIB);
+    }
 
   while (mipng_is_type(dat, "IDAT"))
     {
@@ -197,11 +210,13 @@ int	mipng_data(mlx_img_list_t *img, unsigned char *dat, png_info_t *pi)
 	  if (z_ret != Z_OK && z_ret != Z_STREAM_END)
 	    {
 	      inflateEnd(&z_strm);
+	      free(buffer);
 	      return (ERR_ZLIB);
 	    }
-	  if (b_pos + Z_CHUNK - z_strm.avail_out > img->width*img->height*pi->bpp+img->height)
+	  if (b_pos + Z_CHUNK - z_strm.avail_out > pi->width*pi->height*pi->bpp+pi->height)
 	    {
 	      inflateEnd(&z_strm);
+	      free(buffer);
 	      return (ERR_DATA_MISMATCH);
 	    }
 	  bcopy(z_out, buffer+b_pos, Z_CHUNK - z_strm.avail_out);
@@ -210,14 +225,15 @@ int	mipng_data(mlx_img_list_t *img, unsigned char *dat, png_info_t *pi)
       dat += len + 4 + 4 + 4;
     } 
   inflateEnd(&z_strm);
-  if (b_pos != img->width*img->height*pi->bpp+img->height)
+  if (b_pos != pi->width*pi->height*pi->bpp+pi->height)
     {
       //      printf("pb : bpos %d vs expected %d\n", b_pos, img->width*img->height*pi->bpp+img->height);
+      free(buffer);
       return (ERR_DATA_MISMATCH);
     }
-  if ((ret = mipng_fill_img(img, buffer, pi)))
-    return (ret);
-  return (0);
+  ret = mipng_fill_img(img, buffer, pi);
+  free(buffer);
+  return (ret);
 }
 
 
@@ -345,41 +361,43 @@ int	mipng_verif_hdr(unsigned char *hdr, png_info_t *pi)
 }
 
 
-mlx_img_list_t	*mlx_int_parse_png(mlx_ptr_t *xvar, unsigned char *fptr, int size)
+void	*mlx_int_parse_png(void *xvar, unsigned char *fptr, int size, int *width, int *height)
 {
   int		err;
   unsigned char *hdr;
   unsigned char *dat;
   png_info_t	pi;
-  mlx_img_list_t *img;
+  void          *img;
 
   if ((err = mipng_magic(fptr, size)))
     {
       warnx("mlx PNG error : %s", mipng_err[err]);
-      return ((mlx_img_list_t *)0);
+      return ((void *)0);
     }
   fptr += PNG_MAGIC_SIZE;
   size -= PNG_MAGIC_SIZE;
   if ((err = mipng_structure(fptr, size, &hdr, &dat)))
     {
       warnx("mlx PNG error : %s", mipng_err[err]);
-      return ((mlx_img_list_t *)0);
+      return ((void *)0);
     }
   if ((err = mipng_verif_hdr(hdr, &pi)))
     {
       warnx("mlx PNG error : %s", mipng_err[err]);
-      return ((mlx_img_list_t *)0);
+      return ((void *)0);
     }
   if (!(img = mlx_new_image(xvar, pi.width, pi.height)))
     {
       warnx("mlx PNG error : Can't create mlx image");
-      return ((mlx_img_list_t *)0);
+      return ((void *)0);
     }
+  *width = pi.width;
+  *height = pi.height;
   if ((err = mipng_data(img, dat, &pi)))
     {
       mlx_destroy_image(xvar, img);
       warnx("mlx PNG error : %s", mipng_err[err]);
-      return ((mlx_img_list_t *)0);
+      return ((void *)0);
     }
   return (img);
 }
@@ -387,12 +405,12 @@ mlx_img_list_t	*mlx_int_parse_png(mlx_ptr_t *xvar, unsigned char *fptr, int size
 
 
 
-void	*mlx_png_file_to_image(mlx_ptr_t *xvar, char *file, int *width, int *height)
+void	*mlx_png_file_to_image(void *xvar, char *file, int *width, int *height)
 {
   int			fd;
   int			size;
   unsigned char		*ptr;
-  mlx_img_list_t        *img;
+  void                  *img;
 
   if ((fd = open(file, O_RDONLY)) == -1 || (size = lseek(fd, 0, SEEK_END)) == -1 ||
       (ptr = mmap(0, size, PROT_READ, MAP_PRIVATE, fd, 0)) == (void *)MAP_FAILED)
@@ -402,12 +420,7 @@ void	*mlx_png_file_to_image(mlx_ptr_t *xvar, char *file, int *width, int *height
       warnx("Can't map png file '%s'", file);
       return ((void *)0);
     }
-  if ((img = mlx_int_parse_png(xvar, ptr, size)))
-    {
-      *width = img->width;
-      *height = img->height;
-    }
-  else
+  if (!(img = mlx_int_parse_png(xvar, ptr, size, width, height)))
     {
       *width = 0;
       *height = 0;
