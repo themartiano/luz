@@ -6,7 +6,7 @@
 #    By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2021/04/08 15:31:37 by ejuliao-          #+#    #+#              #
-#    Updated: 2021/04/29 09:48:09 by ejuliao-         ###   ########.fr        #
+#    Updated: 2021/04/29 12:38:56 by ejuliao-         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -46,25 +46,33 @@ ifeq ($(SANITIZE),1)
 endif
 
 $(NAME):
-	# Compiles libft
+	@# Compiling libft
+	@printf "\e[1;34m\nCompiling libft:\e[0m\n\n"
 	$(MAKE) -C ./libraries/libft
 	$(MAKE) bonus -C ./libraries/libft
 
-	# Compiles minilibx
+	@# Compiling minilibx
+	@printf "\e[1;34m\nCompiling minilibx:\e[0m\n\n"
 	$(MAKE) -C ./libraries/$(CURR_MLX)
 	$(CP_CMD)
 
-	# Compiles miniRT
+	@# Compiling miniRT
+	@printf "\e[1;34m\nCompiling miniRT:\e[0m\n\n"
 	gcc $(WWW_FLAGS) $(OPT_FLAGS) $(DEBUG_FLAGS) -pthread $(INCLUDES) $(SRCS) $(GNL_SRCS) $(MLX_FLAGS) $(LIBFT_PATH) -o $(NAME)
+	
+	@printf "\e[0;32m\nCompilation done. miniRT ready.\e[0m\n\n"
 
 all:	$(NAME)
 
 clean:
+	@printf "\e[1;33m\nCleaning:\e[0m\n\n"
 	rm -f $(NAME)
 
 fclean:	clean
+	@printf "\e[1;33m\nCleaning libraries:\e[0m\n\n"
 	$(MAKE) fclean -C ./libraries/libft
 	$(MAKE) clean -C ./libraries/$(CURR_MLX)
+	rm -f ./libmlx.dylib
 
 re:	clean all
 
