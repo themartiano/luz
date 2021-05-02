@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/14 11:55:19 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/29 09:40:00 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/02 10:41:43 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -105,7 +105,7 @@ void	*render(void *vscene)
 	}
 	printf(COLOR_LIGHT_GREEN "Render done!\n\n" COLOR_NC);
 	write_bmp(scene);
-	scene->thread = NULL;
+	scene->thread = (pthread_t)NULL;
 	return (NULL);
 }
 

@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   miniRT.c                                           :+:      :+:    :+:   */
+/*   minirt.c                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:12:09 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/29 12:17:36 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/02 10:41:56 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,7 @@ static void	init_scene(t_scene *scene)
 {
 	scene->mlx = mlx_init();
 	scene->window = NULL;
-	scene->thread = NULL;
+	scene->thread = (pthread_t)NULL;
 	scene->objects = NULL;
 	scene->t_min = 0.001f;
 	scene->t_max = FLT_MAX;
