@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:16:25 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/29 15:24:35 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/05 12:55:53 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -75,6 +75,7 @@ t_vec3		cross(t_vec3 vec1, t_vec3 vec2);
 t_vec3		normalize(t_vec3 vector);
 t_color		set_color(int r, int g, int b);
 t_color		sum_colors(t_color clr1, t_color clr2);
+t_color		mul_color(t_color clr, float m);
 t_color		divide_color(t_color clr, float f);
 t_vec3		sum(t_vec3 vec1, t_vec3 vec2);
 t_vec3		sub(t_vec3 vec1, t_vec3 vec2);
@@ -94,6 +95,7 @@ char		*get_file_no_ext(const char *path);
 t_vec3		parse_xyz(char *str);
 void		read_scene(int fd, t_scene *scene);
 void		store_object(t_scene *scene, t_object *object);
+void		store_light(t_scene *scene, t_object *object);
 
 // Rendering
 int			render_manager(t_scene *scene);
@@ -103,6 +105,8 @@ t_ray		gen_ray(t_scene *scene, t_vec3 uv, t_vec3 origin, t_vec3 dir);
 bool		check_ray_hits(t_scene *scene, t_ray ray, t_hit_record *hit_rec);
 void		light_bouncer(t_scene *scene, t_vec3 uv, t_hit_record *hit_rec);
 bool		get_hit_color(t_scene *scene, t_hit_record *hit_rec, int x, int y);
+void		average_w_light_clr(t_scene *scene, t_ray *ray,
+				t_hit_record *hit_rec);
 
 // Object utils
 bool		hit_sphere(t_scene *scene, t_ray *ray, t_hit_record *hit_rec,

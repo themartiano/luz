@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/28 16:16:46 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/28 19:34:14 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/05 13:03:23 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,12 +38,22 @@ t_color	sum_colors(t_color clr1, t_color clr2)
 	return (result);
 }
 
+t_color	mul_color(t_color clr, float m)
+{
+	t_color	result;
+
+	result.r = (float)clr.r * m;
+	result.g = (float)clr.g * m;
+	result.b = (float)clr.b * m;
+	return (result);
+}
+
 t_color	divide_color(t_color clr, float f)
 {
 	t_color	result;
 
-	result.r = clr.r / f;
-	result.g = clr.g / f;
-	result.b = clr.b / f;
+	result.r = (float)clr.r / f;
+	result.g = (float)clr.g / f;
+	result.b = (float)clr.b / f;
 	return (result);
 }
