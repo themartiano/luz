@@ -6,12 +6,18 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/13 08:38:41 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/29 16:19:38 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/05 16:08:30 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef TYPEDEFS_H
 # define TYPEDEFS_H
+
+typedef struct s_vec2
+{
+	float	x;
+	float	y;
+}				t_vec2;
 
 typedef struct s_vec3
 {
@@ -124,6 +130,7 @@ typedef struct s_scene
 	int			y_res;
 	float		t_min;
 	float		t_max;
+	t_vec2		crrnt_pxl;
 	int			samples;
 	int			max_bounces;
 	t_light		amb_light;

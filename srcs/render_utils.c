@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/21 11:58:52 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/29 12:38:24 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/05 16:05:46 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,13 +14,13 @@
 
 bool	get_hit_color(t_scene *scene, t_hit_record *hit_rec, int x, int y)
 {
-	t_vec3	uv;
+	t_vec2	pxl;
 	float	brightness;
 	float	random;
 
-	uv.x = (float)(x + drand48()) / (float)scene->x_res;
-	uv.y = (float)(y + drand48()) / (float)scene->y_res;
-	if (check_ray_hits(scene, gen_ray(scene, uv,
+	pxl.x = (float)(x + drand48()) / (float)scene->x_res;
+	pxl.y = (float)(y + drand48()) / (float)scene->y_res;
+	if (check_ray_hits(scene, gen_ray(scene, pxl,
 				scene->camera.transform.position,
 				scene->camera.transform.orientation),
 			hit_rec))
@@ -30,7 +30,7 @@ bool	get_hit_color(t_scene *scene, t_hit_record *hit_rec, int x, int y)
 				+ hit_rec->color.b) / 765.0f;
 		random = drand48();
 		if (brightness < random - 0.001f || brightness > random + 0.001f)
-			light_bouncer(scene, uv, hit_rec);
+			light_bouncer(scene, pxl, hit_rec);
 		return (true);
 	}
 	else
