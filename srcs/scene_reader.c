@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/12 11:04:06 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/29 10:25:23 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/05 12:48:51 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -91,7 +91,7 @@ static bool	read_l(char **values, char *line, t_scene *scene)
 		light->color = vec3_to_rgb(parse_xyz(values[3]));
 		object->object = light;
 		object->type = 5;
-		store_object(scene, object);
+		store_light(scene, object);
 		return (true);
 	}
 	return (false);
