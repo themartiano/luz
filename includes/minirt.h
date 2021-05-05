@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:16:25 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/05 12:55:53 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/05 16:05:30 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -101,9 +101,9 @@ void		store_light(t_scene *scene, t_object *object);
 int			render_manager(t_scene *scene);
 void		*render(void *vscene);
 t_vec3		random_in_unit(void);
-t_ray		gen_ray(t_scene *scene, t_vec3 uv, t_vec3 origin, t_vec3 dir);
+t_ray		gen_ray(t_scene *scene, t_vec2 pxl, t_vec3 origin, t_vec3 dir);
 bool		check_ray_hits(t_scene *scene, t_ray ray, t_hit_record *hit_rec);
-void		light_bouncer(t_scene *scene, t_vec3 uv, t_hit_record *hit_rec);
+void		light_bouncer(t_scene *scene, t_vec2 pxl, t_hit_record *hit_rec);
 bool		get_hit_color(t_scene *scene, t_hit_record *hit_rec, int x, int y);
 void		average_w_light_clr(t_scene *scene, t_ray *ray,
 				t_hit_record *hit_rec);

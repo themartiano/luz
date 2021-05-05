@@ -6,13 +6,13 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/14 11:55:19 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/02 10:41:43 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/05 16:05:26 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minirt.h"
 
-void	light_bouncer(t_scene *scene, t_vec3 uv, t_hit_record *hit_rec)
+void	light_bouncer(t_scene *scene, t_vec2 pxl, t_hit_record *hit_rec)
 {
 	t_vec3	tmp_vec3;
 	t_vec3	target;
@@ -26,7 +26,7 @@ void	light_bouncer(t_scene *scene, t_vec3 uv, t_hit_record *hit_rec)
 		target.x = 0;
 		target.y = 0;
 		target.z -= 1.0f;
-		if (!check_ray_hits(scene, gen_ray(scene, uv,
+		if (!check_ray_hits(scene, gen_ray(scene, pxl,
 					hit_rec->p, target), hit_rec))
 		{
 			break ;
@@ -35,7 +35,7 @@ void	light_bouncer(t_scene *scene, t_vec3 uv, t_hit_record *hit_rec)
 	}
 }
 
-t_ray	gen_ray(t_scene *scene, t_vec3 uv, t_vec3 origin, t_vec3 dir)
+t_ray	gen_ray(t_scene *scene, t_vec2 pxl, t_vec3 origin, t_vec3 dir)
 {
 	t_ray	ray;
 	t_vec3	view_up;
@@ -50,9 +50,9 @@ t_ray	gen_ray(t_scene *scene, t_vec3 uv, t_vec3 origin, t_vec3 dir)
 	ray.origin.x = origin.x;
 	ray.origin.y = origin.y;
 	ray.origin.z = origin.z;
-	ray.direction.x = -scene->camera.half_width + dir.x + (uv.x * u.x
+	ray.direction.x = -scene->camera.half_width + dir.x + (pxl.x * u.x
 			* scene->camera.half_width * 2.0f);
-	ray.direction.y = -scene->camera.half_height + dir.y + (uv.y * v.y
+	ray.direction.y = -scene->camera.half_height + dir.y + (pxl.y * v.y
 			* scene->camera.half_height * 2.0f);
 	ray.direction.z = dir.z;
 	ray.direction = normalize(ray.direction);
@@ -97,6 +97,8 @@ void	*render(void *vscene)
 		x = 0;
 		while (x < scene->x_res)
 		{
+			scene->crrnt_pxl.x = x;
+			scene->crrnt_pxl.y = y;
 			render_loop(scene, &hit_color, x, y);
 			put_pixel(&scene->img, x, y, rgba_to_hex(hit_color));
 			x++;
