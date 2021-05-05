@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/29 09:46:57 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/29 19:26:35 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/05 10:56:02 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,11 +32,7 @@ static bool	plane(t_scene *scene, t_cylinder *cylinder, t_hit_record *hit_rec, f
 	if (t < scene->t_min || t > t_max)
 		return (false);
 	hit_rec->t = t;
-	hit_rec->normal = set((hit_rec->p.x
-				- cylinder->transform.position.x) / cylinder->radius,
-			(hit_rec->p.y - cylinder->transform.position.y)
-			/ (cylinder->height / 2.0f), (hit_rec->p.z
-				- cylinder->transform.position.z) / cylinder->radius);
+	hit_rec->normal = set(hit_rec->p.x, hit_rec->p.y, hit_rec->p.z);
 	hit_rec->color = cylinder->color;
 	return (true);
 }
@@ -57,18 +53,18 @@ static bool	intersect_cylinder(t_scene *scene, t_ray *ray, t_hit_record *hit_rec
 			hit_rec->color = divide_color(sum_colors(hit_rec->color, hit_rec2.color), 2);
 			return (true);
 		}
-	cylinder->transform.orientation = mul(cylinder->transform.orientation, -1);
+	cylinder->transform.orientation = mul(cylinder->transform.orientation, -1.0f);
 	if (plane(scene, cylinder, &hit_rec2, t_max))
 		if (hit_rec2.t <= cylinder->height / 2.0f)
 		{
-			cylinder->transform.orientation = mul(cylinder->transform.orientation, -1);
+			cylinder->transform.orientation = mul(cylinder->transform.orientation, -1.0f);
 			hit_rec->t = hit_rec2.t;
 			hit_rec->normal = hit_rec2.normal;
 			hit_rec->p = hit_rec2.p;
 			hit_rec->color = divide_color(sum_colors(hit_rec->color, hit_rec2.color), 2);
 			return (true);
 		}
-	cylinder->transform.orientation = mul(cylinder->transform.orientation, -1);
+	cylinder->transform.orientation = mul(cylinder->transform.orientation, -1.0f);
 	return (false);
 }
 
