@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/21 11:58:52 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/06 14:23:04 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/06 15:41:39 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,30 +37,28 @@ bool	get_hit_color(t_scene *scene, t_hit_record *hit_rec, int x, int y)
 		return (false);
 }
 
-static void	gen_pixel_clr(t_scene *scene, t_ray ray, t_color *hit_color,
-float t)
+static void	gen_pixel_clr(t_scene *scene, t_ray ray, t_hit_record *hit_rec)
 {
 	t_vec3	n;
-	float	shadow_level;
+	float	new_t;
 
-	shadow_level = 0.3f;
-	n = set(ray.origin.x + t * ray.direction.x, ray.origin.y + t
-			* ray.direction.y, ray.origin.z + t * ray.direction.z);
+	n = set(ray.origin.x + hit_rec->t * ray.direction.x, ray.origin.y + hit_rec->t
+			* ray.direction.y, ray.origin.z + hit_rec->t * ray.direction.z);
 	n = normalize(n);
-	t = (0.5f * n.z + shadow_level) * 255.0f;
-	*hit_color = set_color(
-			((float)hit_color->r - t) + ((float)scene->amb_light.color.r
+	new_t = 255.0f - (hit_rec->l_brightness * 255.0f); // (0.5f * n.z + shadow_level) * 255.0f;
+	hit_rec->color = set_color(
+			((float)hit_rec->color.r) + ((float)scene->amb_light.color.r
 				* scene->amb_light.brightness),
-			((float)hit_color->g - t) + ((float)scene->amb_light.color.g
+			((float)hit_rec->color.g) + ((float)scene->amb_light.color.g
 				* scene->amb_light.brightness),
-			((float)hit_color->b - t) + ((float)scene->amb_light.color.b
+			((float)hit_rec->color.b) + ((float)scene->amb_light.color.b
 				* scene->amb_light.brightness));
 }
 
 static float	manage_hit(t_scene *scene, t_ray ray, t_hit_record *hit_rec)
 {
 	hit_rec->hit = true;
-	gen_pixel_clr(scene, ray, &hit_rec->color, hit_rec->t);
+	gen_pixel_clr(scene, ray, hit_rec);
 	return (hit_rec->t);
 }
 

@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/05 11:34:52 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/06 15:13:22 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/06 16:53:43 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,17 +42,16 @@ static void	compute_light(t_scene *scene, t_light *light, t_hit_record *hit_rec)
 	t_vec3	light_n;
 	float	r2;
 	float	l_gain;
-	float	l_brightness;
 
 	light_n = sub(light->transform.position, hit_rec->p);
 	r2 = length_sqrt(light_n);
 	l_gain = dot(normalize(light_n), hit_rec->normal);
 	if (l_gain <= 0.0f)
-		l_brightness = 0;
+		hit_rec->l_brightness = 0.0f;
 	else
-		l_brightness = (light->brightness * l_gain * 2000.0f) / (4.0f * M_PI * r2);
+		hit_rec->l_brightness = (light->brightness * l_gain * 1000.0f) / (4.0f * M_PI * r2);
 	if (!object_in_shadow(*scene, *light, *hit_rec))
-		hit_rec->color = sum_colors(hit_rec->color, mul_color(light->color, l_brightness));
+		hit_rec->color = sum_colors(hit_rec->color, mul_color(light->color, hit_rec->l_brightness));
 }
 
 void	calc_lights(t_scene *scene, t_hit_record *hit_rec)

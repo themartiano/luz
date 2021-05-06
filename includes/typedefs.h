@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/13 08:38:41 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/05 16:08:30 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/06 15:22:45 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -153,6 +153,7 @@ typedef struct s_hit_record
 	t_vec3	normal;
 	bool	hit;
 	t_color	color;
+	float	l_brightness;
 }				t_hit_record;
 
 #endif

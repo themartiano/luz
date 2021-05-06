@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:12:09 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/06 14:24:58 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/06 15:39:29 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,8 @@ static void	init_scene(t_scene *scene)
 	scene->t_max = FLT_MAX;
 	scene->samples = 48;
 	scene->max_bounces = 12;
+	scene->amb_light.color = set_color(0, 0, 0);
+	scene->amb_light.brightness = 0.0f;
 }
 
 int	window_key_callback(int keycode, t_scene *scene)
