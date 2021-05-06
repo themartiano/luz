@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/05 11:34:52 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/05 16:29:08 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/06 12:38:25 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,57 +29,35 @@ void	store_light(t_scene *scene, t_object *object)
 	}
 }
 
-// static float	manage_hit(t_scene *scene, t_ray ray, t_hit_record *hit_rec)
-// {
-// 	hit_rec->hit = true;
-// 	gen_pixel_clr(scene, ray, &hit_rec->color, hit_rec->t);
-// 	return (hit_rec->t);
-// }
-
-// static bool	check_l_ray_hits(t_scene *scene, t_ray ray, t_hit_record *hit_rec)
-// {
-// 	float	closest;
-
-// 	hit_rec->hit = false;
-// 	closest = scene->t_max;
-// 	while (true)
-// 	{
-// 		if (scene->objects != NULL && ((scene->objects->type == 0
-// 					&& hit_sphere(scene, &ray, hit_rec, closest))
-// 				|| (scene->objects->type == 1
-// 					&& hit_plane(scene, &ray, hit_rec, closest))
-// 				|| (scene->objects->type == 3
-// 					&& hit_cylinder(scene, &ray, hit_rec, closest))))
-// 			closest = manage_hit(scene, ray, hit_rec);
-// 		if (scene->objects->next == NULL)
-// 			break ;
-// 		else
-// 			scene->objects = scene->objects->next;
-// 	}
-// 	while (scene->objects->prev != NULL)
-// 		scene->objects = scene->objects->prev;
-// 	return (hit_rec->hit);
-// }
-
-void	average_w_light_clr(t_scene *scene, t_ray *ray, t_hit_record *hit_rec)
+static void	compute_light(t_light *light, t_hit_record *hit_rec)
 {
-	t_light		*light;
-	static bool	calling = false;
-	t_hit_record	new_hr;
+	t_vec3	light_n;
+	float	r2;
+	float	l_gain;
+	float	l_brightness;
 
-	if (calling == false && scene->lights != NULL && scene->lights->type == 5)
+	light_n = sub(light->transform.position, hit_rec->p);
+	r2 = length_sqrt(light_n);
+	l_gain = dot(normalize(light_n), hit_rec->normal);
+	if (l_gain <= 0.0f)
+		l_brightness = 0.0f;
+	else
+		l_brightness = (light->brightness * l_gain * 1000.0f) * (4.0f * M_PI * r2);
+	hit_rec->color = sum_colors(hit_rec->color, mul_color(light->color, l_brightness));
+}
+
+void	calc_lights(t_scene *scene, t_hit_record *hit_rec)
+{
+	t_light	*light;
+
+	while (true)
 	{
-		calling = true;
-		new_hr.color = set_color(255, 255, 255);
 		light = scene->lights->object;
-		if (check_ray_hits(scene, gen_ray(scene, scene->crrnt_pxl,
-				scene->camera.transform.position,
-				scene->camera.transform.orientation),
-			&new_hr))
-		{
-			printf("HIT\n");
-			hit_rec->color = sum_colors(hit_rec->color, mul_color(light->color, light->brightness));
-		}
-		calling = false;
+		compute_light(light, hit_rec);
+		if (scene->lights->next == NULL)
+			break ;
+		scene->lights = scene->lights->next;
 	}
+	while (scene->lights->prev != NULL)
+		scene->lights = scene->lights->prev;
 }
