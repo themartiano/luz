@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/05 11:34:52 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/06 12:42:58 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/06 15:13:22 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,7 +29,15 @@ void	store_light(t_scene *scene, t_object *object)
 	}
 }
 
-static void	compute_light(t_light *light, t_hit_record *hit_rec)
+static bool	object_in_shadow(t_scene scene, t_light light, t_hit_record hit_rec)
+{
+	t_vec3	ray_origin;
+
+	ray_origin = sum(hit_rec.p, scale(hit_rec.normal, scene.t_min));
+	return (check_ray_hits(&scene, gen_ray(&scene, scene.crrnt_pxl, ray_origin, normalize(sub(light.transform.position, ray_origin))), &hit_rec));
+}
+
+static void	compute_light(t_scene *scene, t_light *light, t_hit_record *hit_rec)
 {
 	t_vec3	light_n;
 	float	r2;
@@ -40,24 +48,31 @@ static void	compute_light(t_light *light, t_hit_record *hit_rec)
 	r2 = length_sqrt(light_n);
 	l_gain = dot(normalize(light_n), hit_rec->normal);
 	if (l_gain <= 0.0f)
-		l_brightness = 0.0f;
+		l_brightness = 0;
 	else
-		l_brightness = (light->brightness * l_gain * 1000.0f) / (4.0f * M_PI * r2);
-	hit_rec->color = sum_colors(hit_rec->color, mul_color(light->color, l_brightness));
+		l_brightness = (light->brightness * l_gain * 2000.0f) / (4.0f * M_PI * r2);
+	if (!object_in_shadow(*scene, *light, *hit_rec))
+		hit_rec->color = sum_colors(hit_rec->color, mul_color(light->color, l_brightness));
 }
 
 void	calc_lights(t_scene *scene, t_hit_record *hit_rec)
 {
-	t_light	*light;
+	t_light		*light;
+	static bool	calculating = false;
 
-	while (true)
+	if (calculating == false && scene->lights != NULL)
 	{
-		light = scene->lights->object;
-		compute_light(light, hit_rec);
-		if (scene->lights->next == NULL)
-			break ;
-		scene->lights = scene->lights->next;
+		calculating = true;
+		while (true)
+		{
+			light = scene->lights->object;
+			compute_light(scene, light, hit_rec);
+			if (scene->lights->next == NULL)
+				break ;
+			scene->lights = scene->lights->next;
+		}
+		calculating = false;
+		while (scene->lights->prev != NULL)
+			scene->lights = scene->lights->prev;
 	}
-	while (scene->lights->prev != NULL)
-		scene->lights = scene->lights->prev;
 }
