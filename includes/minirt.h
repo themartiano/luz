@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:16:25 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/06 12:32:47 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/10 10:04:52 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -119,5 +119,8 @@ t_plane		*get_plane(t_scene *scene);
 bool		hit_cylinder(t_scene *scene, t_ray *ray, t_hit_record *hit_rec,
 				float t_max);
 t_cylinder	*get_cylinder(t_scene *scene);
+bool		hit_triangle(t_scene *scene, t_ray *ray, t_hit_record *hit_rec,
+				float t_max);
+t_triangle	*get_triangle(t_scene *scene);
 
 #endif

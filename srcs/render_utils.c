@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/21 11:58:52 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/07 11:17:17 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/10 10:17:09 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -70,19 +70,24 @@ bool	check_ray_hits(t_scene *scene, t_ray ray, t_hit_record *hit_rec)
 	closest = scene->t_max;
 	while (true)
 	{
-		if (scene->objects != NULL && ((scene->objects->type == 0
+		if (scene->objects == NULL)
+			break ;
+		if (((scene->objects->type == 0
 					&& hit_sphere(scene, &ray, hit_rec, closest))
 				|| (scene->objects->type == 1
 					&& hit_plane(scene, &ray, hit_rec, closest))
 				|| (scene->objects->type == 3
-					&& hit_cylinder(scene, &ray, hit_rec, closest))))
+					&& hit_cylinder(scene, &ray, hit_rec, closest))
+				|| (scene->objects->type == 4
+					&& hit_triangle(scene, &ray, hit_rec, 1.0f))))
 			closest = manage_hit(scene, ray, hit_rec);
 		if (scene->objects->next == NULL)
 			break ;
 		else
 			scene->objects = scene->objects->next;
 	}
-	while (scene->objects->prev != NULL)
-		scene->objects = scene->objects->prev;
+	if (scene->objects != NULL)
+		while (scene->objects->prev != NULL)
+			scene->objects = scene->objects->prev;
 	return (hit_rec->hit);
 }

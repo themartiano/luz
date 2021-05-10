@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/12 11:04:06 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/05 12:48:51 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/10 09:45:11 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -122,4 +122,6 @@ void	read_scene(int fd, t_scene *scene)
 			free(values[i++]);
 		free(values);
 	}
+	if (scene->x_res <= 0 || scene->y_res == 0)
+		clean_exit(scene);
 }

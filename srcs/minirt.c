@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   minirt.c                                           :+:      :+:    :+:   */
+/*   miniRT.c                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:12:09 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/07 11:39:44 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/10 09:44:04 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,8 @@ static void	init_scene(t_scene *scene)
 	scene->thread = (pthread_t)NULL;
 	scene->lights = NULL;
 	scene->objects = NULL;
+	scene->x_res = 0;
+	scene->y_res = 0;
 	scene->crrnt_pxl.x = 0;
 	scene->crrnt_pxl.y = 0;
 	scene->t_min = 0.001f;
