@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/13 13:13:02 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/10 10:34:43 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/10 13:06:17 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,7 +69,7 @@ bool	read_sq(char **values, char *line, t_scene *scene)
 			exit_error(scene, "MALLOC failed.");
 		square->transform.position = parse_xyz(values[1]);
 		square->transform.orientation = parse_xyz(values[2]);
-		square->side_size = ft_atoi(values[3]);
+		square->half_side_size = ft_atof(values[3]) / 2.0f;
 		square->color = vec3_to_rgb(parse_xyz(values[4]));
 		object->object = square;
 		object->type = 2;

@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/13 08:38:41 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/06 15:22:45 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/10 13:05:54 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,7 +57,7 @@ typedef struct s_square
 {
 	t_color		color;
 	t_transform	transform;
-	int			side_size;
+	int			half_side_size;
 }				t_square;
 
 typedef struct s_cylinder

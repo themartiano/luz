@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/26 17:14:24 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/29 15:23:53 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/10 15:25:08 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,5 +51,10 @@ float t_max)
 	t_plane	*plane;
 
 	plane = get_plane(scene);
-	return (intersect_plane(plane, ray, hit_rec, t_max, scene->t_min));
+	if (intersect_plane(plane, ray, hit_rec, t_max, scene->t_min))
+	{
+		calc_lights(scene, hit_rec);
+		return (true);
+	}
+	return (false);
 }
