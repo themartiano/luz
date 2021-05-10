@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/10 09:59:05 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/10 10:17:17 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/10 15:25:51 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,13 +34,19 @@ bool	hit_triangle(t_scene *scene, t_ray *ray, t_hit_record *hit_rec, float t_max
 	float c = 1.0f / d;
 	t_vec3 t = sub(ray->origin, triangle->p1);
 	float a = dot(t, p) * c;
-	if (a < 0.0f || a > t_max)
+	if (a < 0.0f || a > 1.0f || fabs(t.z) > t_max)
 		return (false);
 	t = cross(t, v1);
 	float b = dot(ray->direction, t) * c;
-	if (b < 0.0f || a + b > t_max)
+	if (b < 0.0f || a + b > 1.0f)
 		return (false);
 	hit_rec->t = dot(v2, t) * c;
+	hit_rec->p = sum(ray->origin, mul(ray->direction, hit_rec->t));
+	hit_rec->normal.x = (v1.y * v2.z) - (v1.z * v2.y);
+	hit_rec->normal.y = (v1.z * v2.x) - (v1.x * v2.z);
+	hit_rec->normal.z = (v1.x * v2.y) - (v1.y * v2.x);
 	hit_rec->color = divide_color(sum_colors(hit_rec->color, triangle->color), 2);
+	calc_lights(scene, hit_rec);
 	return (true);
+	(void)t_max;
 }
