@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/26 17:14:24 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/10 15:25:08 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/10 16:00:36 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,10 +34,10 @@ bool	intersect_plane(t_plane *plane, t_ray *ray, t_hit_record *hit_rec, float t_
 	{
 		hit_rec->t = t;
 		hit_rec->p = sum(ray->origin, mul(ray->direction, hit_rec->t));
-		if (dot(ray->direction, plane->transform.orientation) > 0)
-			hit_rec->normal = scale(plane->transform.orientation, -1.0f);
+		if (dot(ray->direction, plane->transform.orientation) < 0.0f)
+			hit_rec->normal = scale(normalize(hit_rec->p), -1.0f);
 		else
-			hit_rec->normal = plane->transform.orientation;
+			hit_rec->normal = normalize(hit_rec->p);
 		hit_rec->color = divide_color(
 				sum_colors(hit_rec->color, plane->color), 2);
 		return (true);
