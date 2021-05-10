@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:16:25 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/10 10:38:16 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/10 16:17:39 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -83,7 +83,6 @@ t_vec3		mul(t_vec3 vec, float m);
 t_vec3		set(float x, float y, float z);
 float		length_sqrt(t_vec3 v);
 float		length(t_vec3 v);
-t_vec3		scale(t_vec3 v, float f);
 int			exit_error(t_scene *scene, char *message);
 int			clean_exit(t_scene *scene, int code);
 int			write_bmp(t_scene *scene);

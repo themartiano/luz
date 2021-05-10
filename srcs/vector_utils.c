@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/21 11:08:33 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/29 09:01:33 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/10 16:17:31 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,11 +20,6 @@ t_vec3	set(float x, float y, float z)
 	result.y = y;
 	result.z = z;
 	return (result);
-}
-
-t_vec3	scale(t_vec3 v, float f)
-{
-	return (set(f * v.x, f * v.y, f * v.z));
 }
 
 t_vec3	sum(t_vec3 vec1, t_vec3 vec2)
