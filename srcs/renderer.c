@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/14 11:55:19 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/10 10:33:18 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/10 16:32:14 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,18 +14,14 @@
 
 void	light_bouncer(t_scene *scene, t_vec2 pxl, t_hit_record *hit_rec)
 {
-	t_vec3	tmp_vec3;
 	t_vec3	target;
 	int		bounces;
 
 	bounces = 0;
 	while (bounces < scene->max_bounces)
 	{
-		tmp_vec3 = sum(sum(hit_rec->p, hit_rec->normal), random_in_unit());
-		target = sub(tmp_vec3, hit_rec->p);
-		target.x = 0;
-		target.y = 0;
-		target.z -= 1.0f;
+		target = sub(sum(sum(hit_rec->p, hit_rec->normal), random_in_unit()),
+					hit_rec->p);
 		if (!check_ray_hits(scene, gen_ray(scene, pxl,
 					hit_rec->p, target), hit_rec))
 		{
