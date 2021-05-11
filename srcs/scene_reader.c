@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/12 11:04:06 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/11 15:06:02 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/11 15:25:59 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -63,23 +63,31 @@ static bool	read_a(char **values, char *line, t_scene *scene)
 
 static bool	read_c(char **values, char *line, t_scene *scene)
 {
-	float	theta;
+	t_camera	*camera;
+	t_object	*object;
+	float		theta;
 
 	if (ft_memcmp(line, "c ", 2) == 0)
 	{
-		scene->camera.transform.position = parse_xyz(values[1]);
-		scene->camera.transform.orientation = parse_xyz(values[2]);
-		scene->camera.transform.orientation.y *= -1.0f;
-		if (!is_vec3_in_range(scene->camera.transform.orientation, -1.0f, 1.0f))
+		object = (t_object *)malloc(sizeof(*object));
+		camera = (t_camera *)malloc(sizeof(*camera));
+		if (object == NULL || camera == NULL)
+			exit_error(scene, "MALLOC failed.");
+		camera->transform.position = parse_xyz(values[1]);
+		camera->transform.orientation = parse_xyz(values[2]);
+		camera->transform.orientation.y *= -1.0f;
+		if (!is_vec3_in_range(camera->transform.orientation, -1.0f, 1.0f))
 			exit_error(scene, "Camera orientation out of range [-1.0=>1.0].");
-		scene->camera.fov = ft_atoi(values[3]);
-		if (scene->camera.fov < 0 || scene->camera.fov > 180)
+		camera->fov = ft_atoi(values[3]);
+		if (camera->fov < 0 || camera->fov > 180)
 			exit_error(scene, "Camera FOV out of range [0=>180].");
-		theta = scene->camera.fov * M_PI / 180;
-		scene->camera.half_width = tan(theta / 2);
-		scene->camera.half_height = ((float)scene->y_res
-				/ (float)scene->x_res)
-			* scene->camera.half_width;
+		theta = camera->fov * M_PI / 180;
+		camera->half_width = tan(theta / 2);
+		camera->half_height = ((float)scene->y_res
+				/ (float)scene->x_res) * camera->half_width;
+		object->object = camera;
+		object->type = 6;
+		store_camera(scene, object);
 		return (true);
 	}
 	return (false);

@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:16:25 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/11 15:05:44 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/11 15:27:54 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,9 +58,11 @@
 
 # if OS == 1
 #  define KEY_ESC 53
+#  define KEY_J 106
 #  define DESTROYNOTIFY 17
 # elif OS == 2
 #  define KEY_ESC 65307
+#  define KEY_J 106
 #  define DESTROYNOTIFY 33
 # endif
 
@@ -97,6 +99,7 @@ t_vec3		parse_xyz(char *str);
 void		read_scene(int fd, t_scene *scene);
 void		store_object(t_scene *scene, t_object *object);
 void		store_light(t_scene *scene, t_object *object);
+void		store_camera(t_scene *scene, t_object *object);
 void		verify_values(t_scene *scene, char **input, int start);
 
 // Rendering
@@ -127,5 +130,6 @@ t_triangle	*get_triangle(t_scene *scene);
 bool		hit_square(t_scene *scene, t_ray *ray, t_hit_record *hit_rec,
 				float t_max);
 t_square	*get_square(t_scene *scene);
+t_camera	*get_camera(t_scene *scene);
 
 #endif
