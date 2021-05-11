@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/21 11:08:33 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/10 16:17:31 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/11 13:18:59 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,4 +51,10 @@ t_vec3	normalize(t_vec3 v)
 	v.y /= w;
 	v.z /= w;
 	return (v);
+}
+
+bool	is_vec3_in_range(t_vec3 v, float min, float max)
+{
+	return (v.x >= min && v.x <= max && v.y >= min && v.y <= max
+		&& v.z >= min && v.z <= max);
 }

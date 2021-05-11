@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/28 16:16:46 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/05 13:03:23 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/11 13:19:12 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,4 +56,10 @@ t_color	divide_color(t_color clr, float f)
 	result.g = (float)clr.g / f;
 	result.b = (float)clr.b / f;
 	return (result);
+}
+
+bool	is_color_valid(t_color clr)
+{
+	return (clr.r >= 0 && clr.r <= 255 && clr.g >= 0 && clr.g <= 255
+		&& clr.b >= 0 && clr.b <= 255);
 }

@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/05 11:34:52 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/10 16:52:27 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/11 11:58:59 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,8 +35,7 @@ static bool	object_in_shadow(t_scene scene, t_light light, t_hit_record hit_rec)
 	t_vec3	ray_direction;
 
 	ray_origin = hit_rec.p;
-	ray_direction = sub(sum(hit_rec.p, hit_rec.normal), hit_rec.p);
-	//normalize(sub(light.transform.position, ray_origin)))
+	ray_direction = normalize(sub(light.transform.position, ray_origin));
 	return (check_ray_hits(&scene, gen_ray(&scene, scene.crrnt_pxl, ray_origin, ray_direction), &hit_rec));
 }
 

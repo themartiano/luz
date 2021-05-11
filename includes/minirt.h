@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   miniRT.h                                           :+:      :+:    :+:   */
+/*   minirt.h                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:16:25 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/10 16:17:39 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/11 13:19:30 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -73,10 +73,12 @@ t_color		get_pixel(t_img *img_data, int x, int y);
 float		dot(t_vec3 u, t_vec3 v);
 t_vec3		cross(t_vec3 vec1, t_vec3 vec2);
 t_vec3		normalize(t_vec3 vector);
+bool		is_vec3_in_range(t_vec3 v, float min, float max);
 t_color		set_color(int r, int g, int b);
 t_color		sum_colors(t_color clr1, t_color clr2);
 t_color		mul_color(t_color clr, float m);
 t_color		divide_color(t_color clr, float f);
+bool		is_color_valid(t_color clr);
 t_vec3		sum(t_vec3 vec1, t_vec3 vec2);
 t_vec3		sub(t_vec3 vec1, t_vec3 vec2);
 t_vec3		mul(t_vec3 vec, float m);

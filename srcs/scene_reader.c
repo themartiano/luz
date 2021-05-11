@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/12 11:04:06 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/10 11:13:00 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/11 13:27:12 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,8 +48,13 @@ static bool	read_ra(char **values, char *line, t_scene *scene)
 	}
 	else if (ft_memcmp(line, "A ", 2) == 0)
 	{
-		scene->amb_light.brightness = ft_atof(values[1]) / 6.4f;
+		scene->amb_light.brightness = ft_atof(values[1]);
+		if (scene->amb_light.brightness < 0.0f || scene->amb_light.brightness > 1.0f)
+			exit_error(scene, "Ambient light brightness out of range [0.0=>1.0].");
+		scene->amb_light.brightness /= 6.4f;
 		scene->amb_light.color = vec3_to_rgb(parse_xyz(values[2]));
+		if (!is_color_valid(scene->amb_light.color))
+			exit_error(scene, "Ambient light color out of range [0=>255].");
 		return (true);
 	}
 	return (false);
@@ -63,8 +68,12 @@ static bool	read_c(char **values, char *line, t_scene *scene)
 	{
 		scene->camera.transform.position = parse_xyz(values[1]);
 		scene->camera.transform.orientation = parse_xyz(values[2]);
-		scene->camera.transform.orientation.y *= -1;
+		scene->camera.transform.orientation.y *= -1.0f;
+		if (!is_vec3_in_range(scene->camera.transform.orientation, -1.0f, 1.0f))
+			exit_error(scene, "Camera orientation out of range [-1.0=>1.0].");
 		scene->camera.fov = ft_atoi(values[3]);
+		if (scene->camera.fov < 0 || scene->camera.fov > 180)
+			exit_error(scene, "Camera FOV out of range [0=>180].");
 		theta = scene->camera.fov * M_PI / 180;
 		scene->camera.half_width = tan(theta / 2);
 		scene->camera.half_height = ((float)scene->y_res
@@ -88,7 +97,11 @@ static bool	read_l(char **values, char *line, t_scene *scene)
 			exit_error(scene, "MALLOC failed.");
 		light->transform.position = parse_xyz (values[1]);
 		light->brightness = ft_atof(values[2]);
+		if (light->brightness < 0.0f || light->brightness > 1.0f)
+			exit_error(scene, "Light brightness out of range [0.0=>1.0].");
 		light->color = vec3_to_rgb(parse_xyz(values[3]));
+		if (!is_color_valid(light->color))
+			exit_error(scene, "Light color out of range [0=>255].");
 		object->object = light;
 		object->type = 5;
 		store_light(scene, object);
@@ -122,6 +135,6 @@ void	read_scene(int fd, t_scene *scene)
 			free(values[i++]);
 		free(values);
 	}
-	if (scene->x_res <= 0 || scene->y_res == 0)
+	if (scene->x_res <= 0 || scene->y_res <= 0)
 		clean_exit(scene, 0);
 }
