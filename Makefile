@@ -6,7 +6,7 @@
 #    By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2021/04/08 15:31:37 by ejuliao-          #+#    #+#              #
-#    Updated: 2021/05/10 10:47:41 by ejuliao-         ###   ########.fr        #
+#    Updated: 2021/05/11 14:00:00 by ejuliao-         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -60,12 +60,12 @@ $(NAME):
 	@printf "\e[1;34m\nCompiling miniRT:\e[0m\n\n"
 	gcc $(WWW_FLAGS) $(OPT_FLAGS) $(DEBUG_FLAGS) -pthread $(INCLUDES) $(SRCS) $(GNL_SRCS) $(MLX_FLAGS) $(LIBFT_PATH) -o $(NAME)
 
-	@printf "\e[0;32m\nCompilation done. miniRT ready.\e[0m\n\n"
+	@printf "\e[0;32m\nCompilation done. miniRT ready.\e[0m\n"
 
 all:	$(NAME)
 
 clean:
-	@printf "\e[1;33m\nCleaning:\e[0m\n\n"
+	@printf "\e[1;33m\nCleaning miniRT:\e[0m\n\n"
 	rm -f $(NAME)
 
 fclean:	clean
