@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/05 11:34:52 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/11 11:58:59 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/11 17:23:02 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,12 +31,16 @@ void	store_light(t_scene *scene, t_object *object)
 
 static bool	object_in_shadow(t_scene scene, t_light light, t_hit_record hit_rec)
 {
-	t_vec3	ray_origin;
-	t_vec3	ray_direction;
+	t_ray		ray;
+	t_object	*initial;
 
-	ray_origin = hit_rec.p;
-	ray_direction = normalize(sub(light.transform.position, ray_origin));
-	return (check_ray_hits(&scene, gen_ray(&scene, scene.crrnt_pxl, ray_origin, ray_direction), &hit_rec));
+	initial = scene.objects;
+	while (scene.objects->prev != NULL)
+			scene.objects = scene.objects->prev;
+	ray.origin = sum(hit_rec.p, mul(hit_rec.normal, 0.01f));
+	ray.direction = normalize(sub(light.transform.position, ray.origin));
+	return (check_ray_hits(&scene, ray, &hit_rec));
+	scene.objects = initial;
 }
 
 static void	compute_light(t_scene *scene, t_light *light, t_hit_record *hit_rec)
