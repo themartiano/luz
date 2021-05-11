@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/29 09:01:00 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/29 15:03:55 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/11 13:38:23 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,4 +35,19 @@ t_vec3	mul(t_vec3 vec, float m)
 	result.y = vec.y * m;
 	result.z = vec.z * m;
 	return (result);
+}
+
+t_vec3	random_in_unit(void)
+{
+	t_vec3	rndm;
+
+	while (true)
+	{
+		rndm = set(drand48(), drand48(), drand48());
+		rndm = mul(rndm, 2.0f);
+		rndm = sub(rndm, set(1.0f, 1.0f, 1.0f));
+		if (length_sqrt(rndm) < 1.0f)
+			break ;
+	}
+	return (rndm);
 }

@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/10 14:51:57 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/07 11:32:59 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/11 13:38:32 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,17 +50,19 @@ float	length(t_vec3 v)
 	return (sqrt(length_sqrt(v)));
 }
 
-t_vec3	random_in_unit(void)
+void	store_object(t_scene *scene, t_object *object)
 {
-	t_vec3	rndm;
-
-	while (true)
+	object->next = NULL;
+	object->prev = NULL;
+	if (scene->objects == NULL)
+		scene->objects = object;
+	else
 	{
-		rndm = set(drand48(), drand48(), drand48());
-		rndm = mul(rndm, 2.0f);
-		rndm = sub(rndm, set(1.0f, 1.0f, 1.0f));
-		if (length_sqrt(rndm) < 1.0f)
-			break ;
+		while (scene->objects->next != NULL)
+			scene->objects = scene->objects->next;
+		object->prev = scene->objects;
+		scene->objects->next = object;
+		while (scene->objects->prev != NULL)
+			scene->objects = scene->objects->prev;
 	}
-	return (rndm);
 }
