@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/11 15:18:05 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/11 15:18:59 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/11 16:11:42 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,11 @@ t_camera	*get_camera(t_scene *scene)
 {
 	t_camera	*camera;
 
-	camera = scene->cameras->object;
+	camera = NULL;
+	if (scene->cameras != NULL)
+	{
+		camera = scene->cameras->object;
+	}
 	return (camera);
 }
 

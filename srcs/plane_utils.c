@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/26 17:14:24 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/10 16:17:19 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/11 16:10:07 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,11 @@ t_plane	*get_plane(t_scene *scene)
 {
 	t_plane	*plane;
 
-	plane = scene->objects->object;
+	plane = NULL;
+	if (scene->objects != NULL)
+	{
+		plane = scene->objects->object;
+	}
 	return (plane);
 }
 

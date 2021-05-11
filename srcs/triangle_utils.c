@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/10 09:59:05 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/10 15:25:51 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/11 16:10:57 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,11 @@ t_triangle	*get_triangle(t_scene *scene)
 {
 	t_triangle	*triangle;
 
-	triangle = scene->objects->object;
+	triangle = NULL;
+	if (scene->objects != NULL)
+	{
+		triangle = scene->objects->object;
+	}
 	return (triangle);
 }
 

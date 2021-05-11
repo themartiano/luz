@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/10 10:36:58 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/10 13:10:42 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/11 16:11:18 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,11 @@ t_square	*get_square(t_scene *scene)
 {
 	t_square	*square;
 
-	square = scene->objects->object;
+	square = NULL;
+	if (scene->objects != NULL)
+	{
+		square = scene->objects->object;
+	}
 	return (square);
 }
 

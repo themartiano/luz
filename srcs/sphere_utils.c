@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/21 12:38:12 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/07 11:15:52 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/11 16:08:16 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,11 @@ t_sphere	*get_sphere(t_scene *scene)
 {
 	t_sphere	*sphere;
 
-	sphere = scene->objects->object;
+	sphere = NULL;
+	if (scene->objects != NULL)
+	{
+		sphere = scene->objects->object;
+	}
 	return (sphere);
 }
 

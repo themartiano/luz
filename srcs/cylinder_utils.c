@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/29 09:46:57 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/10 15:22:53 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/11 16:10:33 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,11 @@ t_cylinder	*get_cylinder(t_scene *scene)
 {
 	t_cylinder	*cylinder;
 
-	cylinder = scene->objects->object;
+	cylinder = NULL;
+	if (scene->objects != NULL)
+	{
+		cylinder = scene->objects->object;
+	}
 	return (cylinder);
 }
 
