@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:16:25 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/11 13:19:30 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/11 15:05:44 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -97,6 +97,7 @@ t_vec3		parse_xyz(char *str);
 void		read_scene(int fd, t_scene *scene);
 void		store_object(t_scene *scene, t_object *object);
 void		store_light(t_scene *scene, t_object *object);
+void		verify_values(t_scene *scene, char **input, int start);
 
 // Rendering
 int			render_manager(t_scene *scene);

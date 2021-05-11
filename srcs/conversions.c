@@ -6,11 +6,30 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/13 13:06:23 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/04/28 16:19:13 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/11 15:08:20 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minirt.h"
+
+void	verify_values(t_scene *scene, char **input, int start)
+{
+	int	i;
+	int	j;
+
+	i = start;
+	while (input[i])
+	{
+		j = 0;
+		while (input[i][j])
+		{
+			if (!ft_isdigit(input[i][j]) && !ft_charinset(input[i][j], ".-,"))
+				exit_error(scene, "Invalid characters detected.");
+			j++;
+		}
+		i++;
+	}
+}
 
 t_vec3	parse_xyz(char *str)
 {
@@ -18,9 +37,7 @@ t_vec3	parse_xyz(char *str)
 	char	**input;
 	int		i;
 
-	values.x = 0;
-	values.y = 0;
-	values.z = 0;
+	values = set(0.0f, 0.0f, 0.0f);
 	input = ft_split(str, ',');
 	if (input != NULL)
 	{
