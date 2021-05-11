@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/14 11:55:19 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/11 11:57:51 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/11 16:05:48 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,10 +46,10 @@ t_ray	gen_ray(t_scene *scene, t_vec2 pxl, t_vec3 origin, t_vec3 dir)
 	ray.origin.x = origin.x;
 	ray.origin.y = origin.y;
 	ray.origin.z = origin.z;
-	ray.direction.x = -scene->camera.half_width + dir.x + (pxl.x * u.x
-			* scene->camera.half_width * 2.0f);
-	ray.direction.y = -scene->camera.half_height + dir.y + (pxl.y * v.y
-			* scene->camera.half_height * 2.0f);
+	ray.direction.x = -get_camera(scene)->half_width + dir.x + (pxl.x * u.x
+			* get_camera(scene)->half_width * 2.0f);
+	ray.direction.y = -get_camera(scene)->half_height + dir.y + (pxl.y * v.y
+			* get_camera(scene)->half_height * 2.0f);
 	ray.direction.z = dir.z;
 	ray.direction = normalize(ray.direction);
 	ray.direction.y = -ray.direction.y;
@@ -98,6 +98,7 @@ void	*render(void *vscene)
 			put_pixel(&scene->img, x, y, rgba_to_hex(hit_color));
 			x++;
 		}
+		sleep(0);
 		y++;
 	}
 	printf(COLOR_LIGHT_GREEN "\nRender done!\n\n" COLOR_NC);
@@ -109,10 +110,11 @@ void	*render(void *vscene)
 int	render_manager(t_scene *scene)
 {
 	static pthread_attr_t	thread_attr;
-	static bool				created = false;
+	static t_camera			*camera = NULL;
 
-	if (created == false)
+	if (scene->thread == (pthread_t)NULL && camera != get_camera(scene))
 	{
+		camera = get_camera(scene);
 		printf(COLOR_YELLOW "Starting rendering thread...\n" COLOR_NC);
 		pthread_attr_init(&thread_attr);
 		if (scene->window != NULL)
@@ -126,7 +128,6 @@ int	render_manager(t_scene *scene)
 			pthread_join(scene->thread, NULL);
 			clean_exit(scene, 0);
 		}
-		created = true;
 	}
 	if (scene->mlx != NULL && scene->window != NULL)
 		mlx_put_image_to_window(scene->mlx, scene->window, scene->img.img,

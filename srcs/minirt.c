@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:12:09 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/11 13:36:44 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/11 15:59:13 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,8 +17,9 @@ static void	init_scene(t_scene *scene)
 	scene->mlx = mlx_init();
 	scene->window = NULL;
 	scene->thread = (pthread_t)NULL;
-	scene->lights = NULL;
 	scene->objects = NULL;
+	scene->lights = NULL;
+	scene->cameras = NULL;
 	scene->x_res = 0;
 	scene->y_res = 0;
 	scene->crrnt_pxl.x = 0;
@@ -39,6 +40,22 @@ int	window_key_callback(int keycode, t_scene *scene)
 	{
 		mlx_destroy_window(scene->mlx, scene->window);
 		clean_exit(scene, 0);
+	}
+	if (keycode == KEY_J)
+	{
+		if (scene->cameras != NULL)
+		{
+			if (scene->cameras->next != NULL || scene->cameras->prev != NULL)
+			{
+				printf(COLOR_LIGHT_GRAY"\nChanging camera...\n"COLOR_NC);
+				pthread_cancel(scene->thread);
+				scene->thread = (pthread_t)NULL;
+			}
+			if (scene->cameras->next != NULL)
+				scene->cameras = scene->cameras->next;
+			else if (scene->cameras->prev != NULL)
+				scene->cameras = scene->cameras->prev;
+		}
 	}
 	return (0);
 }
