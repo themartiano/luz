@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/10 09:59:05 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/11 16:10:57 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/11 18:08:56 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,5 +52,4 @@ bool	hit_triangle(t_scene *scene, t_ray *ray, t_hit_record *hit_rec, float t_max
 	hit_rec->color = divide_color(sum_colors(hit_rec->color, triangle->color), 2);
 	calc_lights(scene, hit_rec);
 	return (true);
-	(void)t_max;
 }
