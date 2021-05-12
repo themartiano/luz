@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/29 09:46:57 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/12 16:01:36 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/12 16:40:16 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,21 +37,22 @@ float t_max)
 	if (b == 0.0f || (a < 0.0f && b < 0.0f) || (a > 0.0f && b > 0.0f))
 		return (false);
 	t = -a / b;
-	if (t < scene->t_min || t > t_max)
-		return (false);
-	hit_rec2->t = t;
-	hit_rec2->normal = normalize(set(hit_rec2->p.x, hit_rec2->p.y, hit_rec2->p.z));
-	hit_rec2->color = cylinder->color;
-	return (true);
+	if (t < t_max && t > scene->t_min)
+	{
+		hit_rec2->t = t;
+		hit_rec2->normal = normalize(set(hit_rec2->p.x, hit_rec2->p.y, hit_rec2->p.z));
+		hit_rec2->color = cylinder->color;
+		return (true);
+	}
+	return (false);
 }
 
-static bool	update_hit_record(t_scene *scene, t_hit_record *hit_rec,
-t_hit_record *hit_rec2)
+static bool	update_hit_record(t_hit_record *hit_rec, t_hit_record *hit_rec2)
 {
 	hit_rec->t = hit_rec2->t;
 	hit_rec->p = hit_rec2->p;
 	hit_rec->normal = hit_rec2->normal;
-	set_hit_color(scene, hit_rec, hit_rec2->color);
+	hit_rec->hit_color = hit_rec2->color;
 	return (true);
 }
 
@@ -65,7 +66,7 @@ t_vec3 ray_p, float t_max)
 	hit_rec2.p = ray_p;
 	if (plane(scene, cylinder, &hit_rec2, t_max))
 		if (hit_rec2.t <= cylinder->height / 2.0f)
-			return (update_hit_record(scene, hit_rec, &hit_rec2));
+			return (update_hit_record(hit_rec, &hit_rec2));
 	cylinder->transform.orientation
 		= mul(cylinder->transform.orientation, -1.0f);
 	if (plane(scene, cylinder, &hit_rec2, t_max))
@@ -74,7 +75,7 @@ t_vec3 ray_p, float t_max)
 		{
 			cylinder->transform.orientation
 				= mul(cylinder->transform.orientation, -1.0f);
-			return (update_hit_record(scene, hit_rec, &hit_rec2));
+			return (update_hit_record(hit_rec, &hit_rec2));
 		}
 	}
 	cylinder->transform.orientation

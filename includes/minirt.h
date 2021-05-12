@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:16:25 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/12 16:01:14 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/12 16:39:19 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -111,7 +111,7 @@ bool		check_ray_hits(t_scene *scene, t_ray ray, t_hit_record *hit_rec);
 void		light_bouncer(t_scene *scene, t_vec2 pxl, t_hit_record *hit_rec);
 bool		get_hit_color(t_scene *scene, t_hit_record *hit_rec, int x, int y);
 void		calc_lights(t_scene *scene, t_hit_record *hit_rec);
-void		set_hit_color(t_scene *scene, t_hit_record *hit_rec, t_color color);
+void		set_hit_color(t_scene *scene, t_hit_record *hit_rec);
 
 // Object utils
 bool		hit_sphere(t_scene *scene, t_ray *ray, t_hit_record *hit_rec,
