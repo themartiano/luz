@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/29 09:46:57 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/12 10:08:04 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/12 13:27:07 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -96,10 +96,10 @@ float t_max)
 	cross2 = cross(sub(ray->origin, get_cylinder(scene)->transform.position),
 			get_cylinder(scene)->transform.orientation);
 	tmp = dot(cross1, cross2) * dot(cross1, cross2) - dot(cross1, cross1)
-		* dot(cross2, cross2) - (get_cylinder(scene)->radius
-			* get_cylinder(scene)->radius * dot(
-				get_cylinder(scene)->transform.orientation,
-				get_cylinder(scene)->transform.orientation));
+		* (dot(cross2, cross2) - (get_cylinder(scene)->radius
+				* get_cylinder(scene)->radius
+				* dot(get_cylinder(scene)->transform.orientation,
+					get_cylinder(scene)->transform.orientation)));
 	if (tmp > 0.0f)
 	{
 		d = (-dot(cross1, cross2) - sqrt(tmp)) / dot(cross1, cross1);

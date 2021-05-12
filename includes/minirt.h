@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:16:25 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/12 09:24:08 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/12 10:19:59 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,7 +58,7 @@
 
 # if OS == 1
 #  define KEY_ESC 53
-#  define KEY_J 106
+#  define KEY_J 38
 #  define DESTROYNOTIFY 17
 # elif OS == 2
 #  define KEY_ESC 65307
