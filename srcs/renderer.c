@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/14 11:55:19 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/12 09:17:20 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/12 14:36:25 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -63,10 +63,10 @@ int x, int y)
 	int				s;
 
 	s = 0;
-	*hit_color = set_color(0.0f, 0.0f, 0.0f);
+	*hit_color = set_color(0, 0, 0);
 	while (s < scene->samples)
 	{
-		hit_rec.color = set_color(0.0f, 0.0f, 0.0f);
+		hit_rec.color = set_color(0, 0, 0);
 		hit_rec.l_brightness = 0.0f;
 		get_hit_color(scene, &hit_rec, x, y);
 		*hit_color = set_color(hit_color->r + hit_rec.color.r,

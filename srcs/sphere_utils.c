@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/21 12:38:12 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/11 16:08:16 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/12 16:00:08 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,8 +37,7 @@ float d)
 			(hit_rec->p.y - sphere->transform.position.y)
 			/ sphere->radius, (hit_rec->p.z
 				- sphere->transform.position.z) / sphere->radius);
-	hit_rec->color = divide_color(sum_colors(hit_rec->color, sphere->color), 2);
-	calc_lights(scene, hit_rec);
+		set_hit_color(scene, hit_rec, sphere->color);
 	return (true);
 }
 
@@ -56,7 +55,7 @@ float t_max)
 	b = dot(oc, ray->direction);
 	tmp = b * b - a * (dot(oc, oc) - get_sphere(scene)->radius
 			* get_sphere(scene)->radius);
-	if (tmp > 0)
+	if (tmp > 0.0f)
 	{
 		d = (-b - sqrt(tmp)) / a;
 		if (d < t_max && d > scene->t_min)

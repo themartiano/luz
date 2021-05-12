@@ -6,35 +6,11 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/13 13:06:23 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/12 09:06:48 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/12 15:53:19 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minirt.h"
-
-void	verify_values(t_scene *scene, char **input, int start)
-{
-	int	i;
-	int	j;
-
-	i = -1;
-	while (++i < start)
-	{
-		if (!input[i])
-			break ;
-	}
-	while (input[i])
-	{
-		j = 0;
-		while (input[i][j])
-		{
-			if (!ft_isdigit(input[i][j]) && !ft_charinset(input[i][j], ".-,"))
-				exit_error(scene, "Invalid characters detected.");
-			j++;
-		}
-		i++;
-	}
-}
 
 t_vec3	parse_xyz(char *str)
 {

@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/10 10:36:58 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/12 09:51:02 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/12 16:00:14 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,7 +49,6 @@ float t_max)
 	hit_rec->normal = normalize(hit_rec->p);
 	if (dot(ray->direction, sq->transform.orientation) < 0.0f)
 		hit_rec->normal = mul(normalize(hit_rec->p), -1.0f);
-	hit_rec->color = divide_color(sum_colors(hit_rec->color, sq->color), 2);
-	calc_lights(scene, hit_rec);
+		set_hit_color(scene, hit_rec, sq->color);
 	return (true);
 }

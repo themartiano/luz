@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/26 17:14:24 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/12 09:24:57 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/12 15:59:58 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,10 +24,10 @@ t_plane	*get_plane(t_scene *scene)
 	return (plane);
 }
 
-static bool	intersect_plane(t_scene *scene, t_ray *ray, t_hit_record *hit_rec,
+bool	hit_plane(t_scene *scene, t_ray *ray, t_hit_record *hit_rec,
 float t_max)
 {
-	t_plane	*plane;
+		t_plane	*plane;
 	float	d;
 	float	t;
 
@@ -45,19 +45,7 @@ float t_max)
 			hit_rec->normal = mul(normalize(hit_rec->p), -1.0f);
 		else
 			hit_rec->normal = normalize(hit_rec->p);
-		hit_rec->color = divide_color(
-				sum_colors(hit_rec->color, plane->color), 2);
-		return (true);
-	}
-	return (false);
-}
-
-bool	hit_plane(t_scene *scene, t_ray *ray, t_hit_record *hit_rec,
-float t_max)
-{
-	if (intersect_plane(scene, ray, hit_rec, t_max))
-	{
-		calc_lights(scene, hit_rec);
+		set_hit_color(scene, hit_rec, plane->color);
 		return (true);
 	}
 	return (false);
