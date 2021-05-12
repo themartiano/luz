@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/21 12:38:12 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/12 16:00:08 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/12 16:35:32 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,7 +37,7 @@ float d)
 			(hit_rec->p.y - sphere->transform.position.y)
 			/ sphere->radius, (hit_rec->p.z
 				- sphere->transform.position.z) / sphere->radius);
-		set_hit_color(scene, hit_rec, sphere->color);
+	hit_rec->hit_color = sphere->color;
 	return (true);
 }
 

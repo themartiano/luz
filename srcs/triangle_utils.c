@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/10 09:59:05 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/12 16:00:28 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/12 16:35:49 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,6 +57,6 @@ float t_max)
 		return (false);
 	hit_rec->t = dot(v2, t) * (1.0f / d);
 	update_hit_record(hit_rec, v1, v2, ray);
-		set_hit_color(scene, hit_rec, get_triangle(scene)->color);
+	hit_rec->hit_color = get_triangle(scene)->color;
 	return (true);
 }
