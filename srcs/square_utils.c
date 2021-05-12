@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/10 10:36:58 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/12 09:12:21 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/12 09:51:02 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,31 +27,29 @@ t_square	*get_square(t_scene *scene)
 bool	hit_square(t_scene *scene, t_ray *ray, t_hit_record *hit_rec,
 float t_max)
 {
-	t_square	*square;
+	t_square	*sq;
+	t_vec3		d;
+	float		a;
+	float		b;
+	float		t;
 
-	square = get_square(scene);
-	float a = dot(sub(ray->origin, square->transform.position),
-			square->transform.orientation);
-	float b = dot(ray->direction, square->transform.orientation);
+	sq = get_square(scene);
+	a = dot(sub(ray->origin, sq->transform.position),
+			sq->transform.orientation);
+	b = dot(ray->direction, sq->transform.orientation);
 	if (b == 0.0f || (a < 0.0f && b < 0.0f) || (a > 0.0f && b > 0.0f))
 		return (false);
-	float t = -a / b;
-	t_vec3 d = sub(sum(mul(ray->direction, t), ray->origin),
-			square->transform.position);
-	if (fabs(d.x) > square->half_side_size || fabs(d.y) > square->half_side_size
-		|| fabs(d.z) > square->half_side_size)
+	t = -a / b;
+	d = sub(sum(mul(ray->direction, t), ray->origin), sq->transform.position);
+	if (fabs(d.x) > sq->half_side_size || fabs(d.y) > sq->half_side_size
+		|| fabs(d.z) > sq->half_side_size || t > t_max || t < scene->t_min)
 		return (false);
-	if (t < t_max && t > scene->t_min)
-	{
-		hit_rec->t = t;
-		hit_rec->p = sum(ray->origin, mul(ray->direction, hit_rec->t));
-		if (dot(ray->direction, square->transform.orientation) < 0.0f)
-			hit_rec->normal = mul(normalize(hit_rec->p), -1.0f);
-		else
-			hit_rec->normal = normalize(hit_rec->p);
-		hit_rec->color = divide_color(sum_colors(hit_rec->color, square->color), 2);
-		calc_lights(scene, hit_rec);
-		return (true);
-	}
-	return (false);
+	hit_rec->t = t;
+	hit_rec->p = sum(ray->origin, mul(ray->direction, hit_rec->t));
+	hit_rec->normal = normalize(hit_rec->p);
+	if (dot(ray->direction, sq->transform.orientation) < 0.0f)
+		hit_rec->normal = mul(normalize(hit_rec->p), -1.0f);
+	hit_rec->color = divide_color(sum_colors(hit_rec->color, sq->color), 2);
+	calc_lights(scene, hit_rec);
+	return (true);
 }
