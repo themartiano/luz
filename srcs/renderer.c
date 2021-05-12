@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/14 11:55:19 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/11 16:05:48 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/12 09:17:20 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,7 +21,7 @@ void	light_bouncer(t_scene *scene, t_vec2 pxl, t_hit_record *hit_rec)
 	while (bounces < scene->max_bounces)
 	{
 		target = sub(sum(sum(hit_rec->p, hit_rec->normal), random_in_unit()),
-					hit_rec->p);
+				hit_rec->p);
 		if (!check_ray_hits(scene, gen_ray(scene, pxl,
 					hit_rec->p, target), hit_rec))
 		{
@@ -103,7 +103,7 @@ void	*render(void *vscene)
 	}
 	printf(COLOR_LIGHT_GREEN "\nRender done!\n\n" COLOR_NC);
 	write_bmp(scene);
-	scene->thread = (pthread_t)NULL;
+	scene->thread = (pthread_t) NULL;
 	return (NULL);
 }
 
@@ -112,7 +112,7 @@ int	render_manager(t_scene *scene)
 	static pthread_attr_t	thread_attr;
 	static t_camera			*camera = NULL;
 
-	if (scene->thread == (pthread_t)NULL && camera != get_camera(scene))
+	if (scene->thread == (pthread_t) NULL && camera != get_camera(scene))
 	{
 		camera = get_camera(scene);
 		printf(COLOR_YELLOW "Starting rendering thread...\n" COLOR_NC);

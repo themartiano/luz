@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   minirt.c                                           :+:      :+:    :+:   */
+/*   miniRT.c                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:12:09 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/11 15:59:13 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/12 09:25:17 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,7 @@ static void	init_scene(t_scene *scene)
 {
 	scene->mlx = mlx_init();
 	scene->window = NULL;
-	scene->thread = (pthread_t)NULL;
+	scene->thread = (pthread_t) NULL;
 	scene->objects = NULL;
 	scene->lights = NULL;
 	scene->cameras = NULL;
@@ -49,7 +49,7 @@ int	window_key_callback(int keycode, t_scene *scene)
 			{
 				printf(COLOR_LIGHT_GRAY"\nChanging camera...\n"COLOR_NC);
 				pthread_cancel(scene->thread);
-				scene->thread = (pthread_t)NULL;
+				scene->thread = (pthread_t) NULL;
 			}
 			if (scene->cameras->next != NULL)
 				scene->cameras = scene->cameras->next;

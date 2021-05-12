@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/05 11:34:52 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/11 17:23:02 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/12 09:22:24 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,7 +36,7 @@ static bool	object_in_shadow(t_scene scene, t_light light, t_hit_record hit_rec)
 
 	initial = scene.objects;
 	while (scene.objects->prev != NULL)
-			scene.objects = scene.objects->prev;
+		scene.objects = scene.objects->prev;
 	ray.origin = sum(hit_rec.p, mul(hit_rec.normal, 0.01f));
 	ray.direction = normalize(sub(light.transform.position, ray.origin));
 	return (check_ray_hits(&scene, ray, &hit_rec));
@@ -55,9 +55,11 @@ static void	compute_light(t_scene *scene, t_light *light, t_hit_record *hit_rec)
 	if (l_gain <= 0.0f)
 		hit_rec->l_brightness = 0.0f;
 	else
-		hit_rec->l_brightness = (light->brightness * l_gain * 1000.0f) / (4.0f * M_PI * r2);
+		hit_rec->l_brightness = (light->brightness * l_gain * 1000.0f)
+			/ (4.0f * M_PI * r2);
 	if (!object_in_shadow(*scene, *light, *hit_rec))
-		hit_rec->color = sum_colors(hit_rec->color, mul_color(light->color, hit_rec->l_brightness));
+		hit_rec->color = sum_colors(hit_rec->color, mul_color(light->color,
+					hit_rec->l_brightness));
 }
 
 void	calc_lights(t_scene *scene, t_hit_record *hit_rec)

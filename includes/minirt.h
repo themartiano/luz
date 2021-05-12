@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   minirt.h                                           :+:      :+:    :+:   */
+/*   miniRT.h                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:16:25 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/11 15:27:54 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/12 09:24:08 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -118,8 +118,6 @@ bool		hit_sphere(t_scene *scene, t_ray *ray, t_hit_record *hit_rec,
 t_sphere	*get_sphere(t_scene *scene);
 bool		hit_plane(t_scene *scene, t_ray *ray, t_hit_record *hit_rec,
 				float t_max);
-bool		intersect_plane(t_plane *plane, t_ray *ray, t_hit_record *hit_rec,
-				float t_max, float t_min);
 t_plane		*get_plane(t_scene *scene);
 bool		hit_cylinder(t_scene *scene, t_ray *ray, t_hit_record *hit_rec,
 				float t_max);

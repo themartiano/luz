@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/13 13:06:23 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/11 15:08:20 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/12 09:06:48 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,12 @@ void	verify_values(t_scene *scene, char **input, int start)
 	int	i;
 	int	j;
 
-	i = start;
+	i = -1;
+	while (++i < start)
+	{
+		if (!input[i])
+			break ;
+	}
 	while (input[i])
 	{
 		j = 0;
