@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/29 09:46:57 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/12 16:40:16 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/13 10:41:16 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,7 +40,8 @@ float t_max)
 	if (t < t_max && t > scene->t_min)
 	{
 		hit_rec2->t = t;
-		hit_rec2->normal = normalize(set(hit_rec2->p.x, hit_rec2->p.y, hit_rec2->p.z));
+		hit_rec2->normal = normalize(set(hit_rec2->p.x, hit_rec2->p.y,
+					hit_rec2->p.z));
 		hit_rec2->color = cylinder->color;
 		return (true);
 	}

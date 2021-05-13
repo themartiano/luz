@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/12 15:50:02 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/12 16:39:52 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/13 10:41:24 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@ void	set_hit_color(t_scene *scene, t_hit_record *hit_rec)
 	if (hit_rec->color.r != 0 && hit_rec->color.g != 0 && hit_rec->color.b != 0)
 	{
 		hit_rec->color = divide_color(sum_colors(hit_rec->color,
-			hit_rec->hit_color), 2);
+					hit_rec->hit_color), 2);
 	}
 	else
 		hit_rec->color = hit_rec->hit_color;
