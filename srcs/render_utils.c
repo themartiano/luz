@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/21 11:58:52 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/12 16:42:28 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/13 10:40:25 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,38 +37,47 @@ bool	get_hit_color(t_scene *scene, t_hit_record *hit_rec, int x, int y)
 		return (false);
 }
 
+static bool	check_intersects(t_scene *scene, t_ray ray, t_hit_record *hit_rec,
+float *closest)
+{
+	bool	hit;
+
+	if (scene->objects == NULL)
+		return (false);
+	hit = false;
+	if (scene->objects->type == 0)
+		hit = hit_sphere(scene, &ray, hit_rec, *closest);
+	else if (scene->objects->type == 1)
+		hit = hit_plane(scene, &ray, hit_rec, *closest);
+	else if (scene->objects->type == 2)
+		hit = hit_square(scene, &ray, hit_rec, *closest);
+	else if (scene->objects->type == 3)
+		hit = hit_cylinder(scene, &ray, hit_rec, *closest);
+	else if (scene->objects->type == 4)
+		hit = hit_triangle(scene, &ray, hit_rec, *closest);
+	if (hit == true)
+	{
+		hit_rec->hit = true;
+		*closest = hit_rec->t;
+	}
+	if (scene->objects->next == NULL)
+		return (false);
+	else
+		scene->objects = scene->objects->next;
+	return (true);
+}
+
 bool	check_ray_hits(t_scene *scene, t_ray ray, t_hit_record *hit_rec)
 {
 	float	closest;
-	bool	hit;
 
 	hit_rec->hit = false;
+	hit_rec->hit_color = set_color(0, 0, 0);
 	closest = scene->t_max;
 	while (true)
 	{
-		if (scene->objects == NULL)
+		if (!check_intersects(scene, ray, hit_rec, &closest))
 			break ;
-		hit_rec->hit_color = set_color(0, 0, 0);
-		hit = false;
-		if (scene->objects->type == 0)
-			hit = hit_sphere(scene, &ray, hit_rec, closest);
-		else if (scene->objects->type == 1)
-			hit = hit_plane(scene, &ray, hit_rec, closest);
-		else if (scene->objects->type == 2)
-			hit = hit_square(scene, &ray, hit_rec, closest);
-		else if (scene->objects->type == 3)
-			hit = hit_cylinder(scene, &ray, hit_rec, closest);
-		else if (scene->objects->type == 4)
-			hit = hit_triangle(scene, &ray, hit_rec, closest);
-		if (hit == true)
-		{
-			hit_rec->hit = true;
-			closest = hit_rec->t;
-		}
-		if (scene->objects->next == NULL)
-			break ;
-		else
-			scene->objects = scene->objects->next;
 	}
 	if (hit_rec->hit == true)
 	{
