@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:16:25 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/13 12:01:45 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/13 12:26:04 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,48 +23,23 @@
 # include <math.h>
 # include <stdlib.h>
 # include <pthread.h>
+
 # include "libft.h"
 # include "mlx.h"
 # include "get_next_line.h"
 # include "typedefs.h"
+# include "colors.h"
 
 // Macros
 # define WINDOW_TITLE "ejuliao-'s miniRT"
-
-# define COLOR_NC "\e[0m"
-# define COLOR_BLACK "\e[0;30m"
-# define COLOR_GRAY "\e[1;30m"
-# define COLOR_RED "\e[0;31m"
-# define COLOR_LIGHT_RED "\e[1;31m"
-# define COLOR_GREEN "\e[0;32m"
-# define COLOR_LIGHT_GREEN "\e[1;32m"
-# define COLOR_BROWN "\e[0;33m"
-# define COLOR_YELLOW "\e[1;33m"
-# define COLOR_BLUE "\e[0;34m"
-# define COLOR_LIGHT_BLUE "\e[1;34m"
-# define COLOR_PURPLE "\e[0;35m"
-# define COLOR_LIGHT_PURPLE "\e[1;35m"
-# define COLOR_CYAN "\e[0;36m"
-# define COLOR_LIGHT_CYAN "\e[1;36m"
-# define COLOR_LIGHT_GRAY "\e[0;37m"
-# define COLOR_WHITE "\e[1;37m"
+# define CAMERA_MOVE_STEP 1.0f
+# define CAMERA_ROTATE_STEP 0.02f
 
 # ifndef OS
-#  define OS 1
+#  define OS 1 // MacOS = 1, Linux = 2
 # endif
 
-// MacOS = 1
-// Linux = 2
-
-# if OS == 1
-#  define KEY_ESC 53
-#  define KEY_J 38
-#  define DESTROYNOTIFY 17
-# elif OS == 2
-#  define KEY_ESC 65307
-#  define KEY_J 106
-#  define DESTROYNOTIFY 33
-# endif
+# include "keys.h"
 
 // Utils
 t_color		vec3_to_rgb(t_vec3 xyz);
@@ -94,6 +69,9 @@ bool		save_bmp(bool save);
 char		*bmp_name(char *file);
 char		*get_file_no_ext(const char *path);
 void		print_render_message(t_scene *scene);
+void		change_camera(t_scene *scene);
+void		move_camera(t_scene *scene, int keycode);
+void		rotate_camera(t_scene *scene, int keycode);
 
 // Scene reading
 t_vec3		parse_xyz(char *str);

@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/11 15:18:05 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/12 09:21:26 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/13 12:29:50 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,4 +39,59 @@ void	store_camera(t_scene *scene, t_object *object)
 		while (scene->cameras->prev != NULL)
 			scene->cameras = scene->cameras->prev;
 	}
+}
+
+void	change_camera(t_scene *scene)
+{
+	if (scene->cameras != NULL)
+	{
+		if (scene->cameras->next != NULL || scene->cameras->prev != NULL)
+		{
+			printf(COLOR_LIGHT_GRAY"\nChanging camera...\n"COLOR_NC);
+			pthread_cancel(scene->thread);
+			scene->thread = (pthread_t) NULL;
+		}
+		if (scene->cameras->next != NULL)
+			scene->cameras = scene->cameras->next;
+		else if (scene->cameras->prev != NULL)
+			scene->cameras = scene->cameras->prev;
+	}
+}
+
+void	move_camera(t_scene *scene, int keycode)
+{
+	t_camera	*camera;
+
+	camera = get_camera(scene);
+	if (keycode == KEY_W)
+		camera->transform.position.z -= CAMERA_MOVE_STEP;
+	else if (keycode == KEY_A)
+		camera->transform.position.x -= CAMERA_MOVE_STEP;
+	else if (keycode == KEY_S)
+		camera->transform.position.z += CAMERA_MOVE_STEP;
+	else if (keycode == KEY_D)
+		camera->transform.position.x += CAMERA_MOVE_STEP;
+	else if (keycode == KEY_Q)
+		camera->transform.position.y -= CAMERA_MOVE_STEP;
+	else if (keycode == KEY_E)
+		camera->transform.position.y += CAMERA_MOVE_STEP;
+	pthread_cancel(scene->thread);
+	scene->thread = (pthread_t) NULL;
+}
+
+void	rotate_camera(t_scene *scene, int keycode)
+{
+	t_camera	*camera;
+
+	camera = get_camera(scene);
+	if (keycode == KEY_UP)
+		camera->transform.orientation.z -= CAMERA_ROTATE_STEP;
+	else if (keycode == KEY_LEFT)
+		camera->transform.orientation.x -= CAMERA_ROTATE_STEP;
+	else if (keycode == KEY_DOWN)
+		camera->transform.orientation.z += CAMERA_ROTATE_STEP;
+	else if (keycode == KEY_RIGHT)
+		camera->transform.orientation.x += CAMERA_ROTATE_STEP;
+	pthread_cancel(scene->thread);
+	scene->thread = (pthread_t) NULL;
 }

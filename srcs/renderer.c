@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/14 11:55:19 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/13 12:02:02 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/13 12:23:59 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -110,11 +110,9 @@ void	*render(void *vscene)
 int	render_manager(t_scene *scene)
 {
 	static pthread_attr_t	thread_attr;
-	static t_camera			*camera = NULL;
 
-	if (scene->thread == (pthread_t) NULL && camera != get_camera(scene))
+	if (scene->thread == (pthread_t) NULL)
 	{
-		camera = get_camera(scene);
 		printf(COLOR_YELLOW "Starting rendering thread...\n" COLOR_NC);
 		pthread_attr_init(&thread_attr);
 		if (scene->window != NULL)
