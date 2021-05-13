@@ -6,11 +6,30 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/21 11:58:52 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/13 10:40:25 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/13 12:07:28 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minirt.h"
+
+void	print_render_message(t_scene *scene)
+{
+	char	sample_s;
+	char	bounce_s;
+
+	if (scene->samples != 1)
+		sample_s = 's';
+	else
+		sample_s = '\0';
+	if (scene->max_bounces != 1)
+		bounce_s = 's';
+	else
+		bounce_s = '\0';
+	printf(COLOR_YELLOW "Rendering..." COLOR_YELLOW " (" COLOR_WHITE "%d "
+		COLOR_CYAN "sample%c, " COLOR_WHITE "%d" COLOR_CYAN
+		" max light bounce%c" COLOR_YELLOW ")\n" COLOR_NC, scene->samples,
+		sample_s, scene->max_bounces, bounce_s);
+}
 
 bool	get_hit_color(t_scene *scene, t_hit_record *hit_rec, int x, int y)
 {

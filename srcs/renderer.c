@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/14 11:55:19 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/12 14:36:25 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/13 12:02:02 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -119,9 +119,7 @@ int	render_manager(t_scene *scene)
 		pthread_attr_init(&thread_attr);
 		if (scene->window != NULL)
 			pthread_attr_setdetachstate(&thread_attr, PTHREAD_CREATE_DETACHED);
-		printf(COLOR_YELLOW "Rendering..." COLOR_YELLOW " (" COLOR_WHITE "%d "
-			COLOR_CYAN"samples, "COLOR_WHITE"%d"COLOR_CYAN" max light bounces"
-			COLOR_YELLOW ")\n" COLOR_NC, scene->samples, scene->max_bounces);
+		print_render_message(scene);
 		pthread_create(&scene->thread, &thread_attr, render, scene);
 		if (scene->window == NULL)
 		{

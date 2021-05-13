@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:16:25 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/12 16:39:19 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/13 12:01:45 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -93,6 +93,7 @@ int			write_bmp(t_scene *scene);
 bool		save_bmp(bool save);
 char		*bmp_name(char *file);
 char		*get_file_no_ext(const char *path);
+void		print_render_message(t_scene *scene);
 
 // Scene reading
 t_vec3		parse_xyz(char *str);
