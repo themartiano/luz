@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/13 08:38:41 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/12 16:34:53 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/13 17:36:01 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,22 +50,22 @@ typedef struct s_sphere
 {
 	t_color		color;
 	t_transform	transform;
-	int			radius;
+	float		radius;
 }				t_sphere;
 
 typedef struct s_square
 {
 	t_color		color;
 	t_transform	transform;
-	int			half_side_size;
+	float		half_side_size;
 }				t_square;
 
 typedef struct s_cylinder
 {
 	t_color		color;
 	t_transform	transform;
-	int			radius;
-	int			height;
+	float		radius;
+	float		height;
 }				t_cylinder;
 
 typedef struct s_triangle

@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/10 09:59:05 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/12 16:35:49 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/13 17:29:12 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,23 +24,14 @@ t_triangle	*get_triangle(t_scene *scene)
 	return (triangle);
 }
 
-static void	update_hit_record(t_hit_record *hit_rec, t_vec3 v1, t_vec3 v2,
-t_ray *ray)
-{
-	hit_rec->p = sum(ray->origin, mul(ray->direction, hit_rec->t));
-	hit_rec->normal.x = (v1.y * v2.z) - (v1.z * v2.y);
-	hit_rec->normal.y = (v1.z * v2.x) - (v1.x * v2.z);
-	hit_rec->normal.z = (v1.x * v2.y) - (v1.y * v2.x);
-}
-
 bool	hit_triangle(t_scene *scene, t_ray *ray, t_hit_record *hit_rec,
 float t_max)
 {
-	t_vec3		v1;
-	t_vec3		v2;
-	t_vec3		t;
-	float		d;
-	float		a;
+	t_vec3	v1;
+	t_vec3	v2;
+	t_vec3	t;
+	float	d;
+	float	a;
 
 	v1 = sub(get_triangle(scene)->p2, get_triangle(scene)->p1);
 	v2 = sub(get_triangle(scene)->p3, get_triangle(scene)->p1);
@@ -56,7 +47,11 @@ float t_max)
 		+ (dot(ray->direction, t) * (1.0f / d)) > 1.0f)
 		return (false);
 	hit_rec->t = dot(v2, t) * (1.0f / d);
-	update_hit_record(hit_rec, v1, v2, ray);
+	hit_rec->p = get_triangle(scene)->p1;
+	hit_rec->normal = normalize(hit_rec->p);
+	// hit_rec->normal.x = (v1.y * v2.z) - (v1.z * v2.y);
+	// hit_rec->normal.y = (v1.z * v2.x) - (v1.x * v2.z);
+	// hit_rec->normal.z = (v1.x * v2.y) - (v1.y * v2.x);
 	hit_rec->hit_color = get_triangle(scene)->color;
 	return (true);
 }
