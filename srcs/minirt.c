@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   miniRT.c                                           :+:      :+:    :+:   */
+/*   minirt.c                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:12:09 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/12 09:25:17 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/13 11:46:28 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -75,7 +75,7 @@ static void	start_minirt(t_scene *scene, bool save, bool window, char *file)
 		save_bmp(true);
 		bmp_name(file_no_ext);
 	}
-	if (window == true)
+	if (window == true || save == false)
 	{
 		scene->window = mlx_new_window(scene->mlx, scene->x_res,
 				scene->y_res, WINDOW_TITLE);
@@ -88,27 +88,29 @@ static void	start_minirt(t_scene *scene, bool save, bool window, char *file)
 		render_manager(scene);
 }
 
-static void	read_arguments(t_scene *scene, int argc, char *argv[])
+static void	read_arguments(t_scene *scene, char *argv[], bool *save,
+bool *show_window)
 {
-	int		i;
+	int	i;
 
-	if (argc >= 3)
+	i = 2;
+	while (argv[i])
 	{
-		i = 2;
-		while (argv[i])
+		if (ft_memcmp(argv[i], "-s", 2) == 0)
 		{
-			if (ft_memcmp(argv[i], "-s", 2) == 0)
-			{
-				argv[i] += 2;
-				scene->samples = ft_atoi(argv[i]);
-			}
-			else if (ft_memcmp(argv[i], "-mb", 3) == 0)
-			{
-				argv[i] += 3;
-				scene->max_bounces = ft_atoi(argv[i]);
-			}
-			i++;
+			argv[i] += 2;
+			scene->samples = ft_atoi(argv[i]);
 		}
+		else if (ft_memcmp(argv[i], "-mb", 3) == 0)
+		{
+			argv[i] += 3;
+			scene->max_bounces = ft_atoi(argv[i]);
+		}
+		else if (ft_memcmp(argv[i], "--save", 6) == 0)
+			*save = true;
+		else if (ft_memcmp(argv[i], "--no-window", 11) == 0)
+			*show_window = false;
+		i++;
 	}
 }
 
@@ -123,19 +125,13 @@ int	main(int argc, char *argv[])
 	show_window = true;
 	if (argc <= 1)
 		exit_error(&scene, "Scene not specified.");
-	else if (argc >= 3)
-	{
-		if (ft_memcmp(argv[2], "--save", 6) == 0)
-			save = true;
-		if (argc >= 4 && ft_memcmp(argv[3], "--no-window", 11) == 0)
-			show_window = false;
-	}
 	fd = open(argv[1], O_RDONLY);
 	if (fd == -1)
 		exit_error(&scene, "The specified scene file could not be opened.");
 	init_scene(&scene);
 	read_scene(fd, &scene);
-	read_arguments(&scene, argc, argv);
+	if (argc >= 3)
+		read_arguments(&scene, argv, &save, &show_window);
 	start_minirt(&scene, save, show_window, argv[1]);
 	return (0);
 }

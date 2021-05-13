@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/21 12:38:12 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/12 16:35:32 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/13 11:36:57 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,11 +32,10 @@ float d)
 	sphere = get_sphere(scene);
 	hit_rec->t = d;
 	hit_rec->p = sum(ray->origin, mul(ray->direction, hit_rec->t));
-	hit_rec->normal = set((hit_rec->p.x
-				- sphere->transform.position.x) / sphere->radius,
-			(hit_rec->p.y - sphere->transform.position.y)
-			/ sphere->radius, (hit_rec->p.z
-				- sphere->transform.position.z) / sphere->radius);
+	hit_rec->normal = set(
+			(hit_rec->p.x - sphere->transform.position.x) / sphere->radius,
+			(hit_rec->p.y - sphere->transform.position.y) / sphere->radius,
+			(hit_rec->p.z - sphere->transform.position.z) / sphere->radius);
 	hit_rec->hit_color = sphere->color;
 	return (true);
 }
