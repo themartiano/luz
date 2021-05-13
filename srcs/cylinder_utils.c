@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/29 09:46:57 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/13 10:41:16 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/13 11:35:37 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,7 +24,7 @@ t_cylinder	*get_cylinder(t_scene *scene)
 	return (cylinder);
 }
 
-static bool	plane(t_scene *scene, t_cylinder *cylinder, t_hit_record *hit_rec2,
+static bool	inter(t_scene *scene, t_cylinder *cylinder, t_hit_record *hit_rec2,
 float t_max)
 {
 	float	t;
@@ -40,8 +40,10 @@ float t_max)
 	if (t < t_max && t > scene->t_min)
 	{
 		hit_rec2->t = t;
-		hit_rec2->normal = normalize(set(hit_rec2->p.x, hit_rec2->p.y,
-					hit_rec2->p.z));
+		hit_rec2->normal = set(
+			(hit_rec2->p.x - cylinder->transform.position.x),
+			(hit_rec2->p.y - cylinder->transform.position.y),
+			(hit_rec2->p.z - cylinder->transform.position.z));
 		hit_rec2->color = cylinder->color;
 		return (true);
 	}
@@ -65,12 +67,12 @@ t_vec3 ray_p, float t_max)
 
 	cylinder = get_cylinder(scene);
 	hit_rec2.p = ray_p;
-	if (plane(scene, cylinder, &hit_rec2, t_max))
+	if (inter(scene, cylinder, &hit_rec2, t_max))
 		if (hit_rec2.t <= cylinder->height / 2.0f)
 			return (update_hit_record(hit_rec, &hit_rec2));
 	cylinder->transform.orientation
 		= mul(cylinder->transform.orientation, -1.0f);
-	if (plane(scene, cylinder, &hit_rec2, t_max))
+	if (inter(scene, cylinder, &hit_rec2, t_max))
 	{
 		if (hit_rec2.t <= cylinder->height / 2.0f)
 		{
