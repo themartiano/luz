@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:12:09 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/13 11:46:28 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/13 12:28:23 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,22 +41,14 @@ int	window_key_callback(int keycode, t_scene *scene)
 		mlx_destroy_window(scene->mlx, scene->window);
 		clean_exit(scene, 0);
 	}
-	if (keycode == KEY_J)
-	{
-		if (scene->cameras != NULL)
-		{
-			if (scene->cameras->next != NULL || scene->cameras->prev != NULL)
-			{
-				printf(COLOR_LIGHT_GRAY"\nChanging camera...\n"COLOR_NC);
-				pthread_cancel(scene->thread);
-				scene->thread = (pthread_t) NULL;
-			}
-			if (scene->cameras->next != NULL)
-				scene->cameras = scene->cameras->next;
-			else if (scene->cameras->prev != NULL)
-				scene->cameras = scene->cameras->prev;
-		}
-	}
+	else if (keycode == KEY_J)
+		change_camera(scene);
+	else if (keycode == KEY_W || keycode == KEY_A || keycode == KEY_S
+		|| keycode == KEY_D || keycode == KEY_Q || keycode == KEY_E)
+		move_camera(scene, keycode);
+	else if (keycode == KEY_UP || keycode == KEY_LEFT || keycode == KEY_DOWN
+		|| keycode == KEY_RIGHT)
+		rotate_camera(scene, keycode);
 	return (0);
 }
 
