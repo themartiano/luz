@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/13 12:13:55 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/13 12:28:08 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/13 13:34:06 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,7 +32,7 @@
 #  define DESTROYNOTIFY 33
 
 #  define KEY_ESC 65307
-#  define KEY_J 38
+#  define KEY_J 106
 #  define KEY_W 119
 #  define KEY_A 97
 #  define KEY_S 115
