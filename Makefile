@@ -6,7 +6,7 @@
 #    By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2021/04/08 15:31:37 by ejuliao-          #+#    #+#              #
-#    Updated: 2021/05/14 15:18:57 by ejuliao-         ###   ########.fr        #
+#    Updated: 2021/05/14 18:22:54 by ejuliao-         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -78,4 +78,4 @@ fclean:	clean
 
 re:	clean all
 
-.PHONY: re fclean clean all
+.PHONY: re fclean clean bonus all

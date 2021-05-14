@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:12:09 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/14 18:00:34 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/14 18:36:25 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,8 +34,7 @@ static void	init_scene(t_scene *scene)
 
 int	window_key_callback(int keycode, t_scene *scene)
 {
-	printf(COLOR_PURPLE "\nKEY PRESSED: " COLOR_WHITE "%d\n" COLOR_NC,
-		keycode);
+	//printf(COLOR_PURPLE "\nKEY PRESSED: " COLOR_WHITE "%d\n" COLOR_NC, keycode);
 	if (keycode == KEY_ESC)
 	{
 		mlx_destroy_window(scene->mlx, scene->window);

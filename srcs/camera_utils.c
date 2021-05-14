@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/11 15:18:05 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/14 06:39:04 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/14 18:36:47 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,7 +47,7 @@ void	change_camera(t_scene *scene)
 	{
 		if (scene->cameras->next != NULL || scene->cameras->prev != NULL)
 		{
-			printf(COLOR_LIGHT_GRAY"\nChanging camera...\n"COLOR_NC);
+			printf(COLOR_LIGHT_GRAY"\n\nChanging camera...\n"COLOR_NC);
 			clear_rendering_thread(scene);
 		}
 		if (scene->cameras->next != NULL)

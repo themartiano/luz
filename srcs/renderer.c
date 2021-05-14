@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/14 11:55:19 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/14 18:20:26 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/14 18:37:56 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -80,6 +80,7 @@ void	*render(void *vscene)
 {
 	t_scene		*scene;
 	t_color		hit_color;
+	float		percentage;
 	int			x;
 	int			y;
 
@@ -99,9 +100,14 @@ void	*render(void *vscene)
 		}
 		sleep(0);
 		y++;
+		percentage = (float)(y / (scene->y_res / 100.0f));
+		if (percentage > 100) percentage = 100;
+		if (percentage < 0) percentage = 0;
+		printf(COLOR_WHITE "\r[ %.0f%% ]" COLOR_NC, percentage);
+		fflush(stdout);
 	}
 	clock_t after = clock();
-	printf(COLOR_LIGHT_GREEN "\nRender done! " COLOR_LIGHT_BLUE "(Duration: "
+	printf(COLOR_LIGHT_GREEN "\n\nRender done! " COLOR_LIGHT_BLUE "(Duration: "
 		COLOR_WHITE "%.2fs" COLOR_LIGHT_BLUE ")\n\n" COLOR_NC,
 		(double)(after - before) / CLOCKS_PER_SEC);
 	write_bmp(scene);
@@ -125,7 +131,6 @@ int	render_manager(t_scene *scene)
 		}
 	}
 	if (scene->mlx != NULL && scene->window != NULL)
-		mlx_put_image_to_window(scene->mlx, scene->window, scene->img.img,
-			0, 0);
+		mlx_put_image_to_window(scene->mlx, scene->window, scene->img.img, 0, 0);
 	return (0);
 }
