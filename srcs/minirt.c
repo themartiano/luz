@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   minirt.c                                           :+:      :+:    :+:   */
+/*   miniRT.c                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:12:09 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/13 12:28:23 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/14 06:43:23 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,9 +58,8 @@ static void	start_minirt(t_scene *scene, bool save, bool window, char *file)
 
 	scene->img.img = mlx_new_image(scene->mlx, scene->x_res,
 			scene->y_res);
-	scene->img.addr = mlx_get_data_addr(scene->img.img,
-			&scene->img.bits_per_pixel, &scene->img.line_length, &scene->img
-			.endian);
+	scene->img.addr = mlx_get_data_addr(scene->img.img, &scene->img
+			.bits_per_pixel, &scene->img.line_length, &scene->img.endian);
 	if (save == true)
 	{
 		file_no_ext = get_file_no_ext(file);
@@ -74,6 +73,8 @@ static void	start_minirt(t_scene *scene, bool save, bool window, char *file)
 		mlx_hook(scene->window, DESTROYNOTIFY, 0L, clean_exit, scene);
 		mlx_key_hook(scene->window, window_key_callback, scene);
 		mlx_loop_hook(scene->mlx, render_manager, scene);
+		printf(COLOR_YELLOW "Starting rendering thread...\n" COLOR_NC);
+		print_render_message(scene);
 		mlx_loop(scene->mlx);
 	}
 	else

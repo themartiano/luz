@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/11 15:18:05 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/13 12:29:50 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/14 06:39:04 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,8 +48,7 @@ void	change_camera(t_scene *scene)
 		if (scene->cameras->next != NULL || scene->cameras->prev != NULL)
 		{
 			printf(COLOR_LIGHT_GRAY"\nChanging camera...\n"COLOR_NC);
-			pthread_cancel(scene->thread);
-			scene->thread = (pthread_t) NULL;
+			clear_rendering_thread(scene);
 		}
 		if (scene->cameras->next != NULL)
 			scene->cameras = scene->cameras->next;
@@ -75,8 +74,7 @@ void	move_camera(t_scene *scene, int keycode)
 		camera->transform.position.y -= CAMERA_MOVE_STEP;
 	else if (keycode == KEY_E)
 		camera->transform.position.y += CAMERA_MOVE_STEP;
-	pthread_cancel(scene->thread);
-	scene->thread = (pthread_t) NULL;
+	clear_rendering_thread(scene);
 }
 
 void	rotate_camera(t_scene *scene, int keycode)
@@ -92,6 +90,5 @@ void	rotate_camera(t_scene *scene, int keycode)
 		camera->transform.orientation.z += CAMERA_ROTATE_STEP;
 	else if (keycode == KEY_RIGHT)
 		camera->transform.orientation.x += CAMERA_ROTATE_STEP;
-	pthread_cancel(scene->thread);
-	scene->thread = (pthread_t) NULL;
+	clear_rendering_thread(scene);
 }
