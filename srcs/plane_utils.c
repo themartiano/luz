@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/26 17:14:24 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/13 10:41:50 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/14 10:30:13 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,7 +37,7 @@ float t_max)
 		return (false);
 	t = dot(sub(plane->transform.position, ray->origin),
 			plane->transform.orientation) / d;
-	if (t < t_max && t > scene->t_min)
+	if (t < t_max && t > scene->epsilon)
 	{
 		hit_rec->t = t;
 		hit_rec->p = sum(ray->origin, mul(ray->direction, hit_rec->t));

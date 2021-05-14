@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/10 10:36:58 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/14 09:44:20 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/14 10:30:13 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,7 +42,7 @@ float t_max)
 	t = -a / b;
 	d = sub(sum(mul(ray->direction, t), ray->origin), sq->transform.position);
 	if (fabs(d.x) > sq->half_side_size || fabs(d.y) > sq->half_side_size
-		|| fabs(d.z) > sq->half_side_size || t > t_max || t < scene->t_min)
+		|| fabs(d.z) > sq->half_side_size || t > t_max || t < scene->epsilon)
 		return (false);
 	hit_rec->t = t;
 	hit_rec->p = sum(ray->origin, mul(ray->direction, hit_rec->t));

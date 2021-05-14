@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/29 09:46:57 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/13 11:36:34 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/14 10:30:13 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,7 +37,7 @@ float t_max)
 	if (b == 0.0f || (a < 0.0f && b < 0.0f) || (a > 0.0f && b > 0.0f))
 		return (false);
 	t = -a / b;
-	if (t < t_max && t > scene->t_min)
+	if (t < t_max && t > scene->epsilon)
 	{
 		hit_rec2->t = t;
 		hit_rec2->normal = set(
@@ -105,11 +105,11 @@ float t_max)
 	if (tmp > 0.0f)
 	{
 		d = (-dot(cross1, cross2) - sqrt(tmp)) / dot(cross1, cross1);
-		if (d < t_max && d > scene->t_min)
+		if (d < t_max && d > scene->epsilon)
 			return (intersect_cylinder(scene, hit_rec, sum(ray->origin, mul(
 							ray->direction, d)), t_max));
 		d = (-dot(cross1, cross2) + sqrt(tmp)) / dot(cross1, cross1);
-		if (d < t_max && d > scene->t_min)
+		if (d < t_max && d > scene->epsilon)
 			return (intersect_cylinder(scene, hit_rec, sum(ray->origin, mul(
 							ray->direction, d)), t_max));
 	}
