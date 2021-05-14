@@ -6,7 +6,7 @@
 #    By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2021/04/08 15:31:37 by ejuliao-          #+#    #+#              #
-#    Updated: 2021/05/12 15:50:42 by ejuliao-         ###   ########.fr        #
+#    Updated: 2021/05/14 15:18:57 by ejuliao-         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -63,6 +63,8 @@ $(NAME):
 	@printf "\e[0;32m\nCompilation done. miniRT ready.\e[0m\n"
 
 all:	$(NAME)
+
+bonus:	$(NAME)
 
 clean:
 	@printf "\e[1;33m\nCleaning miniRT:\e[0m\n\n"
