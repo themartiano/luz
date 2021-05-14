@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:12:09 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/14 15:05:15 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/14 17:59:24 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,7 +52,7 @@ int	window_key_callback(int keycode, t_scene *scene)
 	return (0);
 }
 
-static void	starepsilonirt(t_scene *scene, bool save, bool window, char *file)
+static void	start_minirt(t_scene *scene, bool save, bool window, char *file)
 {
 	char	*file_no_ext;
 
@@ -127,6 +127,6 @@ int	main(int argc, char *argv[])
 	check_resolution(&scene);
 	if (argc >= 3)
 		read_arguments(&scene, argv, &save, &show_window);
-	starepsilonirt(&scene, save, show_window, argv[1]);
+	start_minirt(&scene, save, show_window, argv[1]);
 	return (0);
 }
