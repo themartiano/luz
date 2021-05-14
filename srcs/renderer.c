@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/14 11:55:19 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/14 06:36:22 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/14 09:35:19 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,9 +43,7 @@ t_ray	gen_ray(t_scene *scene, t_vec2 pxl, t_vec3 origin, t_vec3 dir)
 	w = normalize(sub(origin, dir));
 	u = normalize(cross(view_up, w));
 	v = normalize(cross(w, u));
-	ray.origin.x = origin.x;
-	ray.origin.y = origin.y;
-	ray.origin.z = origin.z;
+	ray.origin = origin;
 	ray.direction.x = -get_camera(scene)->half_width + dir.x + (pxl.x * u.x
 			* get_camera(scene)->half_width * 2.0f);
 	ray.direction.y = -get_camera(scene)->half_height + dir.y + (pxl.y * v.y

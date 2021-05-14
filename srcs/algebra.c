@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/29 09:01:00 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/11 13:38:23 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/14 09:33:37 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,6 +34,16 @@ t_vec3	mul(t_vec3 vec, float m)
 	result.x = vec.x * m;
 	result.y = vec.y * m;
 	result.z = vec.z * m;
+	return (result);
+}
+
+t_vec3	divide(t_vec3 vec, float d)
+{
+	t_vec3	result;
+
+	result.x = vec.x / d;
+	result.y = vec.y / d;
+	result.z = vec.z / d;
 	return (result);
 }
 

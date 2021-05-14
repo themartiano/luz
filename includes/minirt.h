@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:16:25 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/14 06:38:30 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/14 09:33:54 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -72,6 +72,7 @@ void		print_render_message(t_scene *scene);
 void		change_camera(t_scene *scene);
 void		move_camera(t_scene *scene, int keycode);
 void		rotate_camera(t_scene *scene, int keycode);
+t_vec3		divide(t_vec3 vec, float d);
 
 // Scene reading
 t_vec3		parse_xyz(char *str);

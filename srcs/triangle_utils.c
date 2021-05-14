@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/10 09:59:05 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/13 17:29:12 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/14 10:15:24 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,14 +44,14 @@ float t_max)
 		return (false);
 	t = cross(t, v1);
 	if (dot(ray->direction, t) * (1.0f / d) < 0.0f || a
-		+ (dot(ray->direction, t) * (1.0f / d)) > 1.0f)
+		+ ((dot(ray->direction, t) * (1.0f / d))) > 1.0f)
 		return (false);
 	hit_rec->t = dot(v2, t) * (1.0f / d);
-	hit_rec->p = get_triangle(scene)->p1;
-	hit_rec->normal = normalize(hit_rec->p);
-	// hit_rec->normal.x = (v1.y * v2.z) - (v1.z * v2.y);
-	// hit_rec->normal.y = (v1.z * v2.x) - (v1.x * v2.z);
-	// hit_rec->normal.z = (v1.x * v2.y) - (v1.y * v2.x);
+	hit_rec->p = sum(mul(v1, a), mul(v2, dot(ray->direction, t) * (1.0f / d)));
+	hit_rec->normal = cross(v1, v2);
+	//hit_rec->normal = normalize(hit_rec->p);
+	//hit_rec->normal = mul(normalize(hit_rec->normal), -1.0f);
+	//printf("%f, %f, %f\n", hit_rec->normal.x, hit_rec->normal.y, hit_rec->normal.z);
 	hit_rec->hit_color = get_triangle(scene)->color;
 	return (true);
 }
