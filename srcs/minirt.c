@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:12:09 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/14 17:59:24 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/14 18:00:34 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -78,7 +78,11 @@ static void	start_minirt(t_scene *scene, bool save, bool window, char *file)
 		mlx_loop(scene->mlx);
 	}
 	else
+	{
+		printf(COLOR_YELLOW "Starting rendering thread...\n" COLOR_NC);
+		print_render_message(scene);
 		render_manager(scene);
+	}
 }
 
 static void	read_arguments(t_scene *scene, char *argv[], bool *save,
