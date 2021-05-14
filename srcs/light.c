@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/05 11:34:52 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/14 10:30:13 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/14 12:20:19 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,7 +58,7 @@ static void	compute_light(t_scene *scene, t_light *light, t_hit_record *hit_rec)
 			hit_rec->l_brightness = 0.0f;
 		else
 			hit_rec->l_brightness = (light->brightness * l_gain * 1000.0f)
-				/ (4.0f * M_PI * r2);
+				/ (M_PI * r2);
 		hit_rec->color = sum_colors(hit_rec->color, mul_color(light->color,
 					hit_rec->l_brightness));
 	}
