@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/19 10:41:02 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/14 14:29:29 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/14 15:03:08 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -63,21 +63,18 @@ int	clean_exit(t_scene *scene, int code)
 	printf(COLOR_CYAN "\nExiting..." COLOR_NC "\n");
 	if (scene->thread != (pthread_t) NULL)
 		pthread_cancel(scene->thread);
-	if (scene->objects != NULL)
+	while (scene->objects != NULL && scene->objects->prev != NULL)
+		scene->objects = scene->objects->prev;
+	while (scene->objects != NULL && scene->objects->next != NULL)
 	{
-		while (scene->objects->prev != NULL)
-			scene->objects = scene->objects->prev;
-		while (scene->objects != NULL && scene->objects->next != NULL)
-		{
-			if (scene->objects->object != NULL)
-				free(scene->objects->object);
-			if (scene->objects->prev != NULL)
-				free(scene->objects->prev);
-			scene->objects = scene->objects->next;
-		}
-		if (scene->objects->prev != NULL)
+		if (scene->objects != NULL && scene->objects->object != NULL)
+			free(scene->objects->object);
+		if (scene->objects != NULL && scene->objects->prev != NULL)
 			free(scene->objects->prev);
+		scene->objects = scene->objects->next;
 	}
+	if (scene->objects != NULL && scene->objects->prev != NULL)
+		free(scene->objects->prev);
 	clean_cameras(scene);
 	clean_lights(scene);
 	exit(code);
