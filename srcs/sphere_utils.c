@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/21 12:38:12 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/14 09:41:30 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/14 10:30:13 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,10 +57,10 @@ float t_max)
 	if (tmp > 0.0f)
 	{
 		d = (-b - sqrt(tmp)) / a;
-		if (d < t_max && d > scene->t_min)
+		if (d < t_max && d > scene->epsilon)
 			return (update_hit_record(hit_rec, scene, ray, d));
 		d = (-b + sqrt(tmp)) / a;
-		if (d < t_max && d > scene->t_min)
+		if (d < t_max && d > scene->epsilon)
 			return (update_hit_record(hit_rec, scene, ray, d));
 	}
 	return (false);

@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:12:09 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/14 06:43:23 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/14 10:30:49 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,7 +24,7 @@ static void	init_scene(t_scene *scene)
 	scene->y_res = 0;
 	scene->crrnt_pxl.x = 0;
 	scene->crrnt_pxl.y = 0;
-	scene->t_min = 0.001f;
+	scene->epsilon = 0.001f;
 	scene->t_max = FLT_MAX;
 	scene->samples = 48;
 	scene->max_bounces = 12;
@@ -52,7 +52,7 @@ int	window_key_callback(int keycode, t_scene *scene)
 	return (0);
 }
 
-static void	start_minirt(t_scene *scene, bool save, bool window, char *file)
+static void	starepsilonirt(t_scene *scene, bool save, bool window, char *file)
 {
 	char	*file_no_ext;
 
@@ -125,6 +125,6 @@ int	main(int argc, char *argv[])
 	read_scene(fd, &scene);
 	if (argc >= 3)
 		read_arguments(&scene, argv, &save, &show_window);
-	start_minirt(&scene, save, show_window, argv[1]);
+	starepsilonirt(&scene, save, show_window, argv[1]);
 	return (0);
 }

@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/05 11:34:52 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/14 09:54:45 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/14 10:30:13 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,7 +37,7 @@ static bool	object_in_shadow(t_scene scene, t_light light, t_hit_record hit_rec)
 	initial = scene.objects;
 	while (scene.objects->prev != NULL)
 		scene.objects = scene.objects->prev;
-	ray.origin = sum(hit_rec.p, mul(hit_rec.normal, scene.t_min));
+	ray.origin = sum(hit_rec.p, mul(hit_rec.normal, scene.epsilon));
 	ray.direction = normalize(sub(light.transform.position, ray.origin));
 	return (check_ray_hits(&scene, ray, &hit_rec));
 	scene.objects = initial;
