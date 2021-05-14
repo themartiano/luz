@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/13 13:13:02 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/11 15:04:08 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/14 14:58:28 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,6 +25,7 @@ bool	read_sp(char **values, char *line, t_scene *scene)
 			exit_error(scene, "MALLOC failed.");
 		sphere->transform.position = parse_xyz(values[1]);
 		sphere->radius = ft_atof(values[2]) / 2.0f;
+		check_for_integer(scene, values[3]);
 		sphere->color = vec3_to_rgb(parse_xyz(values[3]));
 		if (!is_color_valid(sphere->color))
 			exit_error(scene, "Sphere color out of range [0=>255].");
@@ -51,6 +52,7 @@ bool	read_pl(char **values, char *line, t_scene *scene)
 		plane->transform.orientation = parse_xyz(values[2]);
 		if (!is_vec3_in_range(plane->transform.orientation, -1.0f, 1.0f))
 			exit_error(scene, "Plane orientation out of range [-1.0=>1.0].");
+		check_for_integer(scene, values[3]);
 		plane->color = vec3_to_rgb(parse_xyz(values[3]));
 		if (!is_color_valid(plane->color))
 			exit_error(scene, "Plane color out of range [0=>255].");
@@ -78,6 +80,7 @@ bool	read_sq(char **values, char *line, t_scene *scene)
 		if (!is_vec3_in_range(square->transform.orientation, -1.0f, 1.0f))
 			exit_error(scene, "Square orientation out of range [-1.0=>1.0].");
 		square->half_side_size = ft_atof(values[3]) / 2.0f;
+		check_for_integer(scene, values[4]);
 		square->color = vec3_to_rgb(parse_xyz(values[4]));
 		if (!is_color_valid(square->color))
 			exit_error(scene, "Square color out of range [0=>255].");
@@ -106,6 +109,7 @@ bool	read_cy(char **values, char *line, t_scene *scene)
 			exit_error(scene, "Cylinder orientation out of range [-1.0=>1.0].");
 		cylinder->radius = ft_atof(values[3]) / 2.0f;
 		cylinder->height = ft_atof(values[4]);
+		check_for_integer(scene, values[5]);
 		cylinder->color = vec3_to_rgb(parse_xyz(values[5]));
 		if (!is_color_valid(cylinder->color))
 			exit_error(scene, "Cylinder color out of range [0=>255].");
@@ -131,6 +135,7 @@ bool	read_tr(char **values, char *line, t_scene *scene)
 		triangle->p1 = parse_xyz(values[1]);
 		triangle->p2 = parse_xyz(values[2]);
 		triangle->p3 = parse_xyz(values[3]);
+		check_for_integer(scene, values[4]);
 		triangle->color = vec3_to_rgb(parse_xyz(values[4]));
 		if (!is_color_valid(triangle->color))
 			exit_error(scene, "Triangle color out of range [0=>255].");

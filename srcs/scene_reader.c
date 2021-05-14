@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/12 11:04:06 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/12 09:16:34 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/14 14:57:34 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,8 @@ static bool	read_r(char **values, char *line, t_scene *scene)
 	{
 		if (resltn == true)
 			exit_error(scene, "Multiple resolution entries.");
+		check_for_integer(scene, values[1]);
+		check_for_integer(scene, values[2]);
 		scene->x_res = ft_atoi(values[1]);
 		scene->y_res = ft_atoi(values[2]);
 		mlx_get_screen_size(scene->mlx, &screen_width, &screen_height);
@@ -52,6 +54,7 @@ static bool	read_a(char **values, char *line, t_scene *scene)
 			exit_error(scene,
 				"Ambient light brightness out of range [0.0=>1.0].");
 		scene->amb_light.brightness /= 6.4f;
+		check_for_integer(scene, values[2]);
 		scene->amb_light.color = vec3_to_rgb(parse_xyz(values[2]));
 		if (!is_color_valid(scene->amb_light.color))
 			exit_error(scene, "Ambient light color out of range [0=>255].");
@@ -77,6 +80,7 @@ static bool	read_c(char **values, char *line, t_scene *scene)
 	camera->transform.orientation.y *= -1.0f;
 	if (!is_vec3_in_range(camera->transform.orientation, -1.0f, 1.0f))
 		exit_error(scene, "Camera orientation out of range [-1.0=>1.0].");
+	check_for_integer(scene, values[3]);
 	camera->fov = ft_atoi(values[3]);
 	if (camera->fov < 0 || camera->fov > 180)
 		exit_error(scene, "Camera FOV out of range [0=>180].");
@@ -104,6 +108,7 @@ static bool	read_l(char **values, char *line, t_scene *scene)
 		light->brightness = ft_atof(values[2]);
 		if (light->brightness < 0.0f || light->brightness > 1.0f)
 			exit_error(scene, "Light brightness out of range [0.0=>1.0].");
+		check_for_integer(scene, values[3]);
 		light->color = vec3_to_rgb(parse_xyz(values[3]));
 		if (!is_color_valid(light->color))
 			exit_error(scene, "Light color out of range [0=>255].");

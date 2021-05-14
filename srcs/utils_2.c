@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/12 15:50:02 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/13 10:41:24 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/14 14:54:17 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,5 +52,26 @@ void	verify_values(t_scene *scene, char **input, int start)
 			j++;
 		}
 		i++;
+	}
+}
+
+void	check_for_integer(t_scene *scene, char *str)
+{
+	int	i;
+
+	i = 0;
+	while (str[i])
+	{
+		if (!ft_isdigit(str[i]) && !ft_charinset(str[i], ",-"))
+			exit_error(scene, "Invalid characters detected.");
+		i++;
+	}
+}
+
+void	check_resolution(t_scene *scene)
+{
+	if (scene->x_res <= 0 || scene->y_res <= 0)
+	{
+		exit_error(scene, "Resolution not set.");
 	}
 }
