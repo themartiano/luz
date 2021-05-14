@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:16:25 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/14 09:33:54 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/14 14:52:54 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -81,6 +81,8 @@ void		store_object(t_scene *scene, t_object *object);
 void		store_light(t_scene *scene, t_object *object);
 void		store_camera(t_scene *scene, t_object *object);
 void		verify_values(t_scene *scene, char **input, int start);
+void		check_resolution(t_scene *scene);
+void		check_for_integer(t_scene *scene, char *str);
 
 // Rendering
 int			render_manager(t_scene *scene);

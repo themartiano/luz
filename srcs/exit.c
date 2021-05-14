@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/19 10:41:02 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/13 11:27:47 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/14 14:29:29 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,7 +67,7 @@ int	clean_exit(t_scene *scene, int code)
 	{
 		while (scene->objects->prev != NULL)
 			scene->objects = scene->objects->prev;
-		while (scene->objects->next != NULL)
+		while (scene->objects != NULL && scene->objects->next != NULL)
 		{
 			if (scene->objects->object != NULL)
 				free(scene->objects->object);

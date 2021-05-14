@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:12:09 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/14 10:30:49 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/14 14:44:00 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -121,8 +121,10 @@ int	main(int argc, char *argv[])
 	fd = open(argv[1], O_RDONLY);
 	if (fd == -1)
 		exit_error(&scene, "The specified scene file could not be opened.");
+	printf(COLOR_BLUE "Preparing...\n\n" COLOR_NC);
 	init_scene(&scene);
 	read_scene(fd, &scene);
+	check_resolution(&scene);
 	if (argc >= 3)
 		read_arguments(&scene, argv, &save, &show_window);
 	starepsilonirt(&scene, save, show_window, argv[1]);

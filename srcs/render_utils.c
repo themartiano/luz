@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/21 11:58:52 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/14 06:40:29 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/14 14:32:58 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,10 +60,10 @@ bool	get_hit_color(t_scene *scene, t_hit_record *hit_rec, int x, int y)
 
 	pxl.x = (float)(x + drand48()) / (float)scene->x_res;
 	pxl.y = (float)(y + drand48()) / (float)scene->y_res;
-	if (check_ray_hits(scene, gen_ray(scene, pxl,
+	if (get_camera(scene) != NULL
+				&& check_ray_hits(scene, gen_ray(scene, pxl,
 				get_camera(scene)->transform.position,
-				get_camera(scene)->transform.orientation),
-			hit_rec))
+				get_camera(scene)->transform.orientation), hit_rec))
 	{
 		brightness = (hit_rec->color.r
 				+ hit_rec->color.g
