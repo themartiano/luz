@@ -6,11 +6,32 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/21 11:58:52 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/13 12:07:28 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/14 06:40:29 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minirt.h"
+
+void	clear_rendering_thread(t_scene *scene)
+{
+	int	x;
+	int	y;
+
+	pthread_cancel(scene->thread);
+	scene->thread = (pthread_t) NULL;
+	printf(COLOR_YELLOW "Restarting rendering thread...\n" COLOR_NC);
+	y = 0;
+	while (y < scene->y_res)
+	{
+		x = 0;
+		while (x < scene->x_res)
+		{
+			put_pixel(&scene->img, x, y, 0x00000000);
+			x++;
+		}
+		y++;
+	}
+}
 
 void	print_render_message(t_scene *scene)
 {
