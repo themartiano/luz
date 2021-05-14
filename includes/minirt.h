@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:16:25 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/14 14:52:54 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/14 18:17:18 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,7 @@
 # include <math.h>
 # include <stdlib.h>
 # include <pthread.h>
+# include <time.h>
 
 # include "libft.h"
 # include "mlx.h"

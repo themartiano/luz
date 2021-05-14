@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/14 11:55:19 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/14 09:35:19 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/05/14 18:20:26 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -84,6 +84,7 @@ void	*render(void *vscene)
 	int			y;
 
 	scene = (t_scene *)vscene;
+	clock_t before = clock();
 	y = 0;
 	while (y < scene->y_res)
 	{
@@ -99,7 +100,10 @@ void	*render(void *vscene)
 		sleep(0);
 		y++;
 	}
-	printf(COLOR_LIGHT_GREEN "\nRender done!\n\n" COLOR_NC);
+	clock_t after = clock();
+	printf(COLOR_LIGHT_GREEN "\nRender done! " COLOR_LIGHT_BLUE "(Duration: "
+		COLOR_WHITE "%.2fs" COLOR_LIGHT_BLUE ")\n\n" COLOR_NC,
+		(double)(after - before) / CLOCKS_PER_SEC);
 	write_bmp(scene);
 	return (NULL);
 }
