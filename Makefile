@@ -6,7 +6,7 @@
 #    By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2021/04/08 15:31:37 by ejuliao-          #+#    #+#              #
-#    Updated: 2021/06/17 09:16:11 by ejuliao-         ###   ########.fr        #
+#    Updated: 2021/06/17 09:21:02 by ejuliao-         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -86,5 +86,10 @@ re:
 	@$(MAKE) fclean --no-print-directory
 	@printf "\n"
 	@$(MAKE) all --no-print-directory
+
+debug:
+	@$(MAKE) all DEBUG=1
+	@printf "\n[\e[1;34mStarting $(DEBUGGER)\e[0m]\n\n"
+	$(DEBUGGER) ./$(NAME)
 
 .PHONY: debug re fclean clean bonus all
