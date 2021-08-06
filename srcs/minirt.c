@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   miniRT.c                                           :+:      :+:    :+:   */
+/*   minirt.c                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:12:09 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/14 18:36:25 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/08/06 12:58:10 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,20 +16,21 @@ static void	init_scene(t_scene *scene)
 {
 	scene->mlx = mlx_init();
 	scene->window = NULL;
-	scene->thread = (pthread_t) NULL;
+	scene->threads = NULL;
 	scene->objects = NULL;
 	scene->lights = NULL;
 	scene->cameras = NULL;
 	scene->x_res = 0;
 	scene->y_res = 0;
-	scene->crrnt_pxl.x = 0;
-	scene->crrnt_pxl.y = 0;
+	scene->thread_count = 4;
 	scene->epsilon = 0.001f;
 	scene->t_max = FLT_MAX;
 	scene->samples = 48;
 	scene->max_bounces = 12;
 	scene->amb_light.color = set_color(0, 0, 0);
 	scene->amb_light.brightness = 0.0f;
+	sem_init(&scene->thread_semaphore, 0, 0);
+	pthread_mutex_init(&scene->img_mutex, NULL);
 }
 
 int	window_key_callback(int keycode, t_scene *scene)
@@ -54,7 +55,12 @@ int	window_key_callback(int keycode, t_scene *scene)
 static void	start_minirt(t_scene *scene, bool save, bool window, char *file)
 {
 	char	*file_no_ext;
+	char	thread_s;
 
+	if (scene->thread_count != 1)
+		thread_s = 's';
+	else
+		thread_s = '\0';
 	scene->img.img = mlx_new_image(scene->mlx, scene->x_res,
 			scene->y_res);
 	scene->img.addr = mlx_get_data_addr(scene->img.img, &scene->img
@@ -72,13 +78,13 @@ static void	start_minirt(t_scene *scene, bool save, bool window, char *file)
 		mlx_hook(scene->window, DESTROYNOTIFY, 0L, clean_exit, scene);
 		mlx_key_hook(scene->window, window_key_callback, scene);
 		mlx_loop_hook(scene->mlx, render_manager, scene);
-		printf(COLOR_YELLOW "Starting rendering thread...\n" COLOR_NC);
+		printf(COLOR_YELLOW "Starting rendering thread%c...\n" COLOR_NC, thread_s);
 		print_render_message(scene);
 		mlx_loop(scene->mlx);
 	}
 	else
 	{
-		printf(COLOR_YELLOW "Starting rendering thread...\n" COLOR_NC);
+		printf(COLOR_YELLOW "Starting rendering thread%c...\n" COLOR_NC, thread_s);
 		print_render_message(scene);
 		render_manager(scene);
 	}
@@ -101,6 +107,11 @@ bool *show_window)
 		{
 			argv[i] += 3;
 			scene->max_bounces = ft_atoi(argv[i]);
+		}
+		else if (ft_memcmp(argv[i], "-th", 3) == 0)
+		{
+			argv[i] += 3;
+			scene->thread_count = ft_atoi(argv[i]);
 		}
 		else if (ft_memcmp(argv[i], "--save", 6) == 0)
 			*save = true;

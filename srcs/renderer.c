@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/14 11:55:19 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/08/06 11:20:10 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/08/06 13:10:22 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,19 +51,18 @@ t_ray	gen_ray(t_scene *scene, t_vec2 pxl, t_vec3 origin, t_vec3 dir)
 	return (ray);
 }
 
-static void	render_loop(t_scene *scene, t_color *hit_color,
-int x, int y)
+static void	render_loop(t_scene scene, t_color *hit_color, int x, int y)
 {
 	t_hit_record	hit_rec;
 	int				s;
 
 	s = 0;
 	*hit_color = set_color(0, 0, 0);
-	while (s < scene->samples)
+	while (s < scene.samples)
 	{
 		hit_rec.color = set_color(0, 0, 0);
 		hit_rec.l_brightness = 0.0f;
-		get_hit_color(scene, &hit_rec, x, y);
+		get_hit_color(&scene, &hit_rec, x, y);
 		*hit_color = set_color(hit_color->r + hit_rec.color.r, hit_color->g + hit_rec.color.g, hit_color->b + hit_rec.color.b);
 		s++;
 	}
@@ -81,16 +80,18 @@ void	*render(void *vscene)
 
 	scene = (t_scene *)vscene;
 	clock_t before = clock();
-	y = 0;
-	while (y < scene->y_res)
+	sem_getvalue(&scene->thread_semaphore, &y);
+	sem_post(&scene->thread_semaphore);
+	y *= scene->y_res / scene->thread_count;
+	for (int i = 0; i < scene->y_res / scene->thread_count; i++)
 	{
 		x = 0;
 		while (x < scene->x_res)
 		{
-			scene->crrnt_pxl.x = x;
-			scene->crrnt_pxl.y = y;
-			render_loop(scene, &hit_color, x, y);
+			render_loop(*scene, &hit_color, x, y);
+			pthread_mutex_lock(&scene->img_mutex);
 			put_pixel(&scene->img, x, y, rgba_to_hex(hit_color));
+			pthread_mutex_unlock(&scene->img_mutex);
 			x++;
 		}
 		sleep(0);
@@ -113,16 +114,26 @@ int	render_manager(t_scene *scene)
 {
 	static pthread_attr_t	thread_attr;
 
-	if (scene->thread == (pthread_t) NULL)
+	if (scene->threads == NULL)
 	{
+		scene->threads = malloc((scene->thread_count + 1) * sizeof(pthread_t));
+		if (scene->threads == NULL)
+			exit_error(scene, "MALLOC failed.");
+		scene->threads[scene->thread_count] = (pthread_t) NULL;
 		pthread_attr_init(&thread_attr);
 		if (scene->window != NULL)
 			pthread_attr_setdetachstate(&thread_attr, PTHREAD_CREATE_DETACHED);
-		pthread_create(&scene->thread, &thread_attr, render, scene);
+		for (int i = 0; i < scene->thread_count; i++)
+		{
+			pthread_create(&scene->threads[i], &thread_attr, render, scene);
+		}
 		if (scene->window == NULL)
 		{
-			pthread_join(scene->thread, NULL);
-			clean_exit(scene, 0);
+			for (int i = 0; i < scene->thread_count; i++)
+			{
+				pthread_join(scene->threads[i], NULL);
+				//clean_exit(scene, 0);
+			}
 		}
 	}
 	if (scene->mlx != NULL && scene->window != NULL)

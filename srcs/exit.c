@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/19 10:41:02 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/14 15:03:08 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/08/06 11:21:43 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,8 +61,8 @@ static void	clean_lights(t_scene *scene)
 int	clean_exit(t_scene *scene, int code)
 {
 	printf(COLOR_CYAN "\nExiting..." COLOR_NC "\n");
-	if (scene->thread != (pthread_t) NULL)
-		pthread_cancel(scene->thread);
+	// if (scene->thread != (pthread_t) NULL)
+	// 	pthread_cancel(scene->thread);
 	while (scene->objects != NULL && scene->objects->prev != NULL)
 		scene->objects = scene->objects->prev;
 	while (scene->objects != NULL && scene->objects->next != NULL)
