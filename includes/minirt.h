@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:16:25 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/08/06 12:28:38 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/08/06 19:43:19 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,8 +64,9 @@ t_vec3		mul(t_vec3 vec, float m);
 t_vec3		set(float x, float y, float z);
 float		length_sqrt(t_vec3 v);
 float		length(t_vec3 v);
-int			exit_error(t_scene *scene, char *message);
+void		exit_error(t_scene *scene, char *message);
 int			clean_exit(t_scene *scene, int code);
+void		free_threads(t_scene *scene);
 int			write_bmp(t_scene *scene);
 bool		save_bmp(bool save);
 char		*bmp_name(char *file);
