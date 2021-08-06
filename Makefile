@@ -29,13 +29,15 @@ endif
 ifeq ($(shell uname -s),Linux)
 	DEBUGGER = gdb
 	CURR_MLX = minilibx_linux
-	MLX_FLAGS = -lbsd -Llibraries/$(CURR_MLX) -lmlx -lXext -lX11 -lm -DOS=2
+	MLX_FLAGS = -lbsd -Llibraries/$(CURR_MLX) -lmlx -lXext -lX11 -lm
+	OS = 2
 endif
 ifeq ($(shell uname -s),Darwin)
 	DEBUGGER = lldb
 	CURR_MLX = minilibx_mms
-	MLX_FLAGS = -Ilibraries/$(CURR_MLX) -Llibraries/$(CURR_MLX) -lmlx -DOS=1
+	MLX_FLAGS = -Ilibraries/$(CURR_MLX) -Llibraries/$(CURR_MLX) -lmlx
 	CP_CMD = cp ./libraries/$(CURR_MLX)/libmlx.dylib ./
+	OS = 1
 endif
 #########################################
 
@@ -46,7 +48,7 @@ all:
 
 $(OBJS_DIR)/%.o: $(SRCS_DIR)/%.c
 	$(shell [ ! -d $(@D) ] && mkdir -p $(@D))
-	gcc $(WWW_FLAGS) $(OPT_FLAGS) $(DEBUG_FLAGS) -pthread $(INCLUDES) -c -o $@ $< -Ilibraries/$(CURR_MLX)
+	gcc $(WWW_FLAGS) $(OPT_FLAGS) $(DEBUG_FLAGS) -pthread $(INCLUDES) -DOS=$(OS) -c -o $@ $< -Ilibraries/$(CURR_MLX)
 
 $(NAME):	$(OBJS)
 	@printf "\n[\e[1;34mCompiling libft\e[0m]\n\n"
@@ -58,7 +60,7 @@ $(NAME):	$(OBJS)
 	@$(CP_CMD)
 
 	@printf "\n[\e[1;34mCompiling $(NAME)\e[0m]\n\n"
-	gcc $(WWW_FLAGS) $(OPT_FLAGS) $(DEBUG_FLAGS) -pthread $(INCLUDES) $(OBJS) $(MLX_FLAGS) $(LIBFT_PATH) -o $(NAME)
+	gcc $(WWW_FLAGS) $(OPT_FLAGS) $(DEBUG_FLAGS) -pthread $(INCLUDES) $(OBJS) $(MLX_FLAGS) -DOS=$(OS) $(LIBFT_PATH) -o $(NAME)
 
 	@printf "\n[\e[0;32mCompilation done. $(NAME) ready.\e[0m]\n"
 
