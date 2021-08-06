@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/14 11:55:19 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/14 18:37:56 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/08/06 11:20:10 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,10 +20,9 @@ void	light_bouncer(t_scene *scene, t_vec2 pxl, t_hit_record *hit_rec)
 	bounces = 0;
 	while (bounces < scene->max_bounces)
 	{
-		target = sub(sum(sum(hit_rec->p, hit_rec->normal), random_in_unit()),
-				hit_rec->p);
-		if (!check_ray_hits(scene, gen_ray(scene, pxl,
-					hit_rec->p, target), hit_rec))
+		//target = sub(sum(sum(hit_rec->p, hit_rec->normal), random_in_unit()), hit_rec->p);
+		target = sum(sum(hit_rec->p, hit_rec->normal), random_in_unit());
+		if (!check_ray_hits(scene, gen_ray(scene, pxl, hit_rec->p, target), hit_rec))
 		{
 			break ;
 		}
@@ -44,10 +43,8 @@ t_ray	gen_ray(t_scene *scene, t_vec2 pxl, t_vec3 origin, t_vec3 dir)
 	u = normalize(cross(view_up, w));
 	v = normalize(cross(w, u));
 	ray.origin = origin;
-	ray.direction.x = -get_camera(scene)->half_width + dir.x + (pxl.x * u.x
-			* get_camera(scene)->half_width * 2.0f);
-	ray.direction.y = -get_camera(scene)->half_height + dir.y + (pxl.y * v.y
-			* get_camera(scene)->half_height * 2.0f);
+	ray.direction.x = -get_camera(scene)->half_width + dir.x + (pxl.x * u.x * get_camera(scene)->half_width * 2.0f);
+	ray.direction.y = -get_camera(scene)->half_height + dir.y + (pxl.y * v.y * get_camera(scene)->half_height * 2.0f);
 	ray.direction.z = dir.z;
 	ray.direction = normalize(ray.direction);
 	ray.direction.y = -ray.direction.y;
@@ -67,13 +64,11 @@ int x, int y)
 		hit_rec.color = set_color(0, 0, 0);
 		hit_rec.l_brightness = 0.0f;
 		get_hit_color(scene, &hit_rec, x, y);
-		*hit_color = set_color(hit_color->r + hit_rec.color.r,
-				hit_color->g + hit_rec.color.g, hit_color->b + hit_rec.color.b);
+		*hit_color = set_color(hit_color->r + hit_rec.color.r, hit_color->g + hit_rec.color.g, hit_color->b + hit_rec.color.b);
 		s++;
 	}
 	if (s++ > 0)
-		*hit_color = set_color(hit_color->r / s, hit_color->g / s,
-				hit_color->b / s);
+		*hit_color = set_color(hit_color->r / s, hit_color->g / s, hit_color->b / s);
 }
 
 void	*render(void *vscene)
