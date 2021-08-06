@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/13 08:38:41 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/14 10:30:13 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/08/06 12:17:14 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -123,21 +123,23 @@ typedef struct s_img
 
 typedef struct s_scene
 {
-	void		*mlx;
-	void		*window;
-	t_img		img;
-	pthread_t	thread;
-	int			x_res;
-	int			y_res;
-	float		epsilon;
-	float		t_max;
-	t_vec2		crrnt_pxl;
-	int			samples;
-	int			max_bounces;
-	t_light		amb_light;
-	t_object	*cameras;
-	t_object	*objects;
-	t_object	*lights;
+	void			*mlx;
+	void			*window;
+	t_img			img;
+	pthread_mutex_t	img_mutex;
+	pthread_t		*threads;
+	sem_t			thread_semaphore;
+	int				thread_count;
+	int				x_res;
+	int				y_res;
+	float			epsilon;
+	float			t_max;
+	int				samples;
+	int				max_bounces;
+	t_light			amb_light;
+	t_object		*cameras;
+	t_object		*objects;
+	t_object		*lights;
 }				t_scene;
 
 typedef struct s_ray

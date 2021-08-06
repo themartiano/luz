@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/21 11:58:52 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/14 15:10:35 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/08/06 13:01:05 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,19 +14,24 @@
 
 void	clear_rendering_thread(t_scene *scene)
 {
-	int	x;
-	int	y;
+	char	thread_s;
+	int		x;
+	int		y;
 
-	pthread_cancel(scene->thread);
-	scene->thread = (pthread_t) NULL;
-	printf(COLOR_YELLOW "Restarting rendering thread...\n" COLOR_NC);
+	// pthread_cancel(scene->thread);
+	// scene->thread = (pthread_t) NULL;
+	if (scene->thread_count != 1)
+		thread_s = 's';
+	else
+		thread_s = '\0';
+	printf(COLOR_YELLOW "Restarting rendering thread%c...\n" COLOR_NC, thread_s);
 	y = 0;
 	while (y < scene->y_res)
 	{
 		x = 0;
 		while (x < scene->x_res)
 		{
-			put_pixel(&scene->img, x, y, 0x00000000);
+			//put_pixel(&scene->img, x, y, 0x00000000);
 			x++;
 		}
 		y++;
@@ -37,6 +42,7 @@ void	print_render_message(t_scene *scene)
 {
 	char	sample_s;
 	char	bounce_s;
+	char	thread_s;
 
 	if (scene->samples != 1)
 		sample_s = 's';
@@ -46,10 +52,13 @@ void	print_render_message(t_scene *scene)
 		bounce_s = 's';
 	else
 		bounce_s = '\0';
-	printf(COLOR_YELLOW "Rendering..." COLOR_YELLOW " (" COLOR_WHITE "%d "
-		COLOR_CYAN "sample%c, " COLOR_WHITE "%d" COLOR_CYAN
-		" max light bounce%c" COLOR_YELLOW ")\n" COLOR_NC, scene->samples,
-		sample_s, scene->max_bounces, bounce_s);
+	if (scene->thread_count != 1)
+		thread_s = 's';
+	else
+		thread_s = '\0';
+	printf(COLOR_YELLOW "Rendering..." COLOR_YELLOW
+		" (" COLOR_WHITE "%d " COLOR_CYAN "thread%c, " COLOR_WHITE "%d " COLOR_CYAN "sample%c, " COLOR_WHITE "%d" COLOR_CYAN " max light bounce%c" COLOR_YELLOW ")\n" COLOR_NC,
+		scene->thread_count, thread_s, scene->samples, sample_s, scene->max_bounces, bounce_s);
 }
 
 bool	get_hit_color(t_scene *scene, t_hit_record *hit_rec, int x, int y)
@@ -77,8 +86,7 @@ bool	get_hit_color(t_scene *scene, t_hit_record *hit_rec, int x, int y)
 		return (false);
 }
 
-static bool	check_intersects(t_scene *scene, t_ray ray, t_hit_record *hit_rec,
-float *closest)
+static bool	check_intersects(t_scene *scene, t_ray ray, t_hit_record *hit_rec, float *closest)
 {
 	bool	hit;
 
