@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/13 08:38:41 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/08/06 12:17:14 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/08/06 19:36:45 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -140,6 +140,7 @@ typedef struct s_scene
 	t_object		*cameras;
 	t_object		*objects;
 	t_object		*lights;
+	bool			should_calculate_light;
 }				t_scene;
 
 typedef struct s_ray

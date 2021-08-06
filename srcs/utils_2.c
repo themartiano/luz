@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/12 15:50:02 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/14 14:54:17 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/08/06 19:36:19 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,7 +28,8 @@ void	set_hit_color(t_scene *scene, t_hit_record *hit_rec)
 				* scene->amb_light.brightness),
 			((float)hit_rec->color.b) + ((float)scene->amb_light.color.b
 				* scene->amb_light.brightness));
-	calc_lights(scene, hit_rec);
+	if (scene->should_calculate_light)
+		calc_lights(scene, hit_rec);
 }
 
 void	verify_values(t_scene *scene, char **input, int start)
