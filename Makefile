@@ -1,22 +1,12 @@
-# **************************************************************************** #
-#                                                                              #
-#                                                         :::      ::::::::    #
-#    Makefile                                           :+:      :+:    :+:    #
-#                                                     +:+ +:+         +:+      #
-#    By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+         #
-#                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2021/04/08 15:31:37 by ejuliao-          #+#    #+#              #
-#    Updated: 2021/06/17 09:21:02 by ejuliao-         ###   ########.fr        #
-#                                                                              #
-# **************************************************************************** #
-
-NAME = miniRT
-SRCS =	./srcs/minirt.c ./srcs/utils.c ./srcs/scene_reader.c ./srcs/conversions.c ./srcs/readers.c ./srcs/renderer.c ./srcs/exit.c	\
+NAME := miniRT
+SRCS_DIR := ./srcs
+OBJS_DIR := ./objs
+SRCS :=	./srcs/minirt.c ./srcs/utils.c ./srcs/scene_reader.c ./srcs/conversions.c ./srcs/readers.c ./srcs/renderer.c ./srcs/exit.c	\
 		./srcs/vector_utils.c ./srcs/render_utils.c ./srcs/sphere_utils.c ./srcs/bmp.c ./srcs/plane_utils.c ./srcs/color_utils.c	\
 		./srcs/algebra.c ./srcs/cylinder_utils.c ./srcs/light.c ./srcs/triangle_utils.c ./srcs/square_utils.c ./srcs/camera_utils.c	\
-		./libraries/get_next_line/get_next_line.c ./libraries/get_next_line/get_next_line_utils.c ./srcs/utils_2.c
-OBJS = $(SRCS:.c=.o)
-INCLUDES = -Iincludes -Ilibraries/libft -Ilibraries/get_next_line
+		./srcs/get_next_line.c ./srcs/get_next_line_utils.c ./srcs/utils_2.c
+OBJS := $(patsubst $(SRCS_DIR)/%.c,$(OBJS_DIR)/%.o,$(SRCS))
+INCLUDES = -Iincludes -Ilibraries/libft
 LIBFT_PATH = ./libraries/libft/libft.a
 WWW_FLAGS = -Wall -Wextra -Werror
 OPT_FLAGS = -O3
@@ -32,7 +22,7 @@ ifeq ($(DEBUG),1)
 endif
 
 ifeq ($(SANITIZER),1)
-	DEBUG_FLAGS = -fsanitize=address -g
+	DEBUG_FLAGS = -g -fsanitize=address
 	OPT_FLAGS =
 endif
 
@@ -49,11 +39,13 @@ ifeq ($(shell uname -s),Darwin)
 endif
 #########################################
 
+.PHONY: all
 all:
 	@printf "[\e[1;34mPreparing objects\e[0m]\n\n"
 	@$(MAKE) $(NAME) --no-print-directory
 
-%.o: %.c
+$(OBJS_DIR)/%.o: $(SRCS_DIR)/%.c
+	$(shell [ ! -d $(@D) ] && mkdir -p $(@D))
 	gcc $(WWW_FLAGS) $(OPT_FLAGS) $(DEBUG_FLAGS) -pthread $(INCLUDES) -c -o $@ $< -Ilibraries/$(CURR_MLX)
 
 $(NAME):	$(OBJS)
@@ -70,26 +62,27 @@ $(NAME):	$(OBJS)
 
 	@printf "\n[\e[0;32mCompilation done. $(NAME) ready.\e[0m]\n"
 
-bonus:	all
-
+.PHONY: clean
 clean:
 	@printf "[\e[1;33mCleaning\e[0m]\n\n"
-	rm -f $(NAME)
-
-fclean:	clean
-	rm -f $(OBJS)
+	$(shell rm -f $(OBJS))
 	@$(MAKE) fclean -C ./libraries/libft
 	@$(MAKE) clean -C ./libraries/$(CURR_MLX)
 	rm -f ./libmlx.dylib
+	@$(shell if [[ "$(shell test -d $(OBJS_DIR) && find $(OBJS_DIR) -type f | wc -l)" -eq 0 ]]; then rm -rf $(OBJS_DIR); fi;)
 
+.PHONY: fclean
+fclean:	clean
+	rm -f $(NAME)
+
+.PHONY: re
 re:
 	@$(MAKE) fclean --no-print-directory
 	@printf "\n"
 	@$(MAKE) all --no-print-directory
 
+.PHONY: debug
 debug:
-	@$(MAKE) all DEBUG=1
+	@$(MAKE) all DEBUG=1 --no-print-directory
 	@printf "\n[\e[1;34mStarting $(DEBUGGER)\e[0m]\n\n"
 	$(DEBUGGER) ./$(NAME)
-
-.PHONY: debug re fclean clean bonus all
