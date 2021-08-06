@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:12:09 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/08/06 12:58:10 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/08/06 19:36:56 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,7 @@ static void	init_scene(t_scene *scene)
 	scene->objects = NULL;
 	scene->lights = NULL;
 	scene->cameras = NULL;
+	scene->should_calculate_light = true;
 	scene->x_res = 0;
 	scene->y_res = 0;
 	scene->thread_count = 4;
