@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/14 11:55:19 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/08/06 21:12:16 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/08/09 15:59:43 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -137,10 +137,10 @@ void	*render(void *vscene)
 
 	thread_nbr++;
 	int grid_size = sqrt(scene->thread_count);
-	int grid_row = ceilf((float)thread_nbr / (float)grid_size);
+	int grid_row = ceilf((float)thread_nbr / (float)grid_size) - 1.0f;
 	y = grid_row * (scene->y_res / grid_size);
-	x = (thread_nbr / 8) * (scene->x_res / grid_size);
-
+	x = (thread_nbr - 1 - (grid_size * grid_row)) * (scene->x_res / grid_size);
+	printf("thread #%d - row %d, x: %d, y: %d\n", thread_nbr, grid_row, x, y);
 
 	// 64 threads resultam em um grid 8x8.
 	// a primeira thread esta em y0 x0, a oitava em y0 xN e a nona em yN x0
@@ -159,28 +159,31 @@ void	*render(void *vscene)
 
 
 
-	if (thread_nbr + 1 <= scene->thread_count / 2)
+	// if (thread_nbr + 1 <= scene->thread_count / 2)
+	// {
+	// 	y = thread_nbr * (scene->y_res / (scene->thread_count / 2));
+	// 	x = 0;
+	// }
+	// else
+	// {
+	// 	y = (thread_nbr - (scene->thread_count / 2)) * (scene->y_res / (scene->thread_count / 2));
+	// 	x = scene->x_res / 2;
+	// }
+	// printf("thread #%d - y: %d, x: %d\n", thread_nbr, y, x);
+	for (int i = y; i < (scene->y_res / grid_size) + y; i++)
 	{
-		y = thread_nbr * (scene->y_res / (scene->thread_count / 2));
-		x = 0;
-	}
-	else
-	{
-		y = (thread_nbr - (scene->thread_count / 2)) * (scene->y_res / (scene->thread_count / 2));
-		x = scene->x_res / 2;
-	}
-	printf("thread #%d - y: %d, x: %d\n", thread_nbr, y, x);
-	for (int i = 0; i < scene->y_res / (scene->thread_count / 2); i++)
-	{
-		for (int j = x; j < (scene->x_res / 2) + x; j++)
+		for (int j = x; j < (scene->x_res / grid_size) + x; j++)
 		{
-			render_loop(*scene, &hit_color, j, y);
-			pthread_mutex_lock(&scene->img_mutex);
-			put_pixel(&scene->img, j, y, rgba_to_hex(hit_color));
-			pthread_mutex_unlock(&scene->img_mutex);
+			if (i >= 0 && i < scene->y_res && j >= 0 && j < scene->x_res)
+			{
+				render_loop(*scene, &hit_color, j, i);
+				pthread_mutex_lock(&scene->img_mutex);
+				put_pixel(&scene->img, j, i, rgba_to_hex(hit_color));
+				pthread_mutex_unlock(&scene->img_mutex);
+			}
 		}
 		sleep(0);
-		y++;
+		// y++;
 		// percentage = (float)(y / (scene->y_res / 100.0f));
 		// if (percentage > 100) percentage = 100;
 		// if (percentage < 0) percentage = 0;
