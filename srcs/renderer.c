@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/14 11:55:19 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/08/09 15:59:43 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/08/09 16:49:03 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -70,59 +70,9 @@ static void	render_loop(t_scene scene, t_color *hit_color, int x, int y)
 		*hit_color = set_color(hit_color->r / s, hit_color->g / s, hit_color->b / s);
 }
 
-// void	*render(void *vscene)
-// {
-// 	t_scene	*scene;
-// 	t_color	hit_color;
-// 	//float	percentage;
-// 	int		thread_nbr;
-// 	int		x;
-// 	int		y;
-
-// 	usleep(100);
-// 	scene = (t_scene *)vscene;
-// 	// clock_t before = clock();
-// 	sem_getvalue(&scene->thread_semaphore, &thread_nbr);
-// 	sem_post(&scene->thread_semaphore);
-// 	if (thread_nbr + 1 <= scene->thread_count / 2)
-// 	{
-// 		y = thread_nbr * (scene->y_res / (scene->thread_count / 2));
-// 		x = 0;
-// 	}
-// 	else
-// 	{
-// 		y = (thread_nbr - (scene->thread_count / 2)) * (scene->y_res / (scene->thread_count / 2));
-// 		x = scene->x_res / 2;
-// 	}
-// 	printf("thread #%d - y: %d, x: %d\n", thread_nbr, y, x);
-// 	for (int i = 0; i < scene->y_res / (scene->thread_count / 2); i++)
-// 	{
-// 		for (int j = x; j < (scene->x_res / 2) + x; j++)
-// 		{
-// 			render_loop(*scene, &hit_color, j, y);
-// 			pthread_mutex_lock(&scene->img_mutex);
-// 			put_pixel(&scene->img, j, y, rgba_to_hex(hit_color));
-// 			pthread_mutex_unlock(&scene->img_mutex);
-// 		}
-// 		sleep(0);
-// 		y++;
-// 		// percentage = (float)(y / (scene->y_res / 100.0f));
-// 		// if (percentage > 100) percentage = 100;
-// 		// if (percentage < 0) percentage = 0;
-// 		// printf(COLOR_WHITE "\r[ %.0f%% ]" COLOR_NC, percentage);
-// 		// fflush(stdout);
-// 	}
-// 	// clock_t after = clock();
-// 	// printf(COLOR_LIGHT_GREEN "\n\nRender done! " COLOR_LIGHT_BLUE "(Duration: "
-// 	// 	COLOR_WHITE "%.2fs" COLOR_LIGHT_BLUE ")\n\n" COLOR_NC,
-// 	// 	(double)(after - before) / CLOCKS_PER_SEC);
-// 	// write_bmp(scene);
-// 	return (NULL);
-// }
-
 void	*render(void *vscene)
 {
-	t_scene	*scene;
+	t_scene	*scene = (t_scene *)vscene;
 	t_color	hit_color;
 	//float	percentage;
 	int		thread_nbr;
@@ -130,60 +80,28 @@ void	*render(void *vscene)
 	int		y;
 
 	usleep(100);
-	scene = (t_scene *)vscene;
 	// clock_t before = clock();
 	sem_getvalue(&scene->thread_semaphore, &thread_nbr);
 	sem_post(&scene->thread_semaphore);
 
 	thread_nbr++;
-	int grid_size = sqrt(scene->thread_count);
+	int grid_size = sqrt(scene->thread_count - 1);
 	int grid_row = ceilf((float)thread_nbr / (float)grid_size) - 1.0f;
 	y = grid_row * (scene->y_res / grid_size);
 	x = (thread_nbr - 1 - (grid_size * grid_row)) * (scene->x_res / grid_size);
-	printf("thread #%d - row %d, x: %d, y: %d\n", thread_nbr, grid_row, x, y);
-
-	// 64 threads resultam em um grid 8x8.
-	// a primeira thread esta em y0 x0, a oitava em y0 xN e a nona em yN x0
-	// cada thread tera sua posicao no grid definida e a posicao yx correspondente sera calculada de acordo com a resolucao
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-	// if (thread_nbr + 1 <= scene->thread_count / 2)
-	// {
-	// 	y = thread_nbr * (scene->y_res / (scene->thread_count / 2));
-	// 	x = 0;
-	// }
-	// else
-	// {
-	// 	y = (thread_nbr - (scene->thread_count / 2)) * (scene->y_res / (scene->thread_count / 2));
-	// 	x = scene->x_res / 2;
-	// }
-	// printf("thread #%d - y: %d, x: %d\n", thread_nbr, y, x);
 	for (int i = y; i < (scene->y_res / grid_size) + y; i++)
 	{
 		for (int j = x; j < (scene->x_res / grid_size) + x; j++)
 		{
-			if (i >= 0 && i < scene->y_res && j >= 0 && j < scene->x_res)
-			{
-				render_loop(*scene, &hit_color, j, i);
-				pthread_mutex_lock(&scene->img_mutex);
-				put_pixel(&scene->img, j, i, rgba_to_hex(hit_color));
-				pthread_mutex_unlock(&scene->img_mutex);
-			}
+			render_loop(*scene, &hit_color, j, i);
+			pthread_mutex_lock(&scene->img_mutex);
+			put_pixel(&scene->img, j, i, rgba_to_hex(hit_color));
+			pthread_mutex_unlock(&scene->img_mutex);
 		}
+		pthread_mutex_lock(&scene->pxl_counter_mutex);
+		scene->rendered_rows += 1;
+		pthread_mutex_unlock(&scene->pxl_counter_mutex);
 		sleep(0);
-		// y++;
 		// percentage = (float)(y / (scene->y_res / 100.0f));
 		// if (percentage > 100) percentage = 100;
 		// if (percentage < 0) percentage = 0;
@@ -210,19 +128,11 @@ int	render_manager(t_scene *scene)
 			exit_error(scene, "MALLOC failed.");
 		scene->threads[scene->thread_count] = (pthread_t) NULL;
 		pthread_attr_init(&thread_attr);
-		if (scene->window != NULL)
-			pthread_attr_setdetachstate(&thread_attr, PTHREAD_CREATE_DETACHED);
-		for (int i = 0; i < scene->thread_count; i++)
+		pthread_attr_setdetachstate(&thread_attr, PTHREAD_CREATE_DETACHED);
+		pthread_create(&scene->threads[0], &thread_attr, output_manager, scene);
+		for (int i = 1; i < scene->thread_count; i++)
 		{
 			pthread_create(&scene->threads[i], &thread_attr, render, scene);
-		}
-		if (scene->window == NULL)
-		{
-			for (int i = 0; i < scene->thread_count; i++)
-			{
-				pthread_join(scene->threads[i], NULL);
-				clean_exit(scene, 0);
-			}
 		}
 	}
 	if (scene->mlx != NULL && scene->window != NULL)

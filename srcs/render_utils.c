@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/21 11:58:52 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/08/06 19:42:56 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/08/09 16:38:03 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,7 @@ void	clear_rendering_thread(t_scene *scene)
 	int		y;
 
 	free_threads(scene);
-	if (scene->thread_count != 1)
+	if (scene->thread_count != 2)
 		thread_s = 's';
 	else
 		thread_s = '\0';
@@ -51,13 +51,13 @@ void	print_render_message(t_scene *scene)
 		bounce_s = 's';
 	else
 		bounce_s = '\0';
-	if (scene->thread_count != 1)
+	if (scene->thread_count != 2)
 		thread_s = 's';
 	else
 		thread_s = '\0';
 	printf(COLOR_YELLOW "Rendering..." COLOR_YELLOW
 		" (" COLOR_WHITE "%d " COLOR_CYAN "thread%c, " COLOR_WHITE "%d " COLOR_CYAN "sample%c, " COLOR_WHITE "%d" COLOR_CYAN " max light bounce%c" COLOR_YELLOW ")\n" COLOR_NC,
-		scene->thread_count, thread_s, scene->samples, sample_s, scene->max_bounces, bounce_s);
+		scene->thread_count - 1, thread_s, scene->samples, sample_s, scene->max_bounces, bounce_s);
 }
 
 bool	get_hit_color(t_scene *scene, t_hit_record *hit_rec, int x, int y)

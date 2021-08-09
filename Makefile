@@ -4,7 +4,7 @@ OBJS_DIR := ./objs
 SRCS :=	./srcs/minirt.c ./srcs/utils.c ./srcs/scene_reader.c ./srcs/conversions.c ./srcs/readers.c ./srcs/renderer.c ./srcs/exit.c	\
 		./srcs/vector_utils.c ./srcs/render_utils.c ./srcs/sphere_utils.c ./srcs/bmp.c ./srcs/plane_utils.c ./srcs/color_utils.c	\
 		./srcs/algebra.c ./srcs/cylinder_utils.c ./srcs/light.c ./srcs/triangle_utils.c ./srcs/square_utils.c ./srcs/camera_utils.c	\
-		./srcs/get_next_line.c ./srcs/get_next_line_utils.c ./srcs/utils_2.c
+		./srcs/get_next_line.c ./srcs/get_next_line_utils.c ./srcs/utils_2.c ./srcs/output.c
 OBJS := $(patsubst $(SRCS_DIR)/%.c,$(OBJS_DIR)/%.o,$(SRCS))
 INCLUDES = -Iincludes -Ilibraries/libft
 LIBFT_PATH = ./libraries/libft/libft.a

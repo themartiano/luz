@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:16:25 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/08/06 19:43:19 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/08/09 17:03:17 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,8 +16,10 @@
 // Includes
 # include <fcntl.h>
 # include <sys/stat.h>
+# include <sys/time.h>
 # include <stdio.h>
 # include <stdbool.h>
+# include <stdint.h>
 # include <float.h>
 # include <unistd.h>
 # include <math.h>
@@ -76,6 +78,7 @@ void		change_camera(t_scene *scene);
 void		move_camera(t_scene *scene, int keycode);
 void		rotate_camera(t_scene *scene, int keycode);
 t_vec3		divide(t_vec3 vec, float d);
+void		*output_manager(void *vscene);
 
 // Scene reading
 t_vec3		parse_xyz(char *str);
