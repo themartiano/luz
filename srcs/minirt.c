@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   minirt.c                                           :+:      :+:    :+:   */
+/*   miniRT.c                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:12:09 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/08/09 16:45:29 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/08/10 09:30:12 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,14 +25,15 @@ static void	init_scene(t_scene *scene)
 	scene->y_res = 0;
 	scene->rendered_rows = 0;
 	scene->thread_count = 5;
+	scene->thread_counter = 0;
 	scene->epsilon = 0.001f;
 	scene->t_max = FLT_MAX;
 	scene->samples = 48;
 	scene->max_bounces = 12;
 	scene->amb_light.color = set_color(0, 0, 0);
 	scene->amb_light.brightness = 0.0f;
-	sem_init(&scene->thread_semaphore, 0, 0);
 	pthread_mutex_init(&scene->img_mutex, NULL);
+	pthread_mutex_init(&scene->thread_counter_mutex, NULL);
 	pthread_mutex_init(&scene->pxl_counter_mutex, NULL);
 }
 

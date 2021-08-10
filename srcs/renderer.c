@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/14 11:55:19 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/08/09 16:49:03 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/08/10 09:33:12 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -74,17 +74,16 @@ void	*render(void *vscene)
 {
 	t_scene	*scene = (t_scene *)vscene;
 	t_color	hit_color;
-	//float	percentage;
 	int		thread_nbr;
 	int		x;
 	int		y;
 
 	usleep(100);
-	// clock_t before = clock();
-	sem_getvalue(&scene->thread_semaphore, &thread_nbr);
-	sem_post(&scene->thread_semaphore);
+	pthread_mutex_lock(&scene->thread_counter_mutex);
+	scene->thread_counter += 1;
+	thread_nbr = scene->thread_counter;
+	pthread_mutex_unlock(&scene->thread_counter_mutex);
 
-	thread_nbr++;
 	int grid_size = sqrt(scene->thread_count - 1);
 	int grid_row = ceilf((float)thread_nbr / (float)grid_size) - 1.0f;
 	y = grid_row * (scene->y_res / grid_size);
@@ -101,18 +100,7 @@ void	*render(void *vscene)
 		pthread_mutex_lock(&scene->pxl_counter_mutex);
 		scene->rendered_rows += 1;
 		pthread_mutex_unlock(&scene->pxl_counter_mutex);
-		sleep(0);
-		// percentage = (float)(y / (scene->y_res / 100.0f));
-		// if (percentage > 100) percentage = 100;
-		// if (percentage < 0) percentage = 0;
-		// printf(COLOR_WHITE "\r[ %.0f%% ]" COLOR_NC, percentage);
-		// fflush(stdout);
 	}
-	// clock_t after = clock();
-	// printf(COLOR_LIGHT_GREEN "\n\nRender done! " COLOR_LIGHT_BLUE "(Duration: "
-	// 	COLOR_WHITE "%.2fs" COLOR_LIGHT_BLUE ")\n\n" COLOR_NC,
-	// 	(double)(after - before) / CLOCKS_PER_SEC);
-	// write_bmp(scene);
 	return (NULL);
 }
 
