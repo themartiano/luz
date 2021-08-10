@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/13 08:38:41 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/08/09 16:45:29 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/08/09 17:11:21 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -133,7 +133,7 @@ typedef struct s_scene
 	int				x_res;
 	int				y_res;
 	int				rendered_rows;
-	pthread_mutex_t	pxl_counter_mutex;
+	pthread_mutex_t	row_counter_mutex;
 	float			epsilon;
 	float			t_max;
 	int				samples;

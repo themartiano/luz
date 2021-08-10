@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/08 15:12:09 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/08/09 16:45:29 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/08/09 17:11:21 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,7 +33,7 @@ static void	init_scene(t_scene *scene)
 	scene->amb_light.brightness = 0.0f;
 	sem_init(&scene->thread_semaphore, 0, 0);
 	pthread_mutex_init(&scene->img_mutex, NULL);
-	pthread_mutex_init(&scene->pxl_counter_mutex, NULL);
+	pthread_mutex_init(&scene->row_counter_mutex, NULL);
 }
 
 int	window_key_callback(int keycode, t_scene *scene)

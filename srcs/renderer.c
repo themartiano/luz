@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/14 11:55:19 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/08/09 16:49:03 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/08/09 17:48:34 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,7 +20,6 @@ void	light_bouncer(t_scene *scene, t_vec2 pxl, t_hit_record *hit_rec)
 	bounces = 0;
 	while (bounces < scene->max_bounces)
 	{
-		//target = sub(sum(sum(hit_rec->p, hit_rec->normal), random_in_unit()), hit_rec->p);
 		target = sum(sum(hit_rec->p, hit_rec->normal), random_in_unit());
 		if (!check_ray_hits(scene, gen_ray(scene, pxl, hit_rec->p, target), hit_rec))
 		{
@@ -63,27 +62,24 @@ static void	render_loop(t_scene scene, t_color *hit_color, int x, int y)
 		hit_rec.color = set_color(0, 0, 0);
 		hit_rec.l_brightness = 0.0f;
 		get_hit_color(&scene, &hit_rec, x, y);
-		*hit_color = set_color(hit_color->r + hit_rec.color.r, hit_color->g + hit_rec.color.g, hit_color->b + hit_rec.color.b);
+		*hit_color = sum_colors(*hit_color, hit_rec.color);
 		s++;
 	}
 	if (s++ > 0)
-		*hit_color = set_color(hit_color->r / s, hit_color->g / s, hit_color->b / s);
+		*hit_color = divide_color(*hit_color, s);
 }
 
 void	*render(void *vscene)
 {
 	t_scene	*scene = (t_scene *)vscene;
 	t_color	hit_color;
-	//float	percentage;
 	int		thread_nbr;
 	int		x;
 	int		y;
 
 	usleep(100);
-	// clock_t before = clock();
 	sem_getvalue(&scene->thread_semaphore, &thread_nbr);
 	sem_post(&scene->thread_semaphore);
-
 	thread_nbr++;
 	int grid_size = sqrt(scene->thread_count - 1);
 	int grid_row = ceilf((float)thread_nbr / (float)grid_size) - 1.0f;
@@ -94,25 +90,21 @@ void	*render(void *vscene)
 		for (int j = x; j < (scene->x_res / grid_size) + x; j++)
 		{
 			render_loop(*scene, &hit_color, j, i);
+			hit_color = set_color(
+				((float)hit_color.r) + ((float)scene->amb_light.color.r
+					* scene->amb_light.brightness),
+				((float)hit_color.g) + ((float)scene->amb_light.color.g
+					* scene->amb_light.brightness),
+				((float)hit_color.b) + ((float)scene->amb_light.color.b
+					* scene->amb_light.brightness));
 			pthread_mutex_lock(&scene->img_mutex);
 			put_pixel(&scene->img, j, i, rgba_to_hex(hit_color));
 			pthread_mutex_unlock(&scene->img_mutex);
 		}
-		pthread_mutex_lock(&scene->pxl_counter_mutex);
+		pthread_mutex_lock(&scene->row_counter_mutex);
 		scene->rendered_rows += 1;
-		pthread_mutex_unlock(&scene->pxl_counter_mutex);
-		sleep(0);
-		// percentage = (float)(y / (scene->y_res / 100.0f));
-		// if (percentage > 100) percentage = 100;
-		// if (percentage < 0) percentage = 0;
-		// printf(COLOR_WHITE "\r[ %.0f%% ]" COLOR_NC, percentage);
-		// fflush(stdout);
+		pthread_mutex_unlock(&scene->row_counter_mutex);
 	}
-	// clock_t after = clock();
-	// printf(COLOR_LIGHT_GREEN "\n\nRender done! " COLOR_LIGHT_BLUE "(Duration: "
-	// 	COLOR_WHITE "%.2fs" COLOR_LIGHT_BLUE ")\n\n" COLOR_NC,
-	// 	(double)(after - before) / CLOCKS_PER_SEC);
-	// write_bmp(scene);
 	return (NULL);
 }
 
