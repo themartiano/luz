@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/13 08:38:41 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/08/09 17:11:21 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/08/10 15:39:25 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -128,8 +128,9 @@ typedef struct s_scene
 	t_img			img;
 	pthread_mutex_t	img_mutex;
 	pthread_t		*threads;
-	sem_t			thread_semaphore;
 	int				thread_count;
+	int				thread_counter;
+	pthread_mutex_t	thread_counter_mutex;
 	int				x_res;
 	int				y_res;
 	int				rendered_rows;

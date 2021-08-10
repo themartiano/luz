@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/14 11:55:19 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/08/09 17:48:34 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/08/10 15:37:36 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -78,9 +78,11 @@ void	*render(void *vscene)
 	int		y;
 
 	usleep(100);
-	sem_getvalue(&scene->thread_semaphore, &thread_nbr);
-	sem_post(&scene->thread_semaphore);
-	thread_nbr++;
+	pthread_mutex_lock(&scene->thread_counter_mutex);
+	scene->thread_counter += 1;
+	thread_nbr = scene->thread_counter;
+	pthread_mutex_unlock(&scene->thread_counter_mutex);
+
 	int grid_size = sqrt(scene->thread_count - 1);
 	int grid_row = ceilf((float)thread_nbr / (float)grid_size) - 1.0f;
 	y = grid_row * (scene->y_res / grid_size);
