@@ -6,10 +6,12 @@ SRCS :=	./srcs/minirt.c ./srcs/utils.c ./srcs/scene_reader.c ./srcs/conversions.
 		./srcs/algebra.c ./srcs/cylinder_utils.c ./srcs/light.c ./srcs/triangle_utils.c ./srcs/square_utils.c ./srcs/camera_utils.c	\
 		./srcs/get_next_line.c ./srcs/get_next_line_utils.c ./srcs/utils_2.c ./srcs/output.c
 OBJS := $(patsubst $(SRCS_DIR)/%.c,$(OBJS_DIR)/%.o,$(SRCS))
+DPND := $(OBJS:.o=.d)
 INCLUDES = -Iincludes -Ilibraries/libft
 LIBFT_PATH = ./libraries/libft/libft.a
 WWW_FLAGS = -Wall -Wextra -Werror
 OPT_FLAGS = -O3
+INC_FLAGS = -MD
 
 ####  ~~   Preparing variables   ~~  ####
 ifeq ($(NOFLAGS),1)
@@ -48,7 +50,7 @@ all:
 
 $(OBJS_DIR)/%.o: $(SRCS_DIR)/%.c
 	$(shell [ ! -d $(@D) ] && mkdir -p $(@D))
-	gcc $(WWW_FLAGS) $(OPT_FLAGS) $(DEBUG_FLAGS) -pthread $(INCLUDES) -DOS=$(OS) -c -o $@ $< -Ilibraries/$(CURR_MLX)
+	gcc $(WWW_FLAGS) $(OPT_FLAGS) $(INC_FLAGS) $(DEBUG_FLAGS) -pthread $(INCLUDES) -DOS=$(OS) -c -o $@ $< -Ilibraries/$(CURR_MLX)
 
 $(NAME):	$(OBJS)
 	@printf "\n[\e[1;34mCompiling libft\e[0m]\n\n"
@@ -60,14 +62,15 @@ $(NAME):	$(OBJS)
 	@$(CP_CMD)
 
 	@printf "\n[\e[1;34mCompiling $(NAME)\e[0m]\n\n"
-	gcc $(WWW_FLAGS) $(OPT_FLAGS) $(DEBUG_FLAGS) -pthread $(INCLUDES) $(OBJS) $(MLX_FLAGS) -DOS=$(OS) $(LIBFT_PATH) -o $(NAME)
+	gcc $(WWW_FLAGS) $(OPT_FLAGS) $(INC_FLAGS) $(DEBUG_FLAGS) -pthread $(INCLUDES) $(OBJS) $(MLX_FLAGS) -DOS=$(OS) $(LIBFT_PATH) -o $(NAME)
 
 	@printf "\n[\e[0;32mCompilation done. $(NAME) ready.\e[0m]\n"
 
 .PHONY: clean
 clean:
 	@printf "[\e[1;33mCleaning\e[0m]\n\n"
-	$(shell rm -f $(OBJS))
+	rm -f $(OBJS)
+	rm -f $(DPND)
 	@$(MAKE) fclean -C ./libraries/libft
 	@$(MAKE) clean -C ./libraries/$(CURR_MLX)
 	rm -f ./libmlx.dylib
@@ -88,3 +91,5 @@ debug:
 	@$(MAKE) all DEBUG=1 --no-print-directory
 	@printf "\n[\e[1;34mStarting $(DEBUGGER)\e[0m]\n\n"
 	$(DEBUGGER) ./$(NAME)
+
+-include $(DPND)
