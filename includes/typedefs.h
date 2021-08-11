@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/13 08:38:41 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/08/10 15:39:25 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/08/11 15:34:02 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,29 +40,35 @@ typedef struct s_color
 	int	a;
 }				t_color;
 
+typedef struct s_material
+{
+	t_color	color;
+	float	opacity;
+}				t_material;
+
 typedef struct s_plane
 {
-	t_color		color;
+	t_material	material;
 	t_transform	transform;
 }				t_plane;
 
 typedef struct s_sphere
 {
-	t_color		color;
+	t_material	material;
 	t_transform	transform;
 	float		radius;
 }				t_sphere;
 
 typedef struct s_square
 {
-	t_color		color;
+	t_material	material;
 	t_transform	transform;
 	float		half_side_size;
 }				t_square;
 
 typedef struct s_cylinder
 {
-	t_color		color;
+	t_material	material;
 	t_transform	transform;
 	float		radius;
 	float		height;
@@ -70,7 +76,7 @@ typedef struct s_cylinder
 
 typedef struct s_triangle
 {
-	t_color	color;
+	t_material	material;
 	t_vec3	p1;
 	t_vec3	p2;
 	t_vec3	p3;

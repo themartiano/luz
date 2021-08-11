@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/26 17:14:24 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/14 10:30:13 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/08/11 15:40:11 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,7 +45,7 @@ float t_max)
 			hit_rec->normal = mul(normalize(hit_rec->p), -1.0f);
 		else
 			hit_rec->normal = normalize(hit_rec->p);
-		hit_rec->hit_color = plane->color;
+		hit_rec->hit_color = plane->material.color;
 		return (true);
 	}
 	return (false);

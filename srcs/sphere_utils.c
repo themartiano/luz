@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/21 12:38:12 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/14 10:30:13 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/08/11 15:40:17 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,7 +36,7 @@ float d)
 			(hit_rec->p.x - sphere->transform.position.x) / sphere->radius,
 			(hit_rec->p.y - sphere->transform.position.y) / sphere->radius,
 			(hit_rec->p.z - sphere->transform.position.z) / sphere->radius);
-	hit_rec->hit_color = sphere->color;
+	hit_rec->hit_color = sphere->material.color;
 	return (true);
 }
 

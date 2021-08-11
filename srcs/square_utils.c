@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/10 10:36:58 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/14 10:30:13 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/08/11 15:40:45 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,6 +49,6 @@ float t_max)
 	hit_rec->normal = normalize(hit_rec->p);
 	if (dot(ray->direction, sq->transform.orientation) < 0.0f)
 		hit_rec->normal = mul(normalize(hit_rec->p), -1.0f);
-	hit_rec->hit_color = sq->color;
+	hit_rec->hit_color = sq->material.color;
 	return (true);
 }

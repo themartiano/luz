@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/29 09:46:57 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/14 10:30:13 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/08/11 15:41:06 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,7 +44,7 @@ float t_max)
 				(hit_rec2->p.x - cylinder->transform.position.x),
 				(hit_rec2->p.y - cylinder->transform.position.y),
 				(hit_rec2->p.z - cylinder->transform.position.z));
-		hit_rec2->color = cylinder->color;
+		hit_rec2->color = cylinder->material.color;
 		return (true);
 	}
 	return (false);

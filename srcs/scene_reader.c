@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/12 11:04:06 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/14 14:57:34 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/08/11 15:39:41 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,11 +17,11 @@ static bool	read_r(char **values, char *line, t_scene *scene)
 {
 	int			screen_width;
 	int			screen_height;
-	static bool	resltn = false;
+	static bool	resolution_set = false;
 
 	if (ft_memcmp(line, "R ", 2) == 0)
 	{
-		if (resltn == true)
+		if (resolution_set == true)
 			exit_error(scene, "Multiple resolution entries.");
 		check_for_integer(scene, values[1]);
 		check_for_integer(scene, values[2]);
@@ -34,7 +34,7 @@ static bool	read_r(char **values, char *line, t_scene *scene)
 			scene->y_res = screen_height;
 		if (scene->x_res <= 0 || scene->y_res <= 0)
 			exit_error(scene, "Resolution must be greater than zero.");
-		resltn = true;
+		resolution_set = true;
 		return (true);
 	}
 	return (false);
@@ -135,11 +135,9 @@ void	read_scene(int fd, t_scene *scene)
 		rv = get_next_line(fd, &line);
 		values = ft_split(line, ' ');
 		verify_values(scene, values, 1);
-		if (read_r(values, line, scene) || read_a(values, line, scene)
-			|| read_c(values, line, scene) || read_l(values, line, scene)
-			|| read_sp(values, line, scene) || read_pl(values, line, scene)
-			|| read_sq(values, line, scene) || read_cy(values, line, scene)
-			|| read_tr(values, line, scene))
+		if (read_r(values, line, scene) || read_a(values, line, scene) || read_c(values, line, scene) || read_l(values, line, scene)
+			|| read_sp(values, line, scene) || read_pl(values, line, scene) || read_sq(values, line, scene)
+			|| read_cy(values, line, scene) || read_tr(values, line, scene))
 			i = 0;
 		free(line);
 		i = 0;

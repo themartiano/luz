@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/05/10 09:59:05 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/14 11:51:39 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/08/11 15:40:21 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,6 +49,6 @@ float t_max)
 	hit_rec->p = sum(get_triangle(scene)->p1, sub(mul(v1, u), mul(v2,
 					dot(ray->direction, cross(t, v1)) * (1.0f / d))));
 	hit_rec->normal = normalize(cross(v1, v2));
-	hit_rec->hit_color = get_triangle(scene)->color;
+	hit_rec->hit_color = get_triangle(scene)->material.color;
 	return (true);
 }

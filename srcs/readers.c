@@ -6,7 +6,7 @@
 /*   By: ejuliao- <martinez@brhaka.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/04/13 13:13:02 by ejuliao-          #+#    #+#             */
-/*   Updated: 2021/05/14 14:58:28 by ejuliao-         ###   ########.fr       */
+/*   Updated: 2021/08/11 15:39:32 by ejuliao-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,9 +26,12 @@ bool	read_sp(char **values, char *line, t_scene *scene)
 		sphere->transform.position = parse_xyz(values[1]);
 		sphere->radius = ft_atof(values[2]) / 2.0f;
 		check_for_integer(scene, values[3]);
-		sphere->color = vec3_to_rgb(parse_xyz(values[3]));
-		if (!is_color_valid(sphere->color))
+		sphere->material.color = vec3_to_rgb(parse_xyz(values[3]));
+		if (!is_color_valid(sphere->material.color))
 			exit_error(scene, "Sphere color out of range [0=>255].");
+		sphere->material.opacity = ft_atof(values[4]);
+		if (sphere->material.opacity < 0.0f || sphere->material.opacity > 1.0f)
+			exit_error(scene, "Sphere material opacity out of range [0.0=>1.0].");
 		object->object = sphere;
 		object->type = 0;
 		store_object(scene, object);
@@ -53,9 +56,12 @@ bool	read_pl(char **values, char *line, t_scene *scene)
 		if (!is_vec3_in_range(plane->transform.orientation, -1.0f, 1.0f))
 			exit_error(scene, "Plane orientation out of range [-1.0=>1.0].");
 		check_for_integer(scene, values[3]);
-		plane->color = vec3_to_rgb(parse_xyz(values[3]));
-		if (!is_color_valid(plane->color))
+		plane->material.color = vec3_to_rgb(parse_xyz(values[3]));
+		if (!is_color_valid(plane->material.color))
 			exit_error(scene, "Plane color out of range [0=>255].");
+		plane->material.opacity = ft_atof(values[4]);
+		if (plane->material.opacity < 0.0f || plane->material.opacity > 1.0f)
+			exit_error(scene, "Plane material opacity out of range [0.0=>1.0].");
 		object->object = plane;
 		object->type = 1;
 		store_object(scene, object);
@@ -81,8 +87,8 @@ bool	read_sq(char **values, char *line, t_scene *scene)
 			exit_error(scene, "Square orientation out of range [-1.0=>1.0].");
 		square->half_side_size = ft_atof(values[3]) / 2.0f;
 		check_for_integer(scene, values[4]);
-		square->color = vec3_to_rgb(parse_xyz(values[4]));
-		if (!is_color_valid(square->color))
+		square->material.color = vec3_to_rgb(parse_xyz(values[4]));
+		if (!is_color_valid(square->material.color))
 			exit_error(scene, "Square color out of range [0=>255].");
 		object->object = square;
 		object->type = 2;
@@ -110,9 +116,12 @@ bool	read_cy(char **values, char *line, t_scene *scene)
 		cylinder->radius = ft_atof(values[3]) / 2.0f;
 		cylinder->height = ft_atof(values[4]);
 		check_for_integer(scene, values[5]);
-		cylinder->color = vec3_to_rgb(parse_xyz(values[5]));
-		if (!is_color_valid(cylinder->color))
+		cylinder->material.color = vec3_to_rgb(parse_xyz(values[5]));
+		if (!is_color_valid(cylinder->material.color))
 			exit_error(scene, "Cylinder color out of range [0=>255].");
+		cylinder->material.opacity = ft_atof(values[6]);
+		if (cylinder->material.opacity < 0.0f || cylinder->material.opacity > 1.0f)
+			exit_error(scene, "Cylinder material opacity out of range [0.0=>1.0].");
 		object->object = cylinder;
 		object->type = 3;
 		store_object(scene, object);
@@ -136,9 +145,12 @@ bool	read_tr(char **values, char *line, t_scene *scene)
 		triangle->p2 = parse_xyz(values[2]);
 		triangle->p3 = parse_xyz(values[3]);
 		check_for_integer(scene, values[4]);
-		triangle->color = vec3_to_rgb(parse_xyz(values[4]));
-		if (!is_color_valid(triangle->color))
+		triangle->material.color = vec3_to_rgb(parse_xyz(values[4]));
+		if (!is_color_valid(triangle->material.color))
 			exit_error(scene, "Triangle color out of range [0=>255].");
+		triangle->material.opacity = ft_atof(values[5]);
+		if (triangle->material.opacity < 0.0f || triangle->material.opacity > 1.0f)
+			exit_error(scene, "Triangle material opacity out of range [0.0=>1.0].");
 		object->object = triangle;
 		object->type = 4;
 		store_object(scene, object);
