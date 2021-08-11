@@ -11,3 +11,4 @@ miniRT
 libraries/minilibx_linux/test/mlx-test
 *.bmp
 libmlx.dylib
+objs
