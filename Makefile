@@ -1,32 +1,91 @@
+#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#
+#                                                                           #
+#   Makefile                                                                #
+#    by ejuliao- (Brhaka)                                                   #
+#                                                                           #
+#    Options: (make FLAG=1/0)                                               #
+#     DEBUG -> Compiles with "-g" flag                                      #
+#     SANITIZER -> Compiles with "-g" and "-fsanitize=address" flags        #
+#     NO_FLAGS -> Compiles without "-Wall", "-Wextra" and "-Werror" flags   #
+#                                                                           #
+#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#
+
+
+#######  ~~~   Initial variable setup   ~~~  #######
+
 NAME := miniRT
 SRCS_DIR := ./srcs
 OBJS_DIR := ./objs
-SRCS :=	./srcs/minirt.c ./srcs/utils.c ./srcs/scene_reader.c ./srcs/conversions.c ./srcs/readers.c ./srcs/renderer.c ./srcs/exit.c	\
-		./srcs/vector_utils.c ./srcs/render_utils.c ./srcs/sphere_utils.c ./srcs/bmp.c ./srcs/plane_utils.c ./srcs/color_utils.c	\
-		./srcs/algebra.c ./srcs/cylinder_utils.c ./srcs/light.c ./srcs/triangle_utils.c ./srcs/square_utils.c ./srcs/camera_utils.c	\
-		./srcs/get_next_line.c ./srcs/get_next_line_utils.c ./srcs/utils_2.c ./srcs/output.c
-OBJS := $(patsubst $(SRCS_DIR)/%.c,$(OBJS_DIR)/%.o,$(SRCS))
+SRCS := $(wildcard $(SRCS_DIR)/*/*.cpp) $(wildcard $(SRCS_DIR)/*.cpp)
+OBJS := $(patsubst $(SRCS_DIR)/%.cpp, $(OBJS_DIR)/%.o, $(SRCS))
 DPND := $(OBJS:.o=.d)
-INCLUDES = -Iincludes -Ilibraries/libft
-LIBFT_PATH = ./libraries/libft/libft.a
-WWW_FLAGS = -Wall -Wextra -Werror
-OPT_FLAGS = -O3
-INC_FLAGS = -MD
+INCLUDES := -Iincludes -Ilibraries/libft
+LIBFT_PATH := ./libraries/libft/libft.a
+COMPILER := clang++
+WWW_FLAGS := -Wall -Wextra -Werror
+OPT_FLAGS := -O3
+INC_FLAGS := -MD
+TMP_FILE := Makefile.tmp
 
-####  ~~   Preparing variables   ~~  ####
-ifeq ($(NOFLAGS),1)
-	WWW_FLAGS =
+####################################################
+
+
+#######  ~~~   Compilation setup   ~~~  #######
+
+# Ensures that TMP_FILE exists before calling awk
+$(shell touch $(TMP_FILE))
+
+# Reads DEBUG option from TMP_FILE if user hasn't provided it
+ifndef DEBUG
+	ifeq ($(shell awk 'NR==1 {print $$3}' $(TMP_FILE)),1)
+		DEBUG = 1
+	else
+		DEBUG = 0
+	endif
+else
+	PRE_EXECUTE = clean
 endif
 
+# Reads SANITIZER option from TMP_FILE if user hasn't provided it
+ifndef SANITIZER
+	ifeq ($(shell awk 'NR==2 {print $$3}' $(TMP_FILE)),1)
+		SANITIZER = 1
+	else
+		SANITIZER = 0
+	endif
+else
+	PRE_EXECUTE = clean
+endif
+
+# Reads NO_FLAGS option from TMP_FILE if user hasn't provided it
+ifndef NO_FLAGS
+	ifeq ($(shell awk 'NR==3 {print $$3}' $(TMP_FILE)),1)
+		NO_FLAGS = 1
+	else
+		NO_FLAGS = 0
+	endif
+else
+	PRE_EXECUTE = clean
+endif
+
+# Configure DEBUG
 ifeq ($(DEBUG),1)
 	DEBUG_FLAGS = -g
 	OPT_FLAGS =
 endif
 
+# Configure SANITIZER
 ifeq ($(SANITIZER),1)
 	DEBUG_FLAGS = -g -fsanitize=address
 	OPT_FLAGS =
 endif
+
+# Configure NO_FLAGS
+ifeq ($(NO_FLAGS),1)
+	WWW_FLAGS =
+endif
+
+$(shell echo "DEBUG = $(DEBUG)\nSANITIZER = $(SANITIZER)\nNO_FLAGS = $(NO_FLAGS)" > $(TMP_FILE))
 
 ifeq ($(shell uname -s),Linux)
 	DEBUGGER = gdb
@@ -34,6 +93,7 @@ ifeq ($(shell uname -s),Linux)
 	MLX_FLAGS = -lbsd -Llibraries/$(CURR_MLX) -lmlx -lXext -lX11 -lm
 	OS = 2
 endif
+
 ifeq ($(shell uname -s),Darwin)
 	DEBUGGER = lldb
 	CURR_MLX = minilibx_mms
@@ -41,18 +101,22 @@ ifeq ($(shell uname -s),Darwin)
 	CP_CMD = cp ./libraries/$(CURR_MLX)/libmlx.dylib ./
 	OS = 1
 endif
-#########################################
+
+###############################################
+
+
+#######  ~~~   Rules and commands setup   ~~~  #######
 
 .PHONY: all
-all:
+all: $(PRE_EXECUTE)
 	@printf "[\e[1;34mPreparing objects\e[0m]\n\n"
 	@$(MAKE) $(NAME) --no-print-directory
 
-$(OBJS_DIR)/%.o: $(SRCS_DIR)/%.c
+$(OBJS_DIR)/%.o: $(SRCS_DIR)/%.cpp
 	$(shell [ ! -d $(@D) ] && mkdir -p $(@D))
-	gcc $(WWW_FLAGS) $(OPT_FLAGS) $(INC_FLAGS) $(DEBUG_FLAGS) -pthread $(INCLUDES) -DOS=$(OS) -c -o $@ $< -Ilibraries/$(CURR_MLX)
+	$(COMPILER) $(WWW_FLAGS) $(OPT_FLAGS) $(INC_FLAGS) $(DEBUG_FLAGS) -pthread $(INCLUDES) -DOS=$(OS) -c -o $@ $< -Ilibraries/$(CURR_MLX)
 
-$(NAME):	$(OBJS)
+$(NAME): $(OBJS)
 	@printf "\n[\e[1;34mCompiling libft\e[0m]\n\n"
 	@$(MAKE) -C ./libraries/libft
 	@$(MAKE) bonus -C ./libraries/libft
@@ -62,7 +126,7 @@ $(NAME):	$(OBJS)
 	@$(CP_CMD)
 
 	@printf "\n[\e[1;34mCompiling $(NAME)\e[0m]\n\n"
-	gcc $(WWW_FLAGS) $(OPT_FLAGS) $(INC_FLAGS) $(DEBUG_FLAGS) -pthread $(INCLUDES) $(OBJS) $(MLX_FLAGS) -DOS=$(OS) $(LIBFT_PATH) -o $(NAME)
+	$(COMPILER) $(WWW_FLAGS) $(OPT_FLAGS) $(INC_FLAGS) $(DEBUG_FLAGS) -pthread $(INCLUDES) $(OBJS) $(MLX_FLAGS) -DOS=$(OS) $(LIBFT_PATH) -o $(NAME)
 
 	@printf "\n[\e[0;32mCompilation done. $(NAME) ready.\e[0m]\n"
 
@@ -77,8 +141,9 @@ clean:
 	@$(shell if [[ "$(shell test -d $(OBJS_DIR) && find $(OBJS_DIR) -type f | wc -l)" -eq 0 ]]; then rm -rf $(OBJS_DIR); fi;)
 
 .PHONY: fclean
-fclean:	clean
+fclean: clean
 	rm -f $(NAME)
+	rm -f $(TMP_FILE)
 
 .PHONY: re
 re:
@@ -93,3 +158,5 @@ debug:
 	$(DEBUGGER) ./$(NAME)
 
 -include $(DPND)
+
+######################################################
