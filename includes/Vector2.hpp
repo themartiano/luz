@@ -5,6 +5,7 @@ class	Vector2
 {
 	public:
 		Vector2(void);
+		Vector2(float x, float y);
 
 	private:
 		float	_x;

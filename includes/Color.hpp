@@ -5,6 +5,7 @@ class	Color
 {
 	public:
 		Color(void);
+		Color(short r, short g, short b, short a);
 
 	private:
 		short	_red;

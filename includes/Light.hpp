@@ -1,15 +1,19 @@
 #ifndef LIGHT_HPP
 # define LIGHT_HPP
 
+#include "Color.hpp"
+#include "Transform.hpp"
+
 class	Light
 {
 	public:
 		Light(void);
+		Light(Color color, Transform transform, float brightness);
 
 	private:
-		t_color		_color;
-		t_transform	_transform;
-		float		_brightness;
+		Color	_color;
+		Transform	_transform;
+		float	_brightness;
 
 };
 
