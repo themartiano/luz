@@ -1,4 +1,4 @@
-#include "Sphere.hpp"
+#include "Objects/Sphere.hpp"
 
 /*
 	Constructors

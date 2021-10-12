@@ -1,4 +1,4 @@
-#include "Triangle.hpp"
+#include "Objects/Triangle.hpp"
 
 /*
 	Constructors

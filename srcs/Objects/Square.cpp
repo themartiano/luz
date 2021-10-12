@@ -1,4 +1,4 @@
-#include "Square.hpp"
+#include "Objects/Square.hpp"
 
 /*
 	Constructors
