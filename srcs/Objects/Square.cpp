@@ -4,6 +4,7 @@
 	Constructors
 */
 
+// Constructs the Square with default values
 Square::Square(void)
 {
 	this->_transform = Transform();
@@ -11,6 +12,7 @@ Square::Square(void)
 	this->_half_side_size = 0.0f;
 }
 
+// Constructs the Square with custom values
 Square::Square(Transform transform, Material material, float hss)
 {
 	this->_transform = transform;

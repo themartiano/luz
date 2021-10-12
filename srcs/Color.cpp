@@ -4,6 +4,7 @@
 	Constructors
 */
 
+// Constructs the Color with default values
 Color::Color(void)
 {
 	this->_red = 0;
@@ -12,6 +13,7 @@ Color::Color(void)
 	this->_alpha = 0;
 }
 
+// Constructs the Color with custom values
 Color::Color(short r, short g, short b, short a)
 {
 	this->_red = r;
