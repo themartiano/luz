@@ -1,15 +1,17 @@
 #ifndef MATERIAL_HPP
 # define MATERIAL_HPP
 
+#include "Color.hpp"
+
 class	Material
 {
 	public:
 		Material(void);
+		Material(Color color, float opacity);
 
 	private:
-		t_color		_color;
-		t_transform	_transform;
-		float		_brightness;
+		Color	_color;
+		float	_opacity;
 
 };
 
