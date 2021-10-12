@@ -14,7 +14,6 @@ class	Square
 		Transform	_transform;
 		Material	_material;
 		float		_half_side_size;
-
 };
 
 #endif

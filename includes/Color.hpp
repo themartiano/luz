@@ -12,7 +12,6 @@ class	Color
 		short	_green;
 		short	_blue;
 		short	_alpha;
-
 };
 
 #endif

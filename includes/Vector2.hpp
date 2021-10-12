@@ -10,7 +10,6 @@ class	Vector2
 	private:
 		float	_x;
 		float	_y;
-
 };
 
 #endif

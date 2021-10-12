@@ -14,7 +14,6 @@ class	Light
 		Color	_color;
 		Transform	_transform;
 		float	_brightness;
-
 };
 
 #endif

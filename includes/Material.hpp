@@ -12,7 +12,6 @@ class	Material
 	private:
 		Color	_color;
 		float	_opacity;
-
 };
 
 #endif
