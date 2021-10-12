@@ -13,7 +13,6 @@ class	Plane
 	private:
 		Transform	_transform;
 		Material	_material;
-
 };
 
 #endif

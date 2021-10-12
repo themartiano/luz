@@ -14,7 +14,6 @@ class	Sphere
 		Transform	_transform;
 		Material	_material;
 		float		_radius;
-
 };
 
 #endif

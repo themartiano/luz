@@ -1,6 +1,10 @@
+#include "Scene.hpp"
+#include "Exit.hpp"
+
 int	main(int argc, char *argv[])
 {
-	return (0);
-	(void)argc;
-	(void)argv;
+	Scene	scene;
+
+	if (argc <= 1)
+		exit_error(scene, "Scene not specified.");
 }

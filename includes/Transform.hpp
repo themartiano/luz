@@ -14,7 +14,6 @@ class	Transform
 		// Vector3	_rotation;
 		Vector3	_orientation;
 		Vector3	_scale;
-
 };
 
 #endif

@@ -1,14 +1,14 @@
-#ifndef IMAGE_HPP
-# define IMAGE_HPP
+#ifndef MLXIMAGE_HPP
+# define MLXIMAGE_HPP
 
-class	Image
+class	MLXImage
 {
 	public:
-		Image(void);
+		MLXImage(void);
 
 	private:
 		void	*_img;
-		char	*_addr;
+		char	*_address;
 		int		_bits_per_pixel;
 		int		_line_length;
 		int		_endian;

@@ -15,7 +15,6 @@ class	Triangle
 		Vector3		_position2;
 		Vector3		_position3;
 		Material	_material;
-
 };
 
 #endif

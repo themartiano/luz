@@ -15,7 +15,6 @@ class	Cylinder
 		Material	_material;
 		float		_radius;
 		float		_height;
-
 };
 
 #endif
