@@ -4,6 +4,7 @@
 	Constructors
 */
 
+// Constructs the Cylinder with default values
 Cylinder::Cylinder(void)
 {
 	this->_transform = Transform();
@@ -12,6 +13,7 @@ Cylinder::Cylinder(void)
 	this->_height = 3.0f;
 }
 
+// Constructs the Cylinder with custom values
 Cylinder::Cylinder(Transform transform, Material material, float radius, float height)
 {
 	this->_transform = transform;

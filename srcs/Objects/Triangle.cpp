@@ -4,6 +4,7 @@
 	Constructors
 */
 
+// Constructs the Triangle with default values
 Triangle::Triangle(void)
 {
 	this->_position1 = Vector3(0.0f, 0.0f, 0.0f); //Values
@@ -12,6 +13,7 @@ Triangle::Triangle(void)
 	this->_material = Material(Color(126, 126, 126, 0), 1.0f);
 }
 
+// Constructs the Triangle with custom values
 Triangle::Triangle(Vector3 pos1, Vector3 pos2, Vector3 pos3, Material material)
 {
 	this->_position1 = pos1;
