@@ -15,6 +15,8 @@ class	Scene
 {
 	public:
 		Scene(void);
+		void	setXResolution(const short xRes);
+		void	setYResolution(const short yRes);
 
 	private:
 		void			*_mlx;

@@ -29,3 +29,13 @@ Scene::Scene(void)
 	// this->_planes = ;
 	this->_should_calculate_light = true;
 }
+
+void	Scene::setXResolution(const short xRes)
+{
+	this->_x_resolution = xRes;
+}
+
+void	Scene::setYResolution(const short yRes)
+{
+	this->_y_resolution = yRes;
+}
