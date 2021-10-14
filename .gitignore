@@ -4,7 +4,7 @@
 *.a
 *.out
 *.dSYM
-miniRT
+Luz
 .idea
 .DS_Store
 .vscode
