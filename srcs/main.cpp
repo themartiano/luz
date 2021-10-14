@@ -1,17 +1,16 @@
 #include "Scene.hpp"
 #include "Exit.hpp"
-#include "FileHandling.hpp"
 #include <fstream>
 
 int	main(int argc, char *argv[])
 {
 	Scene	scene;
 
-	if (argc <= 1)
-		exit_error(scene, "Scene not specified.");
+	// if (argc <= 1)
+	// 	exit_error(scene, "Scene not specified.");
 
 	std::cout << CLR_BLUE << "Preparing...\n\n" << CLR_RESET;
-	read_scene_file(scene, argv[1]);
+	//read scene file
 	//check res
 
 	if (argc >= 3)
