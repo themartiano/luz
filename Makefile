@@ -13,7 +13,7 @@
 
 #######  ~~~   Initial variable setup   ~~~  #######
 
-NAME := miniRT
+NAME := Luz
 SRCS_DIR := ./srcs
 OBJS_DIR := ./objs
 SRCS := $(wildcard $(SRCS_DIR)/*/*.cpp) $(wildcard $(SRCS_DIR)/*.cpp)
