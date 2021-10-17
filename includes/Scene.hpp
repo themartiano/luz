@@ -15,8 +15,15 @@ class	Scene
 {
 	public:
 		Scene(void);
+		void	addCamera(Camera camera);
+		void	addLight(Light light);
+		void	addSphere(Sphere sphere);
 		void	setXResolution(const short xRes);
+		int		getXResolution(void) const;
 		void	setYResolution(const short yRes);
+		int		getYResolution(void) const;
+		void	setMlx(void *mlx);
+		void*	getMlx(void) const;
 
 	private:
 		void			*_mlx;

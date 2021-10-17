@@ -16,11 +16,11 @@
 NAME := Luz
 SRCS_DIR := ./srcs
 OBJS_DIR := ./objs
-SRCS := $(wildcard $(SRCS_DIR)/*/*.cpp) $(wildcard $(SRCS_DIR)/*.cpp)
+SRCS := ./srcs/Camera.cpp ./srcs/exit_error.cpp ./srcs/init_Luz.cpp ./srcs/main.cpp ./srcs/MLXImage.cpp ./srcs/Scene.cpp ./srcs/Vector2.cpp \
+	./srcs/Color.cpp ./srcs/Image.cpp ./srcs/Light.cpp ./srcs/Material.cpp ./srcs/Transform.cpp ./srcs/Vector3.cpp ./srcs/Objects/Cylinder.cpp ./srcs/Objects/Plane.cpp ./srcs/Objects/Sphere.cpp ./srcs/Objects/Square.cpp ./srcs/Objects/Triangle.cpp
 OBJS := $(patsubst $(SRCS_DIR)/%.cpp, $(OBJS_DIR)/%.o, $(SRCS))
 DPND := $(OBJS:.o=.d)
-INCLUDES := -Iincludes -Ilibraries/libft
-LIBFT_PATH := ./libraries/libft/libft.a
+INCLUDES := -Iincludes
 COMPILER := clang++
 WWW_FLAGS := -Wall -Wextra -Werror
 OPT_FLAGS := -O3
@@ -89,17 +89,8 @@ $(shell echo "DEBUG = $(DEBUG)\nSANITIZER = $(SANITIZER)\nNO_FLAGS = $(NO_FLAGS)
 
 ifeq ($(shell uname -s),Linux)
 	DEBUGGER = gdb
-	CURR_MLX = minilibx_linux
-	MLX_FLAGS = -lbsd -Llibraries/$(CURR_MLX) -lmlx -lXext -lX11 -lm
-	OS = 2
-endif
-
-ifeq ($(shell uname -s),Darwin)
+else ifeq ($(shell uname -s),Darwin)
 	DEBUGGER = lldb
-	CURR_MLX = minilibx_mms
-	MLX_FLAGS = -Ilibraries/$(CURR_MLX) -Llibraries/$(CURR_MLX) -lmlx
-	CP_CMD = cp ./libraries/$(CURR_MLX)/libmlx.dylib ./
-	OS = 1
 endif
 
 ###############################################
@@ -114,19 +105,11 @@ all: $(PRE_EXECUTE)
 
 $(OBJS_DIR)/%.o: $(SRCS_DIR)/%.cpp
 	$(shell [ ! -d $(@D) ] && mkdir -p $(@D))
-	$(COMPILER) $(WWW_FLAGS) $(OPT_FLAGS) $(INC_FLAGS) $(DEBUG_FLAGS) -pthread $(INCLUDES) -DOS=$(OS) -c -o $@ $< -Ilibraries/$(CURR_MLX)
+	$(COMPILER) $(WWW_FLAGS) $(OPT_FLAGS) $(INC_FLAGS) $(DEBUG_FLAGS) $(INCLUDES) -c -o $@ $<
 
 $(NAME): $(OBJS)
-	@printf "\n[\e[1;34mCompiling libft\e[0m]\n\n"
-	@$(MAKE) -C ./libraries/libft
-	@$(MAKE) bonus -C ./libraries/libft
-
-	@printf "\n[\e[1;34mCompiling minilibx\e[0m]\n\n"
-	@$(MAKE) -C ./libraries/$(CURR_MLX)
-	@$(CP_CMD)
-
 	@printf "\n[\e[1;34mCompiling $(NAME)\e[0m]\n\n"
-	$(COMPILER) $(WWW_FLAGS) $(OPT_FLAGS) $(INC_FLAGS) $(DEBUG_FLAGS) -pthread $(INCLUDES) $(OBJS) $(MLX_FLAGS) -DOS=$(OS) $(LIBFT_PATH) -o $(NAME)
+	$(COMPILER) $(WWW_FLAGS) $(OPT_FLAGS) $(INC_FLAGS) $(DEBUG_FLAGS) $(INCLUDES) $(OBJS) -o $(NAME)
 
 	@printf "\n[\e[0;32mCompilation done. $(NAME) ready.\e[0m]\n"
 
@@ -135,9 +118,6 @@ clean:
 	@printf "[\e[1;33mCleaning\e[0m]\n\n"
 	rm -f $(OBJS)
 	rm -f $(DPND)
-	@$(MAKE) fclean -C ./libraries/libft
-	@$(MAKE) clean -C ./libraries/$(CURR_MLX)
-	rm -f ./libmlx.dylib
 	@$(shell if [[ "$(shell test -d $(OBJS_DIR) && find $(OBJS_DIR) -type f | wc -l)" -eq 0 ]]; then rm -rf $(OBJS_DIR); fi;)
 
 .PHONY: fclean

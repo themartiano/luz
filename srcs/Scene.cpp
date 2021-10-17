@@ -30,12 +30,47 @@ Scene::Scene(void)
 	this->_should_calculate_light = true;
 }
 
+void	Scene::addCamera(Camera camera)
+{
+	this->_cameras.push_back(camera);
+}
+
+void	Scene::addLight(Light light)
+{
+	this->_lights.push_back(light);
+}
+
+void	Scene::addSphere(Sphere sphere)
+{
+	this->_spheres.push_back(sphere);
+}
+
 void	Scene::setXResolution(const short xRes)
 {
 	this->_x_resolution = xRes;
 }
 
+int		Scene::getXResolution(void) const
+{
+	return (this->_x_resolution);
+}
+
 void	Scene::setYResolution(const short yRes)
 {
 	this->_y_resolution = yRes;
+}
+
+int		Scene::getYResolution(void) const
+{
+	return (this->_y_resolution);
+}
+
+void	Scene::setMlx(void *mlx)
+{
+	this->_mlx = mlx;
+}
+
+void*	Scene::getMlx(void) const
+{
+	return (this->_mlx);
 }

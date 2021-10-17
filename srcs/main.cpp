@@ -1,5 +1,6 @@
 #include "Scene.hpp"
 #include "Exit.hpp"
+#include "Luz.hpp"
 #include <fstream>
 
 int	main(int argc, char *argv[])
@@ -15,7 +16,7 @@ int	main(int argc, char *argv[])
 
 	if (argc >= 3)
 		//read_flags();
-
-	//start();
+	(void)argv;
+	init_Luz(scene);
 	return (0);
 }

@@ -5,6 +5,12 @@ class	MLXImage
 {
 	public:
 		MLXImage(void);
+		void	setImg(void* img);
+		void*	getImg(void) const;
+		void	setAddress(char* address);
+		void	setBitsPerPixel(int bits_per_pixel);
+		void	setLineLength(int line_length);
+		void	setEndian(int endian);
 
 	private:
 		void	*_img;
