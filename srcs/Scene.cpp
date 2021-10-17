@@ -52,12 +52,15 @@ int		Scene::getYResolution(void) const
 	return (this->_y_resolution);
 }
 
-void	Scene::setPixelArray(int index, unsigned char value)
+// Sets the color for the pixel at 'index', which is a simple X/Y index.
+void	Scene::setPixelArray(int index, unsigned char r, unsigned char g, unsigned char b)
 {
 	// Check if index is in range. (x * y * RGB for each pixel)
 	if (index < this->_x_resolution * this->_y_resolution * 3)
 	{
-		this->_pixelArray[index] = value;
+		this->_pixelArray[(index * 3) + 2] = r;
+		this->_pixelArray[(index * 3) + 1] = g;
+		this->_pixelArray[index * 3] = b;
 	}
 }
 

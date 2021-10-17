@@ -2,6 +2,7 @@
 #include "Exit.hpp"
 #include "BMP.hpp"
 #include "Luz.hpp"
+#include "Renderer.hpp"
 #include <fstream>
 
 int	main(int argc, char *argv[])
@@ -17,9 +18,14 @@ int	main(int argc, char *argv[])
 
 	if (argc >= 3)
 		//read_flags();
-	(void)argv;
 	init_Luz(scene);
+
+	render(scene);
+
+	// Writes BMP image file
 	BMP bmp("render.bmp");
 	bmp.write_file(scene);
+
 	return (0);
+	(void)argv;
 }

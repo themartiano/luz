@@ -27,8 +27,8 @@ void	BMP::write_file(Scene scene)
 	fwrite(fileHeader, 1, 14, imageFile);
 	fwrite(infoHeader, 1, 40, imageFile);
 
-	for (int i = 0; i < scene.getYResolution(); i++) {
-		fwrite((unsigned char *)scene.getPixelArray() + (i * scene.getXResolution() * 3), 3, scene.getXResolution(), imageFile);
+	for (int i = scene.getYResolution(); i >= 0; i--) {
+		fwrite(scene.getPixelArray() + (i * scene.getXResolution() * 3), 3, scene.getXResolution(), imageFile);
 		fwrite(padding, 1, paddingSize, imageFile);
 	}
 

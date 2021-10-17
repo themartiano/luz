@@ -22,7 +22,7 @@ class	Scene
 		int		getXResolution(void) const;
 		void	setYResolution(const short yRes);
 		int		getYResolution(void) const;
-		void	setPixelArray(int index, unsigned char value);
+		void	setPixelArray(int index, unsigned char r, unsigned char g, unsigned char b);
 		unsigned char*	getPixelArray() const;
 
 	private:
