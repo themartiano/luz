@@ -4,7 +4,6 @@
 #include <vector>
 #include "Camera.hpp"
 #include "Light.hpp"
-#include "MLXImage.hpp"
 #include "Objects/Triangle.hpp"
 #include "Objects/Square.hpp"
 #include "Objects/Sphere.hpp"
@@ -22,13 +21,8 @@ class	Scene
 		int		getXResolution(void) const;
 		void	setYResolution(const short yRes);
 		int		getYResolution(void) const;
-		void	setMlx(void *mlx);
-		void*	getMlx(void) const;
 
 	private:
-		void			*_mlx;
-		void			*_window;
-		MLXImage		_mlx_image;
 		//pthread_mutex_t	_img_mutex;
 		//pthread_t		*_threads;
 		int				_thread_count;

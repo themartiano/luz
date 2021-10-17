@@ -3,9 +3,6 @@
 
 Scene::Scene(void)
 {
-	this->_mlx = nullptr;
-	this->_window = nullptr;
-	//this->_mlx_image = ;
 	//this->_img_mutex = ; //mutex
 	//this->_threads = nullptr;
 	this->_thread_count = 5;
@@ -63,14 +60,4 @@ void	Scene::setYResolution(const short yRes)
 int		Scene::getYResolution(void) const
 {
 	return (this->_y_resolution);
-}
-
-void	Scene::setMlx(void *mlx)
-{
-	this->_mlx = mlx;
-}
-
-void*	Scene::getMlx(void) const
-{
-	return (this->_mlx);
 }
