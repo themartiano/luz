@@ -2,6 +2,7 @@
 *.swo
 *.o
 *.a
+*.d
 *.out
 *.dSYM
 Luz
