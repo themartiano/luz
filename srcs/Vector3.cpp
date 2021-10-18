@@ -19,3 +19,28 @@ Vector3::Vector3(float x, float y, float z)
 	this->_y = y;
 	this->_z = z;
 }
+
+float	Vector3::getX(void) const
+{
+	return (this->_x);
+}
+
+float	Vector3::getY(void) const
+{
+	return (this->_y);
+}
+
+float	Vector3::getZ(void) const
+{
+	return (this->_z);
+}
+
+Vector3&	Vector3::operator+(void)
+{
+	return (*this);
+}
+
+Vector3	Vector3::operator*(const float f)
+{
+	return (Vector3(this->_x * f, this->_y * f, this->_z * f));
+}
