@@ -3,6 +3,7 @@
 
 #include "Vector3.hpp"
 #include "Objects/Sphere.hpp"
+#include <string>
 #include <cmath>
 
 float	dot(Vector3 vec1, Vector3 vec2);
@@ -11,5 +12,6 @@ float	vectorLengthSQRT(Vector3 vector);
 float	vectorLength(Vector3 vector);
 Vector3	normalize(Vector3 vector);
 Vector3 randomPointInsideUnitSphere(void);
+std::string    pluralOrSingular(int number);
 
 #endif

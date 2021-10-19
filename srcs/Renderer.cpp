@@ -5,6 +5,7 @@ static bool	checkHits(Scene scene, Ray ray, Color& pixelColor);
 
 void	render(Scene scene)
 {
+	std::cout << CLR_YELLOW << "Rendering..." << CLR_YELLOW << " (" << CLR_WHITE << D_SAMPLE_COUNT << CLR_CYAN << " sample" << pluralOrSingular(D_SAMPLE_COUNT) << ", " << CLR_WHITE << D_MAX_LIGHT_BOUNCES << CLR_CYAN << " max light bounce" << pluralOrSingular(D_MAX_LIGHT_BOUNCES) << CLR_YELLOW << ")\n" << CLR_RESET;
 	for (int y = 0; y < scene.getYResolution(); y++)
 	{
 		for (int x = 0; x < scene.getXResolution(); x++)
@@ -21,6 +22,7 @@ void	render(Scene scene)
 			scene.setPixelArray((y * scene.getXResolution()) + x, pixelColor);
 		}
 	}
+	std::cout << CLR_GREEN_BRIGHT << "Render done!\n\n" << CLR_RESET;
 }
 
 static Color	calculatePixelColor(Scene scene, int x, int y)

@@ -1,5 +1,4 @@
 #include "BMP.hpp"
-#include <iostream>
 
 static unsigned char*	createBitmapFileHeader(int height, int stride);
 static unsigned char*	createBitmapInfoHeader(int height, int width);
@@ -22,6 +21,8 @@ void	BMP::write_file(Scene scene)
 	unsigned char*	fileHeader = createBitmapFileHeader(scene.getYResolution(), stride);
 	unsigned char*	infoHeader = createBitmapInfoHeader(scene.getYResolution(), scene.getXResolution());
 
+	std::cout << CLR_YELLOW << "Writing render to " << CLR_BLUE_BRIGHT << this->_fileName << CLR_YELLOW << "...\n" << CLR_RESET;
+
 	FILE* imageFile = fopen(this->_fileName.c_str(), "wb");
 
 	fwrite(fileHeader, 1, 14, imageFile);
@@ -33,6 +34,7 @@ void	BMP::write_file(Scene scene)
 	}
 
 	fclose(imageFile);
+	std::cout << CLR_GREEN_BRIGHT << "File ready.\n\n" << CLR_RESET;
 }
 
 static unsigned char*	createBitmapFileHeader(int height, int stride)
