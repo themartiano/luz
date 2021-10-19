@@ -18,6 +18,7 @@ Material::Material(Color color, float opacity)
 	this->_opacity = opacity;
 }
 
+// Returns the Material's color
 Color	Material::getColor(void) const
 {
 	return (this->_color);

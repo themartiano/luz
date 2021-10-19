@@ -21,16 +21,18 @@ Sphere::Sphere(Transform transform, Material material, float radius)
 	this->_radius = radius;
 }
 
+// Returns the Sphere's material
 Material	Sphere::getMaterial(void) const
 {
 	return (this->_material);
 }
-
+// Returns the Sphere's transform
 Transform	Sphere::getTransform(void) const
 {
 	return (this->_transform);
 }
 
+// Returns the Sphere's radius
 float		Sphere::getRadius(void) const
 {
 	return (this->_radius);

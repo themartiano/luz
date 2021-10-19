@@ -3,6 +3,11 @@
 #include "Color.hpp"
 #include <limits>
 
+/*
+	Constructors
+*/
+
+// Constructs the Scene with default values
 Scene::Scene(void)
 {
 	this->_thread_count = 5;
@@ -20,45 +25,52 @@ Scene::Scene(void)
 	this->_pixelArray = new unsigned char[D_WIDTH * D_HEIGHT * 3];
 }
 
+// Appends 'camera' to the camera vector (list)
 void	Scene::addCamera(Camera camera)
 {
 	this->_cameras.push_back(camera);
 }
 
+// Appends 'light' to the light vector (list)
 void	Scene::addLight(Light light)
 {
 	this->_lights.push_back(light);
 }
 
+// Appends 'sphere' to the sphere vector (list)
 void	Scene::addSphere(Sphere sphere)
 {
 	this->_spheres.push_back(sphere);
 }
 
-void	Scene::setXResolution(const short xRes)
-{
-	this->_x_resolution = xRes;
-}
-
+// Returns the X resolution (width)
 int		Scene::getXResolution(void) const
 {
 	return (this->_x_resolution);
 }
 
-void	Scene::setYResolution(const short yRes)
+// Sets the X resolution (width)
+void	Scene::setXResolution(const short xRes)
 {
-	this->_y_resolution = yRes;
+	this->_x_resolution = xRes;
 }
 
+// Returns the Y resolution (height)
 int		Scene::getYResolution(void) const
 {
 	return (this->_y_resolution);
 }
 
+// Sets the Y resolution (height)
+void	Scene::setYResolution(const short yRes)
+{
+	this->_y_resolution = yRes;
+}
+
 // Sets the color for the pixel at 'index', which is a simple X/Y index.
 void	Scene::setPixelArray(int index, Color pixelColor)
 {
-	// Check if index is in range. (x * y * RGB for each pixel)
+	// Check if index is in range. (x res * y res * RGB for each pixel)
 	if (index < this->_x_resolution * this->_y_resolution * 3)
 	{
 		this->_pixelArray[(index * 3) + 2] = (unsigned char)(pixelColor.getRed() * 255.0f);
@@ -67,16 +79,19 @@ void	Scene::setPixelArray(int index, Color pixelColor)
 	}
 }
 
+// Returns the pixel array
 unsigned char*	Scene::getPixelArray(void) const
 {
 	return (this->_pixelArray);
 }
 
+// Returns the vector (list) of spheres
 std::vector<Sphere>	Scene::getSpheres(void) const
 {
 	return (this->_spheres);
 }
 
+// Returns the currently active camera
 Camera	Scene::getActiveCamera(void) const
 {
 	return (this->_cameras[this->_activeCamera]);

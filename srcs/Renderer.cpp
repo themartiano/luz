@@ -13,6 +13,7 @@
 static Color	calculatePixelColor(Scene scene, int x, int y);
 static bool	checkHits(Scene scene, Ray ray, Color& pixelColor);
 
+// Renders the image using all the information present on 'scene'. (Objects, cameras, lights, settings, etc)
 void	render(Scene scene)
 {
 	std::cout << CLR_YELLOW << "Rendering..." << CLR_YELLOW << " (" << CLR_WHITE << D_SAMPLE_COUNT << CLR_CYAN << " sample" << pluralOrSingular(D_SAMPLE_COUNT) << ", " << CLR_WHITE << D_MAX_LIGHT_BOUNCES << CLR_CYAN << " max light bounce" << pluralOrSingular(D_MAX_LIGHT_BOUNCES) << CLR_YELLOW << ")\n" << CLR_RESET;
@@ -35,6 +36,7 @@ void	render(Scene scene)
 	std::cout << CLR_GREEN_BRIGHT << "Render done!\n\n" << CLR_RESET;
 }
 
+// Calculates the color for the pixel at 'x' and 'y'. Creates rays, checks for intersections with objects on 'scene' and bounce light rays
 static Color	calculatePixelColor(Scene scene, int x, int y)
 {
 	Color	pixelColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -66,6 +68,7 @@ static Color	calculatePixelColor(Scene scene, int x, int y)
 	return (pixelColor);
 }
 
+// Checks if 'ray' hits objects present 'scene'. On hit, sets 'pixelColor' to the hitted object's material color
 static bool	checkHits(Scene scene, Ray ray, Color& pixelColor)
 {
 	bool	anyHit = false;
