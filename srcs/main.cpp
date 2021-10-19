@@ -21,8 +21,9 @@ int	main(int argc, char *argv[])
 	scene.setXResolution(1920);
 	scene.setYResolution(1080);
 
-	scene.addCamera(Camera(Transform(Vector3(0.0f, 0.0f, 2.0f), Vector3(0.0f, 0.0f, -1.0f), Vector3(1.0f, 1.0f, 1.0f)), 70));
-	scene.addSphere(Sphere());
+	scene.addCamera(Camera(Transform(Vector3(0.0f, 0.0f, 0.0f), Vector3(0.0f, 0.0f, -1.0f), Vector3(1.0f, 1.0f, 1.0f)), 70));
+	scene.addSphere(Sphere(Transform(Vector3(0.0f, 0.0f, -5.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f, 1.0f, 1.0f)), Material(Color(126, 126, 126, 0), 1.0f), 0.5f));
+	scene.addSphere(Sphere(Transform(Vector3(0.0f, -5.0f, -5.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f, 1.0f, 1.0f)), Material(Color(255, 0, 0, 0), 1.0f), 5.0f));
 
 	render(scene);
 

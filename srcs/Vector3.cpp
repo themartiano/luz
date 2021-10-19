@@ -65,6 +65,11 @@ Vector3	Vector3::operator*(const float f) const
 	return (Vector3(this->_x * f, this->_y * f, this->_z * f));
 }
 
+Vector3	Vector3::operator/(const float f) const
+{
+	return (Vector3(this->_x / f, this->_y / f, this->_z / f));
+}
+
 Vector3&	Vector3::operator/=(const float f)
 {
 	this->_x /= f;
