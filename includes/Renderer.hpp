@@ -4,6 +4,7 @@
 #include "Scene.hpp"
 #include "Color.hpp"
 #include "Vector2.hpp"
+#include "Ray.hpp"
 #include <stdlib.h>
 
 void	render(Scene scene);

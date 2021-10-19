@@ -1,7 +1,6 @@
 #include "Scene.hpp"
 #include "Exit.hpp"
 #include "BMP.hpp"
-#include "Luz.hpp"
 #include "Renderer.hpp"
 #include <fstream>
 
@@ -18,7 +17,12 @@ int	main(int argc, char *argv[])
 
 	if (argc >= 3)
 		//read_flags();
-	init_Luz(scene);
+
+	scene.setXResolution(1920);
+	scene.setYResolution(1080);
+
+	scene.addCamera(Camera(Transform(Vector3(0.0f, 0.0f, 2.0f), Vector3(0.0f, 0.0f, -1.0f), Vector3(1.0f, 1.0f, 1.0f)), 70));
+	scene.addSphere(Sphere());
 
 	render(scene);
 

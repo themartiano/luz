@@ -8,6 +8,7 @@ class	Material
 	public:
 		Material(void);
 		Material(Color color, float opacity);
+		Color	getColor(void) const;
 
 	private:
 		Color	_color;

@@ -24,6 +24,8 @@ class	Scene
 		int		getYResolution(void) const;
 		void	setPixelArray(int index, unsigned char r, unsigned char g, unsigned char b);
 		unsigned char*	getPixelArray() const;
+		std::vector<Sphere>	getSpheres(void) const;
+		Camera	getActiveCamera(void) const;
 
 	private:
 		//pthread_mutex_t	_img_mutex;
@@ -49,6 +51,7 @@ class	Scene
 		std::vector<Plane>		_planes;
 		bool			_should_calculate_light;
 		unsigned char*	_pixelArray;
+		size_t			_activeCamera;
 };
 
 #endif

@@ -35,12 +35,17 @@ float	Vector3::getZ(void) const
 	return (this->_z);
 }
 
-Vector3&	Vector3::operator+(void)
+Vector3	Vector3::operator+(const Vector3 &vec) const
 {
-	return (*this);
+	return (Vector3(this->_x + vec.getX(), this->_y + vec.getY(), this->_z + vec.getZ()));
 }
 
-Vector3	Vector3::operator*(const float f)
+Vector3	Vector3::operator-(const Vector3 &vec) const
+{
+	return (Vector3(this->_x - vec.getX(), this->_y - vec.getY(), this->_z - vec.getZ()));
+}
+
+Vector3	Vector3::operator*(const float f) const
 {
 	return (Vector3(this->_x * f, this->_y * f, this->_z * f));
 }
