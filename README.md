@@ -1,15 +1,11 @@
 # Luz
 
 ## Command-line arguments:
-* -s: Custom sample ammout
-* -mb: Custom maximum light bounces
-* -th: Custom rendering thread number
-* --save: Saves render to .bmp file
-* --no-window: Renders without showing the result in a window
+#### Coming soon
 
 ## Compilation flags
 * DEBUG: Adds the `-g` flag
 * NO_FLAGS: Removes `-Wall`, `-Wextra` and `-Werror` flags
 * SANITIZER: Adds the `-g` and `-fsanitize=address` flags
 
-##### Usage example: make NOFLAGS=1
+##### Usage example: make NO_FLAGS=1
