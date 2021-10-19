@@ -2,35 +2,41 @@
 #include "Objects/Sphere.hpp"
 #include <cmath>
 
-float	dot(Vector3 vec1, Vector3 vec2)
+// Returns the dot product of 'vector1' and 'vector2'
+float	dot(Vector3 vector1, Vector3 vector2)
 {
-	return ((vec1.getX() * vec2.getX()) + (vec1.getY() * vec2.getY()) + (vec1.getZ() * vec2.getZ()));
+	return ((vector1.getX() * vector2.getX()) + (vector1.getY() * vector2.getY()) + (vector1.getZ() * vector2.getZ()));
 }
 
-Vector3	cross(Vector3 vec1, Vector3 vec2)
+// Returns the cross product of 'vector1' and 'vector2'
+Vector3	cross(Vector3 vector1, Vector3 vector2)
 {
 	return (Vector3(
-		(vec1.getY() * vec2.getZ()) - (vec1.getZ() * vec2.getY()),
-		(vec1.getX() * vec2.getZ()) - (vec1.getZ() * vec2.getX()),
-		(vec1.getX() * vec2.getY()) - (vec1.getY() * vec2.getX())));
+		(vector1.getY() * vector2.getZ()) - (vector1.getZ() * vector2.getY()),
+		(vector1.getX() * vector2.getZ()) - (vector1.getZ() * vector2.getX()),
+		(vector1.getX() * vector2.getY()) - (vector1.getY() * vector2.getX())));
 }
 
-float	vectorLengthSQRT(Vector3 vector)
+// Returns the Vector3's length (no square root applied)
+float	vectorLengthNoSQRT(Vector3 vector)
 {
 	return ((vector.getX() * vector.getX()) + (vector.getY() * vector.getY()) + (vector.getZ() * vector.getZ()));
 }
 
+// Returns the Vector3's length
 float	vectorLength(Vector3 vector)
 {
-	return (sqrt(vectorLengthSQRT(vector)));
+	return (sqrt(vectorLengthNoSQRT(vector)));
 }
 
+// Normalizes 'vector'
 Vector3	normalize(Vector3 vector)
 {
 	vector /= vectorLength(vector);
 	return (vector);
 }
 
+// Returns a 3D point (Vector3) that's random and inside a unit sphere (normalized)
 Vector3 randomPointInsideUnitSphere(void)
 {
 	Vector3	position;
@@ -38,10 +44,11 @@ Vector3 randomPointInsideUnitSphere(void)
 	do
 	{
 		position = (Vector3(drand48(), drand48(), drand48()) * 2.0f) - Vector3(1.0f, 1.0f, 1.0f);
-	} while (vectorLengthSQRT(position) >= 1.0f);
+	} while (vectorLengthNoSQRT(position) >= 1.0f);
 	return (position);
 }
 
+// Returns "s" if 'number' differs from 1
 std::string    pluralOrSingular(int number)
 {
 	if (number == 1)

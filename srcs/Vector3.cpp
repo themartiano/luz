@@ -20,31 +20,37 @@ Vector3::Vector3(float x, float y, float z)
 	this->_z = z;
 }
 
+// Returns the Vector3's X axis
 float	Vector3::getX(void) const
 {
 	return (this->_x);
 }
 
+// Sets the Vector3's X axis
 void	Vector3::setX(float x)
 {
 	this->_x = x;
 }
 
+// Returns the Vector3's Y axis
 float	Vector3::getY(void) const
 {
 	return (this->_y);
 }
 
+// Sets the Vector3's Y axis
 void	Vector3::setY(float y)
 {
 	this->_y = y;
 }
 
+// Returns the Vector3's Z axis
 float	Vector3::getZ(void) const
 {
 	return (this->_z);
 }
 
+// Sets the Vector3's Z axis
 void	Vector3::setZ(float z)
 {
 	this->_z = z;
