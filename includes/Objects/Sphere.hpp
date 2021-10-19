@@ -3,7 +3,6 @@
 
 #include "Transform.hpp"
 #include "Material.hpp"
-#include "Utilities.hpp"
 
 class	Sphere
 {

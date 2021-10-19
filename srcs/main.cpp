@@ -2,7 +2,9 @@
 #include "Exit.hpp"
 #include "BMP.hpp"
 #include "Renderer.hpp"
+#include "ANSIColors.hpp"
 #include <fstream>
+#include <iostream>
 
 int	main(int argc, char *argv[])
 {

@@ -1,4 +1,5 @@
 #include "Objects/Sphere.hpp"
+#include "Utilities.hpp"
 
 /*
 	Constructors

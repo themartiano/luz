@@ -1,4 +1,6 @@
 #include "Scene.hpp"
+#include "Defaults.hpp"
+#include "Color.hpp"
 #include <limits>
 
 Scene::Scene(void)

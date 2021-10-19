@@ -14,8 +14,6 @@ class	Camera
 	private:
 		Transform	_transform;
 		short		_fov;
-		// float		half_width; //Necessario?
-		// float		half_height; //Necessario?
 };
 
 #endif

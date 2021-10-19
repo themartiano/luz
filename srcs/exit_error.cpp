@@ -1,4 +1,6 @@
 #include "Exit.hpp"
+#include "ANSIColors.hpp"
+#include <iostream>
 
 // Prints 'message' as an error and exits with code 1
 void	exit_error(Scene &scene, std::string message)

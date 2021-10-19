@@ -1,4 +1,6 @@
 #include "Ray.hpp"
+#include "Scene.hpp"
+#include <cmath>
 
 Ray::Ray(void)
 {
