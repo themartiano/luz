@@ -2,7 +2,7 @@
 # define HITUTILS_HPP
 
 #include "Ray.hpp"
-#include "Defaults.hpp"
+#include "Objects/Sphere.hpp"
 
 bool	hitSphere(Ray& ray, Sphere sphere, float t_max);
 

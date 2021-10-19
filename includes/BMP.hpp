@@ -2,8 +2,6 @@
 # define BMP_HPP
 
 #include "Scene.hpp"
-#include "ANSIColors.hpp"
-#include <iostream>
 #include <string>
 
 class	BMP

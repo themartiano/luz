@@ -1,4 +1,6 @@
 #include "BMP.hpp"
+#include "ANSIColors.hpp"
+#include <iostream>
 
 static unsigned char*	createBitmapFileHeader(int height, int stride);
 static unsigned char*	createBitmapInfoHeader(int height, int width);

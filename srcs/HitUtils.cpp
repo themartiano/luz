@@ -1,4 +1,7 @@
 #include "HitUtils.hpp"
+#include "Defaults.hpp"
+#include "Utilities.hpp"
+#include <cmath>
 
 bool	hitSphere(Ray& ray, Sphere sphere, float t_max)
 {

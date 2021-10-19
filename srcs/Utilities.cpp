@@ -1,4 +1,6 @@
 #include "Utilities.hpp"
+#include "Objects/Sphere.hpp"
+#include <cmath>
 
 float	dot(Vector3 vec1, Vector3 vec2)
 {

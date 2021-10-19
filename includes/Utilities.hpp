@@ -2,9 +2,7 @@
 # define UTILITIES_HPP
 
 #include "Vector3.hpp"
-#include "Objects/Sphere.hpp"
 #include <string>
-#include <cmath>
 
 float	dot(Vector3 vec1, Vector3 vec2);
 Vector3	cross(Vector3 vec1, Vector3 vec2);

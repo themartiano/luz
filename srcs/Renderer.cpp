@@ -1,4 +1,14 @@
 #include "Renderer.hpp"
+#include "ANSIColors.hpp"
+#include "Color.hpp"
+#include "Vector2.hpp"
+#include "Ray.hpp"
+#include "HitUtils.hpp"
+#include "Defaults.hpp"
+#include "Utilities.hpp"
+#include <cmath>
+#include <iostream>
+#include <stdlib.h>
 
 static Color	calculatePixelColor(Scene scene, int x, int y);
 static bool	checkHits(Scene scene, Ray ray, Color& pixelColor);

@@ -1,16 +1,14 @@
 #ifndef SCENE_HPP
 # define SCENE_HPP
 
-#include <vector>
-#include "Defaults.hpp"
 #include "Camera.hpp"
 #include "Light.hpp"
-#include "Color.hpp"
 #include "Objects/Triangle.hpp"
 #include "Objects/Square.hpp"
 #include "Objects/Sphere.hpp"
 #include "Objects/Cylinder.hpp"
 #include "Objects/Plane.hpp"
+#include <vector>
 
 class	Scene
 {

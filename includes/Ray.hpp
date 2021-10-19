@@ -1,9 +1,7 @@
 #ifndef RAY_HPP
 # define RAY_HPP
 
-#include "Scene.hpp"
 #include "Vector3.hpp"
-#include <cmath>
 
 struct HitRecord
 {
