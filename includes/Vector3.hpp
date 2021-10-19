@@ -15,6 +15,7 @@ class	Vector3
 		Vector3	operator+(const Vector3 &vec) const;
 		Vector3	operator-(const Vector3 &vec) const;
 		Vector3	operator*(const float f) const;
+		Vector3	operator/(const float f) const;
 		Vector3&	operator/=(const float f);
 
 	private:
