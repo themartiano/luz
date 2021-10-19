@@ -19,15 +19,15 @@ static Color	calculatePixelColor(Scene scene, int x, int y)
 {
 	Color	pixelColor(0, 0, 0, 0);
 
-	Vector2 pixel((float)x + drand48() / (float)scene.getXResolution(), (float)y + drand48() / (float)scene.getYResolution());
-	float u = float(x) / float(scene.getXResolution());
-	float v = float(y) / float(scene.getYResolution());
-	Ray ray(scene.getActiveCamera().getTransform().getPosition(), Vector3(-2.0f, -1.0f, -1.0f) + (Vector3(4.0f, 0.0f, 0.0f) * u) + (Vector3(0.0f, 2.0f, 0.0f) * v));
+	float u = ((float)x + drand48()) / (float)scene.getXResolution();
+	float v = ((float)y + drand48()) / (float)scene.getYResolution();
+	Ray ray(scene.getActiveCamera().getTransform().getPosition(), Vector3(-2.0f, -1.0f, -1.0f) + (Vector3(4.0f, 0.0f, 0.0f) * u) + (Vector3(0.0f, 2.0f, 0.0f) * v) - scene.getActiveCamera().getTransform().getPosition(), scene, u, v);
 	for (Sphere sphere : scene.getSpheres())
 	{
-		if (sphere.hit(ray))
+		if (hitSphere(ray, sphere))
 		{
-			return (sphere.getMaterial().getColor());
+			//return (sphere.getMaterial().getColor());
+			return (Color(123, 123, 123, 0));
 		}
 	}
 	return (pixelColor);

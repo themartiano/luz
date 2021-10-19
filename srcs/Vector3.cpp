@@ -25,14 +25,29 @@ float	Vector3::getX(void) const
 	return (this->_x);
 }
 
+void	Vector3::setX(float x)
+{
+	this->_x = x;
+}
+
 float	Vector3::getY(void) const
 {
 	return (this->_y);
 }
 
+void	Vector3::setY(float y)
+{
+	this->_y = y;
+}
+
 float	Vector3::getZ(void) const
 {
 	return (this->_z);
+}
+
+void	Vector3::setZ(float z)
+{
+	this->_z = z;
 }
 
 Vector3	Vector3::operator+(const Vector3 &vec) const
@@ -48,4 +63,12 @@ Vector3	Vector3::operator-(const Vector3 &vec) const
 Vector3	Vector3::operator*(const float f) const
 {
 	return (Vector3(this->_x * f, this->_y * f, this->_z * f));
+}
+
+Vector3&	Vector3::operator/=(const float f)
+{
+	this->_x /= f;
+	this->_y /= f;
+	this->_z /= f;
+	return (*this);
 }
