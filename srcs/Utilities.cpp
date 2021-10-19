@@ -39,3 +39,15 @@ Vector3 randomPointInsideUnitSphere(void)
 	} while (vectorLengthSQRT(position) >= 1.0f);
 	return (position);
 }
+
+std::string    pluralOrSingular(int number)
+{
+	if (number == 1)
+	{
+		return ("");
+	}
+	else
+	{
+		return ("s");
+	}
+}

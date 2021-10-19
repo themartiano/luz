@@ -6,6 +6,8 @@
 #include "Vector2.hpp"
 #include "Ray.hpp"
 #include "HitUtils.hpp"
+#include "ANSIColors.hpp"
+#include <iostream>
 #include <stdlib.h>
 
 void	render(Scene scene);
