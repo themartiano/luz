@@ -9,7 +9,6 @@ Ray::Ray(void)
 Ray::Ray(Vector3 origin, Vector3 direction)
 {
 	this->_origin = origin;
-    direction.setY(-direction.getY());
     this->_direction = direction;
 }
 
@@ -24,7 +23,17 @@ Vector3 Ray::getOrigin(void) const
     return (this->_origin);
 }
 
+void Ray::setOrigin(Vector3 origin)
+{
+	this->_origin = origin;
+}
+
 Vector3 Ray::getDirection(void) const
 {
     return (this->_direction);
+}
+
+void Ray::setDirection(Vector3 direction)
+{
+    this->_direction = direction;
 }

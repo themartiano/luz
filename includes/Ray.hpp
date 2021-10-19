@@ -20,7 +20,9 @@ class   Ray
         Ray(Vector3 origin, Vector3 direction);
         Vector3 pointAtRay(float t);
         Vector3 getOrigin(void) const;
+        void    setOrigin(Vector3 origin);
         Vector3 getDirection(void) const;
+        void    setDirection(Vector3 direction);
         struct HitRecord    hitRecord;
 
     private:

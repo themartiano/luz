@@ -14,7 +14,7 @@ Color::Color(void)
 }
 
 // Constructs the Color with custom values
-Color::Color(short r, short g, short b, short a)
+Color::Color(int r, int g, int b, int a)
 {
 	this->_red = r;
 	this->_green = g;
@@ -22,17 +22,38 @@ Color::Color(short r, short g, short b, short a)
 	this->_alpha = a;
 }
 
-short	Color::getRed(void) const
+int	Color::getRed(void) const
 {
 	return (this->_red);
 }
 
-short	Color::getGreen(void) const
+int	Color::getGreen(void) const
 {
 	return (this->_green);
 }
 
-short	Color::getBlue(void) const
+int	Color::getBlue(void) const
 {
 	return (this->_blue);
+}
+
+Color&	Color::operator+=(const Color &color2)
+{
+	this->_red += color2.getRed();
+	this->_green += color2.getGreen();
+	this->_blue += color2.getBlue();
+	return (*this);
+}
+
+Color&	Color::operator/=(const int i)
+{
+	this->_red /= i;
+	this->_green /= i;
+	this->_blue /= i;
+	return (*this);
+}
+
+Color	Color::operator/(const int i) const
+{
+	return (Color(this->_red / i, this->_green / i, this->_blue / i, 0));
 }

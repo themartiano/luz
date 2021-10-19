@@ -5,6 +5,7 @@
 #include "Defaults.hpp"
 #include "Camera.hpp"
 #include "Light.hpp"
+#include "Color.hpp"
 #include "Objects/Triangle.hpp"
 #include "Objects/Square.hpp"
 #include "Objects/Sphere.hpp"
@@ -22,7 +23,7 @@ class	Scene
 		int		getXResolution(void) const;
 		void	setYResolution(const short yRes);
 		int		getYResolution(void) const;
-		void	setPixelArray(int index, unsigned char r, unsigned char g, unsigned char b);
+		void	setPixelArray(int index, Color pixelColor);
 		unsigned char*	getPixelArray() const;
 		std::vector<Sphere>	getSpheres(void) const;
 		Camera	getActiveCamera(void) const;

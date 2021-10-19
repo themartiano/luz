@@ -28,3 +28,14 @@ Vector3	normalize(Vector3 vector)
 	vector /= vectorLength(vector);
 	return (vector);
 }
+
+Vector3 randomPointInsideUnitSphere(void)
+{
+	Vector3	position;
+
+	do
+	{
+		position = (Vector3(drand48(), drand48(), drand48()) * 2.0f) - Vector3(1.0f, 1.0f, 1.0f);
+	} while (vectorLengthSQRT(position) >= 1.0f);
+	return (position);
+}
