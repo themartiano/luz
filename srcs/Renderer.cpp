@@ -5,7 +5,6 @@ static bool	checkHits(Scene scene, Ray ray, Color& pixelColor);
 
 void	render(Scene scene)
 {
-	scene.addSphere(Sphere(Transform(Vector3(0.0f, 0.0f, -2.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(0.0f, 0.0f, 0.0f)), Material(Color(0.49f, 0.49f, 0.49f, 0.0f), 1.0f), 1.0f));
 	for (int y = 0; y < scene.getYResolution(); y++)
 	{
 		for (int x = 0; x < scene.getXResolution(); x++)
@@ -65,6 +64,7 @@ static bool	checkHits(Scene scene, Ray ray, Color& pixelColor)
 		if (hitSphere(ray, sphere, currentClosestObject))
 		{
 			pixelColor = sphere.getMaterial().getColor();
+			currentClosestObject = ray.hitRecord.t;
 			anyHit = true;
 		}
 	}
