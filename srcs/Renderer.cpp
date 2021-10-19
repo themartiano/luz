@@ -1,6 +1,7 @@
 #include "Renderer.hpp"
 
 static Color	calculatePixelColor(Scene scene, int x, int y);
+static bool	checkHits(Scene scene, Ray ray, Color& pixelColor);
 
 void	render(Scene scene)
 {
@@ -9,8 +10,13 @@ void	render(Scene scene)
 	{
 		for (int x = 0; x < scene.getXResolution(); x++)
 		{
-			Color color = calculatePixelColor(scene, x, y);
-			scene.setPixelArray((y * scene.getXResolution()) + x, color.getRed(), color.getGreen(), color.getBlue());
+			Color pixelColor(0, 0, 0, 0);
+			for (int samples = 0; samples < D_SAMPLE_COUNT; samples++)
+			{
+				pixelColor += calculatePixelColor(scene, x, y);
+			}
+			pixelColor /= D_SAMPLE_COUNT;
+			scene.setPixelArray((y * scene.getXResolution()) + x, pixelColor);
 		}
 	}
 }
@@ -18,9 +24,10 @@ void	render(Scene scene)
 static Color	calculatePixelColor(Scene scene, int x, int y)
 {
 	Color	pixelColor(0, 0, 0, 0);
+	Color	tempColor(0, 0, 0, 0);
 
-	float u = (float)x / (float)scene.getXResolution();
-	float v = (float)y / (float)scene.getYResolution();
+	float u = float(x + drand48()) / (float)scene.getXResolution();
+	float v = float(y + drand48()) / (float)scene.getYResolution();
 
     float   halfHeight = tan(((float)scene.getActiveCamera().getFOV() * M_PI / 180.0f) / 2.0f);
     float   halfWidth = ((float)scene.getXResolution() / (float)scene.getYResolution()) * halfHeight;
@@ -29,13 +36,34 @@ static Color	calculatePixelColor(Scene scene, int x, int y)
 	Vector3	vertical = Vector3(0.0f, 2.0f * halfHeight, 0.0f);
 
 	Ray ray(scene.getActiveCamera().getTransform().getPosition(), lowerLeftCorner + (horizontal * u) + (vertical * v) - scene.getActiveCamera().getTransform().getPosition());
+	int	bounces;
+	for (bounces = -1; bounces < D_MAX_LIGHT_BOUNCES && checkHits(scene, ray, tempColor); bounces++)
+	{
+		Vector3	newTarget = ray.hitRecord.position + ray.hitRecord.normal + randomPointInsideUnitSphere();
+		ray.setOrigin(ray.hitRecord.position);
+		ray.setDirection(newTarget - ray.hitRecord.position);
+		pixelColor += tempColor;
+		tempColor = Color(0, 0, 0, 0);
+	}
+	if (bounces > 0)
+	{
+		pixelColor /= bounces;
+	}
+	return (pixelColor);
+}
+
+static bool	checkHits(Scene scene, Ray ray, Color& pixelColor)
+{
+	bool	anyHit = false;
 	float	currentClosestObject = T_MAX;
+
 	for (Sphere sphere : scene.getSpheres())
 	{
 		if (hitSphere(ray, sphere, currentClosestObject))
 		{
 			pixelColor = sphere.getMaterial().getColor();
+			anyHit = true;
 		}
 	}
-	return (pixelColor);
+	return (anyHit);
 }

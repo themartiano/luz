@@ -5,16 +5,19 @@ class	Color
 {
 	public:
 		Color(void);
-		Color(short r, short g, short b, short a);
-		short	getRed(void) const;
-		short	getGreen(void) const;
-		short	getBlue(void) const;
+		Color(int r, int g, int b, int a);
+		int	getRed(void) const;
+		int	getGreen(void) const;
+		int	getBlue(void) const;
+		Color&	operator+=(const Color &color2);
+		Color&	operator/=(const int i);
+		Color	operator/(const int i) const;
 
 	private:
-		short	_red;
-		short	_green;
-		short	_blue;
-		short	_alpha;
+		int	_red;
+		int	_green;
+		int	_blue;
+		int	_alpha;
 };
 
 #endif
