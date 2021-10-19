@@ -22,3 +22,8 @@ Transform	Camera::getTransform(void) const
 {
 	return (this->_transform);
 }
+
+short		Camera::getFOV(void) const
+{
+	return (this->_fov);
+}
