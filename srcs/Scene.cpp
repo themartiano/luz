@@ -13,6 +13,7 @@ Scene::Scene(void)
 	this->_sample_count = D_SAMPLE_COUNT;
 	this->_max_light_bounces = D_MAX_LIGHT_BOUNCES;
 	this->_should_calculate_light = true;
+	this->_activeCamera = 0;
 
 	this->_pixelArray = new unsigned char[D_WIDTH * D_HEIGHT * 3];
 }
@@ -67,4 +68,14 @@ void	Scene::setPixelArray(int index, unsigned char r, unsigned char g, unsigned 
 unsigned char*	Scene::getPixelArray(void) const
 {
 	return (this->_pixelArray);
+}
+
+std::vector<Sphere>	Scene::getSpheres(void) const
+{
+	return (this->_spheres);
+}
+
+Camera	Scene::getActiveCamera(void) const
+{
+	return (this->_cameras[this->_activeCamera]);
 }

@@ -8,6 +8,7 @@ class	Camera
 	public:
 		Camera(void);
 		Camera(Transform transform, short fov);
+		Transform	getTransform(void) const;
 
 	private:
 		Transform	_transform;

@@ -17,3 +17,13 @@ Vector3 Ray::pointAtRay(float t)
 {
     return (this->_origin + (Vector3)(this->_direction * t));
 }
+
+Vector3 Ray::getOrigin(void) const
+{
+    return (this->_origin);
+}
+
+Vector3 Ray::getDirection(void) const
+{
+    return (this->_direction);
+}

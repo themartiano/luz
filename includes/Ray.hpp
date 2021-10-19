@@ -9,6 +9,8 @@ class   Ray
         Ray(void);
         Ray(Vector3 origin, Vector3 direction);
         Vector3 pointAtRay(float t);
+        Vector3 getOrigin(void) const;
+        Vector3 getDirection(void) const;
 
     private:
         Vector3 _origin;

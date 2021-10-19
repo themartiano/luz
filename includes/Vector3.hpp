@@ -9,8 +9,9 @@ class	Vector3
 		float	getX(void) const;
 		float	getY(void) const;
 		float	getZ(void) const;
-		Vector3&	operator+(void);
-		Vector3		operator*(const float f);
+		Vector3	operator+(const Vector3 &vec) const;
+		Vector3	operator-(const Vector3 &vec) const;
+		Vector3	operator*(const float f) const;
 
 	private:
 		float	_x;
