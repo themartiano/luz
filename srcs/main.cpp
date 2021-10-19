@@ -23,13 +23,13 @@ int	main(int argc, char *argv[])
 
 	// Current coordinate system ~~ Forward: -Z | Up: -Y
 	scene.addCamera(Camera(Transform(Vector3(0.0f, 0.0f, 0.0f), Vector3(0.0f, 0.0f, -1.0f), Vector3(1.0f, 1.0f, 1.0f)), 70));
-	scene.addSphere(Sphere(Transform(Vector3(0.0f, 0.0f, -10.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f, 1.0f, 1.0f)), Material(Color(0.6f, 0.6f, 0.6f, 0.0f), 1.0f), 3.0f));
-	scene.addSphere(Sphere(Transform(Vector3(0.0f, 103.0f, -10.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f, 1.0f, 1.0f)), Material(Color(0.5f, 0.0f, 0.0f, 0.0f), 1.0f), 100.0f));
+	scene.addSphere(Sphere(Transform(Vector3(0.0f, 0.0f, -8.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f, 1.0f, 1.0f)), Material(Color(0.6f, 0.6f, 0.6f, 0.0f), 1.0f), 4.0f));
+	scene.addSphere(Sphere(Transform(Vector3(0.0f, 104.0f, -10.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f, 1.0f, 1.0f)), Material(Color(0.5f, 0.0f, 0.0f, 0.0f), 1.0f), 100.0f));
 
 	render(scene);
 
 	// Writes BMP image file
-	BMP bmp("render.bmp");
+	BMP bmp("render");
 	bmp.write_file(scene);
 
 	return (0);

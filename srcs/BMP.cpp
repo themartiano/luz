@@ -11,7 +11,7 @@ BMP::BMP(void)
 
 BMP::BMP(std::string fileName)
 {
-	this->_fileName = fileName;
+	this->_fileName = fileName + ".bmp";
 }
 
 void	BMP::write_file(Scene scene)
