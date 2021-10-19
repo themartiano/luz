@@ -7,14 +7,14 @@
 // Constructs the Color with default values
 Color::Color(void)
 {
-	this->_red = 0;
-	this->_green = 0;
-	this->_blue = 0;
-	this->_alpha = 0;
+	this->_red = 0.0f;
+	this->_green = 0.0f;
+	this->_blue = 0.0f;
+	this->_alpha = 0.0f;
 }
 
 // Constructs the Color with custom values
-Color::Color(int r, int g, int b, int a)
+Color::Color(float r, float g, float b, float a)
 {
 	this->_red = r;
 	this->_green = g;
@@ -22,17 +22,17 @@ Color::Color(int r, int g, int b, int a)
 	this->_alpha = a;
 }
 
-int	Color::getRed(void) const
+float	Color::getRed(void) const
 {
 	return (this->_red);
 }
 
-int	Color::getGreen(void) const
+float	Color::getGreen(void) const
 {
 	return (this->_green);
 }
 
-int	Color::getBlue(void) const
+float	Color::getBlue(void) const
 {
 	return (this->_blue);
 }
@@ -45,15 +45,15 @@ Color&	Color::operator+=(const Color &color2)
 	return (*this);
 }
 
-Color&	Color::operator/=(const int i)
+Color&	Color::operator/=(const float f)
 {
-	this->_red /= i;
-	this->_green /= i;
-	this->_blue /= i;
+	this->_red /= f;
+	this->_green /= f;
+	this->_blue /= f;
 	return (*this);
 }
 
-Color	Color::operator/(const int i) const
+Color	Color::operator/(const float f) const
 {
-	return (Color(this->_red / i, this->_green / i, this->_blue / i, 0));
+	return (Color(this->_red / f, this->_green / f, this->_blue / f, 0));
 }

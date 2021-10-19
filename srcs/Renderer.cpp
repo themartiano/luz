@@ -5,17 +5,20 @@ static bool	checkHits(Scene scene, Ray ray, Color& pixelColor);
 
 void	render(Scene scene)
 {
-	scene.addSphere(Sphere(Transform(Vector3(0.0f, 0.0f, -2.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(0.0f, 0.0f, 0.0f)), Material(Color(126, 126, 126, 0), 1.0f), 1.0f));
+	scene.addSphere(Sphere(Transform(Vector3(0.0f, 0.0f, -2.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(0.0f, 0.0f, 0.0f)), Material(Color(0.49f, 0.49f, 0.49f, 0.0f), 1.0f), 1.0f));
 	for (int y = 0; y < scene.getYResolution(); y++)
 	{
 		for (int x = 0; x < scene.getXResolution(); x++)
 		{
-			Color pixelColor(0, 0, 0, 0);
+			Color pixelColor(0.0f, 0.0f, 0.0f, 0.0f);
+
 			for (int samples = 0; samples < D_SAMPLE_COUNT; samples++)
 			{
 				pixelColor += calculatePixelColor(scene, x, y);
 			}
-			pixelColor /= D_SAMPLE_COUNT;
+			pixelColor /= float(D_SAMPLE_COUNT);
+			pixelColor = Color(sqrtf(pixelColor.getRed()), sqrtf(pixelColor.getGreen()), sqrtf(pixelColor.getBlue()), 0.0f); // Gamma (2) correction
+
 			scene.setPixelArray((y * scene.getXResolution()) + x, pixelColor);
 		}
 	}
@@ -23,8 +26,8 @@ void	render(Scene scene)
 
 static Color	calculatePixelColor(Scene scene, int x, int y)
 {
-	Color	pixelColor(0, 0, 0, 0);
-	Color	tempColor(0, 0, 0, 0);
+	Color	pixelColor(0.0f, 0.0f, 0.0f, 0.0f);
+	Color	tempColor(0.0f, 0.0f, 0.0f, 0.0f);
 
 	float u = float(x + drand48()) / (float)scene.getXResolution();
 	float v = float(y + drand48()) / (float)scene.getYResolution();
@@ -42,12 +45,12 @@ static Color	calculatePixelColor(Scene scene, int x, int y)
 		Vector3	newTarget = ray.hitRecord.position + ray.hitRecord.normal + randomPointInsideUnitSphere();
 		ray.setOrigin(ray.hitRecord.position);
 		ray.setDirection(newTarget - ray.hitRecord.position);
-		pixelColor += tempColor;
-		tempColor = Color(0, 0, 0, 0);
+		pixelColor += tempColor / 2.0f;
+		tempColor = Color(0.0f, 0.0f, 0.0f, 0.0f);
 	}
 	if (bounces > 0)
 	{
-		pixelColor /= bounces;
+		pixelColor /= float(bounces);
 	}
 	return (pixelColor);
 }

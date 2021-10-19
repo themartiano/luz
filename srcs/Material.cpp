@@ -7,7 +7,7 @@
 // Constructs the Material with default values
 Material::Material(void)
 {
-	this->_color = Color(0, 0, 0, 0);
+	this->_color = Color(0.0f, 0.0f, 0.0f, 0.0f);
 	this->_opacity = 1.0f;
 }
 
