@@ -3,11 +3,11 @@
 
 #include "Camera.hpp"
 #include "Light.hpp"
-#include "Objects/Triangle.hpp"
-#include "Objects/Square.hpp"
-#include "Objects/Sphere.hpp"
-#include "Objects/Cylinder.hpp"
-#include "Objects/Plane.hpp"
+#include "Forms/Triangle.hpp"
+#include "Forms/Square.hpp"
+#include "Forms/Sphere.hpp"
+#include "Forms/Cylinder.hpp"
+#include "Forms/Plane.hpp"
 #include <vector>
 
 class	Scene

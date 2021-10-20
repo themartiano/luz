@@ -1,5 +1,5 @@
 #include "Utilities.hpp"
-#include "Objects/Sphere.hpp"
+#include "Forms/Sphere.hpp"
 #include <cmath>
 
 // Returns the dot product of 'vector1' and 'vector2'
