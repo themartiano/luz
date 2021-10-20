@@ -10,6 +10,7 @@
 #include <iostream>
 #include <stdlib.h>
 
+// Static function prototypes
 static Color	calculatePixelColor(Scene scene, int x, int y);
 static bool	checkHits(Scene scene, Ray ray, Color& pixelColor);
 

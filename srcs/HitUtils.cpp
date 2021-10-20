@@ -3,6 +3,7 @@
 #include "Utilities.hpp"
 #include <cmath>
 
+// Calculates if 'sphere' is hit by 'ray', is closer than 't_max' and farther than T_MIN
 bool	hitSphere(Ray& ray, Sphere sphere, float t_max)
 {
 	Vector3 oc = ray.getOrigin() - sphere.getTransform().getPosition();

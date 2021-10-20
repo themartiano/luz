@@ -2,19 +2,27 @@
 #include "ANSIColors.hpp"
 #include <iostream>
 
+// Static function prototypes
 static unsigned char*	createBitmapFileHeader(int height, int stride);
 static unsigned char*	createBitmapInfoHeader(int height, int width);
 
+/*
+	Constructors
+*/
+
+// Constructs the BMP object with default values
 BMP::BMP(void)
 {
 	this->_fileName = "";
 }
 
+// Constructs the BMP object with custom values
 BMP::BMP(std::string fileName)
 {
 	this->_fileName = fileName + ".bmp";
 }
 
+// Writes a .bmp image file using the information present on 'scene'
 void	BMP::write_file(Scene scene)
 {
 	unsigned char	padding[3] = {0, 0, 0};
@@ -39,6 +47,7 @@ void	BMP::write_file(Scene scene)
 	std::cout << CLR_GREEN_BRIGHT << "File ready.\n\n" << CLR_RESET;
 }
 
+// Creates and returns the BMP image "file header"
 static unsigned char*	createBitmapFileHeader(int height, int stride)
 {
 	int fileSize = 14 + 40 + (stride * height);
@@ -61,6 +70,7 @@ static unsigned char*	createBitmapFileHeader(int height, int stride)
 	return (fileHeader);
 }
 
+// Creates and returns the BMP image "info header"
 static unsigned char*	createBitmapInfoHeader(int height, int width)
 {
 	static unsigned char infoHeader[] = {

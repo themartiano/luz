@@ -22,16 +22,19 @@ Color::Color(float r, float g, float b, float a)
 	this->_alpha = a;
 }
 
+// Returns the Color's Red value
 float	Color::getRed(void) const
 {
 	return (this->_red);
 }
 
+// Returns the Color's Green value
 float	Color::getGreen(void) const
 {
 	return (this->_green);
 }
 
+// Returns the Color's Blue value
 float	Color::getBlue(void) const
 {
 	return (this->_blue);

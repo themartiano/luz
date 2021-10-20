@@ -2,7 +2,7 @@
 #include "ANSIColors.hpp"
 #include <iostream>
 
-// Prints 'message' as an error and exits with code 1
+// Prints 'message' as an error and exits with code (1)
 void	exit_error(Scene &scene, std::string message)
 {
 	std::cout << CLR_RED << "Error\n" << CLR_RESET;
