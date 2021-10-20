@@ -17,18 +17,22 @@ static bool	checkHits(Scene scene, Ray ray, Color& pixelColor);
 // Renders the image using all the information present on 'scene'. (Objects, cameras, lights, settings, etc)
 void	render(Scene scene)
 {
-	std::cout << CLR_YELLOW << "Rendering..." << CLR_YELLOW << " (" << CLR_WHITE << D_SAMPLE_COUNT << CLR_CYAN << " sample" << pluralOrSingular(D_SAMPLE_COUNT) << ", " << CLR_WHITE << D_MAX_LIGHT_BOUNCES << CLR_CYAN << " max light bounce" << pluralOrSingular(D_MAX_LIGHT_BOUNCES) << CLR_YELLOW << ")\n" << CLR_RESET;
+	std::cout << CLR_YELLOW << "Rendering..." << CLR_YELLOW << " (" << CLR_WHITE << scene.getSampleCount() << CLR_CYAN << " sample"
+		<< pluralOrSingular(scene.getSampleCount()) << ", " << CLR_WHITE << scene.getMaxLightBounces() << CLR_CYAN << " max light bounce"
+		<< pluralOrSingular(scene.getMaxLightBounces()) << CLR_YELLOW << ")\n" << CLR_RESET;
+
 	for (int y = 0; y < scene.getYResolution(); y++)
 	{
 		for (int x = 0; x < scene.getXResolution(); x++)
 		{
 			Color pixelColor(0.0f, 0.0f, 0.0f, 0.0f);
 
-			for (int samples = 0; samples < D_SAMPLE_COUNT; samples++)
+			int samples;
+			for (samples = 0; samples < scene.getSampleCount(); samples++)
 			{
 				pixelColor += calculatePixelColor(scene, x, y);
 			}
-			pixelColor /= float(D_SAMPLE_COUNT);
+			pixelColor /= float(samples + 1);
 			pixelColor = Color(sqrtf(pixelColor.getRed()), sqrtf(pixelColor.getGreen()), sqrtf(pixelColor.getBlue()), 0.0f); // Gamma (2) correction
 
 			scene.setPixelArray((y * scene.getXResolution()) + x, pixelColor);
@@ -48,13 +52,14 @@ static Color	calculatePixelColor(Scene scene, int x, int y)
 
     float   halfHeight = tan(((float)scene.getActiveCamera().getFOV() * M_PI / 180.0f) / 2.0f);
     float   halfWidth = ((float)scene.getXResolution() / (float)scene.getYResolution()) * halfHeight;
+
 	Vector3	lowerLeftCorner = Vector3(-halfWidth, -halfHeight, -1.0f);
 	Vector3	horizontal = Vector3(2.0f * halfWidth, 0.0f, 0.0f);
 	Vector3	vertical = Vector3(0.0f, 2.0f * halfHeight, 0.0f);
 
 	Ray ray(scene.getActiveCamera().getTransform().getPosition(), lowerLeftCorner + (horizontal * u) + (vertical * v) - scene.getActiveCamera().getTransform().getPosition());
 	int	bounces;
-	for (bounces = -1; bounces < D_MAX_LIGHT_BOUNCES && checkHits(scene, ray, tempColor); bounces++)
+	for (bounces = -1; bounces < scene.getMaxLightBounces() && checkHits(scene, ray, tempColor); bounces++)
 	{
 		Vector3	newTarget = ray.hitRecord.position + ray.hitRecord.normal + randomPointInsideUnitSphere();
 		ray.setOrigin(ray.hitRecord.position);

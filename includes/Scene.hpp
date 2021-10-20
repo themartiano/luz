@@ -17,40 +17,35 @@ class	Scene
 		void	addCamera(Camera camera);
 		void	addLight(Light light);
 		void	addSphere(Sphere sphere);
-		void	setXResolution(const short xRes);
 		int		getXResolution(void) const;
-		void	setYResolution(const short yRes);
+		void	setXResolution(const int xRes);
 		int		getYResolution(void) const;
+		void	setYResolution(const int yRes);
+		int		getSampleCount(void) const;
+		void	setSampleCount(const int sampleCount);
+		int		getMaxLightBounces(void) const;
+		void	setMaxLightBounces(const int maxLightBounces);
 		void	setPixelArray(int index, Color pixelColor);
 		unsigned char*	getPixelArray() const;
 		std::vector<Sphere>	getSpheres(void) const;
 		Camera	getActiveCamera(void) const;
 
 	private:
-		//pthread_mutex_t	_img_mutex;
-		//pthread_t		*_threads;
-		int				_threadCount;
-		int				_threadCounter;
-		//pthread_mutex_t	_thread_counter_mutex;
-		short				_xResolution;
-		short				_yResolution;
-		int				_renderedRows;
-		//pthread_mutex_t	_row_counter_mutex;
-		float			_epsilon;
-		float			_t_max;
-		int				_sampleCount;
-		int				_maxLightBounces;
-		Light			_ambientLight;
+		int						_xResolution;
+		int						_yResolution;
+		float					_t_max;
+		int						_sampleCount;
+		int						_maxLightBounces;
+		unsigned char*			_pixelArray;
+		//Light					_ambientLight;
 		std::vector<Camera>		_cameras;
+		size_t					_activeCamera;
 		std::vector<Light>		_lights;
 		std::vector<Triangle>	_triangles;
 		std::vector<Square>		_squares;
 		std::vector<Sphere>		_spheres;
 		std::vector<Cylinder>	_cylinders;
 		std::vector<Plane>		_planes;
-		bool			_shouldCalculateLight;
-		unsigned char*	_pixelArray;
-		size_t			_activeCamera;
 };
 
 #endif

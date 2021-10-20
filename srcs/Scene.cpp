@@ -10,17 +10,13 @@
 // Constructs the Scene with default values
 Scene::Scene(void)
 {
-	this->_threadCount = 5;
-	this->_threadCounter = 0;
 	this->_xResolution = D_WIDTH;
 	this->_yResolution = D_HEIGHT;
-	this->_renderedRows = 0;
-	this->_epsilon = 0.001f;
-	this->_t_max = std::numeric_limits<float>::max();
 	this->_sampleCount = D_SAMPLE_COUNT;
 	this->_maxLightBounces = D_MAX_LIGHT_BOUNCES;
-	this->_shouldCalculateLight = true;
 	this->_activeCamera = 0;
+
+	this->_t_max = std::numeric_limits<float>::max();
 
 	this->_pixelArray = new unsigned char[D_WIDTH * D_HEIGHT * 3];
 }
@@ -50,7 +46,7 @@ int		Scene::getXResolution(void) const
 }
 
 // Sets the X resolution (width)
-void	Scene::setXResolution(const short xRes)
+void	Scene::setXResolution(const int xRes)
 {
 	this->_xResolution = xRes;
 }
@@ -62,9 +58,33 @@ int		Scene::getYResolution(void) const
 }
 
 // Sets the Y resolution (height)
-void	Scene::setYResolution(const short yRes)
+void	Scene::setYResolution(const int yRes)
 {
 	this->_yResolution = yRes;
+}
+
+// Returns the current Sample Count (rays per pixel)
+int		Scene::getSampleCount(void) const
+{
+	return (this->_sampleCount);
+}
+
+// Sets the Sample Count
+void	Scene::setSampleCount(const int sampleCount)
+{
+	this->_sampleCount = sampleCount;
+}
+
+// Returns the current Maximum Bounces of Light
+int		Scene::getMaxLightBounces(void) const
+{
+	return (this->_maxLightBounces);
+}
+
+// Sets the Maximum Bounces of Light
+void	Scene::setMaxLightBounces(const int maxLightBounces)
+{
+	this->_maxLightBounces = maxLightBounces;
 }
 
 // Sets the color for the pixel at 'index', which is a simple X/Y index.
