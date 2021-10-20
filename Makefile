@@ -17,7 +17,7 @@ NAME := Luz
 SRCS_DIR := ./srcs
 OBJS_DIR := ./objs
 SRCS := ./srcs/Camera.cpp ./srcs/exit_error.cpp ./srcs/main.cpp ./srcs/Scene.cpp ./srcs/Vector2.cpp ./srcs/BMP.cpp ./srcs/Renderer.cpp ./srcs/Ray.cpp ./srcs/Utilities.cpp ./srcs/HitUtils.cpp \
-	./srcs/Color.cpp ./srcs/Image.cpp ./srcs/Light.cpp ./srcs/Material.cpp ./srcs/Transform.cpp ./srcs/Vector3.cpp ./srcs/Objects/Cylinder.cpp ./srcs/Objects/Plane.cpp ./srcs/Objects/Sphere.cpp ./srcs/Objects/Square.cpp ./srcs/Objects/Triangle.cpp
+	./srcs/Color.cpp ./srcs/Light.cpp ./srcs/Material.cpp ./srcs/Transform.cpp ./srcs/Vector3.cpp ./srcs/Objects/Cylinder.cpp ./srcs/Objects/Plane.cpp ./srcs/Objects/Sphere.cpp ./srcs/Objects/Square.cpp ./srcs/Objects/Triangle.cpp
 OBJS := $(patsubst $(SRCS_DIR)/%.cpp, $(OBJS_DIR)/%.o, $(SRCS))
 DPND := $(OBJS:.o=.d)
 INCLUDES := -Iincludes

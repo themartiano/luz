@@ -11,9 +11,9 @@ class	Light
 		Light(Color color, Transform transform, float brightness);
 
 	private:
-		Color	_color;
+		Color		_color;
 		Transform	_transform;
-		float	_brightness;
+		float		_brightness;
 };
 
 #endif

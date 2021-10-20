@@ -33,7 +33,7 @@ int	main(int argc, char *argv[])
 
 	// Writes BMP image file
 	BMP bmp("render");
-	bmp.write_file(scene);
+	bmp.writeFile(scene);
 
 	return (0);
 	(void)argv;

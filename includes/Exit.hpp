@@ -4,6 +4,6 @@
 #include "Scene.hpp"
 #include <string>
 
-void	exit_error(Scene &scene, std::string message);
+void	exitError(Scene &scene, std::string message);
 
 #endif

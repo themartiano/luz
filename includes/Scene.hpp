@@ -29,18 +29,18 @@ class	Scene
 	private:
 		//pthread_mutex_t	_img_mutex;
 		//pthread_t		*_threads;
-		int				_thread_count;
-		int				_thread_counter;
+		int				_threadCount;
+		int				_threadCounter;
 		//pthread_mutex_t	_thread_counter_mutex;
-		short				_x_resolution;
-		short				_y_resolution;
-		int				_rendered_rows;
+		short				_xResolution;
+		short				_yResolution;
+		int				_renderedRows;
 		//pthread_mutex_t	_row_counter_mutex;
 		float			_epsilon;
 		float			_t_max;
-		int				_sample_count;
-		int				_max_light_bounces;
-		Light			_ambient_light;
+		int				_sampleCount;
+		int				_maxLightBounces;
+		Light			_ambientLight;
 		std::vector<Camera>		_cameras;
 		std::vector<Light>		_lights;
 		std::vector<Triangle>	_triangles;
@@ -48,7 +48,7 @@ class	Scene
 		std::vector<Sphere>		_spheres;
 		std::vector<Cylinder>	_cylinders;
 		std::vector<Plane>		_planes;
-		bool			_should_calculate_light;
+		bool			_shouldCalculateLight;
 		unsigned char*	_pixelArray;
 		size_t			_activeCamera;
 };

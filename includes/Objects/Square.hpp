@@ -13,7 +13,7 @@ class	Square
 	private:
 		Transform	_transform;
 		Material	_material;
-		float		_half_side_size;
+		float		_halfSideSize;
 };
 
 #endif
