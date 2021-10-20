@@ -6,6 +6,7 @@
 #include "HitUtils.hpp"
 #include "Defaults.hpp"
 #include "Utilities.hpp"
+#include "Clock.hpp"
 #include <cmath>
 #include <iostream>
 #include <stdlib.h>
@@ -20,6 +21,8 @@ void	render(Scene scene)
 	std::cout << CLR_YELLOW << "Rendering..." << CLR_YELLOW << " (" << CLR_WHITE << scene.getSampleCount() << CLR_CYAN << " sample"
 		<< pluralOrSingular(scene.getSampleCount()) << ", " << CLR_WHITE << scene.getMaxLightBounces() << CLR_CYAN << " max light bounce"
 		<< pluralOrSingular(scene.getMaxLightBounces()) << CLR_YELLOW << ")\n" << CLR_RESET;
+
+	Clock	clock;
 
 	for (int y = 0; y < scene.getYResolution(); y++)
 	{
@@ -38,7 +41,9 @@ void	render(Scene scene)
 			scene.setPixelArray((y * scene.getXResolution()) + x, pixelColor);
 		}
 	}
-	std::cout << CLR_GREEN_BRIGHT << "Render done!\n\n" << CLR_RESET;
+
+	double elapsedS = clock.stop();
+	std::cout << CLR_GREEN_BRIGHT << "Render done! " << CLR_BLUE_BRIGHT << "(Duration: " << CLR_WHITE << elapsedS << "s" << CLR_BLUE_BRIGHT << ")\n\n" << CLR_RESET;
 }
 
 // Calculates the color for the pixel at 'x' and 'y'. Creates rays, checks for intersections with objects on 'scene' and bounce light rays
