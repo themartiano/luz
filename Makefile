@@ -16,8 +16,11 @@
 NAME := Luz
 SRCS_DIR := ./srcs
 OBJS_DIR := ./objs
-SRCS := ./srcs/Camera.cpp ./srcs/exit_error.cpp ./srcs/main.cpp ./srcs/Scene.cpp ./srcs/Vector2.cpp ./srcs/BMP.cpp ./srcs/Renderer.cpp ./srcs/Ray.cpp ./srcs/Utilities.cpp ./srcs/HitUtils.cpp \
-	./srcs/Color.cpp ./srcs/Light.cpp ./srcs/Material.cpp ./srcs/Transform.cpp ./srcs/Vector3.cpp ./srcs/Objects/Cylinder.cpp ./srcs/Objects/Plane.cpp ./srcs/Objects/Sphere.cpp ./srcs/Objects/Square.cpp ./srcs/Objects/Triangle.cpp
+SRCS :=	./srcs/Camera.cpp ./srcs/exit_error.cpp ./srcs/main.cpp ./srcs/Scene.cpp ./srcs/Vector2.cpp \
+		./srcs/BMP.cpp ./srcs/Renderer.cpp ./srcs/Ray.cpp ./srcs/Utilities.cpp ./srcs/HitUtils.cpp \
+		./srcs/Color.cpp ./srcs/Light.cpp ./srcs/Material.cpp ./srcs/Transform.cpp ./srcs/Vector3.cpp \
+		./srcs/Objects/Cylinder.cpp ./srcs/Objects/Plane.cpp ./srcs/Objects/Sphere.cpp ./srcs/Objects/Square.cpp \
+		./srcs/Objects/Triangle.cpp
 OBJS := $(patsubst $(SRCS_DIR)/%.cpp, $(OBJS_DIR)/%.o, $(SRCS))
 DPND := $(OBJS:.o=.d)
 INCLUDES := -Iincludes
@@ -105,7 +108,7 @@ all: $(PRE_EXECUTE)
 
 $(OBJS_DIR)/%.o: $(SRCS_DIR)/%.cpp
 	$(shell [ ! -d $(@D) ] && mkdir -p $(@D))
-	$(COMPILER) $(WWW_FLAGS) $(OPT_FLAGS) $(INC_FLAGS) $(DEBUG_FLAGS) $(INCLUDES) -c -o $@ $<
+	$(COMPILER) $(WWW_FLAGS) $(OPT_FLAGS) $(INC_FLAGS) $(DEBUG_FLAGS) $(INCLUDES) -c $< -o $@
 
 $(NAME): $(OBJS)
 	@printf "\n[\e[1;34mCompiling $(NAME)\e[0m]\n\n"
