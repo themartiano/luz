@@ -23,27 +23,37 @@ void	render(Scene scene)
 		<< pluralOrSingular(scene.getMaxLightBounces()) << CLR_YELLOW << ")\n" << CLR_RESET;
 
 	Clock	clock;
+	int		height = scene.getYResolution();
+	int		width = scene.getXResolution();
+	int		sampleCount = scene.getSampleCount();
+	int		percentageUpdateFactor = height / 100;
 
-	for (int y = 0; y < scene.getYResolution(); y++)
+	for (int y = 0; y < height; y++)
 	{
-		for (int x = 0; x < scene.getXResolution(); x++)
+		for (int x = 0; x < width; x++)
 		{
 			Color pixelColor(0.0f, 0.0f, 0.0f, 0.0f);
 
 			int samples;
-			for (samples = 0; samples < scene.getSampleCount(); samples++)
+			for (samples = 0; samples < sampleCount; samples++)
 			{
 				pixelColor += calculatePixelColor(scene, x, y);
 			}
 			pixelColor /= float(samples + 1);
 			pixelColor = Color(sqrtf(pixelColor.getRed()), sqrtf(pixelColor.getGreen()), sqrtf(pixelColor.getBlue()), 0.0f); // Gamma (2) correction
 
-			scene.setPixelArray((y * scene.getXResolution()) + x, pixelColor);
+			scene.setPixelArray((y * width) + x, pixelColor);
+		}
+		if (y % percentageUpdateFactor == 0)
+		{
+			int percentage = (float(y) / float(height)) * 100.0f;
+			std::cout << CLR_WHITE << "\r[ " << percentage << "% ]" << std::flush;
 		}
 	}
 
 	double elapsedS = clock.stop();
-	std::cout << CLR_GREEN_BRIGHT << "Render done! " << CLR_BLUE_BRIGHT << "(Duration: " << CLR_WHITE << elapsedS << "s" << CLR_BLUE_BRIGHT << ")\n\n" << CLR_RESET;
+	std::cout << CLR_WHITE << "\r[ 100% ]";
+	std::cout << CLR_GREEN_BRIGHT << "\nRender done! " << CLR_BLUE_BRIGHT << "(Duration: " << CLR_WHITE << elapsedS << "s" << CLR_BLUE_BRIGHT << ")\n\n" << CLR_RESET;
 }
 
 // Calculates the color for the pixel at 'x' and 'y'. Creates rays, checks for intersections with objects on 'scene' and bounce light rays
@@ -52,19 +62,20 @@ static Color	calculatePixelColor(Scene scene, int x, int y)
 	Color	pixelColor(0.0f, 0.0f, 0.0f, 0.0f);
 	Color	tempColor(0.0f, 0.0f, 0.0f, 0.0f);
 
-	float u = float(x + drand48()) / (float)scene.getXResolution();
-	float v = float(y + drand48()) / (float)scene.getYResolution();
+	static float u = float(x + drand48()) / (float)scene.getXResolution();
+	static float v = float(y + drand48()) / (float)scene.getYResolution();
 
-    float   halfHeight = tan(((float)scene.getActiveCamera().getFOV() * M_PI / 180.0f) / 2.0f);
-    float   halfWidth = ((float)scene.getXResolution() / (float)scene.getYResolution()) * halfHeight;
+    static float   halfHeight = tan(((float)scene.getActiveCamera().getFOV() * M_PI / 180.0f) / 2.0f);
+    static float   halfWidth = ((float)scene.getXResolution() / (float)scene.getYResolution()) * halfHeight;
 
-	Vector3	lowerLeftCorner = Vector3(-halfWidth, -halfHeight, -1.0f);
-	Vector3	horizontal = Vector3(2.0f * halfWidth, 0.0f, 0.0f);
-	Vector3	vertical = Vector3(0.0f, 2.0f * halfHeight, 0.0f);
+	static Vector3	lowerLeftCorner = Vector3(-halfWidth, -halfHeight, -1.0f);
+	static Vector3	horizontal = Vector3(2.0f * halfWidth, 0.0f, 0.0f);
+	static Vector3	vertical = Vector3(0.0f, 2.0f * halfHeight, 0.0f);
 
 	Ray ray(scene.getActiveCamera().getTransform().getPosition(), lowerLeftCorner + (horizontal * u) + (vertical * v) - scene.getActiveCamera().getTransform().getPosition());
+	int	maxLightBounces = scene.getMaxLightBounces();
 	int	bounces;
-	for (bounces = -1; bounces < scene.getMaxLightBounces() && checkHits(scene, ray, tempColor); bounces++)
+	for (bounces = -1; bounces < maxLightBounces && checkHits(scene, ray, tempColor); bounces++)
 	{
 		Vector3	newTarget = ray.hitRecord.position + ray.hitRecord.normal + randomPointInsideUnitSphere();
 		ray.setOrigin(ray.hitRecord.position);
