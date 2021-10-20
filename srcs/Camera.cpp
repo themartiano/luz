@@ -18,11 +18,13 @@ Camera::Camera(Transform transform, short fov)
 	this->_fov = fov;
 }
 
+// Returns the Camera's transform
 Transform	Camera::getTransform(void) const
 {
 	return (this->_transform);
 }
 
+// Returns the Camera's FOV (Field of View)
 short		Camera::getFOV(void) const
 {
 	return (this->_fov);
