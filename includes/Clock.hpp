@@ -13,7 +13,7 @@ class   Clock
         double  stop(void);
 
     private:
-        std::chrono::system_clock::time_point   _startTimeMS;
+        std::chrono::steady_clock::time_point   _startTimeMS;
         bool                                    _running;
 };
 
