@@ -13,7 +13,7 @@
 
 // Static function prototypes
 static Color	calculatePixelColor(Scene scene, int x, int y);
-static bool	checkHits(Scene scene, Ray ray, Color& pixelColor);
+static bool	checkHits(Scene scene, Ray& ray, Color& pixelColor);
 
 // Renders the image using all the information present on 'scene'. (Objects, cameras, lights, settings, etc)
 void	render(Scene scene)
@@ -91,7 +91,7 @@ static Color	calculatePixelColor(Scene scene, int x, int y)
 }
 
 // Checks if 'ray' hits objects present 'scene'. On hit, sets 'pixelColor' to the hitted object's material color
-static bool	checkHits(Scene scene, Ray ray, Color& pixelColor)
+static bool	checkHits(Scene scene, Ray& ray, Color& pixelColor)
 {
 	bool	anyHit = false;
 	float	currentClosestObject = T_MAX;
