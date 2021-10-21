@@ -17,8 +17,6 @@ Scene::Scene(void)
 	this->_activeCamera = 0;
 
 	this->_t_max = std::numeric_limits<float>::max();
-
-	this->_pixelArray = new unsigned char[D_WIDTH * D_HEIGHT * 3];
 }
 
 // Appends 'camera' to the camera vector (list)
@@ -103,6 +101,12 @@ void	Scene::setPixelArray(int index, Color pixelColor)
 unsigned char*	Scene::getPixelArray(void) const
 {
 	return (this->_pixelArray);
+}
+
+// Initializes the pixel array using the Scene's width and height (X & Y pixel resolution)
+void	Scene::initializePixelArray(void)
+{
+	this->_pixelArray = new unsigned char[this->_xResolution * this->_yResolution * 3];
 }
 
 // Returns the vector (list) of spheres

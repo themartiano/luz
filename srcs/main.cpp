@@ -19,12 +19,15 @@ int	main(int argc, char *argv[])
 	//check res
 
 	if (argc >= 3)
+	{
 		//read_flags();
+	}
 
-	scene.setXResolution(1920);
-	scene.setYResolution(1080);
+	scene.setXResolution(125);
+	scene.setYResolution(125);
+	scene.initializePixelArray();
 	scene.setSampleCount(4);
-	scene.setMaxLightBounces(8);
+	scene.setMaxLightBounces(1);
 
 	// Current coordinate system ~~ Forward: -Z | Up: -Y
 	scene.addCamera(Camera(Transform(Vector3(0.0f, 0.0f, 0.0f), Vector3(0.0f, 0.0f, -1.0f), Vector3(1.0f, 1.0f, 1.0f)), 70));

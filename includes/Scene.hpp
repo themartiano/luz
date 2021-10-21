@@ -27,6 +27,7 @@ class	Scene
 		void	setMaxLightBounces(const int maxLightBounces);
 		void	setPixelArray(int index, Color pixelColor);
 		unsigned char*	getPixelArray() const;
+		void	initializePixelArray(void);
 		std::vector<Sphere>	getSpheres(void) const;
 		Camera	getActiveCamera(void) const;
 
