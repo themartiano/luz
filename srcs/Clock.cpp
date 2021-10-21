@@ -27,7 +27,7 @@ Clock::Clock(bool startNow)
 void    Clock::start(void)
 {
     this->_running = true;
-    this->_startTimeMS = std::chrono::high_resolution_clock::now();
+    this->_startTimeMS = std::chrono::steady_clock::now();
 }
 
 // Returns elapsed seconds since start
@@ -35,7 +35,7 @@ double     Clock::elapsed(void)
 {
     if (this->_running == true)
     {
-        double elapsedMS = std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - this->_startTimeMS).count();
+        double elapsedMS = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - this->_startTimeMS).count();
         return (elapsedMS / 1000.0);
     }
     return (0.0);
