@@ -62,8 +62,8 @@ static Color	calculatePixelColor(Scene scene, int x, int y)
 	Color	pixelColor(0.0f, 0.0f, 0.0f, 0.0f);
 	Color	tempColor(0.0f, 0.0f, 0.0f, 0.0f);
 
-	static float u = float(x + drand48()) / (float)scene.getXResolution();
-	static float v = float(y + drand48()) / (float)scene.getYResolution();
+	float u = float(x + drand48()) / (float)scene.getXResolution();
+	float v = float(y + drand48()) / (float)scene.getYResolution();
 
     static float   halfHeight = tan(((float)scene.getActiveCamera().getFOV() * M_PI / 180.0f) / 2.0f);
     static float   halfWidth = ((float)scene.getXResolution() / (float)scene.getYResolution()) * halfHeight;
