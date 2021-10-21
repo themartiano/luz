@@ -24,7 +24,7 @@ SRCS :=	./srcs/Camera.cpp ./srcs/exit_error.cpp ./srcs/main.cpp ./srcs/Scene.cpp
 OBJS := $(patsubst $(SRCS_DIR)/%.cpp, $(OBJS_DIR)/%.o, $(SRCS))
 DPND := $(OBJS:.o=.d)
 INCLUDES := -Iincludes
-COMPILER := clang++
+COMPILER := clang++ -std=c++17
 WWW_FLAGS := -Wall -Wextra -Werror
 OPT_FLAGS := -O3
 INC_FLAGS := -MD
