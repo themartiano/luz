@@ -48,6 +48,12 @@ Vector3 randomPointInsideUnitSphere(void)
 	return (position);
 }
 
+// Returns the reflected Vector3 of 'vector' using 'normal' in the calculation
+Vector3	reflect(Vector3 vector, Vector3 normal)
+{
+	return (vector - (normal * (2.0f * dot(vector, normal))));
+}
+
 // Returns "s" if 'number' differs from 1
 std::string    pluralOrSingular(int number)
 {
@@ -58,5 +64,18 @@ std::string    pluralOrSingular(int number)
 	else
 	{
 		return ("s");
+	}
+}
+
+// If 'flt' surprasses the specified range ('min' & 'max'), it's set to the nearest possible value ('min' or 'max')
+void	setFloatRange(float& flt, float min, float max)
+{
+	if (flt < min)
+	{
+		flt = min;
+	}
+	if (flt > max)
+	{
+		flt = max;
 	}
 }

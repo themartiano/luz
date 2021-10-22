@@ -14,6 +14,7 @@ Scene::Scene(void)
 	this->_yResolution = D_HEIGHT;
 	this->_sampleCount = D_SAMPLE_COUNT;
 	this->_maxLightBounces = D_MAX_LIGHT_BOUNCES;
+	this->_gammaCorrected = true;
 	this->_activeCamera = 0;
 
 	this->_t_max = std::numeric_limits<float>::max();
@@ -83,6 +84,18 @@ int		Scene::getMaxLightBounces(void) const
 void	Scene::setMaxLightBounces(const int maxLightBounces)
 {
 	this->_maxLightBounces = maxLightBounces;
+}
+
+// Gets Gamma Correction (whether or not the render should be gamma corrected)
+bool	Scene::getGammaCorrected(void) const
+{
+	return (this->_gammaCorrected);
+}
+
+// Sets Gamma Correction (whether or not the render should be gamma corrected)
+void	Scene::setGammaCorrected(bool gammaCorrected)
+{
+	this->_gammaCorrected = gammaCorrected;
 }
 
 // Sets the color for the pixel at 'index', which is a simple X/Y index.

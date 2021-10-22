@@ -2,12 +2,14 @@
 # define RAY_HPP
 
 #include "Vector3.hpp"
+#include "Material.hpp"
 
 struct HitRecord
 {
-    float   t;
-    Vector3 position;
-    Vector3 normal;
+    float       t;
+    Vector3     position;
+    Vector3     normal;
+    Material    material;
 };
 
 

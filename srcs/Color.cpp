@@ -56,7 +56,17 @@ Color&	Color::operator/=(const float f)
 	return (*this);
 }
 
+Color	Color::operator*(const float f) const
+{
+	return (Color(this->_red * f, this->_green * f, this->_blue * f, 0));
+}
+
 Color	Color::operator/(const float f) const
 {
 	return (Color(this->_red / f, this->_green / f, this->_blue / f, 0));
+}
+
+Color	Color::operator+(const Color color) const
+{
+	return (Color(this->_red + color.getRed(), this->_green + color.getGreen(), this->_blue + color.getBlue(), 0.0f));
 }
