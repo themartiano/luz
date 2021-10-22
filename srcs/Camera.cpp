@@ -7,23 +7,29 @@
 // Constructs the Camera with default values
 Camera::Camera(void)
 {
-	this->_transform = Transform();
+	this->_lookFrom = Vector3(0.0f, 0.0f, 15.0f);
+	this->_lookAt = Vector3(0.0f, 0.0f, 0.0f);
 	this->_fov = 65;
 	this->_aperture = 2.0f;
 }
 
 // Constructs the Camera with custom values
-Camera::Camera(Transform transform, short fov, float aperture)
+Camera::Camera(Vector3 lookFrom, Vector3 lookAt, short fov, float aperture)
 {
-	this->_transform = transform;
+	this->_lookFrom = lookFrom;
+	this->_lookAt = lookAt;
 	this->_fov = fov;
 	this->_aperture = aperture;
 }
 
-// Returns the Camera's transform
-Transform	Camera::getTransform(void) const
+Vector3		Camera::getLookFrom(void) const
 {
-	return (this->_transform);
+	return (this->_lookFrom);
+}
+
+Vector3		Camera::getLookAt(void) const
+{
+	return (this->_lookAt);
 }
 
 // Returns the Camera's FOV (Field of View)
