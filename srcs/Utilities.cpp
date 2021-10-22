@@ -54,16 +54,16 @@ Vector3	reflect(Vector3 vector, Vector3 normal)
 	return (vector - (normal * (2.0f * dot(vector, normal))));
 }
 
-// If refraction is possible on 'vector' taking 'normal' and 'niOverNt' into account, sets 'refracted' to the new Vector3 and returns TRUE. Otherwise, returns FALSE
-bool	refract(Vector3 vector, Vector3 normal, float niOverNt, Vector3& refracted)
+// If refraction is possible on 'vector' taking 'normal' and 'refractiveIndex' into account, sets 'refractedVector' to the new Vector3 and returns TRUE. Otherwise, returns FALSE
+bool	refract(Vector3 vector, Vector3 normal, float refractiveIndex, Vector3& refractedVector)
 {
 	vector = normalize(vector);
 
 	float	dt = dot(vector, normal);
-	float	discriminant = 1.0f - niOverNt * niOverNt * (1.0f - dt * dt);
+	float	discriminant = 1.0f - refractiveIndex * refractiveIndex * (1.0f - dt * dt);
 	if (discriminant > 0.0f)
 	{
-		refracted = ((vector - normal * dt) * niOverNt) - normal * sqrt(discriminant);
+		refractedVector = ((vector - normal * dt) * refractiveIndex) - normal * sqrt(discriminant);
 		return (true);
 	}
 	else
@@ -73,10 +73,11 @@ bool	refract(Vector3 vector, Vector3 normal, float niOverNt, Vector3& refracted)
 }
 
 // Christophe Schlick's formula for approximating the contribution of the Fresnel factor in the specular reflection of light from a non-conducting interface (surface) between two media
-float	schlick(float cosine, float ref_idx)
+float	schlick(float cosine, float refractiveIndex)
 {
-	float	r0 = (1.0f - ref_idx) / (1.0f + ref_idx);
+	float r0 = (1.0f - refractiveIndex) / (1.0f + refractiveIndex);
 	r0 *= r0;
+
 	return (r0 + (1.0f - r0) * pow((1.0f - cosine), 5));
 }
 

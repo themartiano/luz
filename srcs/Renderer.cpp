@@ -7,6 +7,7 @@
 #include "Defaults.hpp"
 #include "Utilities.hpp"
 #include "Clock.hpp"
+#include "RefractiveIndexes.hpp"
 #include <cmath>
 #include <iostream>
 #include <stdlib.h>
@@ -128,43 +129,43 @@ void	calculateLightRayBounceDirection(Ray& ray)
 
 	if (ray.hitRecord.material.getDieletric() == 1.0f)
 	{
-		Vector3	refracted;
-		Vector3	outwardNormal;
-		Vector3	reflected = reflect(ray.getDirection(), ray.hitRecord.normal);
-		float	niOverNt;
-		float	reflectProb;
+		Vector3	refractedVector;
+		Vector3	outwardsNormal;
+		float	reflectionProbability;
 		float	cosine;
-		float	ref_idx = 1.5f;
+		float	refractiveIndex = RI_GLASS;
+		float	directionNormalDot = dot(ray.getDirection(), ray.hitRecord.normal);
 
-		if (dot(ray.getDirection(), ray.hitRecord.normal) > 0.0f)
+		if (directionNormalDot > 0.0f)
 		{
-			outwardNormal = ray.hitRecord.normal * -1.0f;
-			niOverNt = ref_idx;
-			cosine = ref_idx * dot(ray.getDirection(), ray.hitRecord.normal) / vectorLength(ray.getDirection());
+			outwardsNormal = ray.hitRecord.normal * -1.0f;
+			cosine = refractiveIndex * directionNormalDot / vectorLength(ray.getDirection());
 		}
 		else
 		{
-			outwardNormal = ray.hitRecord.normal;
-			niOverNt = 1.0f / ref_idx;
-			cosine = -dot(ray.getDirection(), ray.hitRecord.normal) / vectorLength(ray.getDirection());
+			outwardsNormal = ray.hitRecord.normal;
+			refractiveIndex = 1.0f / refractiveIndex;
+			cosine = -directionNormalDot / vectorLength(ray.getDirection());
 		}
-		if (refract(ray.getDirection(), outwardNormal, niOverNt, refracted))
+
+		if (refract(ray.getDirection(), outwardsNormal, refractiveIndex, refractedVector))
 		{
-			reflectProb = schlick(cosine, ref_idx);
+			reflectionProbability = schlick(cosine, refractiveIndex);
 		}
 		else
 		{
-			reflectProb = 1.0f;
+			reflectionProbability = 1.0f;
 		}
-		if (drand48() < reflectProb)
+
+		if (drand48() < reflectionProbability)
 		{
 			ray.setOrigin(ray.hitRecord.position);
-			ray.setDirection(reflected);
+			ray.setDirection(reflect(ray.getDirection(), ray.hitRecord.normal));
 		}
 		else
 		{
 			ray.setOrigin(ray.hitRecord.position);
-			ray.setDirection(refracted);
+			ray.setDirection(refractedVector);
 		}
 		return;
 	}
