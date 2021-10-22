@@ -81,6 +81,7 @@ static Color	calculatePixelColor(Scene scene, int x, int y)
 	return (calculateLightRaysColor(ray, scene, 0));
 }
 
+// Properly calculates light rays bounces, reflections, etc and returns the resulting color
 Color	calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
 {
 	if (bounces > scene.getMaxLightBounces())
@@ -98,6 +99,7 @@ Color	calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
 	return (calculateSkyInterpolation(scene, ray));
 }
 
+// Calculates the sky interpolation for the background
 Color	calculateSkyInterpolation(Scene scene, Ray ray)
 {
 	Vector3	normalizedDirection = normalize(ray.getDirection());
@@ -107,6 +109,7 @@ Color	calculateSkyInterpolation(Scene scene, Ray ray)
 	return ((Color(1.0f, 1.0f, 1.0f, 0.0f) * (1.0f - temp)) + (Color(0.5f, 0.7f, 1.0f, 0.0f) * temp));
 }
 
+// Calculates the light rays bounce/reflection direction
 void	calculateLightRayBounceDirection(Ray& ray)
 {
 	if (ray.hitRecord.material.getMetallic() == 1.0f)

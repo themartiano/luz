@@ -12,7 +12,7 @@ int	main(int argc, char *argv[])
 	Scene	scene;
 
 	// if (argc <= 1)
-	// 	exit_error(scene, "Scene not specified.");
+	// 	exitError(scene, "Scene not specified.");
 
 	std::cout << CLR_BLUE << "Preparing...\n\n" << CLR_RESET;
 	//read scene file
