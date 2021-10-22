@@ -27,6 +27,7 @@ class	Scene
 		void	setMaxLightBounces(const int maxLightBounces);
 		bool	getGammaCorrected(void) const;
 		void	setGammaCorrected(bool gamma);
+		float	getSkyHorizonModifier(void) const;
 		void	setPixelArray(int index, Color pixelColor);
 		unsigned char*	getPixelArray() const;
 		void	initializePixelArray(void);
@@ -41,6 +42,7 @@ class	Scene
 		int						_maxLightBounces;
 		bool					_gammaCorrected;
 		unsigned char*			_pixelArray;
+		float					_skyHorizonModifier;
 		//Light					_ambientLight;
 		std::vector<Camera>		_cameras;
 		size_t					_activeCamera;

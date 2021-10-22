@@ -16,6 +16,7 @@ static Color	calculatePixelColor(Scene scene, int x, int y);
 static bool		checkHits(Scene scene, Ray& ray);
 Color			calculateLightRaysColor(Ray& ray, Scene& scene, int bounces);
 void			calculateLightRayBounceDirection(Ray& ray);
+Color			calculateSkyInterpolation(Scene scene, Ray ray);
 
 // Renders the image using all the information present on 'scene'. (Objects, cameras, lights, settings, etc)
 void	render(Scene scene)
@@ -82,17 +83,28 @@ static Color	calculatePixelColor(Scene scene, int x, int y)
 
 Color	calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
 {
-	if (bounces < scene.getMaxLightBounces() && checkHits(scene, ray))
+	if (bounces > scene.getMaxLightBounces())
+	{
+		return (Color(0.0f, 0.0f, 0.0f, 0.0f));
+	}
+	if (checkHits(scene, ray))
 	{
 		ray.setOrigin(ray.hitRecord.position);
 
 		calculateLightRayBounceDirection(ray);
 
-		Color color = (calculateLightRaysColor(ray, scene, bounces + 1) + ray.hitRecord.material.getColor()) / 2.0f;
-
-		return (color * ray.hitRecord.material.getAlbedo());
+		return ((calculateLightRaysColor(ray, scene, bounces + 1) + (ray.hitRecord.material.getColor()  * ray.hitRecord.material.getAlbedo())) / 2.0f);
 	}
-	return (Color(0.0f, 0.0f, 0.0f, 0.0f));
+	return (calculateSkyInterpolation(scene, ray));
+}
+
+Color	calculateSkyInterpolation(Scene scene, Ray ray)
+{
+	Vector3	normalizedDirection = normalize(ray.getDirection());
+
+	float temp = scene.getSkyHorizonModifier() * (-normalizedDirection.getY() + 1.0f);
+
+	return ((Color(1.0f, 1.0f, 1.0f, 0.0f) * (1.0f - temp)) + (Color(0.5f, 0.7f, 1.0f, 0.0f) * temp));
 }
 
 void	calculateLightRayBounceDirection(Ray& ray)

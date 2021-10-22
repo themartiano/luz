@@ -15,6 +15,8 @@ Scene::Scene(void)
 	this->_sampleCount = D_SAMPLE_COUNT;
 	this->_maxLightBounces = D_MAX_LIGHT_BOUNCES;
 	this->_gammaCorrected = true;
+	this->_skyHorizonModifier = 1.0f;
+
 	this->_activeCamera = 0;
 
 	this->_t_max = std::numeric_limits<float>::max();
@@ -86,7 +88,7 @@ void	Scene::setMaxLightBounces(const int maxLightBounces)
 	this->_maxLightBounces = maxLightBounces;
 }
 
-// Gets Gamma Correction (whether or not the render should be gamma corrected)
+// Returns Gamma Correction (whether or not the render should be gamma corrected)
 bool	Scene::getGammaCorrected(void) const
 {
 	return (this->_gammaCorrected);
@@ -96,6 +98,11 @@ bool	Scene::getGammaCorrected(void) const
 void	Scene::setGammaCorrected(bool gammaCorrected)
 {
 	this->_gammaCorrected = gammaCorrected;
+}
+// Returns Sky Horizon Line Modifier (used on sky colors interpolation)
+float	Scene::getSkyHorizonModifier(void) const
+{
+	return (this->_skyHorizonModifier);
 }
 
 // Sets the color for the pixel at 'index', which is a simple X/Y index.
