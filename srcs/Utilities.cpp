@@ -54,6 +54,32 @@ Vector3	reflect(Vector3 vector, Vector3 normal)
 	return (vector - (normal * (2.0f * dot(vector, normal))));
 }
 
+// If refraction is possible on 'vector' taking 'normal' and 'niOverNt' into account, sets 'refracted' to the new Vector3 and returns TRUE. Otherwise, returns FALSE
+bool	refract(Vector3 vector, Vector3 normal, float niOverNt, Vector3& refracted)
+{
+	vector = normalize(vector);
+
+	float	dt = dot(vector, normal);
+	float	discriminant = 1.0f - niOverNt * niOverNt * (1.0f - dt * dt);
+	if (discriminant > 0.0f)
+	{
+		refracted = ((vector - normal * dt) * niOverNt) - normal * sqrt(discriminant);
+		return (true);
+	}
+	else
+	{
+		return (false);
+	}
+}
+
+// Christophe Schlick's formula for approximating the contribution of the Fresnel factor in the specular reflection of light from a non-conducting interface (surface) between two media
+float	schlick(float cosine, float ref_idx)
+{
+	float	r0 = (1.0f - ref_idx) / (1.0f + ref_idx);
+	r0 *= r0;
+	return (r0 + (1.0f - r0) * pow((1.0f - cosine), 5));
+}
+
 // Returns "s" if 'number' differs from 1
 std::string    pluralOrSingular(int number)
 {

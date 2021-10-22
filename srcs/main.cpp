@@ -26,18 +26,19 @@ int	main(int argc, char *argv[])
 	scene.setXResolution(1920);
 	scene.setYResolution(1080);
 	scene.initializePixelArray();
-	scene.setSampleCount(1);
-	scene.setMaxLightBounces(12);
+	scene.setSampleCount(128);
+	scene.setMaxLightBounces(64);
 	scene.setGammaCorrected(true);
 
 	// Current coordinate system ~~ Forward: -Z | Up: -Y | Right: -X
 	scene.addCamera(Camera(Transform(Vector3(0.0f, 0.0f, 13.0f), Vector3(0.0f, 0.0f, -1.0f), Vector3(1.0f, 1.0f, 1.0f)), 65));
 
-	scene.addSphere(Sphere(Transform(Vector3(6.0f, 0.0f, -8.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f, 1.0f, 1.0f)), Material(Color(0.0f, 0.6f, 0.0f, 0.0f), 1.0f, 1.0f, 1.0f, 0.1f), 3.0f));
-	scene.addSphere(Sphere(Transform(Vector3(0.0f, 0.0f, -8.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f, 1.0f, 1.0f)), Material(Color(0.5f, 0.5f, 0.5f, 0.0f), 1.0f, 0.0f, 0.5f, 0.0f), 3.0f));
-	scene.addSphere(Sphere(Transform(Vector3(-6.0f, 0.0f, -8.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f, 1.0f, 1.0f)), Material(Color(0.0f, 0.0f, 0.5f, 0.0f), 1.0f, 1.0f, 1.0f, 0.6f), 3.0f));
+	scene.addSphere(Sphere(Transform(Vector3(6.0f, 0.0f, -8.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f, 1.0f, 1.0f)), Material(Color(0.0f, 0.6f, 0.0f, 0.0f), 1.0f, 1.0f, 1.0f, 0.0f, 0.0f), 3.0f));
+	//scene.addSphere(Sphere(Transform(Vector3(0.0f, 0.0f, -8.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f, 1.0f, 1.0f)), Material(Color(0.5f, 0.5f, 0.5f, 0.0f), 1.0f, 0.0f, 0.5f, 0.0f, 0.0f), 3.0f));
+	scene.addSphere(Sphere(Transform(Vector3(0.0f, 1.0f, -6.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f, 1.0f, 1.0f)), Material(Color(0.5f, 0.5f, 0.5f, 0.0f), 1.0f, 0.0f, 0.5f, 0.0f, 1.0f), 2.0f));
+	scene.addSphere(Sphere(Transform(Vector3(-6.0f, 0.0f, -8.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f, 1.0f, 1.0f)), Material(Color(0.0f, 0.0f, 0.5f, 0.0f), 1.0f, 1.0f, 1.0f, 0.6f, 0.0f), 3.0f));
 
-	scene.addSphere(Sphere(Transform(Vector3(0.0f, 103.0f, -8.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f, 1.0f, 1.0f)), Material(Color(0.5f, 0.0f, 0.0f, 0.0f), 1.0f, 0.0f, 0.5f, 0.0f), 100.0f));
+	scene.addSphere(Sphere(Transform(Vector3(0.0f, 103.0f, -8.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f, 1.0f, 1.0f)), Material(Color(0.5f, 0.0f, 0.0f, 0.0f), 1.0f, 0.0f, 0.5f, 0.0f, 0.0f), 100.0f));
 
 	render(scene);
 

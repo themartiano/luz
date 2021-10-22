@@ -11,6 +11,8 @@ float	    vectorLength(Vector3 vector);
 Vector3	    normalize(Vector3 vector);
 Vector3     randomPointInsideUnitSphere(void);
 Vector3 	reflect(Vector3 vector, Vector3 normal);
+bool	    refract(Vector3 vector, Vector3 normal, float niOverNt, Vector3& refracted);
+float	    schlick(float cosine, float ref_idx);
 std::string pluralOrSingular(int number);
 void	    setFloatRange(float& flt, float min, float max);
 

@@ -15,7 +15,7 @@ Material::Material(void)
 }
 
 // Constructs the Material with custom values
-Material::Material(Color color, float opacity, float metallic, float albedo, float reflectionFuzziness)
+Material::Material(Color color, float opacity, float metallic, float albedo, float reflectionFuzziness, float dieletric)
 {
 	setFloatRange(metallic, 0.0f, 1.0f);
 	this->_metallic = metallic;
@@ -25,6 +25,8 @@ Material::Material(Color color, float opacity, float metallic, float albedo, flo
 	this->_opacity = opacity;
 	setFloatRange(reflectionFuzziness, 0.0f, 1.0f);
 	this->_reflectionFuzziness = reflectionFuzziness;
+	setFloatRange(dieletric, 0.0f, 1.0f);
+	this->_dieletric = dieletric;
 	this->_color = color;
 }
 
@@ -56,4 +58,10 @@ float	Material::getAlbedo(void) const
 float	Material::getReflectionFuzziness(void) const
 {
 	return (this->_reflectionFuzziness);
+}
+
+// Returns the Material's dieletric value
+float	Material::getDieletric(void) const
+{
+	return (this->_dieletric);
 }

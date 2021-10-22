@@ -97,7 +97,7 @@ Color	calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
 
 		calculateLightRayBounceDirection(ray);
 
-		if (dot(ray.getDirection(), ray.hitRecord.normal) <= 0.0f)
+		if (ray.hitRecord.material.getMetallic() == 1.0f && dot(ray.getDirection(), ray.hitRecord.normal) <= 0.0f)
 		{
 			return (Color(0.0f, 0.0f, 0.0f, 0.0f));
 		}
@@ -123,6 +123,49 @@ void	calculateLightRayBounceDirection(Ray& ray)
 	if (ray.hitRecord.material.getMetallic() == 1.0f)
 	{
 		ray.setDirection(reflect(ray.getDirection(), ray.hitRecord.normal) + (randomPointInsideUnitSphere() * ray.hitRecord.material.getReflectionFuzziness()));
+		return;
+	}
+
+	if (ray.hitRecord.material.getDieletric() == 1.0f)
+	{
+		Vector3	refracted;
+		Vector3	outwardNormal;
+		Vector3	reflected = reflect(ray.getDirection(), ray.hitRecord.normal);
+		float	niOverNt;
+		float	reflectProb;
+		float	cosine;
+		float	ref_idx = 1.5f;
+
+		if (dot(ray.getDirection(), ray.hitRecord.normal) > 0.0f)
+		{
+			outwardNormal = ray.hitRecord.normal * -1.0f;
+			niOverNt = ref_idx;
+			cosine = ref_idx * dot(ray.getDirection(), ray.hitRecord.normal) / vectorLength(ray.getDirection());
+		}
+		else
+		{
+			outwardNormal = ray.hitRecord.normal;
+			niOverNt = 1.0f / ref_idx;
+			cosine = -dot(ray.getDirection(), ray.hitRecord.normal) / vectorLength(ray.getDirection());
+		}
+		if (refract(ray.getDirection(), outwardNormal, niOverNt, refracted))
+		{
+			reflectProb = schlick(cosine, ref_idx);
+		}
+		else
+		{
+			reflectProb = 1.0f;
+		}
+		if (drand48() < reflectProb)
+		{
+			ray.setOrigin(ray.hitRecord.position);
+			ray.setDirection(reflected);
+		}
+		else
+		{
+			ray.setOrigin(ray.hitRecord.position);
+			ray.setDirection(refracted);
+		}
 		return;
 	}
 

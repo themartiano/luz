@@ -9,7 +9,7 @@
 Sphere::Sphere(void)
 {
 	this->_transform = Transform();
-	this->_material = Material(Color(0.49f, 0.49f, 0.49f, 0.0f), 1.0f, 0.0f, 0.5f, 0.0f);
+	this->_material = Material(Color(0.49f, 0.49f, 0.49f, 0.0f), 1.0f, 0.0f, 0.5f, 0.0f, 0.0f);
 	this->_radius = 1.0f;
 }
 
