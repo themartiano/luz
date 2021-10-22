@@ -99,7 +99,7 @@ void	calculateLightRayBounceDirection(Ray& ray)
 {
 	if (ray.hitRecord.material.getMetallic() == 1.0f)
 	{
-		ray.setDirection(reflect(ray.getDirection(), ray.hitRecord.normal));
+		ray.setDirection(reflect(ray.getDirection(), ray.hitRecord.normal) + (randomPointInsideUnitSphere() * ray.hitRecord.material.getReflectionFuzziness()));
 		return;
 	}
 
@@ -113,7 +113,7 @@ void	calculateLightRayBounceDirection(Ray& ray)
 
 	if (drand48() < ray.hitRecord.material.getMetallic())
 	{
-		ray.setDirection(reflect(ray.getDirection(), ray.hitRecord.normal));
+		ray.setDirection(reflect(ray.getDirection(), ray.hitRecord.normal) + (randomPointInsideUnitSphere() * ray.hitRecord.material.getReflectionFuzziness()));
 	}
 	else
 	{

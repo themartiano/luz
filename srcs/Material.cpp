@@ -15,15 +15,17 @@ Material::Material(void)
 }
 
 // Constructs the Material with custom values
-Material::Material(Color color, float opacity, float metallic, float albedo)
+Material::Material(Color color, float opacity, float metallic, float albedo, float reflectionFuzziness)
 {
 	setFloatRange(metallic, 0.0f, 1.0f);
 	this->_metallic = metallic;
 	setFloatRange(albedo, 0.0f, 1.0f);
 	this->_albedo = albedo;
-	this->_color = color;
 	setFloatRange(opacity, 0.0f, 1.0f);
 	this->_opacity = opacity;
+	setFloatRange(reflectionFuzziness, 0.0f, 1.0f);
+	this->_reflectionFuzziness = reflectionFuzziness;
+	this->_color = color;
 }
 
 // Returns the Material's color
@@ -42,4 +44,10 @@ float	Material::getMetallic(void) const
 float	Material::getAlbedo(void) const
 {
 	return (this->_albedo);
+}
+
+// Returns the Material's reflection fuzziness
+float	Material::getReflectionFuzziness(void) const
+{
+	return (this->_reflectionFuzziness);
 }
