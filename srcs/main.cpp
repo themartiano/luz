@@ -26,13 +26,18 @@ int	main(int argc, char *argv[])
 	scene.setXResolution(1920);
 	scene.setYResolution(1080);
 	scene.initializePixelArray();
-	scene.setSampleCount(16);
-	scene.setMaxLightBounces(8);
+	scene.setSampleCount(6);
+	scene.setMaxLightBounces(12);
+	scene.setGammaCorrected(true);
 
 	// Current coordinate system ~~ Forward: -Z | Up: -Y
 	scene.addCamera(Camera(Transform(Vector3(0.0f, 0.0f, 0.0f), Vector3(0.0f, 0.0f, -1.0f), Vector3(1.0f, 1.0f, 1.0f)), 70));
-	scene.addSphere(Sphere(Transform(Vector3(0.0f, 0.0f, -8.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f, 1.0f, 1.0f)), Material(Color(0.0f, 0.6f, 0.0f, 0.0f), 1.0f), 4.0f));
-	scene.addSphere(Sphere(Transform(Vector3(0.0f, 104.0f, -10.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f, 1.0f, 1.0f)), Material(Color(0.5f, 0.0f, 0.0f, 0.0f), 1.0f), 100.0f));
+
+	scene.addSphere(Sphere(Transform(Vector3(6.0f, 0.0f, -8.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f, 1.0f, 1.0f)), Material(Color(0.0f, 0.6f, 0.0f, 0.0f), 1.0f, 1.0f, 1.0f), 3.0f));
+	scene.addSphere(Sphere(Transform(Vector3(0.0f, 0.0f, -8.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f, 1.0f, 1.0f)), Material(Color(0.5f, 0.5f, 0.5f, 0.0f), 1.0f, 0.0f, 0.5f), 3.0f));
+	scene.addSphere(Sphere(Transform(Vector3(-6.0f, 0.0f, -8.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f, 1.0f, 1.0f)), Material(Color(0.0f, 0.0f, 0.5f, 0.0f), 1.0f, 1.0f, 1.0f), 3.0f));
+
+	scene.addSphere(Sphere(Transform(Vector3(0.0f, 104.0f, -10.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f, 1.0f, 1.0f)), Material(Color(0.5f, 0.0f, 0.0f, 0.0f), 1.0f, 0.0f, 0.5f), 100.0f));
 
 	render(scene);
 

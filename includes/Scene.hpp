@@ -25,6 +25,8 @@ class	Scene
 		void	setSampleCount(const int sampleCount);
 		int		getMaxLightBounces(void) const;
 		void	setMaxLightBounces(const int maxLightBounces);
+		bool	getGammaCorrected(void) const;
+		void	setGammaCorrected(bool gamma);
 		void	setPixelArray(int index, Color pixelColor);
 		unsigned char*	getPixelArray() const;
 		void	initializePixelArray(void);
@@ -37,6 +39,7 @@ class	Scene
 		float					_t_max;
 		int						_sampleCount;
 		int						_maxLightBounces;
+		bool					_gammaCorrected;
 		unsigned char*			_pixelArray;
 		//Light					_ambientLight;
 		std::vector<Camera>		_cameras;

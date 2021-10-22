@@ -8,7 +8,7 @@
 Plane::Plane(void)
 {
 	this->_transform = Transform();
-	this->_material = Material(Color(0.49f, 0.49f, 0.49f, 0.0f), 1.0f);
+	this->_material = Material(Color(0.49f, 0.49f, 0.49f, 0.0f), 1.0f, 0.0f, 0.5f);
 }
 
 // Constructs the Plane with custom values

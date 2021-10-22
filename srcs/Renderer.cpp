@@ -13,7 +13,9 @@
 
 // Static function prototypes
 static Color	calculatePixelColor(Scene scene, int x, int y);
-static bool	checkHits(Scene scene, Ray& ray, Color& pixelColor);
+static bool		checkHits(Scene scene, Ray& ray);
+Color			calculateLightRaysColor(Ray& ray, Scene& scene, int bounces);
+void			calculateLightRayBounceDirection(Ray& ray);
 
 // Renders the image using all the information present on 'scene'. (Objects, cameras, lights, settings, etc)
 void	render(Scene scene)
@@ -40,7 +42,10 @@ void	render(Scene scene)
 				pixelColor += calculatePixelColor(scene, x, y);
 			}
 			pixelColor /= float(samples + 1);
-			pixelColor = Color(sqrtf(pixelColor.getRed()), sqrtf(pixelColor.getGreen()), sqrtf(pixelColor.getBlue()), 0.0f); // Gamma (2) correction
+			if (scene.getGammaCorrected() == true)
+			{
+				pixelColor = Color(sqrtf(pixelColor.getRed()), sqrtf(pixelColor.getGreen()), sqrtf(pixelColor.getBlue()), 0.0f); // Gamma (2) correction
+			}
 
 			scene.setPixelArray((y * width) + x, pixelColor);
 		}
@@ -59,7 +64,6 @@ void	render(Scene scene)
 // Calculates the color for the pixel at 'x' and 'y'. Creates rays, checks for intersections with objects on 'scene' and bounce light rays
 static Color	calculatePixelColor(Scene scene, int x, int y)
 {
-	Color	pixelColor(0.0f, 0.0f, 0.0f, 0.0f);
 	Color	tempColor(0.0f, 0.0f, 0.0f, 0.0f);
 
 	float u = float(x + drand48()) / (float)scene.getXResolution();
@@ -73,25 +77,52 @@ static Color	calculatePixelColor(Scene scene, int x, int y)
 	static Vector3	vertical = Vector3(0.0f, 2.0f * halfHeight, 0.0f);
 
 	Ray ray(scene.getActiveCamera().getTransform().getPosition(), lowerLeftCorner + (horizontal * u) + (vertical * v) - scene.getActiveCamera().getTransform().getPosition());
-	int	maxLightBounces = scene.getMaxLightBounces();
-	int	bounces;
-	for (bounces = -1; bounces < maxLightBounces && checkHits(scene, ray, tempColor); bounces++)
+	return (calculateLightRaysColor(ray, scene, 0));
+}
+
+Color	calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
+{
+	if (bounces < scene.getMaxLightBounces() && checkHits(scene, ray))
 	{
-		Vector3	newTarget = ray.hitRecord.position + ray.hitRecord.normal + randomPointInsideUnitSphere();
 		ray.setOrigin(ray.hitRecord.position);
-		ray.setDirection(newTarget - ray.hitRecord.position);
-		pixelColor += tempColor / 2.0f;
-		tempColor = Color(0.0f, 0.0f, 0.0f, 0.0f);
+
+		calculateLightRayBounceDirection(ray);
+
+		Color color = (calculateLightRaysColor(ray, scene, bounces + 1) + ray.hitRecord.material.getColor()) / 2.0f;
+
+		return (color * ray.hitRecord.material.getAlbedo());
 	}
-	if (bounces > 0)
+	return (Color(0.0f, 0.0f, 0.0f, 0.0f));
+}
+
+void	calculateLightRayBounceDirection(Ray& ray)
+{
+	if (ray.hitRecord.material.getMetallic() == 1.0f)
 	{
-		pixelColor /= float(bounces);
+		ray.setDirection(reflect(ray.getDirection(), ray.hitRecord.normal));
+		return;
 	}
-	return (pixelColor);
+
+	Vector3	newTarget = ray.hitRecord.position + ray.hitRecord.normal + randomPointInsideUnitSphere();
+	if (ray.hitRecord.material.getMetallic() == 0.0f)
+	{
+
+		ray.setDirection(newTarget - ray.hitRecord.position);
+		return;
+	}
+
+	if (drand48() < ray.hitRecord.material.getMetallic())
+	{
+		ray.setDirection(reflect(ray.getDirection(), ray.hitRecord.normal));
+	}
+	else
+	{
+		ray.setDirection(newTarget - ray.hitRecord.position);
+	}
 }
 
 // Checks if 'ray' hits objects present 'scene'. On hit, sets 'pixelColor' to the hitted object's material color
-static bool	checkHits(Scene scene, Ray& ray, Color& pixelColor)
+static bool	checkHits(Scene scene, Ray& ray)
 {
 	bool	anyHit = false;
 	float	currentClosestObject = T_MAX;
@@ -100,7 +131,7 @@ static bool	checkHits(Scene scene, Ray& ray, Color& pixelColor)
 	{
 		if (hitSphere(ray, sphere, currentClosestObject))
 		{
-			pixelColor = sphere.getMaterial().getColor();
+			ray.hitRecord.material = sphere.getMaterial();
 			currentClosestObject = ray.hitRecord.t;
 			anyHit = true;
 		}

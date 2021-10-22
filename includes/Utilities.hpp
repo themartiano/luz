@@ -10,6 +10,8 @@ float	    vectorLengthNoSQRT(Vector3 vector);
 float	    vectorLength(Vector3 vector);
 Vector3	    normalize(Vector3 vector);
 Vector3     randomPointInsideUnitSphere(void);
+Vector3 	reflect(Vector3 vector, Vector3 normal);
 std::string pluralOrSingular(int number);
+void	    setFloatRange(float& flt, float min, float max);
 
 #endif
