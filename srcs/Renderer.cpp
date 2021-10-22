@@ -69,17 +69,15 @@ static Color	calculatePixelColor(Scene scene, int x, int y)
 	float xU = float(x + drand48()) / (float)scene.getXResolution();
 	float yV = float(y + drand48()) / (float)scene.getYResolution();
 
-	static Vector3	cameraPosition = scene.getActiveCamera().getTransform().getPosition();
+	static Vector3	cameraPosition = scene.getActiveCamera().getLookFrom();
 
     static float	halfWidth = tan((((float)scene.getActiveCamera().getFOV() * M_PI) / 180.0f) / 2.0f);
     static float	halfHeight = ((float)scene.getYResolution() / (float)scene.getXResolution()) * halfWidth;
 
-	static Vector3	lookAt(0.0f, 0.0f, -1.0f); // Temporary
-
 	static float	lensRadius = scene.getActiveCamera().getAperture() / 2.0f;
-	static float	focusDistance = vectorLength(cameraPosition - lookAt);
+	static float	focusDistance = vectorLength(cameraPosition - scene.getActiveCamera().getLookAt());
 
-	static Vector3	w = normalize(cameraPosition - lookAt);
+	static Vector3	w = normalize(cameraPosition - scene.getActiveCamera().getLookAt());
 	static Vector3	viewUp(0.0f, -1.0f, 0.0f);
 	static Vector3	u = normalize(cross(viewUp, w));
 	static Vector3	v = cross(w, u);
