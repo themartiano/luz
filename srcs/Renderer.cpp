@@ -65,23 +65,22 @@ void	render(Scene scene)
 // Calculates the color for the pixel at 'x' and 'y'. Creates rays, checks for intersections with objects on 'scene' and bounce light rays
 static Color	calculatePixelColor(Scene scene, int x, int y)
 {
-	float xu = float(x + drand48()) / (float)scene.getXResolution();
-	float yv = float(y + drand48()) / (float)scene.getYResolution();
+	float xU = float(x + drand48()) / (float)scene.getXResolution();
+	float yV = float(y + drand48()) / (float)scene.getYResolution();
 
-    static float   halfHeight = tan((((float)scene.getActiveCamera().getFOV() * M_PI) / 180.0f) / 2.0f);
-    static float   halfWidth = ((float)scene.getXResolution() / (float)scene.getYResolution()) * halfHeight;
+    static float   halfWidth = tan((((float)scene.getActiveCamera().getFOV() * M_PI) / 180.0f) / 2.0f);
+    static float   halfHeight = ((float)scene.getYResolution() / (float)scene.getXResolution()) * halfWidth;
 
 	static Vector3	w = normalize(scene.getActiveCamera().getTransform().getPosition() - Vector3(0.0f, 0.0f, -1.0f)); // This Vector3 is the lookAt factor
 	static Vector3	viewUp(0.0f, -1.0f, 0.0f);
 	static Vector3	u = normalize(cross(viewUp, w));
 	static Vector3	v = cross(w, u);
 
-	//static Vector3	lowerLeftCorner = Vector3(-halfWidth, -halfHeight, -1.0f);
 	static Vector3	lowerLeftCorner = scene.getActiveCamera().getTransform().getPosition() - (u * halfWidth) - (v * halfHeight) - w;
 	static Vector3	horizontal = u * (halfWidth * 2.0f);
 	static Vector3	vertical = v * (halfHeight * 2.0f);
 
-	Ray ray(scene.getActiveCamera().getTransform().getPosition(), lowerLeftCorner + (horizontal * xu) + (vertical * yv) - scene.getActiveCamera().getTransform().getPosition());
+	Ray ray(scene.getActiveCamera().getTransform().getPosition(), lowerLeftCorner + (horizontal * xU) + (vertical * yV) - scene.getActiveCamera().getTransform().getPosition());
 	return (calculateLightRaysColor(ray, scene, 0));
 }
 

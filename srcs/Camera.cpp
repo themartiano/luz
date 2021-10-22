@@ -8,7 +8,7 @@
 Camera::Camera(void)
 {
 	this->_transform = Transform();
-	this->_fov = 70;
+	this->_fov = 65;
 }
 
 // Constructs the Camera with custom values
