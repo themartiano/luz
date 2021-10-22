@@ -69,19 +69,29 @@ static Color	calculatePixelColor(Scene scene, int x, int y)
 	float xU = float(x + drand48()) / (float)scene.getXResolution();
 	float yV = float(y + drand48()) / (float)scene.getYResolution();
 
-    static float   halfWidth = tan((((float)scene.getActiveCamera().getFOV() * M_PI) / 180.0f) / 2.0f);
-    static float   halfHeight = ((float)scene.getYResolution() / (float)scene.getXResolution()) * halfWidth;
+	static Vector3	cameraPosition = scene.getActiveCamera().getTransform().getPosition();
 
-	static Vector3	w = normalize(scene.getActiveCamera().getTransform().getPosition() - Vector3(0.0f, 0.0f, -1.0f)); // This Vector3 is the lookAt factor
+    static float	halfWidth = tan((((float)scene.getActiveCamera().getFOV() * M_PI) / 180.0f) / 2.0f);
+    static float	halfHeight = ((float)scene.getYResolution() / (float)scene.getXResolution()) * halfWidth;
+
+	static Vector3	lookAt(0.0f, 0.0f, -1.0f); // Temporary
+
+	static float	lensRadius = scene.getActiveCamera().getAperture() / 2.0f;
+	static float	focusDistance = vectorLength(cameraPosition - lookAt);
+
+	static Vector3	w = normalize(cameraPosition - lookAt);
 	static Vector3	viewUp(0.0f, -1.0f, 0.0f);
 	static Vector3	u = normalize(cross(viewUp, w));
 	static Vector3	v = cross(w, u);
 
-	static Vector3	lowerLeftCorner = scene.getActiveCamera().getTransform().getPosition() - (u * halfWidth) - (v * halfHeight) - w;
-	static Vector3	horizontal = u * (halfWidth * 2.0f);
-	static Vector3	vertical = v * (halfHeight * 2.0f);
+	static Vector3	lowerLeftCorner = cameraPosition - (u * halfWidth * focusDistance) - (v * halfHeight * focusDistance) - (w * focusDistance);
+	static Vector3	horizontal = u * (halfWidth * 2.0f * focusDistance);
+	static Vector3	vertical = v * (halfHeight * 2.0f * focusDistance);
 
-	Ray ray(scene.getActiveCamera().getTransform().getPosition(), lowerLeftCorner + (horizontal * xU) + (vertical * yV) - scene.getActiveCamera().getTransform().getPosition());
+	Vector3	rd = randomPointInsideUnitDisk() * lensRadius;
+	Vector3	offset = u * rd.getX() + v * rd.getY();
+
+	Ray ray(cameraPosition + offset, lowerLeftCorner + (horizontal * xU) + (vertical * yV) - cameraPosition - offset);
 	return (calculateLightRaysColor(ray, scene, 0));
 }
 

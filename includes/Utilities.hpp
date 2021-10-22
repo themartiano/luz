@@ -10,6 +10,7 @@ float	    vectorLengthNoSQRT(Vector3 vector);
 float	    vectorLength(Vector3 vector);
 Vector3	    normalize(Vector3 vector);
 Vector3     randomPointInsideUnitSphere(void);
+Vector3     randomPointInsideUnitDisk(void);
 Vector3 	reflect(Vector3 vector, Vector3 normal);
 bool        refract(Vector3 vector, Vector3 normal, float refractiveIndex, Vector3& refractedVector);
 float	    schlick(float cosine, float refractiveIndex);
