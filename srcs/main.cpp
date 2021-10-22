@@ -31,10 +31,10 @@ int	main(int argc, char *argv[])
 	scene.setGammaCorrected(true);
 
 	// Current coordinate system ~~ Forward: -Z | Up: -Y | Right: -X
-	scene.addCamera(Camera(Transform(Vector3(0.0f, 0.0f, 13.0f), Vector3(0.0f, 0.0f, -1.0f), Vector3(1.0f, 1.0f, 1.0f)), 65));
+	scene.addCamera(Camera(Transform(Vector3(0.0f, 0.0f, 12.0f), Vector3(0.0f, 0.0f, -1.0f), Vector3(1.0f, 1.0f, 1.0f)), 65, 1.0f));
 
 	scene.addSphere(Sphere(Transform(Vector3(6.0f, 0.0f, -8.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f, 1.0f, 1.0f)), Material(Color(0.0f, 0.6f, 0.0f, 0.0f), 1.0f, 1.0f, 1.0f, 0.0f, 0.0f), 3.0f));
-	//scene.addSphere(Sphere(Transform(Vector3(0.0f, 0.0f, -8.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f, 1.0f, 1.0f)), Material(Color(0.5f, 0.5f, 0.5f, 0.0f), 1.0f, 0.0f, 0.5f, 0.0f, 0.0f), 3.0f));
+	scene.addSphere(Sphere(Transform(Vector3(0.0f, 0.0f, -1.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f, 1.0f, 1.0f)), Material(Color(0.5f, 0.5f, 0.5f, 0.0f), 1.0f, 0.0f, 0.5f, 0.0f, 0.0f), 3.0f));
 	scene.addSphere(Sphere(Transform(Vector3(0.0f, 1.0f, -6.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f, 1.0f, 1.0f)), Material(Color(0.5f, 0.5f, 0.5f, 0.0f), 1.0f, 0.0f, 0.5f, 0.0f, 1.0f), 2.0f));
 	scene.addSphere(Sphere(Transform(Vector3(-6.0f, 0.0f, -8.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f, 1.0f, 1.0f)), Material(Color(0.0f, 0.0f, 0.5f, 0.0f), 1.0f, 1.0f, 1.0f, 0.6f, 0.0f), 3.0f));
 

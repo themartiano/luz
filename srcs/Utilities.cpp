@@ -48,6 +48,18 @@ Vector3 randomPointInsideUnitSphere(void)
 	return (position);
 }
 
+// Returns a 3D point (Vector3) that's random and inside a unit disk (normalized)
+Vector3 randomPointInsideUnitDisk(void)
+{
+	Vector3	position;
+
+	do
+	{
+		position = (Vector3(drand48(), drand48(), 0) * 2.0f) - Vector3(1.0f, 1.0f, 0);
+	} while (dot(position, position) >= 1.0f);
+	return (position);
+}
+
 // Returns the reflected Vector3 of 'vector' using 'normal' in the calculation
 Vector3	reflect(Vector3 vector, Vector3 normal)
 {
