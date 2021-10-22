@@ -9,6 +9,7 @@ class	Material
 		Material(void);
 		Material(Color color, float opacity, float metallic, float albedo, float reflectionFuzziness);
 		Color	getColor(void) const;
+		void	setColor(Color color);
 		float	getMetallic(void) const;
 		float	getAlbedo(void) const;
 		float	getReflectionFuzziness(void) const;

@@ -97,12 +97,17 @@ Color	calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
 
 		calculateLightRayBounceDirection(ray);
 
-		return ((calculateLightRaysColor(ray, scene, bounces + 1) + (ray.hitRecord.material.getColor()  * ray.hitRecord.material.getAlbedo())) / 2.0f);
+		if (dot(ray.getDirection(), ray.hitRecord.normal) <= 0.0f)
+		{
+			return (Color(0.0f, 0.0f, 0.0f, 0.0f));
+		}
+
+		return (((calculateLightRaysColor(ray, scene, bounces + 1) * ray.hitRecord.material.getAlbedo()) + ray.hitRecord.material.getColor()) / 2.0f);
 	}
 	return (calculateSkyInterpolation(scene, ray));
 }
 
-// Calculates the sky interpolation for the background
+// Calculates the sky interpolation for the background and reflexes
 Color	calculateSkyInterpolation(Scene scene, Ray ray)
 {
 	Vector3	normalizedDirection = normalize(ray.getDirection());

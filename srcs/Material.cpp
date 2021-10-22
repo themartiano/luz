@@ -34,6 +34,12 @@ Color	Material::getColor(void) const
 	return (this->_color);
 }
 
+// Sets the Material's color
+void	Material::setColor(Color color)
+{
+	this->_color = color;
+}
+
 // Returns the Material's metallic value
 float	Material::getMetallic(void) const
 {
