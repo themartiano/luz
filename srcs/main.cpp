@@ -26,8 +26,8 @@ int	main(int argc, char *argv[])
 	scene.setXResolution(1920);
 	scene.setYResolution(1080);
 	scene.initializePixelArray();
-	scene.setSampleCount(48);
-	scene.setMaxLightBounces(16);
+	scene.setSampleCount(6);
+	scene.setMaxLightBounces(12);
 	scene.setGammaCorrected(true);
 
 	// Current coordinate system ~~ Forward: -Z | Up: -Y
