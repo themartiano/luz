@@ -15,7 +15,7 @@ Scene::Scene(void)
 	this->_sampleCount = D_SAMPLE_COUNT;
 	this->_maxLightBounces = D_MAX_LIGHT_BOUNCES;
 	this->_gammaCorrected = true;
-	this->_skyHorizonModifier = 1.0f;
+	this->_skyline = 1.0f;
 
 	this->_activeCamera = 0;
 
@@ -99,10 +99,10 @@ void	Scene::setGammaCorrected(bool gammaCorrected)
 {
 	this->_gammaCorrected = gammaCorrected;
 }
-// Returns Sky Horizon Line Modifier (used on sky colors interpolation)
-float	Scene::getSkyHorizonModifier(void) const
+// Returns Skyline (used on sky colors interpolation)
+float	Scene::getSkyline(void) const
 {
-	return (this->_skyHorizonModifier);
+	return (this->_skyline);
 }
 
 // Sets the color for the pixel at 'index', which is a simple X/Y index.
