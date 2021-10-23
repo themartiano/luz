@@ -16,7 +16,7 @@
 static Color	calculatePixelColor(Scene scene, int x, int y);
 static bool		checkHits(Scene scene, Ray& ray);
 Color			calculateLightRaysColor(Ray& ray, Scene& scene, int bounces);
-void			calculateLightRayBounceDirection(Ray& ray);
+void			calculateLightRayBounceDirection(Ray& ray, Color& color);
 Color			calculateSkyInterpolation(Scene scene, Ray ray);
 
 // Renders the image using all the information present on 'scene'. (Objects, cameras, lights, settings, etc)
@@ -43,7 +43,7 @@ void	render(Scene scene)
 			{
 				pixelColor += calculatePixelColor(scene, x, y);
 			}
-			pixelColor /= float(samples + 1);
+			pixelColor /= float(sampleCount);
 			if (scene.getGammaCorrected() == true)
 			{
 				pixelColor = Color(sqrtf(pixelColor.getRed()), sqrtf(pixelColor.getGreen()), sqrtf(pixelColor.getBlue()), 0.0f); // Gamma (2) correction
@@ -96,23 +96,26 @@ static Color	calculatePixelColor(Scene scene, int x, int y)
 // Properly calculates light rays bounces, reflections, etc and returns the resulting color
 Color	calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
 {
+	Color color(0.0f, 0.0f, 0.0f, 0.0f);
+
 	if (bounces > scene.getMaxLightBounces())
 	{
-		return (Color(0.0f, 0.0f, 0.0f, 0.0f));
+		return (color);
 	}
+
 	if (checkHits(scene, ray))
 	{
 		ray.setOrigin(ray.hitRecord.position);
-
-		calculateLightRayBounceDirection(ray);
+		calculateLightRayBounceDirection(ray, color);
 
 		if (ray.hitRecord.material.getMetallic() == 1.0f && dot(ray.getDirection(), ray.hitRecord.normal) <= 0.0f)
 		{
-			return (Color(0.0f, 0.0f, 0.0f, 0.0f));
+			return (color);
 		}
 
-		return (((calculateLightRaysColor(ray, scene, bounces + 1) * ray.hitRecord.material.getAlbedo()) + ray.hitRecord.material.getColor()) / 2.0f);
+		return (color * calculateLightRaysColor(ray, scene, bounces + 1));
 	}
+
 	return (calculateSkyInterpolation(scene, ray));
 }
 
@@ -127,11 +130,12 @@ Color	calculateSkyInterpolation(Scene scene, Ray ray)
 }
 
 // Calculates the light rays bounce/reflection direction
-void	calculateLightRayBounceDirection(Ray& ray)
+void	calculateLightRayBounceDirection(Ray& ray, Color& color)
 {
 	if (ray.hitRecord.material.getMetallic() == 1.0f)
 	{
 		ray.setDirection(reflect(ray.getDirection(), ray.hitRecord.normal) + (randomPointInsideUnitSphere() * ray.hitRecord.material.getReflectionFuzziness()));
+		color = ray.hitRecord.material.getColor() * ray.hitRecord.material.getAlbedo();
 		return;
 	}
 
@@ -175,25 +179,27 @@ void	calculateLightRayBounceDirection(Ray& ray)
 			ray.setOrigin(ray.hitRecord.position);
 			ray.setDirection(refractedVector);
 		}
+
+		color = Color(1.0f, 1.0f, 1.0f, 0.0f);
 		return;
 	}
 
 	Vector3	newTarget = ray.hitRecord.position + ray.hitRecord.normal + randomPointInsideUnitSphere();
-	if (ray.hitRecord.material.getMetallic() == 0.0f)
-	{
-
+	/*if (ray.hitRecord.material.getMetallic() == 0.0f)
+	{*/
 		ray.setDirection(newTarget - ray.hitRecord.position);
+		color = ray.hitRecord.material.getColor() * ray.hitRecord.material.getAlbedo();
 		return;
-	}
+	//}
 
-	if (drand48() < ray.hitRecord.material.getMetallic())
+	/*if (drand48() < ray.hitRecord.material.getMetallic())
 	{
 		ray.setDirection(reflect(ray.getDirection(), ray.hitRecord.normal) + (randomPointInsideUnitSphere() * ray.hitRecord.material.getReflectionFuzziness()));
 	}
 	else
 	{
 		ray.setDirection(newTarget - ray.hitRecord.position);
-	}
+	}*/
 }
 
 // Checks if 'ray' hits objects present 'scene'. On hit, sets 'pixelColor' to the hitted object's material color

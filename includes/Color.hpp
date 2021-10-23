@@ -13,6 +13,7 @@ class	Color
 		Color&	operator/=(const float f);
 		Color	operator+(const Color color) const;
 		Color	operator*(const float f) const;
+		Color	operator*(const Color color) const;
 		Color	operator/(const float f) const;
 
 	private:
