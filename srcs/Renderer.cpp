@@ -124,7 +124,7 @@ Color	calculateSkyInterpolation(Scene scene, Ray ray)
 {
 	Vector3	normalizedDirection = normalize(ray.getDirection());
 
-	float temp = scene.getSkyHorizonModifier() * (-normalizedDirection.getY() + 1.0f);
+	float temp = scene.getSkyline() * (-normalizedDirection.getY() + 1.0f);
 
 	return ((Color(1.0f, 1.0f, 1.0f, 0.0f) * (1.0f - temp)) + (Color(0.5f, 0.7f, 1.0f, 0.0f) * temp));
 }
@@ -139,7 +139,7 @@ void	calculateLightRayBounceDirection(Ray& ray, Color& color)
 		return;
 	}
 
-	if (ray.hitRecord.material.getDieletric() == 1.0f)
+	if (ray.hitRecord.material.getDielectric() == 1.0f)
 	{
 		Vector3	refractedVector;
 		Vector3	outwardsNormal;
