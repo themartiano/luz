@@ -15,7 +15,7 @@ Scene::Scene(void)
 	this->_sampleCount = D_SAMPLE_COUNT;
 	this->_maxLightBounces = D_MAX_LIGHT_BOUNCES;
 	this->_gammaCorrected = true;
-	this->_skyline = 1.0f;
+	this->_skyline = 0.5f;
 
 	this->_activeCamera = 0;
 

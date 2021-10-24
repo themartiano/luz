@@ -27,20 +27,22 @@ int	main(int argc, char *argv[])
 		//read_flags();
 	}
 
+	srand(18685165);
+
 	scene.setXResolution(1920);
 	scene.setYResolution(1080);
 	scene.initializePixelArray();
-	scene.setSampleCount(3);
-	scene.setMaxLightBounces(6);
+	scene.setSampleCount(250);
+	scene.setMaxLightBounces(250);
 	scene.setGammaCorrected(true);
 
 	// Current coordinate system ~~ Forward: -Z | Up: -Y | Right: -X
-	scene.addCamera(Camera(Vector3(0.0f, 0.0f, 12.0f), Vector3(0.0f, 0.0f, -8.0f), 65, 0.3f));
+	scene.addCamera(Camera(Vector3(0.0f, 0.0f, 12.0f), Vector3(0.0f, 0.0f, -8.0f), 65, 0.1856321f));
 
 	// Glass
-	scene.addHittable(std::make_shared<Sphere>(Vector3(-8.0f, 0.0f, -4.0f), Material(Color(0.0f, 0.0f, 0.0f), 1.0f, 0.0f, 0.5f, 0.0f, true), 3.0f));
+	scene.addHittable(std::make_shared<Sphere>(Vector3(-6.7f, 0.0f, -4.0f), Material(Color(0.0f, 0.0f, 0.0f), 1.0f, 0.0f, 0.5f, 0.0f, true), 3.0f));
 	// Metal
-	scene.addHittable(std::make_shared<Sphere>(Vector3(-4.0f, 0.0f, -8.0f), Material(Color(0.7f, 0.6f, 0.5f), 1.0f, 1.0f, 0.5f, 0.0f, false), 3.0f));
+	scene.addHittable(std::make_shared<Sphere>(Vector3(-3.35f, 0.0f, -8.0f), Material(Color(0.7f, 0.6f, 0.5f), 1.0f, 1.0f, 0.5f, 0.0f, false), 3.0f));
 	// Lambertian
 	scene.addHittable(std::make_shared<Sphere>(Vector3(0.0f, 0.0f, -12.0f), Material(Color(0.0f, 0.0f, 0.8f), 1.0f, 0.0f, 0.5f, 0.0f, false), 3.0f));
 
@@ -48,10 +50,38 @@ int	main(int argc, char *argv[])
 	scene.addHittable(std::make_shared<Sphere>(Vector3(0.0f, 1003.0f, -8.0f), Material(Color(0.5f, 1.0f, 0.5f), 1.0f, 0.0f, 0.5f, 0.0f, false), 1000.0f));
 
 	std::vector<std::shared_ptr<Hittable>> tinySpheres;
-	for (int i = 0; i < 21; i++)
+	for (int x = -11; x < 11; x++)
 	{
-		tinySpheres.push_back(std::make_shared<Sphere>(Vector3(0.0f, 0.0f, 0.0f), Material(Color(0.0f, 0.0f, 0.8f), 1.0f, 0.0f, 0.5f, 0.0f, false), 0.5f));
-		//scene.addHittable(tinySpheres[i]);
+		for (int y = -11; y < 11; y++)
+		{
+			if (x == 0)
+				break;
+			if (y == 0)
+				continue;
+
+			float	sphereRadius = randomFloat() / 2.0f;
+
+			Vector3 spherePosition(float(x) * (3.6f * randomFloat()), 3.0f - sphereRadius, float(y) * (3.0f * randomFloat()));
+
+			float	random = randomFloat();
+
+			float	metallic = 0.0f;
+			float	reflectionFuzziness = 0.0f;
+			bool	glass = false;
+
+			if (random >= 0.85f && random < 0.95f)
+			{
+				metallic = 1.0f;
+				reflectionFuzziness = randomFloat() - 0.5f;
+				reflectionFuzziness = reflectionFuzziness < 0.0f ? 0.0f : reflectionFuzziness;
+			}
+			else if (random >= 0.95f)
+			{
+				glass = true;
+			}
+
+			tinySpheres.push_back(std::make_shared<Sphere>(spherePosition, Material(Color(randomFloat(), randomFloat(), randomFloat()), 1.0f, metallic, 0.5f, reflectionFuzziness, glass), sphereRadius));
+		}
 	}
 	scene.addHittable(std::make_shared<BVHNode>(tinySpheres));
 
