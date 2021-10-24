@@ -6,7 +6,7 @@
 // Calculates if 'sphere' is hit by 'ray', is closer than 't_max' and farther than T_MIN
 bool	hitSphere(Ray& ray, Sphere sphere, float t_max)
 {
-	Vector3 oc = ray.getOrigin() - sphere.getTransform().getPosition();
+	Vector3 oc = ray.getOrigin() - sphere.getPosition();
 	float a = dot(ray.getDirection(), ray.getDirection());
 	float b = dot(oc, ray.getDirection());
 	float c = dot(oc, oc) - (sphere.getRadius() * sphere.getRadius());
@@ -18,7 +18,7 @@ bool	hitSphere(Ray& ray, Sphere sphere, float t_max)
         {
             ray.hitRecord.t = temp;
             ray.hitRecord.position = ray.pointAtRay(ray.hitRecord.t);
-            ray.hitRecord.normal = (ray.hitRecord.position - sphere.getTransform().getPosition()) / sphere.getRadius();
+            ray.hitRecord.normal = (ray.hitRecord.position - sphere.getPosition()) / sphere.getRadius();
             return (true);
         }
         temp = (-b + sqrt((b * b) - (a * c))) / a;
@@ -26,7 +26,7 @@ bool	hitSphere(Ray& ray, Sphere sphere, float t_max)
         {
             ray.hitRecord.t = temp;
             ray.hitRecord.position = ray.pointAtRay(ray.hitRecord.t);
-            ray.hitRecord.normal = (ray.hitRecord.position - sphere.getTransform().getPosition()) / sphere.getRadius();
+            ray.hitRecord.normal = (ray.hitRecord.position - sphere.getPosition()) / sphere.getRadius();
             return (true);
         }
     }

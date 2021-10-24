@@ -5,7 +5,7 @@ class	Color
 {
 	public:
 		Color(void);
-		Color(float r, float g, float b, float a);
+		Color(float r, float g, float b);
 		float	getRed(void) const;
 		float	getGreen(void) const;
 		float	getBlue(void) const;
@@ -20,7 +20,6 @@ class	Color
 		float	_red;
 		float	_green;
 		float	_blue;
-		float	_alpha;
 };
 
 #endif

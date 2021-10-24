@@ -7,7 +7,7 @@
 // Constructs the Light with default values
 Light::Light(void)
 {
-	this->_color = Color(1.0f, 1.0f, 1.0f, 0.0f);
+	this->_color = Color(1.0f, 1.0f, 1.0f);
 	this->_transform = Transform();
 	this->_brightness = 1.0f;
 }

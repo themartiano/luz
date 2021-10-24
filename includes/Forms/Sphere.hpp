@@ -8,13 +8,13 @@ class	Sphere
 {
 	public:
 		Sphere(void);
-		Sphere(Transform transform, Material material, float radius);
-		Material	getMaterial(void) const;
-		Transform	getTransform(void) const;
+		Sphere(Vector3 position, Material material, float radius);
+		Vector3	getPosition(void) const;
+		Material		getMaterial(void) const;
 		float		getRadius(void) const;
 
 	private:
-		Transform	_transform;
+		Vector3		_position;
 		Material	_material;
 		float		_radius;
 };

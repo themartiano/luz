@@ -10,7 +10,7 @@ Triangle::Triangle(void)
 	this->_position1 = Vector3(0.0f, 0.0f, 0.0f); //Values
 	this->_position2 = Vector3(0.0f, 0.0f, 0.0f); //Values
 	this->_position3 = Vector3(0.0f, 0.0f, 0.0f); //Values
-	this->_material = Material(Color(0.49f, 0.49f, 0.49f, 0.0f), 1.0f, 0.0f, 0.5f, 0.0f, 0.0f);
+	this->_material = Material(Color(0.49f, 0.49f, 0.49f), 1.0f, 0.0f, 0.5f, 0.0f, false);
 }
 
 // Constructs the Triangle with custom values
