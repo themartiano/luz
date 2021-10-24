@@ -27,43 +27,21 @@ int	main(int argc, char *argv[])
 	scene.setYResolution(1080);
 	scene.initializePixelArray();
 	scene.setSampleCount(3);
-	scene.setMaxLightBounces(64);
+	scene.setMaxLightBounces(6);
 	scene.setGammaCorrected(true);
 
 	// Current coordinate system ~~ Forward: -Z | Up: -Y | Right: -X
-	scene.addCamera(Camera(Vector3(0.0f, 0.0f, 12.0f), Vector3(0.0f, 0.0f, -8.0f), 65, 0.83256987f));
+	scene.addCamera(Camera(Vector3(0.0f, 0.0f, 12.0f), Vector3(0.0f, 0.0f, -8.0f), 65, 0.3f));
 
 	// Glass
-	scene.addSphere(Sphere(Transform(Vector3(-8.0f, 0.0f, -4.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f, 1.0f, 1.0f)), Material(Color(0.0f, 0.0f, 0.0f, 0.0f), 1.0f, 0.0f, 0.5f, 0.0f, 1.0f), 3.0f));
+	scene.addSphere(Sphere(Vector3(-8.0f, 0.0f, -4.0f), Material(Color(0.0f, 0.0f, 0.0f), 1.0f, 0.0f, 0.5f, 0.0f, true), 3.0f));
 	// Metal
-	scene.addSphere(Sphere(Transform(Vector3(-4.0f, 0.0f, -8.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f, 1.0f, 1.0f)), Material(Color(0.7f, 0.6f, 0.5f, 0.0f), 1.0f, 1.0f, 0.5f, 0.0f, 0.0f), 3.0f));
+	scene.addSphere(Sphere(Vector3(-4.0f, 0.0f, -8.0f), Material(Color(0.7f, 0.6f, 0.5f), 1.0f, 1.0f, 0.5f, 0.0f, false), 3.0f));
 	// Lambertian
-	scene.addSphere(Sphere(Transform(Vector3(0.0f, 0.0f, -12.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(0.7f, 0.5f, 0.2f)), Material(Color(0.0f, 0.0f, 0.8f, 0.0f), 1.0f, 0.0f, 0.5f, 0.0f, 0.0f), 3.0f));
-
-	scene.addSphere(Sphere(Transform(Vector3(-3.0f, 0.0f, -5.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(0.7f, 0.5f, 0.2f)), Material(Color(0.0f, 0.0f, 0.8f, 0.0f), 1.0f, 0.0f, 0.5f, 0.0f, 0.0f), 0.213f));
-	scene.addSphere(Sphere(Transform(Vector3(2.0f, 0.0f, -4.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(0.7f, 0.5f, 0.2f)), Material(Color(0.0f, 0.0f, 0.8f, 0.0f), 1.0f, 0.0f, 0.5f, 0.0f, 0.0f), 0.6f));
-	scene.addSphere(Sphere(Transform(Vector3(3.0f, 0.0f, -5.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(0.7f, 0.5f, 0.2f)), Material(Color(0.0f, 0.0f, 0.8f, 0.0f), 1.0f, 0.0f, 0.5f, 0.0f, 0.0f), 0.213f));
-	scene.addSphere(Sphere(Transform(Vector3(-3.0f, 0.0f, -8.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(0.7f, 0.5f, 0.2f)), Material(Color(0.0f, 0.0f, 0.8f, 0.0f), 1.0f, 0.0f, 0.5f, 0.0f, 0.0f), 0.213f));
-	scene.addSphere(Sphere(Transform(Vector3(0.0f, 0.0f, -5.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(0.7f, 0.5f, 0.2f)), Material(Color(0.0f, 0.0f, 0.8f, 0.0f), 1.0f, 0.0f, 0.5f, 0.0f, 0.0f), 0.47f));
-	scene.addSphere(Sphere(Transform(Vector3(3.0f, 0.0f, -8.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(0.7f, 0.5f, 0.2f)), Material(Color(0.0f, 0.0f, 0.8f, 0.0f), 1.0f, 0.0f, 0.5f, 0.0f, 0.0f), 0.6f));
-
-	scene.addSphere(Sphere(Transform(Vector3(0.0f, 0.0f, -5.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f, 1.0f, 1.0f)), Material(Color(0.7f, 0.6f, 0.5f, 0.0f), 1.0f, 1.0f, 0.5f, 0.0f, 0.0f), 0.6f));
-	scene.addSphere(Sphere(Transform(Vector3(-1.0f, 0.0f, -12.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f, 1.0f, 1.0f)), Material(Color(0.7f, 0.6f, 0.5f, 0.0f), 1.0f, 1.0f, 0.5f, 0.0f, 0.0f), 0.213f));
-	scene.addSphere(Sphere(Transform(Vector3(-3.0f, 0.0f, -5.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f, 1.0f, 1.0f)), Material(Color(0.7f, 0.6f, 0.5f, 0.0f), 1.0f, 1.0f, 0.5f, 0.0f, 0.0f), 0.47f));
-	scene.addSphere(Sphere(Transform(Vector3(4.0f, 0.0f, -12.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f, 1.0f, 1.0f)), Material(Color(0.7f, 0.6f, 0.5f, 0.0f), 1.0f, 1.0f, 0.5f, 0.0f, 0.0f), 0.213f));
-	scene.addSphere(Sphere(Transform(Vector3(0.0f, 0.0f, -5.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f, 1.0f, 1.0f)), Material(Color(0.7f, 0.6f, 0.5f, 0.0f), 1.0f, 1.0f, 0.5f, 0.0f, 0.0f), 0.6f));
-	scene.addSphere(Sphere(Transform(Vector3(3.0f, 0.0f, -4.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f, 1.0f, 1.0f)), Material(Color(0.7f, 0.6f, 0.5f, 0.0f), 1.0f, 1.0f, 0.5f, 0.0f, 0.0f), 0.213f));
-	scene.addSphere(Sphere(Transform(Vector3(0.0f, 0.0f, -5.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f, 1.0f, 1.0f)), Material(Color(0.7f, 0.6f, 0.5f, 0.0f), 1.0f, 1.0f, 0.5f, 0.0f, 0.0f), 0.213f));
-	scene.addSphere(Sphere(Transform(Vector3(-3.0f, 0.0f, -8.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f, 1.0f, 1.0f)), Material(Color(0.7f, 0.6f, 0.5f, 0.0f), 1.0f, 1.0f, 0.5f, 0.0f, 0.0f), 0.6f));
-
-	scene.addSphere(Sphere(Transform(Vector3(0.0f, 0.0f, -12.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f, 1.0f, 1.0f)), Material(Color(0.0f, 0.0f, 0.0f, 0.0f), 1.0f, 0.0f, 0.5f, 0.0f, 1.0f), 0.47f));
-	scene.addSphere(Sphere(Transform(Vector3(-3.0f, 0.0f, -5.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f, 1.0f, 1.0f)), Material(Color(0.0f, 0.0f, 0.0f, 0.0f), 1.0f, 0.0f, 0.5f, 0.0f, 1.0f), 0.213f));
-	scene.addSphere(Sphere(Transform(Vector3(3.0f, 0.0f, -4.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f, 1.0f, 1.0f)), Material(Color(0.0f, 0.0f, 0.0f, 0.0f), 1.0f, 0.0f, 0.5f, 0.0f, 1.0f), 0.47f));
-	scene.addSphere(Sphere(Transform(Vector3(6.0f, 0.0f, -5.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f, 1.0f, 1.0f)), Material(Color(0.0f, 0.0f, 0.0f, 0.0f), 1.0f, 0.0f, 0.5f, 0.0f, 1.0f), 0.213f));
-	scene.addSphere(Sphere(Transform(Vector3(-3.0f, 0.0f, -5.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f, 1.0f, 1.0f)), Material(Color(0.0f, 0.0f, 0.0f, 0.0f), 1.0f, 0.0f, 0.5f, 0.0f, 1.0f), 0.47f));
+	scene.addSphere(Sphere(Vector3(0.0f, 0.0f, -12.0f), Material(Color(0.0f, 0.0f, 0.8f), 1.0f, 0.0f, 0.5f, 0.0f, false), 3.0f));
 
 	// Ground (Lambertian)
-	scene.addSphere(Sphere(Transform(Vector3(0.0f, 1003.0f, -8.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f, 1.0f, 1.0f)), Material(Color(0.5f, 1.0f, 0.5f, 0.0f), 1.0f, 0.0f, 0.5f, 0.0f, 0.0f), 1000.0f));
+	scene.addSphere(Sphere(Vector3(0.0f, 1003.0f, -8.0f), Material(Color(0.5f, 1.0f, 0.5f), 1.0f, 0.0f, 0.5f, 0.0f, false), 1000.0f));
 
 	render(scene);
 

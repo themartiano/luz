@@ -8,14 +8,14 @@
 // Constructs the Material with default values
 Material::Material(void)
 {
-	this->_color = Color(0.0f, 0.0f, 0.0f, 0.0f);
+	this->_color = Color(0.0f, 0.0f, 0.0f);
 	this->_metallic = 0.0f;
 	this->_albedo = 0.5f;
 	this->_opacity = 1.0f;
 }
 
 // Constructs the Material with custom values
-Material::Material(Color color, float opacity, float metallic, float albedo, float reflectionFuzziness, float dielectric)
+Material::Material(Color color, float opacity, float metallic, float albedo, float reflectionFuzziness, bool isDielectric)
 {
 	setFloatRange(metallic, 0.0f, 1.0f);
 	this->_metallic = metallic;
@@ -25,8 +25,7 @@ Material::Material(Color color, float opacity, float metallic, float albedo, flo
 	this->_opacity = opacity;
 	setFloatRange(reflectionFuzziness, 0.0f, 1.0f);
 	this->_reflectionFuzziness = reflectionFuzziness;
-	setFloatRange(dielectric, 0.0f, 1.0f);
-	this->_dielectric = dielectric;
+	this->_isDielectric = isDielectric;
 	this->_color = color;
 }
 
@@ -61,7 +60,7 @@ float	Material::getReflectionFuzziness(void) const
 }
 
 // Returns the Material's dielectric value
-float	Material::getDielectric(void) const
+bool	Material::getIsDielectric(void) const
 {
-	return (this->_dielectric);
+	return (this->_isDielectric);
 }

@@ -7,20 +7,20 @@ class	Material
 {
 	public:
 		Material(void);
-		Material(Color color, float opacity, float metallic, float albedo, float reflectionFuzziness, float dielectric);
+		Material(Color color, float opacity, float metallic, float albedo, float reflectionFuzziness, bool isDielectric);
 		Color	getColor(void) const;
 		void	setColor(Color color);
 		float	getMetallic(void) const;
 		float	getAlbedo(void) const;
 		float	getReflectionFuzziness(void) const;
-		float	getDielectric(void) const;
+		bool	getIsDielectric(void) const;
 
 	private:
 		Color	_color;
 		float	_metallic;
 		float	_albedo;
 		float	_reflectionFuzziness;
-		float	_dielectric;
+		bool	_isDielectric;
 		float	_opacity; //work on it
 };
 
