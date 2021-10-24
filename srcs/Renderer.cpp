@@ -14,9 +14,9 @@
 // Static function prototypes
 static Color	calculatePixelColor(Scene scene, int x, int y);
 static bool		checkHits(Scene scene, Ray& ray);
-Color			calculateLightRaysColor(Ray& ray, Scene& scene, int bounces);
-void			calculateLightRayBounceDirection(Ray& ray, Color& color);
-Color			calculateSkyInterpolation(Scene scene, Ray ray);
+static Color	calculateLightRaysColor(Ray& ray, Scene& scene, int bounces);
+static void		calculateLightRayBounceDirection(Ray& ray, Color& color);
+static Color	calculateSkyInterpolation(Scene scene, Ray ray);
 
 // Renders the image using all the information present on 'scene'. (Objects, cameras, lights, settings, etc)
 void	render(Scene scene)
@@ -65,8 +65,8 @@ void	render(Scene scene)
 // Calculates the color for the pixel at 'x' and 'y'. Creates rays, checks for intersections with objects on 'scene' and bounce light rays
 static Color	calculatePixelColor(Scene scene, int x, int y)
 {
-	float xU = float(x + drand48()) / (float)scene.getXResolution();
-	float yV = float(y + drand48()) / (float)scene.getYResolution();
+	float xU = float(x + randomFloat()) / (float)scene.getXResolution();
+	float yV = float(y + randomFloat()) / (float)scene.getYResolution();
 
 	static Vector3	cameraPosition = scene.getActiveCamera().getLookFrom();
 
@@ -93,7 +93,7 @@ static Color	calculatePixelColor(Scene scene, int x, int y)
 }
 
 // Properly calculates light rays bounces, reflections, etc and returns the resulting color
-Color	calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
+static Color	calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
 {
 	Color color(0.0f, 0.0f, 0.0f);
 
@@ -119,7 +119,7 @@ Color	calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
 }
 
 // Calculates the sky interpolation for the background and reflexes
-Color	calculateSkyInterpolation(Scene scene, Ray ray)
+static Color	calculateSkyInterpolation(Scene scene, Ray ray)
 {
 	Vector3	normalizedDirection = normalize(ray.getDirection());
 
@@ -129,7 +129,7 @@ Color	calculateSkyInterpolation(Scene scene, Ray ray)
 }
 
 // Calculates the light rays bounce/reflection direction
-void	calculateLightRayBounceDirection(Ray& ray, Color& color)
+static void	calculateLightRayBounceDirection(Ray& ray, Color& color)
 {
 	if (ray.hitRecord.material.getMetallic() == 1.0f)
 	{
@@ -168,7 +168,7 @@ void	calculateLightRayBounceDirection(Ray& ray, Color& color)
 			reflectionProbability = 1.0f;
 		}
 
-		if (drand48() < reflectionProbability)
+		if (randomFloat() < reflectionProbability)
 		{
 			ray.setOrigin(ray.hitRecord.position);
 			ray.setDirection(reflect(ray.getDirection(), ray.hitRecord.normal));
@@ -191,7 +191,7 @@ void	calculateLightRayBounceDirection(Ray& ray, Color& color)
 		return;
 	}
 
-	if (drand48() < ray.hitRecord.material.getMetallic())
+	if (randomFloat() < ray.hitRecord.material.getMetallic())
 	{
 		ray.setDirection(reflect(ray.getDirection(), ray.hitRecord.normal) + (randomPointInsideUnitSphere() * ray.hitRecord.material.getReflectionFuzziness()));
 	}
@@ -211,7 +211,6 @@ static bool	checkHits(Scene scene, Ray& ray)
 	{
 		if (hittable->hit(ray, currentClosestObject))
 		{
-			ray.hitRecord.material = hittable->getMaterial();
 			currentClosestObject = ray.hitRecord.t;
 			anyHit = true;
 		}

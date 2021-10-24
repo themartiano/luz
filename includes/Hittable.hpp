@@ -10,7 +10,6 @@ class   Hittable
         virtual ~Hittable(void) = default;
         virtual bool        hit(Ray& ray, float t_max) const = 0;
         virtual bool        createBoundingBox(AABB& outputBoundingBox) const = 0;
-        virtual Material    getMaterial(void) const = 0;
 };
 
 #endif

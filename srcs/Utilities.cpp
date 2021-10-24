@@ -43,7 +43,7 @@ Vector3 randomPointInsideUnitSphere(void)
 
 	do
 	{
-		position = (Vector3(drand48(), drand48(), drand48()) * 2.0f) - Vector3(1.0f, 1.0f, 1.0f);
+		position = (Vector3(randomFloat(), randomFloat(), randomFloat()) * 2.0f) - Vector3(1.0f, 1.0f, 1.0f);
 	} while (vectorLengthNoSQRT(position) >= 1.0f);
 	return (position);
 }
@@ -55,7 +55,7 @@ Vector3 randomPointInsideUnitDisk(void)
 
 	do
 	{
-		position = (Vector3(drand48(), drand48(), 0) * 2.0f) - Vector3(1.0f, 1.0f, 0);
+		position = (Vector3(randomFloat(), randomFloat(), 0) * 2.0f) - Vector3(1.0f, 1.0f, 0);
 	} while (dot(position, position) >= 1.0f);
 	return (position);
 }
@@ -151,9 +151,9 @@ AABB	mergeBoundingBoxes(AABB boundingBox1, AABB boundingBox2)
 		fmin(boundingBox1.getMinimum().getZ(), boundingBox2.getMinimum().getZ()));
 
 	Vector3 biggestPoints(
-		fmin(boundingBox1.getMaximum().getX(), boundingBox2.getMaximum().getX()),
-		fmin(boundingBox1.getMaximum().getY(), boundingBox2.getMaximum().getY()),
-		fmin(boundingBox1.getMaximum().getZ(), boundingBox2.getMaximum().getZ()));
+		fmax(boundingBox1.getMaximum().getX(), boundingBox2.getMaximum().getX()),
+		fmax(boundingBox1.getMaximum().getY(), boundingBox2.getMaximum().getY()),
+		fmax(boundingBox1.getMaximum().getZ(), boundingBox2.getMaximum().getZ()));
 
 	return (AABB(smallestPoints, biggestPoints));
 }

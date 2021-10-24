@@ -5,6 +5,8 @@
 #include "ANSIColors.hpp"
 #include "Forms/Sphere.hpp"
 #include "Material.hpp"
+#include "BVHNode.hpp"
+#include "Utilities.hpp"
 #include <fstream>
 #include <iostream>
 
@@ -44,6 +46,14 @@ int	main(int argc, char *argv[])
 
 	// Ground (Lambertian)
 	scene.addHittable(std::make_shared<Sphere>(Vector3(0.0f, 1003.0f, -8.0f), Material(Color(0.5f, 1.0f, 0.5f), 1.0f, 0.0f, 0.5f, 0.0f, false), 1000.0f));
+
+	std::vector<std::shared_ptr<Hittable>> tinySpheres;
+	for (int i = 0; i < 21; i++)
+	{
+		tinySpheres.push_back(std::make_shared<Sphere>(Vector3(0.0f, 0.0f, 0.0f), Material(Color(0.0f, 0.0f, 0.8f), 1.0f, 0.0f, 0.5f, 0.0f, false), 0.5f));
+		//scene.addHittable(tinySpheres[i]);
+	}
+	scene.addHittable(std::make_shared<BVHNode>(tinySpheres));
 
 	render(scene);
 

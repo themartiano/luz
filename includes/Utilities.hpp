@@ -20,4 +20,19 @@ void	    setFloatRange(float& flt, float min, float max);
 bool	    createMainBoundingBox(Scene scene, AABB& newBoundingBox);
 AABB	    mergeBoundingBoxes(AABB boundingBox1, AABB boundingBox2);
 
+inline float	randomFloat(void)
+{
+    return (rand() / (RAND_MAX + 1.0));
+}
+
+inline float	randomFloat(float min, float max)
+{
+    return (min + (max - min) * randomFloat());
+}
+
+inline int	randomInt(int min, int max)
+{
+    return (static_cast<int>(randomFloat(min, max + 1)));
+}
+
 #endif

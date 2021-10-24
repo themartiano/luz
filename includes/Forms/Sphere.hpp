@@ -15,7 +15,6 @@ class	Sphere : public Hittable
 		float				getRadius(void) const;
 		virtual bool    	hit(Ray& ray, float t_max) const override;
 		virtual bool    	createBoundingBox(AABB& outputBoundingBox) const override;
-		virtual Material	getMaterial(void) const override;
 
 	private:
 		Vector3		_position;

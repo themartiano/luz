@@ -52,6 +52,7 @@ bool    Sphere::hit(Ray& ray, float t_max) const
             ray.hitRecord.t = temp;
             ray.hitRecord.position = ray.pointAtRay(ray.hitRecord.t);
             ray.hitRecord.normal = (ray.hitRecord.position - this->_position) / this->_radius;
+            ray.hitRecord.material = this->_material;
             return (true);
         }
 
@@ -61,6 +62,7 @@ bool    Sphere::hit(Ray& ray, float t_max) const
             ray.hitRecord.t = temp;
             ray.hitRecord.position = ray.pointAtRay(ray.hitRecord.t);
             ray.hitRecord.normal = (ray.hitRecord.position - this->_position) / this->_radius;
+            ray.hitRecord.material = this->_material;
             return (true);
         }
     }
@@ -76,10 +78,4 @@ bool    Sphere::createBoundingBox(AABB& outputBoundingBox) const
         this->_position + Vector3(this->_radius, this->_radius, this->_radius));
 
     return (true);
-}
-
-// Returns the Sphere's material
-Material	Sphere::getMaterial(void) const
-{
-	return (this->_material);
 }
