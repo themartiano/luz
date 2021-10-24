@@ -1,6 +1,6 @@
 # Luz
 
-Luz ~ Ray Tracer
+**Luz ~ Ray Tracer**
 
 Developed with **C++** using only the *standard library*.
 
@@ -10,39 +10,39 @@ Developed with **C++** using only the *standard library*.
 
 ## Features:
 ### Rendering:
-* Sphere rendering with customizable position, radius, color and albedo
-* Lambertian (Diffuse) Rendering
-* Metals with custom reflection clarity
-* Dielectrics (Glass, etc)
-* Anti-aliasing
-* Depth of Field
-* Sky with customizable skyline
+* **Sphere rendering** with customizable position, radius, color and albedo
+* Lambertian (**Diffuse**) Rendering
+* **Metals** with custom reflection clarity
+* Dielectrics (**Glass**, etc)
+* **Anti-aliasing**
+* **Depth of Field**
+* **Sky** with customizable skyline
 * Light bouncing (reflection & refraction)
 * Gamma correction
-* Multi-sampled rendering
+* **Multi-sampled** rendering
 * Bounding Volumes
-* Per-pixel rendering
+* **Per-pixel** rendering
 * Customizable maximum light bounces count
 ### Camera:
-* Customizable Field of View
-* Customizable Position
-* Customizable Aperture
+* Customizable **Field of View**
+* Customizable **Position**
+* Customizable **Aperture**
 ### General:
+* **.bmp** image file creation with the resulting render
 * Customizable resolution
-* .bmp image file creation with the resulting render
 ### Terminal output:
 * Progress indicators
 * Render time indicator
-* Colored output
+* **Colored output**
 
 ---
 
 ## Compilation:
 * Makefile ready for Linux and MacOS compilation
 * Requires clang++
-### Flags:
-* DEBUG: Adds the `-g` flag
-* NO_FLAGS: Removes `-Wall`, `-Wextra` and `-Werror` flags
-* SANITIZER: Adds the `-g` and `-fsanitize=address` flags
+### Makefile flags:
+* **DEBUG**: Adds the `-g` flag
+* **NO_FLAGS**: Removes `-Wall`, `-Wextra` and `-Werror` flags
+* **SANITIZER**: Adds the `-g` and `-fsanitize=address` flags
 
 ##### by Brhaka
