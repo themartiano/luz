@@ -1,5 +1,5 @@
 #ifndef BMP_HPP
-# define BMP_HPP
+#define BMP_HPP
 
 #include "Scene.hpp"
 #include <string>

@@ -1,5 +1,5 @@
 #ifndef TRIANGLE_HPP
-# define TRIANGLE_HPP
+#define TRIANGLE_HPP
 
 #include "Vector3.hpp"
 #include "Material.hpp"

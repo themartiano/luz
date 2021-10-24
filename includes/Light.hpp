@@ -1,5 +1,5 @@
 #ifndef LIGHT_HPP
-# define LIGHT_HPP
+#define LIGHT_HPP
 
 #include "Color.hpp"
 #include "Transform.hpp"

@@ -1,5 +1,5 @@
 #ifndef UTILITIES_HPP
-# define UTILITIES_HPP
+#define UTILITIES_HPP
 
 #include "Vector3.hpp"
 #include <string>

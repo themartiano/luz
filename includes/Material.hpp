@@ -1,5 +1,5 @@
 #ifndef MATERIAL_HPP
-# define MATERIAL_HPP
+#define MATERIAL_HPP
 
 #include "Color.hpp"
 

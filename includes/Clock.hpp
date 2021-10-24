@@ -1,5 +1,5 @@
 #ifndef CLOCK_HPP
-# define CLOCK_HPP
+#define CLOCK_HPP
 
 #include <chrono>
 

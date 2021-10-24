@@ -1,5 +1,5 @@
 #ifndef EXIT_HPP
-# define EXIT_HPP
+#define EXIT_HPP
 
 #include "Scene.hpp"
 #include <string>

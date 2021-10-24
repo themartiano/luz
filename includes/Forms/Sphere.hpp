@@ -1,5 +1,5 @@
 #ifndef SPHERE_HPP
-# define SPHERE_HPP
+#define SPHERE_HPP
 
 #include "Transform.hpp"
 #include "Material.hpp"

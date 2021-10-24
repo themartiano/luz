@@ -1,5 +1,5 @@
 #ifndef VECTOR3_HPP
-# define VECTOR3_HPP
+#define VECTOR3_HPP
 
 class	Vector3
 {

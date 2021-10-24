@@ -1,5 +1,5 @@
 #ifndef CYLINDER_HPP
-# define CYLINDER_HPP
+#define CYLINDER_HPP
 
 #include "Transform.hpp"
 #include "Material.hpp"

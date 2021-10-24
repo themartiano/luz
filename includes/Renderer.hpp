@@ -1,5 +1,5 @@
 #ifndef RENDERER_HPP
-# define RENDERER_HPP
+#define RENDERER_HPP
 
 #include "Scene.hpp"
 

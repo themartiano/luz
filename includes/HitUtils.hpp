@@ -1,5 +1,5 @@
 #ifndef HITUTILS_HPP
-# define HITUTILS_HPP
+#define HITUTILS_HPP
 
 #include "Ray.hpp"
 #include "Forms/Sphere.hpp"

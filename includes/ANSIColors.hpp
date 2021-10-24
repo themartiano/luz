@@ -1,5 +1,5 @@
 #ifndef ANSICOLORS_H
-# define ANSICOLORS_H
+#define ANSICOLORS_H
 
 #include <string>
 

@@ -1,5 +1,5 @@
 #ifndef PLANE_HPP
-# define PLANE_HPP
+#define PLANE_HPP
 
 #include "Transform.hpp"
 #include "Material.hpp"

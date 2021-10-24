@@ -1,5 +1,5 @@
 #ifndef SQUARE_HPP
-# define SQUARE_HPP
+#define SQUARE_HPP
 
 #include "Transform.hpp"
 #include "Material.hpp"

@@ -1,5 +1,5 @@
 #ifndef REFRACTIVEINDEXES_HPP
-# define REFRACTIVEINDEXES_HPP
+#define REFRACTIVEINDEXES_HPP
 
 const float RI_GLASS = 1.52f;
 const float RI_WATER = 1.333f;

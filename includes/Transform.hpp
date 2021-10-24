@@ -1,5 +1,5 @@
 #ifndef TRANSFORM_HPP
-# define TRANSFORM_HPP
+#define TRANSFORM_HPP
 
 #include "Vector3.hpp"
 

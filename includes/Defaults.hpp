@@ -1,5 +1,5 @@
 #ifndef DEFAULTS_HPP
-# define DEFAULTS_HPP
+#define DEFAULTS_HPP
 
 #include <limits>
 
