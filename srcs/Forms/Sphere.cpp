@@ -1,5 +1,7 @@
 #include "Forms/Sphere.hpp"
 #include "Utilities.hpp"
+#include "Defaults.hpp"
+#include <cmath>
 
 /*
 	Constructors
@@ -34,12 +36,12 @@ float	Sphere::getRadius(void) const
 }
 
 // Calculates if 'sphere' is hit by 'ray', is closer than 't_max' and farther than T_MIN
-virtual bool    Sphere::hit(Ray& ray, float t_max) const override
+bool    Sphere::hit(Ray& ray, float t_max) const
 {
-	Vector3 oc = ray.getOrigin() - sphere.getPosition();
+	Vector3 oc = ray.getOrigin() - this->_position;
 	float a = dot(ray.getDirection(), ray.getDirection());
 	float b = dot(oc, ray.getDirection());
-	float c = dot(oc, oc) - (sphere.getRadius() * sphere.getRadius());
+	float c = dot(oc, oc) - (this->_radius * this->_radius);
 	float discriminant = (b * b) - (a * c);
 
 	if (discriminant > 0.0f)
@@ -49,7 +51,7 @@ virtual bool    Sphere::hit(Ray& ray, float t_max) const override
         {
             ray.hitRecord.t = temp;
             ray.hitRecord.position = ray.pointAtRay(ray.hitRecord.t);
-            ray.hitRecord.normal = (ray.hitRecord.position - sphere.getPosition()) / sphere.getRadius();
+            ray.hitRecord.normal = (ray.hitRecord.position - this->_position) / this->_radius;
             return (true);
         }
 
@@ -58,7 +60,7 @@ virtual bool    Sphere::hit(Ray& ray, float t_max) const override
         {
             ray.hitRecord.t = temp;
             ray.hitRecord.position = ray.pointAtRay(ray.hitRecord.t);
-            ray.hitRecord.normal = (ray.hitRecord.position - sphere.getPosition()) / sphere.getRadius();
+            ray.hitRecord.normal = (ray.hitRecord.position - this->_position) / this->_radius;
             return (true);
         }
     }
@@ -67,13 +69,17 @@ virtual bool    Sphere::hit(Ray& ray, float t_max) const override
 }
 
 // Creates an AABB / bounding box for this Sphere
-virtual AABB    Sphere::createBoundingBox(void) const override
+bool    Sphere::createBoundingBox(AABB& outputBoundingBox) const
 {
-	return (AABB(this->_position - Vector3(this->_radius, this->_radius, this->_radius), this->_position + Vector3(this->_radius, this->_radius, this->_radius)));
+	outputBoundingBox = AABB(
+        this->_position - Vector3(this->_radius, this->_radius, this->_radius),
+        this->_position + Vector3(this->_radius, this->_radius, this->_radius));
+
+    return (true);
 }
 
 // Returns the Sphere's material
-virtual Material	Sphere::getMaterial(void) const override
+Material	Sphere::getMaterial(void) const
 {
 	return (this->_material);
 }

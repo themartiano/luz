@@ -122,7 +122,7 @@ void	setFloatRange(float& flt, float min, float max)
 // Creates the main AABB / bounding box that encapsulates all the objects inside the 'scene'
 bool	createMainBoundingBox(Scene scene, AABB& newBoundingBox)
 {
-	if (scene.getSpheres().size() <= 0)
+	if (scene.getHittables().size() <= 0)
 	{
 		return (false);
 	}
@@ -130,9 +130,12 @@ bool	createMainBoundingBox(Scene scene, AABB& newBoundingBox)
 	AABB	tempBB;
 	bool	firstBB = true;
 
-	for (Sphere sphere : scene.getSpheres())
+	for (std::shared_ptr<Hittable> hittable : scene.getHittables())
 	{
-		tempBB = sphere.createBoundingBox();
+		if (!hittable->createBoundingBox(tempBB))
+		{
+			return (false);
+		}
 		newBoundingBox = firstBB ? tempBB : mergeBoundingBoxes(newBoundingBox, tempBB);
 		firstBB = false;
 	}

@@ -28,8 +28,8 @@ class	Scene
 		void	setPixelArray(int index, Color pixelColor);
 		unsigned char*	getPixelArray() const;
 		void	initializePixelArray(void);
-		std::vector<std::shared_ptr<Hittable>>	getHittables(void) const;
 		Camera	getActiveCamera(void) const;
+		std::vector<std::shared_ptr<Hittable>>	getHittables(void) const;
 
 	private:
 		int						_xResolution;
