@@ -1,5 +1,11 @@
 # Luz
 
+Luz ~ Ray Tracer
+
+Developed with **C++** using only the standard library.
+
+---
+
 ## Features:
 * Customizable resolution
 * .bmp image file creation with the resulting render
@@ -20,6 +26,7 @@
 * Gamma correction (optional)
 * Customizable multi-sampled rendering
 * Customizable maximum light bounces count
+* Bounding Volumes
 ### Camera features:
 * Customizable Field of View
 * Customizable Position
