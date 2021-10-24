@@ -3,15 +3,19 @@
 
 #include "Transform.hpp"
 #include "Material.hpp"
+#include "AABB.hpp"
+#include "Hittable.hpp"
 
-class	Sphere
+class	Sphere : public Hittable
 {
 	public:
 		Sphere(void);
 		Sphere(Vector3 position, Material material, float radius);
-		Vector3	getPosition(void) const;
-		Material		getMaterial(void) const;
-		float		getRadius(void) const;
+		Vector3				getPosition(void) const;
+		float				getRadius(void) const;
+		virtual bool    	hit(Ray& ray, float t_max) const override;
+		virtual AABB    	createBoundingBox(void) const override;
+		virtual Material	getMaterial(void) const override;
 
 	private:
 		Vector3		_position;

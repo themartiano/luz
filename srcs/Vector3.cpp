@@ -83,3 +83,23 @@ Vector3&	Vector3::operator/=(const float f)
 	this->_z /= f;
 	return (*this);
 }
+
+float	Vector3::operator[](int index) const
+{
+	if (index == 0)
+	{
+		return (this->_x);
+	}
+	else if (index == 1)
+	{
+		return (this->_y);
+	}
+	else if (index == 2)
+	{
+		return (this->_z);
+	}
+	else
+	{
+		return (0.0f);
+	}
+}

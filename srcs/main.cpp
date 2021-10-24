@@ -3,6 +3,8 @@
 #include "BMP.hpp"
 #include "Renderer.hpp"
 #include "ANSIColors.hpp"
+#include "Forms/Sphere.hpp"
+#include "Material.hpp"
 #include <fstream>
 #include <iostream>
 
@@ -34,14 +36,14 @@ int	main(int argc, char *argv[])
 	scene.addCamera(Camera(Vector3(0.0f, 0.0f, 12.0f), Vector3(0.0f, 0.0f, -8.0f), 65, 0.3f));
 
 	// Glass
-	scene.addSphere(Sphere(Vector3(-8.0f, 0.0f, -4.0f), Material(Color(0.0f, 0.0f, 0.0f), 1.0f, 0.0f, 0.5f, 0.0f, true), 3.0f));
+	scene.addHittable(std::make_shared<Sphere>(Vector3(-8.0f, 0.0f, -4.0f), Material(Color(0.0f, 0.0f, 0.0f), 1.0f, 0.0f, 0.5f, 0.0f, true), 3.0f));
 	// Metal
-	scene.addSphere(Sphere(Vector3(-4.0f, 0.0f, -8.0f), Material(Color(0.7f, 0.6f, 0.5f), 1.0f, 1.0f, 0.5f, 0.0f, false), 3.0f));
+	scene.addHittable(std::make_shared<Sphere>(Vector3(-4.0f, 0.0f, -8.0f), Material(Color(0.7f, 0.6f, 0.5f), 1.0f, 1.0f, 0.5f, 0.0f, false), 3.0f));
 	// Lambertian
-	scene.addSphere(Sphere(Vector3(0.0f, 0.0f, -12.0f), Material(Color(0.0f, 0.0f, 0.8f), 1.0f, 0.0f, 0.5f, 0.0f, false), 3.0f));
+	scene.addHittable(std::make_shared<Sphere>(Vector3(0.0f, 0.0f, -12.0f), Material(Color(0.0f, 0.0f, 0.8f), 1.0f, 0.0f, 0.5f, 0.0f, false), 3.0f));
 
 	// Ground (Lambertian)
-	scene.addSphere(Sphere(Vector3(0.0f, 1003.0f, -8.0f), Material(Color(0.5f, 1.0f, 0.5f), 1.0f, 0.0f, 0.5f, 0.0f, false), 1000.0f));
+	scene.addHittable(std::make_shared<Sphere>(Vector3(0.0f, 1003.0f, -8.0f), Material(Color(0.5f, 1.0f, 0.5f), 1.0f, 0.0f, 0.5f, 0.0f, false), 1000.0f));
 
 	render(scene);
 

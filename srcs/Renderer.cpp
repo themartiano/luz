@@ -3,7 +3,6 @@
 #include "Color.hpp"
 #include "Vector2.hpp"
 #include "Ray.hpp"
-#include "HitUtils.hpp"
 #include "Defaults.hpp"
 #include "Utilities.hpp"
 #include "Clock.hpp"
@@ -77,7 +76,7 @@ static Color	calculatePixelColor(Scene scene, int x, int y)
 	static float	lensRadius = scene.getActiveCamera().getAperture() / 2.0f;
 	static float	focusDistance = vectorLength(cameraPosition - scene.getActiveCamera().getLookAt());
 
-	static Vector3	w = Vector3(0, 0, 1);//normalize(cameraPosition - scene.getActiveCamera().getLookAt());
+	static Vector3	w = normalize(cameraPosition - scene.getActiveCamera().getLookAt());
 	static Vector3	viewUp(0.0f, -1.0f, 0.0f);
 	static Vector3	u = normalize(cross(viewUp, w));
 	static Vector3	v = cross(w, u);
@@ -208,11 +207,11 @@ static bool	checkHits(Scene scene, Ray& ray)
 	bool	anyHit = false;
 	float	currentClosestObject = T_MAX;
 
-	for (Sphere sphere : scene.getSpheres())
+	for (std::shared_ptr<Hittable> hittable : scene.getHittables())
 	{
-		if (hitSphere(ray, sphere, currentClosestObject))
+		if (hittable->hit(ray, currentClosestObject))
 		{
-			ray.hitRecord.material = sphere.getMaterial();
+			ray.hitRecord.material = hittable->getMaterial();
 			currentClosestObject = ray.hitRecord.t;
 			anyHit = true;
 		}

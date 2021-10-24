@@ -3,12 +3,9 @@
 
 #include "Camera.hpp"
 #include "Light.hpp"
-#include "Forms/Triangle.hpp"
-#include "Forms/Square.hpp"
-#include "Forms/Sphere.hpp"
-#include "Forms/Cylinder.hpp"
-#include "Forms/Plane.hpp"
+#include "Hittable.hpp"
 #include <vector>
+#include <memory>
 
 class	Scene
 {
@@ -16,7 +13,7 @@ class	Scene
 		Scene(void);
 		void	addCamera(Camera camera);
 		void	addLight(Light light);
-		void	addSphere(Sphere sphere);
+		void	addHittable(std::shared_ptr<Hittable> hittable);
 		int		getXResolution(void) const;
 		void	setXResolution(const int xRes);
 		int		getYResolution(void) const;
@@ -31,7 +28,7 @@ class	Scene
 		void	setPixelArray(int index, Color pixelColor);
 		unsigned char*	getPixelArray() const;
 		void	initializePixelArray(void);
-		std::vector<Sphere>	getSpheres(void) const;
+		std::vector<std::shared_ptr<Hittable>>	getHittables(void) const;
 		Camera	getActiveCamera(void) const;
 
 	private:
@@ -47,11 +44,7 @@ class	Scene
 		std::vector<Camera>		_cameras;
 		size_t					_activeCamera;
 		std::vector<Light>		_lights;
-		std::vector<Triangle>	_triangles;
-		std::vector<Square>		_squares;
-		std::vector<Sphere>		_spheres;
-		std::vector<Cylinder>	_cylinders;
-		std::vector<Plane>		_planes;
+		std::vector<std::shared_ptr<Hittable>>	_hittables;
 };
 
 #endif

@@ -2,6 +2,7 @@
 #define UTILITIES_HPP
 
 #include "Vector3.hpp"
+#include "Scene.hpp"
 #include <string>
 
 float	    dot(Vector3 vector1, Vector3 vector2);
@@ -16,5 +17,7 @@ bool        refract(Vector3 vector, Vector3 normal, float refractiveIndex, Vecto
 float	    schlick(float cosine, float refractiveIndex);
 std::string pluralOrSingular(int number);
 void	    setFloatRange(float& flt, float min, float max);
+bool	    createMainBoundingBox(Scene scene, AABB& newBoundingBox);
+AABB	    mergeBoundingBoxes(AABB boundingBox1, AABB boundingBox2);
 
 #endif

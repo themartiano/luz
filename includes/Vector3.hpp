@@ -17,6 +17,7 @@ class	Vector3
 		Vector3		operator*(const float f) const;
 		Vector3		operator/(const float f) const;
 		Vector3&	operator/=(const float f);
+		float		operator[](int index) const;
 
 	private:
 		float	_x;

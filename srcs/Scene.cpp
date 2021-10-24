@@ -34,10 +34,10 @@ void	Scene::addLight(Light light)
 	this->_lights.push_back(light);
 }
 
-// Appends 'sphere' to the sphere vector (list)
-void	Scene::addSphere(Sphere sphere)
+// Appends 'hittable' to the Hittable vector (list)
+void	Scene::addHittable(std::shared_ptr<Hittable> hittable)
 {
-	this->_spheres.push_back(sphere);
+	this->_hittables.push_back(hittable);
 }
 
 // Returns the X resolution (width)
@@ -129,10 +129,10 @@ void	Scene::initializePixelArray(void)
 	this->_pixelArray = new unsigned char[this->_xResolution * this->_yResolution * 3];
 }
 
-// Returns the vector (list) of spheres
-std::vector<Sphere>	Scene::getSpheres(void) const
+// Returns the vector (list) of Hittables
+std::vector<std::shared_ptr<Hittable>>	Scene::getHittables(void) const
 {
-	return (this->_spheres);
+	return (this->_hittables);
 }
 
 // Returns the currently active camera

@@ -118,3 +118,39 @@ void	setFloatRange(float& flt, float min, float max)
 		flt = max;
 	}
 }
+
+// Creates the main AABB / bounding box that encapsulates all the objects inside the 'scene'
+bool	createMainBoundingBox(Scene scene, AABB& newBoundingBox)
+{
+	if (scene.getSpheres().size() <= 0)
+	{
+		return (false);
+	}
+
+	AABB	tempBB;
+	bool	firstBB = true;
+
+	for (Sphere sphere : scene.getSpheres())
+	{
+		tempBB = sphere.createBoundingBox();
+		newBoundingBox = firstBB ? tempBB : mergeBoundingBoxes(newBoundingBox, tempBB);
+		firstBB = false;
+	}
+	return (true);
+}
+
+// Merges 'boundingBox1' with 'boundingBox2' and returns the resulting (and new) AABB / bounding box
+AABB	mergeBoundingBoxes(AABB boundingBox1, AABB boundingBox2)
+{
+	Vector3 smallestPoints(
+		fmin(boundingBox1.getMinimum().getX(), boundingBox2.getMinimum().getX()),
+		fmin(boundingBox1.getMinimum().getY(), boundingBox2.getMinimum().getY()),
+		fmin(boundingBox1.getMinimum().getZ(), boundingBox2.getMinimum().getZ()));
+
+	Vector3 biggestPoints(
+		fmin(boundingBox1.getMaximum().getX(), boundingBox2.getMaximum().getX()),
+		fmin(boundingBox1.getMaximum().getY(), boundingBox2.getMaximum().getY()),
+		fmin(boundingBox1.getMaximum().getZ(), boundingBox2.getMaximum().getZ()));
+
+	return (AABB(smallestPoints, biggestPoints));
+}
