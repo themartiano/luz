@@ -10,6 +10,7 @@ Developed with **C++** using only the *standard library*.
 
 ## Features:
 ### Rendering:
+* **Path Tracing**
 * **Sphere rendering** with customizable position, radius, color and albedo
 * Lambertian (**Diffuse**) Rendering
 * **Metals** with custom reflection clarity
@@ -18,7 +19,7 @@ Developed with **C++** using only the *standard library*.
 * **Depth of Field**
 * **Sky** with customizable skyline
 * Light bouncing (reflection & refraction)
-* Gamma correction
+* Gamma (2) correction
 * **Multi-sampled** rendering
 * Bounding Volumes
 * **Per-pixel** rendering
