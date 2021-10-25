@@ -17,7 +17,7 @@ bool        refract(Vector3 vector, Vector3 normal, float refractiveIndex, Vecto
 float	    schlick(float cosine, float refractiveIndex);
 std::string pluralOrSingular(int number);
 void	    setFloatRange(float& flt, float min, float max);
-bool	    createMainBoundingBox(Scene scene, AABB& newBoundingBox);
+bool	    createMainBoundingBox(Scene& scene, AABB& newBoundingBox);
 AABB	    mergeBoundingBoxes(AABB boundingBox1, AABB boundingBox2);
 
 inline float	randomFloat(void)

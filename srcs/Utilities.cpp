@@ -120,7 +120,7 @@ void	setFloatRange(float& flt, float min, float max)
 }
 
 // Creates the main AABB / bounding box that encapsulates all the objects inside the 'scene'
-bool	createMainBoundingBox(Scene scene, AABB& newBoundingBox)
+bool	createMainBoundingBox(Scene& scene, AABB& newBoundingBox)
 {
 	if (scene.getHittables().size() <= 0)
 	{

@@ -34,7 +34,7 @@ Vector3 AABB::getMaximum(void) const
 }
 
 // Returns true if 'ray' intersects with the AABB
-bool    AABB::hit(Ray ray, float t_max) const
+bool    AABB::hit(Ray& ray, float t_max) const
 {
     for (int a = 0; a < 3; a++)
     {

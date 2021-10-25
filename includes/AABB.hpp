@@ -11,7 +11,7 @@ class   AABB
         AABB(Vector3 minimum, Vector3 maximum);
         Vector3 getMinimum(void) const;
         Vector3 getMaximum(void) const;
-        bool    hit(Ray ray, float t_max) const;
+        bool    hit(Ray& ray, float t_max) const;
 
     private:
         Vector3 _minimum;

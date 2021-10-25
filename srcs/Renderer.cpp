@@ -12,14 +12,14 @@
 #include <stdlib.h>
 
 // Static function prototypes
-static Color	calculatePixelColor(Scene scene, int x, int y);
-static bool		checkHits(Scene scene, Ray& ray);
+static Color	calculatePixelColor(Scene& scene, int x, int y);
+static bool		checkHits(Scene& scene, Ray& ray);
 static Color	calculateLightRaysColor(Ray& ray, Scene& scene, int bounces);
 static void		calculateLightRayBounceDirection(Ray& ray, Color& color);
-static Color	calculateSkyInterpolation(Scene scene, Ray ray);
+static Color	calculateSkyInterpolation(Scene& scene, Ray& ray);
 
 // Renders the image using all the information present on 'scene'. (Objects, cameras, lights, settings, etc)
-void	render(Scene scene)
+void	render(Scene& scene)
 {
 	std::cout << CLR_YELLOW << "Rendering..." << CLR_YELLOW << " (" << CLR_WHITE << scene.getSampleCount() << CLR_CYAN << " sample"
 		<< pluralOrSingular(scene.getSampleCount()) << ", " << CLR_WHITE << scene.getMaxLightBounces() << CLR_CYAN << " max light bounce"
@@ -30,6 +30,7 @@ void	render(Scene scene)
 	int		width = scene.getXResolution();
 	int		sampleCount = scene.getSampleCount();
 	int		percentageUpdateFactor = height / 100;
+	bool	gammaCorrected = scene.getGammaCorrected();
 
 	for (int y = 0; y < height; y++)
 	{
@@ -37,13 +38,12 @@ void	render(Scene scene)
 		{
 			Color pixelColor(0.0f, 0.0f, 0.0f);
 
-			int samples;
-			for (samples = 0; samples < sampleCount; samples++)
+			for (int samples = 0; samples < sampleCount; samples++)
 			{
 				pixelColor += calculatePixelColor(scene, x, y);
 			}
 			pixelColor /= float(sampleCount);
-			if (scene.getGammaCorrected() == true)
+			if (gammaCorrected)
 			{
 				pixelColor = Color(sqrtf(pixelColor.getRed()), sqrtf(pixelColor.getGreen()), sqrtf(pixelColor.getBlue())); // Gamma (2) correction
 			}
@@ -63,15 +63,18 @@ void	render(Scene scene)
 }
 
 // Calculates the color for the pixel at 'x' and 'y'. Creates rays, checks for intersections with objects on 'scene' and bounce light rays
-static Color	calculatePixelColor(Scene scene, int x, int y)
+static Color	calculatePixelColor(Scene& scene, int x, int y)
 {
-	float xU = float(x + randomFloat()) / (float)scene.getXResolution();
-	float yV = float(y + randomFloat()) / (float)scene.getYResolution();
+	static float width = float(scene.getXResolution());
+	static float height = float(scene.getYResolution());
+
+	float xU = float(x + randomFloat()) / width;
+	float yV = float(y + randomFloat()) / height;
 
 	static Vector3	cameraPosition = scene.getActiveCamera().getLookFrom();
 
     static float	halfWidth = tan((((float)scene.getActiveCamera().getFOV() * M_PI) / 180.0f) / 2.0f);
-    static float	halfHeight = ((float)scene.getYResolution() / (float)scene.getXResolution()) * halfWidth;
+    static float	halfHeight = (height / width) * halfWidth;
 
 	static float	lensRadius = scene.getActiveCamera().getAperture() / 2.0f;
 	static float	focusDistance = vectorLength(cameraPosition - scene.getActiveCamera().getLookAt());
@@ -95,9 +98,10 @@ static Color	calculatePixelColor(Scene scene, int x, int y)
 // Properly calculates light rays bounces, reflections, etc and returns the resulting color
 static Color	calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
 {
+	static int	maxLightBounces = scene.getMaxLightBounces();
 	Color color(0.0f, 0.0f, 0.0f);
 
-	if (bounces > scene.getMaxLightBounces())
+	if (bounces > maxLightBounces)
 	{
 		return (color);
 	}
@@ -119,11 +123,13 @@ static Color	calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
 }
 
 // Calculates the sky interpolation for the background and reflexes
-static Color	calculateSkyInterpolation(Scene scene, Ray ray)
+static Color	calculateSkyInterpolation(Scene& scene, Ray& ray)
 {
+	static float	skyLine = scene.getSkyline();
+
 	Vector3	normalizedDirection = normalize(ray.getDirection());
 
-	float temp = scene.getSkyline() * (-normalizedDirection.getY() + 1.0f);
+	float temp = skyLine * (-normalizedDirection.getY() + 1.0f);
 
 	return ((Color(1.0f, 1.0f, 1.0f) * (1.0f - temp)) + (Color(0.5f, 0.7f, 1.0f) * temp));
 }
@@ -202,12 +208,13 @@ static void	calculateLightRayBounceDirection(Ray& ray, Color& color)
 }
 
 // Checks if 'ray' hits objects present 'scene'. On hit, sets 'pixelColor' to the hitted object's material color
-static bool	checkHits(Scene scene, Ray& ray)
+static bool	checkHits(Scene& scene, Ray& ray)
 {
 	bool	anyHit = false;
 	float	currentClosestObject = T_MAX;
+	static std::vector<std::shared_ptr<Hittable>> hittables = scene.getHittables();
 
-	for (std::shared_ptr<Hittable> hittable : scene.getHittables())
+	for (std::shared_ptr<Hittable> hittable : hittables)
 	{
 		if (hittable->hit(ray, currentClosestObject))
 		{
@@ -215,5 +222,6 @@ static bool	checkHits(Scene scene, Ray& ray)
 			anyHit = true;
 		}
 	}
+
 	return (anyHit);
 }

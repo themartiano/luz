@@ -23,7 +23,7 @@ BMP::BMP(std::string fileName)
 }
 
 // Writes a .bmp image file using the information present on 'scene'
-void	BMP::writeFile(Scene scene)
+void	BMP::writeFile(Scene& scene)
 {
 	unsigned char	padding[3] = {0, 0, 0};
 	int				paddingSize = (4 - (scene.getXResolution() * 3) % 4) % 4;

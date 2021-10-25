@@ -32,8 +32,8 @@ int	main(int argc, char *argv[])
 	scene.setXResolution(1920);
 	scene.setYResolution(1080);
 	scene.initializePixelArray();
-	scene.setSampleCount(250);
-	scene.setMaxLightBounces(250);
+	scene.setSampleCount(4);
+	scene.setMaxLightBounces(8);
 	scene.setGammaCorrected(true);
 
 	// Current coordinate system ~~ Forward: -Z | Up: -Y | Right: -X
@@ -49,7 +49,7 @@ int	main(int argc, char *argv[])
 	// Ground (Lambertian)
 	scene.addHittable(std::make_shared<Sphere>(Vector3(0.0f, 1003.0f, -8.0f), Material(Color(0.5f, 1.0f, 0.5f), 1.0f, 0.0f, 0.5f, 0.0f, false), 1000.0f));
 
-	std::vector<std::shared_ptr<Hittable>> tinySpheres;
+	/*std::vector<std::shared_ptr<Hittable>> tinySpheres;
 	for (int x = -11; x < 11; x++)
 	{
 		for (int y = -11; y < 11; y++)
@@ -83,7 +83,7 @@ int	main(int argc, char *argv[])
 			tinySpheres.push_back(std::make_shared<Sphere>(spherePosition, Material(Color(randomFloat(), randomFloat(), randomFloat()), 1.0f, metallic, 0.5f, reflectionFuzziness, glass), sphereRadius));
 		}
 	}
-	scene.addHittable(std::make_shared<BVHNode>(tinySpheres));
+	scene.addHittable(std::make_shared<BVHNode>(tinySpheres));*/
 
 	render(scene);
 
