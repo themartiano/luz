@@ -11,8 +11,9 @@ Developed with **C++** using only the *standard library*.
 ## Features:
 ### Rendering:
 * **Path Tracing**
-* **Sphere rendering** with customizable position, radius, color and albedo
-* **Rectangle rendering** with customizable position, size, color and albedo
+* **Sphere rendering** with customizable position, radius and material
+* **Rectangle rendering** with customizable position, orientation, size and material
+* **Plane rendering** with customizable Y position, orientation and material
 * Lambertian (**Diffuse**) Rendering
 * **Metals** with custom reflection clarity
 * Dielectrics (**Glass**, etc)
