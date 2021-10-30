@@ -27,6 +27,8 @@ class	Scene
 		float	getSkyline(void) const;
 		bool	getRenderSky(void) const;
 		void	setRenderSky(bool renderSky);
+		Color	getBackgroundColor(void) const;
+		void	setBackgroundColor(Color backgroundColor);
 		void	setPixelArray(int index, Color pixelColor);
 		unsigned char*	getPixelArray() const;
 		void	initializePixelArray(void);
@@ -43,6 +45,7 @@ class	Scene
 		unsigned char*			_pixelArray;
 		float					_skyline;
 		bool					_renderSky;
+		Color					_backgroundColor;
 		//Light					_ambientLight;
 		std::vector<Camera>		_cameras;
 		size_t					_activeCamera;

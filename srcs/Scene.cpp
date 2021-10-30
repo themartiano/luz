@@ -18,6 +18,7 @@ Scene::Scene(void)
 	this->_gammaCorrected = true;
 	this->_skyline = 0.5f;
 	this->_renderSky = true;
+	this->_backgroundColor = Color(0.0f, 0.0f, 0.0f);
 
 	this->_activeCamera = 0;
 
@@ -117,6 +118,18 @@ bool	Scene::getRenderSky(void) const
 void	Scene::setRenderSky(bool renderSky)
 {
 	this->_renderSky = renderSky;
+}
+
+// Returns the Background Color
+Color	Scene::getBackgroundColor(void) const
+{
+	return (this->_backgroundColor);
+}
+
+// Sets the Background Color
+void	Scene::setBackgroundColor(Color backgroundColor)
+{
+	this->_backgroundColor = backgroundColor;
 }
 
 // Sets the color for the pixel at 'index', which is a simple X/Y index.
