@@ -92,7 +92,8 @@ static Color	calculatePixelColor(Scene& scene, int x, int y)
 	Vector3	offset = u * rd.getX() + v * rd.getY();
 
 	Ray ray(cameraPosition + offset, lowerLeftCorner + (horizontal * xU) + (vertical * yV) - cameraPosition - offset);
-	return (calculateLightRaysColor(ray, scene, calculateSkyInterpolation(scene, ray), 0));
+	//return (calculateLightRaysColor(ray, scene, calculateSkyInterpolation(scene, ray), 0));
+	return (calculateLightRaysColor(ray, scene, Color(0.0f, 0.0f, 0.0f), 0));
 }
 
 // Properly calculates light rays bounces, reflections, etc and returns the resulting color
@@ -111,7 +112,7 @@ static Color	calculateLightRaysColor(Ray& ray, Scene& scene, Color backgroundCol
 		ray.setOrigin(ray.hitRecord.position);
 		calculateLightRayBounceDirection(ray, color);
 
-		if (ray.hitRecord.material.getMetallic() == 1.0f && dot(ray.getDirection(), ray.hitRecord.normal) <= 0.0f)
+		if (ray.hitRecord.material.getIsEmissive() == true || (ray.hitRecord.material.getMetallic() == 1.0f && dot(ray.getDirection(), ray.hitRecord.normal) <= 0.0f))
 		{
 			return (color);
 		}
@@ -189,13 +190,14 @@ static void	calculateLightRayBounceDirection(Ray& ray, Color& color)
 		return;
 	}
 
+	Vector3	newTarget = ray.hitRecord.position + ray.hitRecord.normal + randomPointInsideUnitSphere();
 	if (ray.hitRecord.material.getIsEmissive() == true)
 	{
-		color = ray.hitRecord.material.getColor();
+		ray.setDirection(newTarget - ray.hitRecord.position);
+		color = ray.hitRecord.material.getColor() * ray.hitRecord.material.getLightIntensity();
 		return;
 	}
 
-	Vector3	newTarget = ray.hitRecord.position + ray.hitRecord.normal + randomPointInsideUnitSphere();
 	if (ray.hitRecord.material.getMetallic() == 0.0f)
 	{
 		ray.setDirection(newTarget - ray.hitRecord.position);

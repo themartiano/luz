@@ -12,10 +12,6 @@ class	Vector3
 		void		setY(float y);
 		float		getZ(void) const;
 		void		setZ(float z);
-		Vector3		operator+(const Vector3 &vec) const;
-		Vector3		operator-(const Vector3 &vec) const;
-		Vector3		operator*(const float f) const;
-		Vector3		operator/(const float f) const;
 		Vector3&	operator/=(const float f);
 		float		operator[](int index) const;
 
@@ -24,5 +20,30 @@ class	Vector3
 		float	_y;
 		float	_z;
 };
+
+inline Vector3	operator+(const Vector3 &vector1, const Vector3 &vector2)
+{
+	return (Vector3(vector1[0] + vector2[0], vector1[1] + vector2[1], vector1[2] + vector2[2]));
+}
+
+inline Vector3	operator-(const Vector3 &vector1, const Vector3 &vector2)
+{
+	return (Vector3(vector1[0] - vector2[0], vector1[1] - vector2[1], vector1[2] - vector2[2]));
+}
+
+inline Vector3 operator*(const float f, const Vector3& vector)
+{
+	return (Vector3(f * vector[0], f * vector[1], f * vector[2]));
+}
+
+inline Vector3 operator*(const Vector3& vector, const float f)
+{
+	return (f * vector);
+}
+
+inline Vector3 operator/(const Vector3& vector, const float f)
+{
+	return ((1.0f / f) * vector);
+}
 
 #endif
