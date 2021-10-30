@@ -12,10 +12,13 @@ Material::Material(void)
 	this->_metallic = 0.0f;
 	this->_albedo = 0.5f;
 	this->_opacity = 1.0f;
+	this->_reflectionFuzziness = 0.0f;
+	this->_isDielectric = false;
+	this->_isEmissive = false;
 }
 
 // Constructs the Material with custom values
-Material::Material(Color color, float opacity, float metallic, float albedo, float reflectionFuzziness, bool isDielectric)
+Material::Material(Color color, float opacity, float metallic, float albedo, float reflectionFuzziness, bool isDielectric, bool isEmissive)
 {
 	setFloatRange(metallic, 0.0f, 1.0f);
 	this->_metallic = metallic;
@@ -26,6 +29,7 @@ Material::Material(Color color, float opacity, float metallic, float albedo, flo
 	setFloatRange(reflectionFuzziness, 0.0f, 1.0f);
 	this->_reflectionFuzziness = reflectionFuzziness;
 	this->_isDielectric = isDielectric;
+	this->_isEmissive = isEmissive;
 	this->_color = color;
 }
 
@@ -63,4 +67,9 @@ float	Material::getReflectionFuzziness(void) const
 bool	Material::getIsDielectric(void) const
 {
 	return (this->_isDielectric);
+}
+// Returns the Material's emissive value
+bool	Material::getIsEmissive(void) const
+{
+	return (this->_isEmissive);
 }

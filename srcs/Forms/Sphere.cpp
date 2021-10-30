@@ -11,7 +11,7 @@
 Sphere::Sphere(void)
 {
 	this->_position = Vector3();
-	this->_material = Material(Color(0.49f, 0.49f, 0.49f), 1.0f, 0.0f, 0.5f, 0.0f, false);
+	this->_material = Material(Color(0.49f, 0.49f, 0.49f), 1.0f, 0.0f, 0.5f, 0.0f, false, false);
 	this->_radius = 1.0f;
 }
 

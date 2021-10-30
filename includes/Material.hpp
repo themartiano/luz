@@ -7,13 +7,14 @@ class	Material
 {
 	public:
 		Material(void);
-		Material(Color color, float opacity, float metallic, float albedo, float reflectionFuzziness, bool isDielectric);
+		Material(Color color, float opacity, float metallic, float albedo, float reflectionFuzziness, bool isDielectric, bool isEmissive);
 		Color	getColor(void) const;
 		void	setColor(Color color);
 		float	getMetallic(void) const;
 		float	getAlbedo(void) const;
 		float	getReflectionFuzziness(void) const;
 		bool	getIsDielectric(void) const;
+		bool	getIsEmissive(void) const;
 
 	private:
 		Color	_color;
@@ -21,6 +22,7 @@ class	Material
 		float	_albedo;
 		float	_reflectionFuzziness;
 		bool	_isDielectric;
+		bool	_isEmissive;
 		float	_opacity; //work on it
 };
 
