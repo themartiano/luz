@@ -5,27 +5,23 @@
 #include "Vector3.hpp"
 #include "Material.hpp"
 #include "AABB.hpp"
+#include "Transform.hpp"
 
 class   Rectangle : public Hittable
 {
     public:
         Rectangle(void);
-        Rectangle(Vector3 position, float sideSize, Material material);
-        Vector3         getPosition(void) const;
+        Rectangle(Transform transform, float sideSize, Material material);
+        Transform       getTransform(void) const;
         float           getSideSize(void) const;
         Material        getMaterial(void) const;
 		virtual bool    hit(Ray& ray, float t_max) const override;
 		virtual bool    createBoundingBox(AABB& outputBoundingBox) const override;
 
     private:
-        Vector3     _position;
+        Transform   _transform;
         float       _sideSize;
         Material    _material;
-        float       _x0;
-        float       _x1;
-        float       _y0;
-        float       _y1;
-        void    _calculateCoordinates(void);
 };
 
 #endif

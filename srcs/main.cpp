@@ -40,14 +40,16 @@ int	main(int argc, char *argv[])
 	// Current coordinate system ~~ Forward: -Z | Up: -Y | Right: -X
 	scene.addCamera(Camera(Vector3(0.0f, 0.0f, 12.0f), Vector3(0.0f, 0.0f, -8.0f), 65, 0.1856321f));
 
-	//scene.addHittable(std::make_shared<Rectangle>(Vector3(0.0f, 0.0f, -6.0f), 3.0f, Material(Color(10.0f, 10.0f, 10.0f), 1.0f, 0.0f, 0.5f, 0.0f, false, true, 10.0f)));
+	scene.addHittable(std::make_shared<Rectangle>(Transform(Vector3(-5.0f, -3.0f, -8.0f), Vector3(0.68f, -0.3f, 1.0f), Vector3(1.0f, 1.0f, 1.0f)), 5.0f, Material(Color(1.0f, 1.10f, 1.0f), 1.0f, 0.0f, 0.5f, 0.0f, false, true, 10.0f)));
 
 	// Glass
 	scene.addHittable(std::make_shared<Sphere>(Vector3(-6.7f, 0.0f, -4.0f), Material(Color(0.0f, 0.0f, 0.0f), 1.0f, 0.0f, 0.5f, 0.0f, true, false, 0.0f), 3.0f));
 	// Metal
-	//scene.addHittable(std::make_shared<Sphere>(Vector3(-3.35f, 0.0f, -8.0f), Material(Color(0.7f, 0.6f, 0.5f), 1.0f, 1.0f, 0.5f, 0.0f, false, false, 0.0f), 3.0f));
+	scene.addHittable(std::make_shared<Sphere>(Vector3(-3.35f, 0.0f, -8.0f), Material(Color(0.7f, 0.6f, 0.5f), 1.0f, 1.0f, 0.5f, 0.0f, false, false, 0.0f), 3.0f));
+
 	// Emissive sphere
-	scene.addHittable(std::make_shared<Sphere>(Vector3(-3.35f, 0.0f, -8.0f), Material(Color(1.0f, 1.0f, 1.0f), 1.0f, 0.0f, 0.5f, 0.0f, false, true, 1.0f), 3.0f));
+	//scene.addHittable(std::make_shared<Sphere>(Vector3(-3.35f, 0.0f, -8.0f), Material(Color(1.0f, 1.0f, 1.0f), 1.0f, 0.0f, 0.5f, 0.0f, false, true, 1.0f), 3.0f));
+
 	// Lambertian
 	scene.addHittable(std::make_shared<Sphere>(Vector3(0.0f, 0.0f, -12.0f), Material(Color(0.0f, 0.0f, 0.8f), 1.0f, 0.0f, 0.5f, 0.0f, false, false, 0.0f), 3.0f));
 
