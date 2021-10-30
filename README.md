@@ -21,6 +21,7 @@ Developed with **C++** using only the *standard library*.
 * **Anti-aliasing**
 * **Depth of Field**
 * **Sky** with customizable skyline
+* Custom (solid) background color (if sky rendering is disabled)
 * Light bouncing (reflection & refraction)
 * Gamma (2) correction
 * **Multi-sampled** rendering
