@@ -68,6 +68,8 @@ static Color	calculatePixelColor(Scene& scene, int x, int y)
 	static float width = float(scene.getXResolution());
 	static float height = float(scene.getYResolution());
 
+	static bool renderSky = scene.getRenderSky();
+
 	float xU = float(x + randomFloat()) / width;
 	float yV = float(y + randomFloat()) / height;
 
@@ -92,8 +94,15 @@ static Color	calculatePixelColor(Scene& scene, int x, int y)
 	Vector3	offset = u * rd.getX() + v * rd.getY();
 
 	Ray ray(cameraPosition + offset, lowerLeftCorner + (horizontal * xU) + (vertical * yV) - cameraPosition - offset);
-	//return (calculateLightRaysColor(ray, scene, calculateSkyInterpolation(scene, ray), 0));
-	return (calculateLightRaysColor(ray, scene, Color(0.0f, 0.0f, 0.0f), 0));
+
+	if (renderSky)
+	{
+		return (calculateLightRaysColor(ray, scene, calculateSkyInterpolation(scene, ray), 0));
+	}
+	else
+	{
+		return (calculateLightRaysColor(ray, scene, Color(0.0f, 0.0f, 0.0f), 0));
+	}
 }
 
 // Properly calculates light rays bounces, reflections, etc and returns the resulting color
