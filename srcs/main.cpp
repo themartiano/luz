@@ -5,6 +5,7 @@
 #include "ANSIColors.hpp"
 #include "Forms/Sphere.hpp"
 #include "Forms/Rectangle.hpp"
+#include "Forms/Plane.hpp"
 #include "Material.hpp"
 #include "BVHNode.hpp"
 #include "Utilities.hpp"
@@ -36,11 +37,12 @@ int	main(int argc, char *argv[])
 	scene.setSampleCount(4);
 	scene.setMaxLightBounces(8);
 	scene.setGammaCorrected(true);
-	scene.setRenderSky(false);
+	scene.setRenderSky(true);
 
 	// Current coordinate system ~~ Forward: -Z | Up: -Y | Right: -X
 	scene.addCamera(Camera(Vector3(0.0f, 0.0f, 12.0f), Vector3(0.0f, 0.0f, -8.0f), 65, 0.1856321f));
 
+	// Emissive rectangle
 	scene.addHittable(std::make_shared<Rectangle>(Transform(Vector3(-5.0f, -3.0f, -8.0f), Vector3(0.68f, -0.3f, 1.0f), Vector3(1.0f, 1.0f, 1.0f)), 5.0f, Material(Color(1.0f, 1.10f, 1.0f), 1.0f, 0.0f, 0.5f, 0.0f, false, true, 10.0f)));
 
 	// Glass
@@ -54,8 +56,8 @@ int	main(int argc, char *argv[])
 	// Lambertian
 	scene.addHittable(std::make_shared<Sphere>(Vector3(0.0f, 0.0f, -12.0f), Material(Color(0.0f, 0.0f, 0.8f), 1.0f, 0.0f, 0.5f, 0.0f, false, false, 0.0f), 3.0f));
 
-	// Ground (Lambertian)
-	scene.addHittable(std::make_shared<Sphere>(Vector3(0.0f, 1003.0f, -8.0f), Material(Color(0.5f, 1.0f, 0.5f), 1.0f, 0.0f, 0.5f, 0.0f, false, false, 0.0f), 1000.0f));
+	// Ground (Plane)
+	scene.addHittable(std::make_shared<Plane>(3.0f, Vector3(0.0f, -1.0f, 0.0f), Material(Color(0.6f, 0.6f, 0.6f), 1.0f, 0.0f, 0.5f, 0.0f, false, false, 0.0f)));
 
 	/*std::vector<std::shared_ptr<Hittable>> tinySpheres;
 	for (int x = -11; x < 11; x++)
