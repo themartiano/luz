@@ -19,8 +19,7 @@ OBJS_DIR := ./objs
 SRCS :=	./srcs/Camera.cpp ./srcs/exitError.cpp ./srcs/main.cpp ./srcs/Scene.cpp ./srcs/Vector2.cpp \
 		./srcs/BMP.cpp ./srcs/Renderer.cpp ./srcs/Ray.cpp ./srcs/Utilities.cpp ./srcs/AABB.cpp \
 		./srcs/Color.cpp ./srcs/Light.cpp ./srcs/Material.cpp ./srcs/Transform.cpp ./srcs/Vector3.cpp \
-		./srcs/Forms/Cylinder.cpp ./srcs/Forms/Plane.cpp ./srcs/Forms/Sphere.cpp ./srcs/Forms/Square.cpp \
-		./srcs/Forms/Triangle.cpp ./srcs/Clock.cpp ./srcs/BVHNode.cpp
+		./srcs/Forms/Sphere.cpp ./srcs/Clock.cpp ./srcs/BVHNode.cpp ./srcs/Forms/Rectangle.cpp
 OBJS := $(patsubst $(SRCS_DIR)/%.cpp, $(OBJS_DIR)/%.o, $(SRCS))
 DPND := $(OBJS:.o=.d)
 INCLUDES := -Iincludes

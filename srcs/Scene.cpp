@@ -1,6 +1,7 @@
 #include "Scene.hpp"
 #include "Defaults.hpp"
 #include "Color.hpp"
+#include "Utilities.hpp"
 #include <limits>
 
 /*
@@ -111,9 +112,16 @@ void	Scene::setPixelArray(int index, Color pixelColor)
 	// Check if index is in range. (x res * y res * RGB for each pixel)
 	if (index < this->_xResolution * this->_yResolution * 3)
 	{
-		this->_pixelArray[(index * 3) + 2] = (unsigned char)(pixelColor.getRed() * 255.0f);
-		this->_pixelArray[(index * 3) + 1] = (unsigned char)(pixelColor.getGreen() * 255.0f);
-		this->_pixelArray[index * 3] = (unsigned char)(pixelColor.getBlue() * 255.0f);
+		float r = pixelColor.getRed();
+		setFloatRange(r, 0.0f, 1.0f);
+		float g = pixelColor.getGreen();
+		setFloatRange(g, 0.0f, 1.0f);
+		float b = pixelColor.getBlue();
+		setFloatRange(b, 0.0f, 1.0f);
+
+		this->_pixelArray[(index * 3) + 2] = (unsigned char)(r * 255.0f);
+		this->_pixelArray[(index * 3) + 1] = (unsigned char)(g * 255.0f);
+		this->_pixelArray[index * 3] = (unsigned char)(b * 255.0f);
 	}
 }
 

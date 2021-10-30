@@ -11,7 +11,7 @@
 Sphere::Sphere(void)
 {
 	this->_position = Vector3();
-	this->_material = Material(Color(0.49f, 0.49f, 0.49f), 1.0f, 0.0f, 0.5f, 0.0f, false, false);
+	this->_material = Material(Color(0.49f, 0.49f, 0.49f), 1.0f, 0.0f, 0.5f, 0.0f, false, false, 0.0f);
 	this->_radius = 1.0f;
 }
 
@@ -35,7 +35,7 @@ float	Sphere::getRadius(void) const
 	return (this->_radius);
 }
 
-// Calculates if 'sphere' is hit by 'ray', is closer than 't_max' and farther than T_MIN
+// Calculates if the Sphere is hit by 'ray', is closer than 't_max' and farther than T_MIN
 bool    Sphere::hit(Ray& ray, float t_max) const
 {
 	Vector3 oc = ray.getOrigin() - this->_position;
