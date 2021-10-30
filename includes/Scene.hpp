@@ -25,6 +25,8 @@ class	Scene
 		bool	getGammaCorrected(void) const;
 		void	setGammaCorrected(bool gamma);
 		float	getSkyline(void) const;
+		bool	getRenderSky(void) const;
+		void	setRenderSky(bool renderSky);
 		void	setPixelArray(int index, Color pixelColor);
 		unsigned char*	getPixelArray() const;
 		void	initializePixelArray(void);
@@ -40,6 +42,7 @@ class	Scene
 		bool					_gammaCorrected;
 		unsigned char*			_pixelArray;
 		float					_skyline;
+		bool					_renderSky;
 		//Light					_ambientLight;
 		std::vector<Camera>		_cameras;
 		size_t					_activeCamera;

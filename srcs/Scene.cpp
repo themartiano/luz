@@ -17,6 +17,7 @@ Scene::Scene(void)
 	this->_maxLightBounces = D_MAX_LIGHT_BOUNCES;
 	this->_gammaCorrected = true;
 	this->_skyline = 0.5f;
+	this->_renderSky = true;
 
 	this->_activeCamera = 0;
 
@@ -104,6 +105,18 @@ void	Scene::setGammaCorrected(bool gammaCorrected)
 float	Scene::getSkyline(void) const
 {
 	return (this->_skyline);
+}
+
+// Returns the RenderSky option
+bool	Scene::getRenderSky(void) const
+{
+	return (this->_renderSky);
+}
+
+// Sets the RenderSky option
+void	Scene::setRenderSky(bool renderSky)
+{
+	this->_renderSky = renderSky;
 }
 
 // Sets the color for the pixel at 'index', which is a simple X/Y index.
