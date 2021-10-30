@@ -24,7 +24,7 @@ SRCS :=	./srcs/Camera.cpp ./srcs/exitError.cpp ./srcs/main.cpp ./srcs/Scene.cpp 
 OBJS := $(patsubst $(SRCS_DIR)/%.cpp, $(OBJS_DIR)/%.o, $(SRCS))
 DPND := $(OBJS:.o=.d)
 INCLUDES := -Iincludes
-COMPILER := clang++ -std=c++17
+LANGUAGE_STD := -std=c++17
 WWW_FLAGS := -Wall -Wextra -Werror
 OPT_FLAGS := -O3
 INC_FLAGS := -MD
@@ -71,6 +71,18 @@ else
 	PRE_EXECUTE = clean
 endif
 
+# Reads COMPILER option from TMP_FILE if user hasn't provided it
+# x86_64-w64-mingw32-g++ => 64bit
+ifndef COMPILER
+	ifeq ($(shell awk 'NR==4 {print $$3}' $(TMP_FILE)),1)
+		COMPILER = 1
+	else
+		COMPILER = 0
+	endif
+else
+	PRE_EXECUTE = clean
+endif
+
 # Configure DEBUG
 ifeq ($(DEBUG),1)
 	DEBUG_FLAGS = -g
@@ -88,7 +100,15 @@ ifeq ($(NO_FLAGS),1)
 	WWW_FLAGS =
 endif
 
-$(shell echo "DEBUG = $(DEBUG)\nSANITIZER = $(SANITIZER)\nNO_FLAGS = $(NO_FLAGS)" > $(TMP_FILE))
+# Configure COMPILER
+ifeq ($(COMPILER),1)
+	_COMPILER = i686-w64-mingw32-g++
+	COMPILER_FLAGS = -U__STRICT_ANSI__ -static-libgcc -static-libstdc++
+else
+	_COMPILER = clang++
+endif
+
+$(shell echo "DEBUG = $(DEBUG)\nSANITIZER = $(SANITIZER)\nNO_FLAGS = $(NO_FLAGS)\nCOMPILER = $(COMPILER)" > $(TMP_FILE))
 
 ifeq ($(shell uname -s),Linux)
 	DEBUGGER = gdb
@@ -108,11 +128,11 @@ all: $(PRE_EXECUTE)
 
 $(OBJS_DIR)/%.o: $(SRCS_DIR)/%.cpp
 	$(shell [ ! -d $(@D) ] && mkdir -p $(@D))
-	$(COMPILER) $(WWW_FLAGS) $(OPT_FLAGS) $(INC_FLAGS) $(DEBUG_FLAGS) $(INCLUDES) -c $< -o $@
+	$(_COMPILER) $(COMPILER_FLAGS) $(LANGUAGE_STD) $(WWW_FLAGS) $(OPT_FLAGS) $(INC_FLAGS) $(DEBUG_FLAGS) $(INCLUDES) -DOS=$(COMPILER) -c $< -o $@
 
 $(NAME): $(OBJS)
 	@printf "\n[\e[1;34mCompiling $(NAME)\e[0m]\n\n"
-	$(COMPILER) $(WWW_FLAGS) $(OPT_FLAGS) $(INC_FLAGS) $(DEBUG_FLAGS) $(INCLUDES) $(OBJS) -o $(NAME)
+	$(_COMPILER) $(COMPILER_FLAGS) $(LANGUAGE_STD) $(WWW_FLAGS) $(OPT_FLAGS) $(INC_FLAGS) $(DEBUG_FLAGS) $(INCLUDES) $(OBJS) -DOS=$(COMPILER) -o $(NAME)
 
 	@printf "\n[\e[0;32mCompilation done. $(NAME) ready.\e[0m]\n"
 

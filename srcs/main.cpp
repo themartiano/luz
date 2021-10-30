@@ -9,6 +9,7 @@
 #include "Material.hpp"
 #include "BVHNode.hpp"
 #include "Utilities.hpp"
+#include "SystemSpecifics.hpp"
 #include <fstream>
 #include <iostream>
 
