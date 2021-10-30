@@ -43,11 +43,12 @@ Developed with **C++** using only the *standard library*.
 ---
 
 ## Compilation:
-* Makefile ready for Linux and MacOS compilation
-* Requires clang++
+* Makefile ready for Linux, MacOS and Windows compilation
+* Requires **clang++** (Linux & MacOS compilation) **or mingw** (Windows compilation)
 ### Makefile flags:
 * **DEBUG**: Adds the `-g` flag
-* **NO_FLAGS**: Removes `-Wall`, `-Wextra` and `-Werror` flags
 * **SANITIZER**: Adds the `-g` and `-fsanitize=address` flags
+* **NO_FLAGS**: Removes `-Wall`, `-Wextra` and `-Werror` flags
+* **COMPILER**: Uses `clang++` (0) or `mingw` (1)
 
 ##### by Brhaka
