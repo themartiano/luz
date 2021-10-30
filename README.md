@@ -12,9 +12,11 @@ Developed with **C++** using only the *standard library*.
 ### Rendering:
 * **Path Tracing**
 * **Sphere rendering** with customizable position, radius, color and albedo
+* **Rectangle rendering** with customizable position, size, color and albedo
 * Lambertian (**Diffuse**) Rendering
 * **Metals** with custom reflection clarity
 * Dielectrics (**Glass**, etc)
+* Emissive materials (**light** emitting objects)
 * **Anti-aliasing**
 * **Depth of Field**
 * **Sky** with customizable skyline
