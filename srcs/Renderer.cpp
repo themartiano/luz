@@ -14,7 +14,7 @@
 // Static function prototypes
 static Color	calculatePixelColor(Scene& scene, int x, int y);
 static bool		checkHits(Scene& scene, Ray& ray);
-static Color	calculateLightRaysColor(Ray& ray, Scene& scene, int bounces);
+static Color	calculateLightRaysColor(Ray& ray, Scene& scene, Color backgroundColor, int bounces);
 static void		calculateLightRayBounceDirection(Ray& ray, Color& color);
 static Color	calculateSkyInterpolation(Scene& scene, Ray& ray);
 
@@ -92,11 +92,11 @@ static Color	calculatePixelColor(Scene& scene, int x, int y)
 	Vector3	offset = u * rd.getX() + v * rd.getY();
 
 	Ray ray(cameraPosition + offset, lowerLeftCorner + (horizontal * xU) + (vertical * yV) - cameraPosition - offset);
-	return (calculateLightRaysColor(ray, scene, 0));
+	return (calculateLightRaysColor(ray, scene, calculateSkyInterpolation(scene, ray), 0));
 }
 
 // Properly calculates light rays bounces, reflections, etc and returns the resulting color
-static Color	calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
+static Color	calculateLightRaysColor(Ray& ray, Scene& scene, Color backgroundColor, int bounces)
 {
 	static int	maxLightBounces = scene.getMaxLightBounces();
 	Color color(0.0f, 0.0f, 0.0f);
@@ -116,10 +116,10 @@ static Color	calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
 			return (color);
 		}
 
-		return (color * calculateLightRaysColor(ray, scene, bounces + 1));
+		return (color * calculateLightRaysColor(ray, scene, backgroundColor, bounces + 1));
 	}
 
-	return (calculateSkyInterpolation(scene, ray));
+	return (backgroundColor);
 }
 
 // Calculates the sky interpolation for the background and reflexes
@@ -186,6 +186,12 @@ static void	calculateLightRayBounceDirection(Ray& ray, Color& color)
 		}
 
 		color = Color(1.0f, 1.0f, 1.0f);
+		return;
+	}
+
+	if (ray.hitRecord.material.getIsEmissive() == true)
+	{
+		color = ray.hitRecord.material.getColor();
 		return;
 	}
 
