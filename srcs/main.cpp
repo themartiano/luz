@@ -37,7 +37,9 @@ int	main(int argc, char *argv[])
 	scene.setSampleCount(4);
 	scene.setMaxLightBounces(8);
 	scene.setGammaCorrected(true);
-	scene.setRenderSky(true);
+	scene.setRenderSky(false);
+	scene.setBackgroundColor(Color(0.0f, 0.0f, 0.0f));
+
 
 	// Current coordinate system ~~ Forward: -Z | Up: -Y | Right: -X
 	scene.addCamera(Camera(Vector3(0.0f, 0.0f, 12.0f), Vector3(0.0f, 0.0f, -8.0f), 65, 0.1856321f));
