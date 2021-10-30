@@ -6,6 +6,7 @@
 *.out
 *.dSYM
 Luz
+Luz.exe
 .idea
 .DS_Store
 .vscode
