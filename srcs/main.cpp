@@ -34,10 +34,10 @@ int	main(int argc, char *argv[])
 	scene.setXResolution(500);
 	scene.setYResolution(500);
 	scene.initializePixelArray();
-	scene.setSampleCount(3);
-	scene.setMaxLightBounces(3);
+	scene.setSampleCount(16);
+	scene.setMaxLightBounces(16);
 	scene.setGammaCorrected(true);
-	scene.setRenderSky(true);
+	scene.setRenderSky(false);
 	scene.setBackgroundColor(Color(0.0f, 0.0f, 0.0f));
 
 	// Current coordinate system ~~ Forward: -Z | Up: -Y | Right: -X
@@ -49,37 +49,64 @@ int	main(int argc, char *argv[])
 	scene.addHittable(std::make_shared<Rectangle>(
 		Transform(Vector3(0.0f, -250.0f, -250.0f), Vector3(0.0f, 1.0f, 0.0f), Vector3(1.0f, 1.0f, 1.0f)),
 		Material(Color(1.0f, 1.0f, 1.0f), 1.0f, 0.0f, 0.5f, 0.0f, false, false, 0.0f),
-		500.0f, 500.0f));
+		500.0f, 500.0f
+	));
 
 	// Light (Top)
 	scene.addHittable(std::make_shared<Rectangle>(
 		Transform(Vector3(0.0f, -250.0f, -125.0f), Vector3(0.0f, 1.0f, 0.0f), Vector3(1.0f, 1.0f, 1.0f)),
 		Material(Color(1.0f, 1.0f, 1.0f), 1.0f, 0.0f, 0.5f, 0.0f, false, true, 100.0f),
-		250.0f, 125.0f));
+		250.0f, 125.0f
+	));
 
 	// Front Wall
 	scene.addHittable(std::make_shared<Rectangle>(
 		Transform(Vector3(0.0f, 0.0f, -250.0f), Vector3(0.0f, 0.0f, 1.0f), Vector3(1.0f, 1.0f, 1.0f)),
 		Material(Color(1.0f, 1.0f, 1.0f), 1.0f, 0.0f, 0.5f, 0.0f, false, false, 0.0f),
-		500.0f, 500.0f));
+		500.0f, 500.0f
+	));
 
 	// Floor Wall
 	scene.addHittable(std::make_shared<Rectangle>(
 		Transform(Vector3(0.0f, 250.0f, -250.0f), Vector3(0.0f, -1.0f, 0.0f), Vector3(1.0f, 1.0f, 1.0f)),
 		Material(Color(1.0f, 1.0f, 1.0f), 1.0f, 0.0f, 0.5f, 0.0f, false, false, 0.0f),
-		500.0f, 500.0f));
+		500.0f, 500.0f
+	));
 
 	// Right Wall
 	scene.addHittable(std::make_shared<Rectangle>(
 		Transform(Vector3(-250.0f, 0.0f, -250.0f), Vector3(1.0f, 0.0f, 0.0f), Vector3(1.0f, 1.0f, 1.0f)),
-		Material(Color(1.0f, 0.0f, 0.0f), 1.0f, 0.0f, 0.5f, 0.0f, false, false, 0.0f),
-		500.0f, 500.0f));
+		Material(Color(0.0f, 1.0f, 0.0f), 1.0f, 0.0f, 0.5f, 0.0f, false, false, 0.0f),
+		500.0f, 500.0f
+	));
 
 	// Left Wall
 	scene.addHittable(std::make_shared<Rectangle>(
 		Transform(Vector3(250.0f, 0.0f, -250.0f), Vector3(-1.0f, 0.0f, 0.0f), Vector3(1.0f, 1.0f, 1.0f)),
-		Material(Color(0.0f, 1.0f, 0.0f), 1.0f, 0.0f, 0.5f, 0.0f, false, false, 0.0f),
-		500.0f, 500.0f));
+		Material(Color(1.0f, 0.0f, 0.0f), 1.0f, 0.0f, 0.5f, 0.0f, false, false, 0.0f),
+		500.0f, 500.0f
+	));
+
+	// Metal Sphere
+	scene.addHittable(std::make_shared<Sphere>(
+		Vector3(200.0f, 200.0f, -200.0f),
+		Material(Color(0.8f, 0.8f, 0.8f), 1.0f, 1.0f, 0.5f, 0.0f, false, false, 0.0f),
+		50.0f
+	));
+
+	// Glass Sphere
+	scene.addHittable(std::make_shared<Sphere>(
+		Vector3(0.0f, 100.0f, -150.0f),
+		Material(Color(1.0f, 1.0f, 1.0f), 1.0f, 0.0f, 0.5f, 0.0f, true, false, 0.0f),
+		100.0f
+	));
+
+	// Golden Metal Sphere
+	scene.addHittable(std::make_shared<Sphere>(
+		Vector3(-200.0f, 200.0f, -200.0f),
+		Material(Color(1.0f, 0.843f, 0.0f), 1.0f, 1.0f, 0.5f, 0.0f, false, false, 0.0f),
+		50.0f
+	));
 
 	render(scene);
 

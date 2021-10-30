@@ -108,18 +108,27 @@ static Color	calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
 		return (Color(0.0f, 0.0f, 0.0f));
 	}
 
-	Color color(0.0f, 0.0f, 0.0f);
+	Color color, emitted = Color(0.0f, 0.0f, 0.0f);
 	if (checkHits(scene, ray))
 	{
 		ray.setOrigin(ray.hitRecord.position);
-		calculateLightRayBounceDirection(ray, color);
 
-		if (ray.hitRecord.material.getIsEmissive() == true || (ray.hitRecord.material.getMetallic() == 1.0f && dot(ray.getDirection(), ray.hitRecord.normal) <= 0.0f))
+		if (ray.hitRecord.material.getIsEmissive() == true)
 		{
-			return (color);
+			emitted = ray.hitRecord.material.getColor() * ray.hitRecord.material.getLightIntensity();
+			return (emitted);
+		}
+		else
+		{
+			calculateLightRayBounceDirection(ray, color);
 		}
 
-		return (color * calculateLightRaysColor(ray, scene, bounces + 1));
+		if ((ray.hitRecord.material.getMetallic() == 1.0f && dot(ray.getDirection(), ray.hitRecord.normal) <= 0.0f))
+		{
+			return (emitted + color);
+		}
+
+		return (emitted + color * calculateLightRaysColor(ray, scene, bounces + 1));
 	}
 
 	if (renderSky)
@@ -197,13 +206,6 @@ static void	calculateLightRayBounceDirection(Ray& ray, Color& color)
 	}
 
 	Vector3	newTarget = ray.hitRecord.position + ray.hitRecord.normal + randomPointInsideUnitSphere();
-	if (ray.hitRecord.material.getIsEmissive() == true)
-	{
-		ray.setDirection(newTarget - ray.hitRecord.position);
-		color = ray.hitRecord.material.getColor() * ray.hitRecord.material.getLightIntensity();
-		return;
-	}
-
 	if (ray.hitRecord.material.getMetallic() == 0.0f)
 	{
 		ray.setDirection(newTarget - ray.hitRecord.position);
