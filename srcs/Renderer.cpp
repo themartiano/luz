@@ -49,6 +49,20 @@ void	render(Scene& scene)
 				pixelColor = Color(sqrtf(pixelColor.getRed()), sqrtf(pixelColor.getGreen()), sqrtf(pixelColor.getBlue())); // Gamma (2) correction
 			}
 
+			// Replaces NaN with zeros (in case there's a problematic sample)
+			if (pixelColor.getRed() != pixelColor.getRed())
+			{
+				pixelColor.setRed(0.0f);
+			}
+			if (pixelColor.getGreen() != pixelColor.getGreen())
+			{
+				pixelColor.setGreen(0.0f);
+			}
+			if (pixelColor.getBlue() != pixelColor.getBlue())
+			{
+				pixelColor.setBlue(0.0f);
+			}
+
 			scene.setPixelArray((y * width) + x, pixelColor);
 		}
 		if (y % percentageUpdateFactor == 0)
