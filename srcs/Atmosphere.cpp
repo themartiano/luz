@@ -1,5 +1,4 @@
 #include "Atmosphere.hpp"
-#include "Forms/Sphere.hpp"
 #include "Defaults.hpp"
 #include "Utilities.hpp"
 #include "SystemSpecifics.hpp"
@@ -46,7 +45,7 @@ double  Atmosphere::getHM(void) const
     return (this->_hM);
 }
 
-static bool hitAtmosphere(Sphere& atmosphere, Ray& ray)
+bool hitAtmosphere(Sphere& atmosphere, Ray& ray)
 {
     double a = dot(ray.getDirection(), ray.getDirection());
     double b = 2.0 * dot(ray.getDirection(), ray.getOrigin());
@@ -88,10 +87,9 @@ static bool hitAtmosphere(Sphere& atmosphere, Ray& ray)
     return (true);
 }
 #include <iostream>
-Color   Atmosphere::computeIncidentLight(Ray& ray)
+Color   Atmosphere::computeIncidentLight(Ray& ray, double t_max)
 {
     double  t_min = T_MIN;
-    double  t_max = T_MAX;
 
     Sphere  atmosphere(Vector3(0.0, 0.0, 0.0), Material(), this->_atmosphereRadius);
 
@@ -103,7 +101,7 @@ Color   Atmosphere::computeIncidentLight(Ray& ray)
     {
         t_min = ray.hitRecord.t0;
     }
-    if (ray.hitRecord.t1 < T_MAX)
+    if (ray.hitRecord.t1 < t_max)
     {
         t_max = ray.hitRecord.t1;
     }

@@ -3,6 +3,7 @@
 
 #include "Vector3.hpp"
 #include "Ray.hpp"
+#include "Forms/Sphere.hpp"
 
 class   Atmosphere
 {
@@ -15,7 +16,7 @@ class   Atmosphere
         double  getAtmosphereRadius(void) const;
         double  getHR(void) const;
         double  getHM(void) const;
-        Color   computeIncidentLight(Ray& ray);
+        Color   computeIncidentLight(Ray& ray, double t_max);
 
     private:
         Vector3 _sunDirection;
@@ -24,5 +25,7 @@ class   Atmosphere
         double  _hR; // Thickness of the atmosphere if density was uniform
         double  _hM; // The same as above but for Mie Scattering
 };
+
+bool hitAtmosphere(Sphere& atmosphere, Ray& ray);
 
 #endif

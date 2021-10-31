@@ -9,6 +9,7 @@
 #include "RefractiveIndexes.hpp"
 #include "SystemSpecifics.hpp"
 #include "Atmosphere.hpp"
+#include "Forms/Sphere.hpp"
 #include <cmath>
 #include <iostream>
 #include <stdlib.h>
@@ -115,7 +116,16 @@ static Color	calculatePixelColor(Scene& scene, int x, int y)
 	if (renderSky == true)
 	{
 		Ray atmosphereRay(ray.getOrigin() + Vector3(0.0, atmosphere.getEarthRadius(), 0.0), ray.getDirection() * -1.0);
-		return (calculateLightRaysColor(ray, scene, atmosphere.computeIncidentLight(atmosphereRay), 0));
+
+		double t_max = T_MAX;
+		Sphere  earth(Vector3(0.0, 0.0, 0.0), Material(), atmosphere.getEarthRadius());
+
+		// Checks ray collision with Earth
+		if (hitAtmosphere(earth, atmosphereRay) && ray.hitRecord.t1 > 0.0)
+		{
+			t_max = std::max(0.0, ray.hitRecord.t0);
+		}
+		return (calculateLightRaysColor(ray, scene, atmosphere.computeIncidentLight(atmosphereRay, t_max), 0));
 	}
 	else
 	{
@@ -126,7 +136,7 @@ static Color	calculatePixelColor(Scene& scene, int x, int y)
 // Properly calculates light rays bounces, reflections, etc and returns the resulting color
 static Color	calculateLightRaysColor(Ray& ray, Scene& scene, Color backgroundColor, int bounces)
 {
-	static int		maxLightBounces = scene.getMaxLightBounces();
+	static int maxLightBounces = scene.getMaxLightBounces();
 
 	if (bounces > maxLightBounces)
 	{

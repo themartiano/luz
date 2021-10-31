@@ -46,7 +46,7 @@ int	main(int argc, char *argv[])
 	// Current coordinate system ~~ Forward: -Z | Up: -Y | Right: -X
 
 	//mountCornellBox(scene);
-	scene.addCamera(Camera(Vector3(0.0, -5.0, 0.0), Vector3(0.0, -5.0, -1.0), 65, 0.0));
+	scene.addCamera(Camera(Vector3(0.0, -5.0, 0.0), Vector3(0.0, -5.0, -0.5), 65, 0.0));
 
 	// scene.addHittable(std::make_shared<Plane>(
 	// 	0.0,
@@ -56,7 +56,8 @@ int	main(int argc, char *argv[])
 
 	// scene.addHittable(std::make_shared<Sphere>(
 	// 	Vector3(0.0, -3.0, -20.0),
-	// 	Material(Color(0.8, 0.8, 0.8), 1.0, 0.0, 0.5, 0.0, false, true, 5.0),
+	// 	//Material(Color(0.8, 0.8, 0.8), 1.0, 0.0, 0.5, 0.0, false, true, 5.0),
+	// 	Material(Color(0.8, 0.8, 0.8), 1.0, 1.0, 0.5, 0.0, false, false, 0.0),
 	// 	3.0
 	// ));
 
