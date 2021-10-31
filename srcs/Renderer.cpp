@@ -114,9 +114,8 @@ static Color	calculatePixelColor(Scene& scene, int x, int y)
 	static bool		renderSky = scene.getRenderSky();
 	if (renderSky == true)
 	{
-		Ray ray2(cameraPosition + offset, lowerLeftCorner + (horizontal * xU) + (vertical * yV) - cameraPosition - offset);
-		ray2.setOrigin(ray2.getOrigin() + Vector3(0.0, atmosphere.getEarthRadius(), 0.0));
-		return (calculateLightRaysColor(ray, scene, atmosphere.computeIncidentLight(ray2), 0));
+		Ray atmosphereRay(ray.getOrigin() + Vector3(0.0, atmosphere.getEarthRadius(), 0.0), ray.getDirection() * -1.0);
+		return (calculateLightRaysColor(ray, scene, atmosphere.computeIncidentLight(atmosphereRay), 0));
 	}
 	else
 	{

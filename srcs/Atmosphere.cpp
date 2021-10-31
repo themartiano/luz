@@ -7,7 +7,11 @@
 
 Atmosphere::Atmosphere(void)
 {
+    // double angle = 64 / float(128) * M_PI * 0.6;
+    // this->_sunDirection = Vector3(0.0, cos(angle), -sin(angle));
+
     this->_sunDirection = Vector3(0.0, 1.0, 0.0);
+
     this->_earthRadius = 6360e3;
     this->_atmosphereRadius = 6420e3;
     this->_hR = 7994.0;
@@ -86,7 +90,8 @@ static bool hitAtmosphere(Sphere& atmosphere, Ray& ray)
 #include <iostream>
 Color   Atmosphere::computeIncidentLight(Ray& ray)
 {
-    double  t_min, t_max;
+    double  t_min = T_MIN;
+    double  t_max = T_MAX;
 
     Sphere  atmosphere(Vector3(0.0, 0.0, 0.0), Material(), this->_atmosphereRadius);
 
@@ -103,12 +108,13 @@ Color   Atmosphere::computeIncidentLight(Ray& ray)
         t_max = ray.hitRecord.t1;
     }
 
-    int numSamples = 16;
-    int numSamplesLight = 8;
+    int numSamples = 8;
+    int numSamplesLight = 4;
 
     double  segmentLength = (t_max - t_min) / numSamples;
     double  tCurrent = t_min;
-    Vector3 sumR, sumM;
+    Vector3 sumR(0.0, 0.0, 0.0);
+    Vector3 sumM(0.0, 0.0, 0.0);
     double  transmittanceR = 0.0;
     double  transmittanceM = 0.0;
     double  mu = dot(ray.getDirection(), this->_sunDirection);
@@ -124,17 +130,19 @@ Color   Atmosphere::computeIncidentLight(Ray& ray)
         double  hM = exp(-height / this->_hM) * segmentLength;
         transmittanceR += hR;
         transmittanceM += hM;
+        Ray ray2(samplePosition, this->_sunDirection);
         Sphere atmosphere2(Vector3(0.0, 0.0, 0.0), Material(), this->_atmosphereRadius);
-        hitAtmosphere(atmosphere2, ray);
-        double  segmentLengthLight = ray.hitRecord.t1 / numSamplesLight;
+        hitAtmosphere(atmosphere2, ray2);
+        double  segmentLengthLight = ray2.hitRecord.t1 / numSamplesLight;
         double  tCurrentLight = 0.0;
         double  transmittanceLightR = 0.0;
         double  transmittanceLightM = 0.0;
         int     j;
+        //std::cout << this->_sunDirection.getX() << ", " << this->_sunDirection.getY() << ", " << this->_sunDirection.getZ() << std::endl;
         for (j = 0; j < numSamplesLight; ++j)
         {
-            Vector3 samplePositionLight = samplePosition + (tCurrentLight + segmentLengthLight * 0.5) * this->_sunDirection;
-            double  heightLight = vectorLength(samplePositionLight) - this->_earthRadius;
+            Vector3 samplePositionLight = samplePosition - (tCurrentLight + segmentLengthLight * 0.5) * this->_sunDirection;
+            double  heightLight = vectorLength(samplePositionLight) + this->_earthRadius;
             if (heightLight < 0.0)
             {
                 break;
