@@ -5,24 +5,24 @@ class	Color
 {
 	public:
 		Color(void);
-		Color(float r, float g, float b);
-		float	getRed(void) const;
-		void	setRed(float red);
-		float	getGreen(void) const;
-		void	setGreen(float green);
-		float	getBlue(void) const;
-		void	setBlue(float blue);
+		Color(double r, double g, double b);
+		double	getRed(void) const;
+		void	setRed(double red);
+		double	getGreen(void) const;
+		void	setGreen(double green);
+		double	getBlue(void) const;
+		void	setBlue(double blue);
 		Color&	operator+=(const Color &color2);
-		Color&	operator/=(const float f);
+		Color&	operator/=(const double f);
 		Color	operator+(const Color color) const;
-		Color	operator*(const float f) const;
+		Color	operator*(const double f) const;
 		Color	operator*(const Color color) const;
-		Color	operator/(const float f) const;
+		Color	operator/(const double f) const;
 
 	private:
-		float	_red;
-		float	_green;
-		float	_blue;
+		double	_red;
+		double	_green;
+		double	_blue;
 };
 
 #endif

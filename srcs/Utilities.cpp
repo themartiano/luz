@@ -3,7 +3,7 @@
 #include <cmath>
 
 // Returns the dot product of 'vector1' and 'vector2'
-float	dot(Vector3 vector1, Vector3 vector2)
+double	dot(Vector3 vector1, Vector3 vector2)
 {
 	return ((vector1.getX() * vector2.getX()) + (vector1.getY() * vector2.getY()) + (vector1.getZ() * vector2.getZ()));
 }
@@ -18,13 +18,13 @@ Vector3	cross(Vector3 vector1, Vector3 vector2)
 }
 
 // Returns the Vector3's length (no square root applied)
-float	vectorLengthNoSQRT(Vector3 vector)
+double	vectorLengthNoSQRT(Vector3 vector)
 {
 	return ((vector.getX() * vector.getX()) + (vector.getY() * vector.getY()) + (vector.getZ() * vector.getZ()));
 }
 
 // Returns the Vector3's length
-float	vectorLength(Vector3 vector)
+double	vectorLength(Vector3 vector)
 {
 	return (sqrt(vectorLengthNoSQRT(vector)));
 }
@@ -43,8 +43,8 @@ Vector3 randomPointInsideUnitSphere(void)
 
 	do
 	{
-		position = (Vector3(randomFloat(), randomFloat(), randomFloat()) * 2.0f) - Vector3(1.0f, 1.0f, 1.0f);
-	} while (vectorLengthNoSQRT(position) >= 1.0f);
+		position = (Vector3(randomdouble(), randomdouble(), randomdouble()) * 2.0) - Vector3(1.0, 1.0, 1.0);
+	} while (vectorLengthNoSQRT(position) >= 1.0);
 	return (position);
 }
 
@@ -55,25 +55,25 @@ Vector3 randomPointInsideUnitDisk(void)
 
 	do
 	{
-		position = (Vector3(randomFloat(), randomFloat(), 0) * 2.0f) - Vector3(1.0f, 1.0f, 0);
-	} while (dot(position, position) >= 1.0f);
+		position = (Vector3(randomdouble(), randomdouble(), 0) * 2.0) - Vector3(1.0, 1.0, 0);
+	} while (dot(position, position) >= 1.0);
 	return (position);
 }
 
 // Returns the reflected Vector3 of 'vector' using 'normal' in the calculation
 Vector3	reflect(Vector3 vector, Vector3 normal)
 {
-	return (vector - (normal * (2.0f * dot(vector, normal))));
+	return (vector - (normal * (2.0 * dot(vector, normal))));
 }
 
 // If refraction is possible on 'vector' taking 'normal' and 'refractiveIndex' into account, sets 'refractedVector' to the new Vector3 and returns TRUE. Otherwise, returns FALSE
-bool	refract(Vector3 vector, Vector3 normal, float refractiveIndex, Vector3& refractedVector)
+bool	refract(Vector3 vector, Vector3 normal, double refractiveIndex, Vector3& refractedVector)
 {
 	vector = normalize(vector);
 
-	float	dt = dot(vector, normal);
-	float	discriminant = 1.0f - refractiveIndex * refractiveIndex * (1.0f - dt * dt);
-	if (discriminant > 0.0f)
+	double	dt = dot(vector, normal);
+	double	discriminant = 1.0 - refractiveIndex * refractiveIndex * (1.0 - dt * dt);
+	if (discriminant > 0.0)
 	{
 		refractedVector = ((vector - normal * dt) * refractiveIndex) - normal * sqrt(discriminant);
 		return (true);
@@ -85,12 +85,12 @@ bool	refract(Vector3 vector, Vector3 normal, float refractiveIndex, Vector3& ref
 }
 
 // Christophe Schlick's formula for approximating the contribution of the Fresnel factor in the specular reflection of light from a non-conducting interface (surface) between two media
-float	schlick(float cosine, float refractiveIndex)
+double	schlick(double cosine, double refractiveIndex)
 {
-	float r0 = (1.0f - refractiveIndex) / (1.0f + refractiveIndex);
+	double r0 = (1.0 - refractiveIndex) / (1.0 + refractiveIndex);
 	r0 *= r0;
 
-	return (r0 + (1.0f - r0) * pow((1.0f - cosine), 5));
+	return (r0 + (1.0 - r0) * pow((1.0 - cosine), 5));
 }
 
 // Returns "s" if 'number' differs from 1
@@ -107,7 +107,7 @@ std::string    pluralOrSingular(int number)
 }
 
 // If 'flt' surprasses the specified range ('min' & 'max'), it's set to the nearest possible value ('min' or 'max')
-void	setFloatRange(float& flt, float min, float max)
+void	setdoubleRange(double& flt, double min, double max)
 {
 	if (flt < min)
 	{

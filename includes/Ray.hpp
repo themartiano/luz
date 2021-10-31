@@ -6,7 +6,7 @@
 
 struct HitRecord
 {
-    float       t;
+    double       t;
     Vector3     position;
     Vector3     normal;
     Material    material;
@@ -18,7 +18,7 @@ class   Ray
     public:
         Ray(void);
         Ray(Vector3 origin, Vector3 direction);
-        Vector3 pointAtRay(float t);
+        Vector3 pointAtRay(double t);
         Vector3 getOrigin(void) const;
         void    setOrigin(Vector3 origin);
         Vector3 getDirection(void) const;

@@ -10,16 +10,16 @@ class	Sphere : public Hittable
 {
 	public:
 		Sphere(void);
-		Sphere(Vector3 position, Material material, float radius);
+		Sphere(Vector3 position, Material material, double radius);
 		Vector3				getPosition(void) const;
-		float				getRadius(void) const;
-		virtual bool    	hit(Ray& ray, float t_max) const override;
+		double				getRadius(void) const;
+		virtual bool    	hit(Ray& ray, double t_max) const override;
 		virtual bool    	createBoundingBox(AABB& outputBoundingBox) const override;
 
 	private:
 		Vector3		_position;
 		Material	_material;
-		float		_radius;
+		double		_radius;
 };
 
 #endif

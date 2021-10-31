@@ -7,13 +7,13 @@
 // Constructs the Vector3 with default values
 Vector3::Vector3(void)
 {
-	this->_x = 0.0f;
-	this->_y = 0.0f;
-	this->_z = 0.0f;
+	this->_x = 0.0;
+	this->_y = 0.0;
+	this->_z = 0.0;
 }
 
 // Constructs the Vector3 with custom values
-Vector3::Vector3(float x, float y, float z)
+Vector3::Vector3(double x, double y, double z)
 {
 	this->_x = x;
 	this->_y = y;
@@ -21,42 +21,42 @@ Vector3::Vector3(float x, float y, float z)
 }
 
 // Returns the Vector3's X axis
-float	Vector3::getX(void) const
+double	Vector3::getX(void) const
 {
 	return (this->_x);
 }
 
 // Sets the Vector3's X axis
-void	Vector3::setX(float x)
+void	Vector3::setX(double x)
 {
 	this->_x = x;
 }
 
 // Returns the Vector3's Y axis
-float	Vector3::getY(void) const
+double	Vector3::getY(void) const
 {
 	return (this->_y);
 }
 
 // Sets the Vector3's Y axis
-void	Vector3::setY(float y)
+void	Vector3::setY(double y)
 {
 	this->_y = y;
 }
 
 // Returns the Vector3's Z axis
-float	Vector3::getZ(void) const
+double	Vector3::getZ(void) const
 {
 	return (this->_z);
 }
 
 // Sets the Vector3's Z axis
-void	Vector3::setZ(float z)
+void	Vector3::setZ(double z)
 {
 	this->_z = z;
 }
 
-Vector3&	Vector3::operator/=(const float f)
+Vector3&	Vector3::operator/=(const double f)
 {
 	this->_x /= f;
 	this->_y /= f;
@@ -64,7 +64,7 @@ Vector3&	Vector3::operator/=(const float f)
 	return (*this);
 }
 
-float	Vector3::operator[](int index) const
+double	Vector3::operator[](int index) const
 {
 	if (index == 0)
 	{
@@ -80,6 +80,6 @@ float	Vector3::operator[](int index) const
 	}
 	else
 	{
-		return (0.0f);
+		return (0.0);
 	}
 }

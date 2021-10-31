@@ -10,14 +10,14 @@
 // Constructs the Rectangle with default values
 Rectangle::Rectangle(void)
 {
-    this->_transform = Transform(Vector3(0.0f, 0.0f, 0.0f), Vector3(0.0f, 0.0f, 1.0f), Vector3(1.0f, 1.0f, 1.0f));
-	this->_material = Material(Color(0.49f, 0.49f, 0.49f), 1.0f, 0.0f, 0.5f, 0.0f, false, false, 0.0f);
-    this->_width = 1.0f;
-    this->_height = 1.0f;
+    this->_transform = Transform(Vector3(0.0, 0.0, 0.0), Vector3(0.0, 0.0, 1.0), Vector3(1.0, 1.0, 1.0));
+	this->_material = Material(Color(0.49, 0.49, 0.49), 1.0, 0.0, 0.5, 0.0, false, false, 0.0);
+    this->_width = 1.0;
+    this->_height = 1.0;
 }
 
 // Constructs the Rectangle with custom values
-Rectangle::Rectangle(Transform transform, Material material, float width, float height)
+Rectangle::Rectangle(Transform transform, Material material, double width, double height)
 {
     this->_transform = transform;
     this->_material = material;
@@ -26,39 +26,39 @@ Rectangle::Rectangle(Transform transform, Material material, float width, float 
 }
 
 // Calculates if the Rectangle is hit by 'ray', is closer than 't_max' and farther than T_MIN
-bool    Rectangle::hit(Ray& ray, float t_max) const
+bool    Rectangle::hit(Ray& ray, double t_max) const
 {
-    float a = dot(ray.getOrigin() - this->_transform.getPosition(), this->_transform.getOrientation());
-    float b = dot(ray.getDirection(), this->_transform.getOrientation());
-    if (b == 0.0f || (a < 0.0f && b < 0.0f) || (a > 0.0f && b > 0.0f))
+    double a = dot(ray.getOrigin() - this->_transform.getPosition(), this->_transform.getOrientation());
+    double b = dot(ray.getDirection(), this->_transform.getOrientation());
+    if (b == 0.0 || (a < 0.0 && b < 0.0) || (a > 0.0 && b > 0.0))
     {
         return (false);
     }
 
-    float t = -a / b;
+    double t = -a / b;
     if (t > t_max || t < T_MIN)
     {
         return (false);
     }
 
     Vector3 d = ray.pointAtRay(t) - this->_transform.getPosition();
-    if (fabs(this->_transform.getOrientation().getY()) > 0.0f)
+    if (fabs(this->_transform.getOrientation().getY()) > 0.0)
     {
-        if (fabs(d.getX()) > (this->_width / 2.0f) || fabs(d.getZ()) > (this->_height / 2.0f))
+        if (fabs(d.getX()) > (this->_width / 2.0) || fabs(d.getZ()) > (this->_height / 2.0))
         {
             return (false);
         }
     }
-    else if (fabs(this->_transform.getOrientation().getZ()) > 0.0f)
+    else if (fabs(this->_transform.getOrientation().getZ()) > 0.0)
     {
-        if (fabs(d.getX()) > (this->_width / 2.0f) || fabs(d.getY()) > (this->_height / 2.0f))
+        if (fabs(d.getX()) > (this->_width / 2.0) || fabs(d.getY()) > (this->_height / 2.0))
         {
             return (false);
         }
     }
-    else if (fabs(this->_transform.getOrientation().getX()) > 0.0f)
+    else if (fabs(this->_transform.getOrientation().getX()) > 0.0)
     {
-        if (fabs(d.getZ()) > (this->_width / 2.0f) || fabs(d.getY()) > (this->_height / 2.0f))
+        if (fabs(d.getZ()) > (this->_width / 2.0) || fabs(d.getY()) > (this->_height / 2.0))
         {
             return (false);
         }

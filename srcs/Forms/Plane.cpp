@@ -9,13 +9,13 @@
 // Constructs the Plane with default values
 Plane::Plane(void)
 {
-    this->_y = 0.0f;
-    this->_orientation = Vector3(0.0f, -1.0f, 0.0f);
-    this->_material = Material(Color(0.49f, 0.49f, 0.49f), 1.0f, 0.0f, 0.5f, 0.0f, false, false, 0.0f);
+    this->_y = 0.0;
+    this->_orientation = Vector3(0.0, -1.0, 0.0);
+    this->_material = Material(Color(0.49, 0.49, 0.49), 1.0, 0.0, 0.5, 0.0, false, false, 0.0);
 }
 
 // Constructs the Plane with custom values
-Plane::Plane(float y, Vector3 orientation, Material material)
+Plane::Plane(double y, Vector3 orientation, Material material)
 {
     this->_y = y;
     this->_orientation = orientation;
@@ -23,17 +23,17 @@ Plane::Plane(float y, Vector3 orientation, Material material)
 }
 
 // Calculates if the Plane is hit by 'ray', is closer than 't_max' and farther than T_MIN
-bool    Plane::hit(Ray& ray, float t_max) const
+bool    Plane::hit(Ray& ray, double t_max) const
 {
-    Vector3 position(0.0f, this->_y, 0.0f);
+    Vector3 position(0.0, this->_y, 0.0);
 
-    float d = dot(ray.getDirection(), this->_orientation);
-    if (d == 0.0f)
+    double d = dot(ray.getDirection(), this->_orientation);
+    if (d == 0.0)
     {
         return (false);
     }
 
-    float t = dot(position - ray.getOrigin(), this->_orientation) / d;
+    double t = dot(position - ray.getOrigin(), this->_orientation) / d;
     if (t > t_max || t < T_MIN)
     {
         return (false);

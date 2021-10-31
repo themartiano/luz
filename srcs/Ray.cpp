@@ -9,8 +9,8 @@
 // Constructs the Ray with default values
 Ray::Ray(void)
 {
-    this->_origin = Vector3(0.0f, 0.0f, 0.0f);
-    this->_direction = Vector3(0.0f, 0.0f, 0.0f);
+    this->_origin = Vector3(0.0, 0.0, 0.0);
+    this->_direction = Vector3(0.0, 0.0, 0.0);
 }
 
 // Constructs the Ray with custom values
@@ -21,7 +21,7 @@ Ray::Ray(Vector3 origin, Vector3 direction)
 }
 
 // Returns a point on the ray where 't' determines its position
-Vector3 Ray::pointAtRay(float t)
+Vector3 Ray::pointAtRay(double t)
 {
     return (this->_origin + (Vector3)(this->_direction * t));
 }

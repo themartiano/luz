@@ -24,7 +24,7 @@ class	Scene
 		void	setMaxLightBounces(const int maxLightBounces);
 		bool	getGammaCorrected(void) const;
 		void	setGammaCorrected(bool gamma);
-		float	getSkyline(void) const;
+		double	getSkyline(void) const;
 		bool	getRenderSky(void) const;
 		void	setRenderSky(bool renderSky);
 		Color	getBackgroundColor(void) const;
@@ -38,12 +38,12 @@ class	Scene
 	private:
 		int						_xResolution;
 		int						_yResolution;
-		float					_t_max;
+		double					_t_max;
 		int						_sampleCount;
 		int						_maxLightBounces;
 		bool					_gammaCorrected;
 		unsigned char*			_pixelArray;
-		float					_skyline;
+		double					_skyline;
 		bool					_renderSky;
 		Color					_backgroundColor;
 		//Light					_ambientLight;

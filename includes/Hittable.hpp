@@ -8,7 +8,7 @@ class   Hittable
 {
     public:
         virtual ~Hittable(void) = default;
-        virtual bool        hit(Ray& ray, float t_max) const = 0;
+        virtual bool        hit(Ray& ray, double t_max) const = 0;
         virtual bool        createBoundingBox(AABB& outputBoundingBox) const = 0;
 };
 

@@ -11,12 +11,12 @@
 Sphere::Sphere(void)
 {
 	this->_position = Vector3();
-	this->_material = Material(Color(0.49f, 0.49f, 0.49f), 1.0f, 0.0f, 0.5f, 0.0f, false, false, 0.0f);
-	this->_radius = 1.0f;
+	this->_material = Material(Color(0.49, 0.49, 0.49), 1.0, 0.0, 0.5, 0.0, false, false, 0.0);
+	this->_radius = 1.0;
 }
 
 // Constructs the Sphere with custom values
-Sphere::Sphere(Vector3 position, Material material, float radius)
+Sphere::Sphere(Vector3 position, Material material, double radius)
 {
 	this->_position = position;
 	this->_material = material;
@@ -30,23 +30,23 @@ Vector3	Sphere::getPosition(void) const
 }
 
 // Returns the Sphere's radius
-float	Sphere::getRadius(void) const
+double	Sphere::getRadius(void) const
 {
 	return (this->_radius);
 }
 
 // Calculates if the Sphere is hit by 'ray', is closer than 't_max' and farther than T_MIN
-bool    Sphere::hit(Ray& ray, float t_max) const
+bool    Sphere::hit(Ray& ray, double t_max) const
 {
 	Vector3 oc = ray.getOrigin() - this->_position;
-	float a = dot(ray.getDirection(), ray.getDirection());
-	float b = dot(oc, ray.getDirection());
-	float c = dot(oc, oc) - (this->_radius * this->_radius);
-	float discriminant = (b * b) - (a * c);
+	double a = dot(ray.getDirection(), ray.getDirection());
+	double b = dot(oc, ray.getDirection());
+	double c = dot(oc, oc) - (this->_radius * this->_radius);
+	double discriminant = (b * b) - (a * c);
 
-	if (discriminant > 0.0f)
+	if (discriminant > 0.0)
     {
-        float temp = (-b - sqrt((b * b) - (a * c))) / a;
+        double temp = (-b - sqrt((b * b) - (a * c))) / a;
         if (temp < t_max && temp > T_MIN)
         {
             ray.hitRecord.t = temp;

@@ -11,15 +11,15 @@ class   Rectangle : public Hittable
 {
     public:
         Rectangle(void);
-        Rectangle(Transform transform, Material material, float width, float height);
-		virtual bool    hit(Ray& ray, float t_max) const override;
+        Rectangle(Transform transform, Material material, double width, double height);
+		virtual bool    hit(Ray& ray, double t_max) const override;
 		virtual bool    createBoundingBox(AABB& outputBoundingBox) const override;
 
     private:
         Transform   _transform;
         Material    _material;
-        float       _width;
-        float       _height;
+        double       _width;
+        double       _height;
 };
 
 #endif

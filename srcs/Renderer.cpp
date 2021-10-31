@@ -37,13 +37,13 @@ void	render(Scene& scene)
 	{
 		for (int x = 0; x < width; x++)
 		{
-			Color pixelColor(0.0f, 0.0f, 0.0f);
+			Color pixelColor(0.0, 0.0, 0.0);
 
 			for (int samples = 0; samples < sampleCount; samples++)
 			{
 				pixelColor += calculatePixelColor(scene, x, y);
 			}
-			pixelColor /= float(sampleCount);
+			pixelColor /= double(sampleCount);
 			if (gammaCorrected)
 			{
 				pixelColor = Color(sqrtf(pixelColor.getRed()), sqrtf(pixelColor.getGreen()), sqrtf(pixelColor.getBlue())); // Gamma (2) correction
@@ -52,22 +52,22 @@ void	render(Scene& scene)
 			// Replaces NaN with zeros (in case there's a problematic sample)
 			if (pixelColor.getRed() != pixelColor.getRed())
 			{
-				pixelColor.setRed(0.0f);
+				pixelColor.setRed(0.0);
 			}
 			if (pixelColor.getGreen() != pixelColor.getGreen())
 			{
-				pixelColor.setGreen(0.0f);
+				pixelColor.setGreen(0.0);
 			}
 			if (pixelColor.getBlue() != pixelColor.getBlue())
 			{
-				pixelColor.setBlue(0.0f);
+				pixelColor.setBlue(0.0);
 			}
 
 			scene.setPixelArray((y * width) + x, pixelColor);
 		}
 		if (y % percentageUpdateFactor == 0)
 		{
-			int percentage = (float(y) / float(height)) * 100.0f;
+			int percentage = (double(y) / double(height)) * 100.0;
 			std::cout << CLR_WHITE << "\r[ " << percentage << "% ]" << std::flush;
 		}
 	}
@@ -80,28 +80,28 @@ void	render(Scene& scene)
 // Calculates the color for the pixel at 'x' and 'y'. Creates rays, checks for intersections with objects on 'scene' and bounce light rays
 static Color	calculatePixelColor(Scene& scene, int x, int y)
 {
-	static float width = float(scene.getXResolution());
-	static float height = float(scene.getYResolution());
+	static double width = double(scene.getXResolution());
+	static double height = double(scene.getYResolution());
 
-	float xU = float(x + randomFloat()) / width;
-	float yV = float(y + randomFloat()) / height;
+	double xU = double(x + randomdouble()) / width;
+	double yV = double(y + randomdouble()) / height;
 
 	static Vector3	cameraPosition = scene.getActiveCamera().getLookFrom();
 
-    static float	halfWidth = tan((((float)scene.getActiveCamera().getFOV() * M_PI) / 180.0f) / 2.0f);
-    static float	halfHeight = (height / width) * halfWidth;
+    static double	halfWidth = tan((((double)scene.getActiveCamera().getFOV() * M_PI) / 180.0) / 2.0);
+    static double	halfHeight = (height / width) * halfWidth;
 
-	static float	lensRadius = scene.getActiveCamera().getAperture() / 2.0f;
-	static float	focusDistance = vectorLength(cameraPosition - scene.getActiveCamera().getLookAt());
+	static double	lensRadius = scene.getActiveCamera().getAperture() / 2.0;
+	static double	focusDistance = vectorLength(cameraPosition - scene.getActiveCamera().getLookAt());
 
 	static Vector3	w = normalize(cameraPosition - scene.getActiveCamera().getLookAt());
-	static Vector3	viewUp(0.0f, -1.0f, 0.0f);
+	static Vector3	viewUp(0.0, -1.0, 0.0);
 	static Vector3	u = normalize(cross(viewUp, w));
 	static Vector3	v = cross(w, u);
 
 	static Vector3	lowerLeftCorner = cameraPosition - (u * halfWidth * focusDistance) - (v * halfHeight * focusDistance) - (w * focusDistance);
-	static Vector3	horizontal = u * (halfWidth * 2.0f * focusDistance);
-	static Vector3	vertical = v * (halfHeight * 2.0f * focusDistance);
+	static Vector3	horizontal = u * (halfWidth * 2.0 * focusDistance);
+	static Vector3	vertical = v * (halfHeight * 2.0 * focusDistance);
 
 	Vector3	rd = randomPointInsideUnitDisk() * lensRadius;
 	Vector3	offset = u * rd.getX() + v * rd.getY();
@@ -126,10 +126,10 @@ static Color	calculateLightRaysColor(Ray& ray, Scene& scene, Color backgroundCol
 
 	if (bounces > maxLightBounces)
 	{
-		return (Color(0.0f, 0.0f, 0.0f));
+		return (Color(0.0, 0.0, 0.0));
 	}
 
-	Color color, emitted = Color(0.0f, 0.0f, 0.0f);
+	Color color, emitted = Color(0.0, 0.0, 0.0);
 	if (checkHits(scene, ray))
 	{
 		ray.setOrigin(ray.hitRecord.position);
@@ -144,7 +144,7 @@ static Color	calculateLightRaysColor(Ray& ray, Scene& scene, Color backgroundCol
 			calculateLightRayBounceDirection(ray, color);
 		}
 
-		if ((ray.hitRecord.material.getMetallic() == 1.0f && dot(ray.getDirection(), ray.hitRecord.normal) <= 0.0f))
+		if ((ray.hitRecord.material.getMetallic() == 1.0 && dot(ray.getDirection(), ray.hitRecord.normal) <= 0.0))
 		{
 			return (emitted + color);
 		}
@@ -158,19 +158,19 @@ static Color	calculateLightRaysColor(Ray& ray, Scene& scene, Color backgroundCol
 // Calculates the sky interpolation for the background and reflexes
 static Color	calculateSkyInterpolation(Scene& scene, Ray& ray)
 {
-	static float	skyLine = scene.getSkyline();
+	static double	skyLine = scene.getSkyline();
 
 	Vector3	normalizedDirection = normalize(ray.getDirection());
 
-	float temp = skyLine * (-normalizedDirection.getY() + 1.0f);
+	double temp = skyLine * (-normalizedDirection.getY() + 1.0);
 
-	return ((Color(1.0f, 1.0f, 1.0f) * (1.0f - temp)) + (Color(0.5f, 0.7f, 1.0f) * temp));
+	return ((Color(1.0, 1.0, 1.0) * (1.0 - temp)) + (Color(0.5, 0.7, 1.0) * temp));
 }
 
 // Calculates the light rays bounce/reflection direction
 static void	calculateLightRayBounceDirection(Ray& ray, Color& color)
 {
-	if (ray.hitRecord.material.getMetallic() == 1.0f)
+	if (ray.hitRecord.material.getMetallic() == 1.0)
 	{
 		ray.setDirection(reflect(ray.getDirection(), ray.hitRecord.normal) + (randomPointInsideUnitSphere() * ray.hitRecord.material.getReflectionFuzziness()));
 		color = ray.hitRecord.material.getColor() * ray.hitRecord.material.getAlbedo();
@@ -181,20 +181,20 @@ static void	calculateLightRayBounceDirection(Ray& ray, Color& color)
 	{
 		Vector3	refractedVector;
 		Vector3	outwardsNormal;
-		float	reflectionProbability;
-		float	cosine;
-		float	refractiveIndex = RI_GLASS;
-		float	directionNormalDot = dot(ray.getDirection(), ray.hitRecord.normal);
+		double	reflectionProbability;
+		double	cosine;
+		double	refractiveIndex = RI_GLASS;
+		double	directionNormalDot = dot(ray.getDirection(), ray.hitRecord.normal);
 
-		if (directionNormalDot > 0.0f)
+		if (directionNormalDot > 0.0)
 		{
-			outwardsNormal = ray.hitRecord.normal * -1.0f;
+			outwardsNormal = ray.hitRecord.normal * -1.0;
 			cosine = refractiveIndex * directionNormalDot / vectorLength(ray.getDirection());
 		}
 		else
 		{
 			outwardsNormal = ray.hitRecord.normal;
-			refractiveIndex = 1.0f / refractiveIndex;
+			refractiveIndex = 1.0 / refractiveIndex;
 			cosine = -directionNormalDot / vectorLength(ray.getDirection());
 		}
 
@@ -204,10 +204,10 @@ static void	calculateLightRayBounceDirection(Ray& ray, Color& color)
 		}
 		else
 		{
-			reflectionProbability = 1.0f;
+			reflectionProbability = 1.0;
 		}
 
-		if (randomFloat() < reflectionProbability)
+		if (randomdouble() < reflectionProbability)
 		{
 			ray.setOrigin(ray.hitRecord.position);
 			ray.setDirection(reflect(ray.getDirection(), ray.hitRecord.normal));
@@ -218,19 +218,19 @@ static void	calculateLightRayBounceDirection(Ray& ray, Color& color)
 			ray.setDirection(refractedVector);
 		}
 
-		color = Color(1.0f, 1.0f, 1.0f);
+		color = Color(1.0, 1.0, 1.0);
 		return;
 	}
 
 	Vector3	newTarget = ray.hitRecord.position + ray.hitRecord.normal + randomPointInsideUnitSphere();
-	if (ray.hitRecord.material.getMetallic() == 0.0f)
+	if (ray.hitRecord.material.getMetallic() == 0.0)
 	{
 		ray.setDirection(newTarget - ray.hitRecord.position);
 		color = ray.hitRecord.material.getColor() * ray.hitRecord.material.getAlbedo();
 		return;
 	}
 
-	if (randomFloat() < ray.hitRecord.material.getMetallic())
+	if (randomdouble() < ray.hitRecord.material.getMetallic())
 	{
 		ray.setDirection(reflect(ray.getDirection(), ray.hitRecord.normal) + (randomPointInsideUnitSphere() * ray.hitRecord.material.getReflectionFuzziness()));
 	}
@@ -244,7 +244,7 @@ static void	calculateLightRayBounceDirection(Ray& ray, Color& color)
 static bool	checkHits(Scene& scene, Ray& ray)
 {
 	bool	anyHit = false;
-	float	currentClosestObject = T_MAX;
+	double	currentClosestObject = T_MAX;
 	static std::vector<std::shared_ptr<Hittable>> hittables = scene.getHittables();
 
 	for (std::shared_ptr<Hittable> hittable : hittables)

@@ -16,13 +16,13 @@ Scene::Scene(void)
 	this->_sampleCount = D_SAMPLE_COUNT;
 	this->_maxLightBounces = D_MAX_LIGHT_BOUNCES;
 	this->_gammaCorrected = true;
-	this->_skyline = 0.5f;
+	this->_skyline = 0.5;
 	this->_renderSky = true;
-	this->_backgroundColor = Color(0.0f, 0.0f, 0.0f);
+	this->_backgroundColor = Color(0.0, 0.0, 0.0);
 
 	this->_activeCamera = 0;
 
-	this->_t_max = std::numeric_limits<float>::max();
+	this->_t_max = std::numeric_limits<double>::max();
 }
 
 // Appends 'camera' to the camera vector (list)
@@ -103,7 +103,7 @@ void	Scene::setGammaCorrected(bool gammaCorrected)
 	this->_gammaCorrected = gammaCorrected;
 }
 // Returns Skyline (used on sky colors interpolation)
-float	Scene::getSkyline(void) const
+double	Scene::getSkyline(void) const
 {
 	return (this->_skyline);
 }
@@ -138,16 +138,16 @@ void	Scene::setPixelArray(int index, Color pixelColor)
 	// Check if index is in range. (x res * y res * RGB for each pixel)
 	if (index < this->_xResolution * this->_yResolution * 3)
 	{
-		float r = pixelColor.getRed();
-		setFloatRange(r, 0.0f, 1.0f);
-		float g = pixelColor.getGreen();
-		setFloatRange(g, 0.0f, 1.0f);
-		float b = pixelColor.getBlue();
-		setFloatRange(b, 0.0f, 1.0f);
+		double r = pixelColor.getRed();
+		setdoubleRange(r, 0.0, 1.0);
+		double g = pixelColor.getGreen();
+		setdoubleRange(g, 0.0, 1.0);
+		double b = pixelColor.getBlue();
+		setdoubleRange(b, 0.0, 1.0);
 
-		this->_pixelArray[(index * 3) + 2] = (unsigned char)(r * 255.0f);
-		this->_pixelArray[(index * 3) + 1] = (unsigned char)(g * 255.0f);
-		this->_pixelArray[index * 3] = (unsigned char)(b * 255.0f);
+		this->_pixelArray[(index * 3) + 2] = (unsigned char)(r * 255.0);
+		this->_pixelArray[(index * 3) + 1] = (unsigned char)(g * 255.0);
+		this->_pixelArray[index * 3] = (unsigned char)(b * 255.0);
 	}
 }
 

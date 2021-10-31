@@ -8,12 +8,12 @@ class	Light
 {
 	public:
 		Light(void);
-		Light(Color color, Transform transform, float brightness);
+		Light(Color color, Transform transform, double brightness);
 
 	private:
 		Color		_color;
 		Transform	_transform;
-		float		_brightness;
+		double		_brightness;
 };
 
 #endif

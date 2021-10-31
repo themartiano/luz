@@ -9,12 +9,12 @@ class   Plane : public Hittable
 {
     public:
         Plane(void);
-        Plane(float y, Vector3 orientation, Material material);
-        virtual bool    hit(Ray& ray, float t_max) const override;
+        Plane(double y, Vector3 orientation, Material material);
+        virtual bool    hit(Ray& ray, double t_max) const override;
         virtual bool    createBoundingBox(AABB& boundingBox) const override;
 
     private:
-        float       _y;
+        double       _y;
         Vector3     _orientation;
         Material    _material;
 

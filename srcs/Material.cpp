@@ -8,26 +8,26 @@
 // Constructs the Material with default values
 Material::Material(void)
 {
-	this->_color = Color(0.0f, 0.0f, 0.0f);
-	this->_metallic = 0.0f;
-	this->_albedo = 0.5f;
-	this->_opacity = 1.0f;
-	this->_reflectionFuzziness = 0.0f;
+	this->_color = Color(0.0, 0.0, 0.0);
+	this->_metallic = 0.0;
+	this->_albedo = 0.5;
+	this->_opacity = 1.0;
+	this->_reflectionFuzziness = 0.0;
 	this->_isDielectric = false;
 	this->_isEmissive = false;
-	this->_lightIntensity = 0.0f;
+	this->_lightIntensity = 0.0;
 }
 
 // Constructs the Material with custom values
-Material::Material(Color color, float opacity, float metallic, float albedo, float reflectionFuzziness, bool isDielectric, bool isEmissive, float lightIntensity)
+Material::Material(Color color, double opacity, double metallic, double albedo, double reflectionFuzziness, bool isDielectric, bool isEmissive, double lightIntensity)
 {
-	setFloatRange(metallic, 0.0f, 1.0f);
+	setdoubleRange(metallic, 0.0, 1.0);
 	this->_metallic = metallic;
-	setFloatRange(albedo, 0.0f, 1.0f);
+	setdoubleRange(albedo, 0.0, 1.0);
 	this->_albedo = albedo;
-	setFloatRange(opacity, 0.0f, 1.0f);
+	setdoubleRange(opacity, 0.0, 1.0);
 	this->_opacity = opacity;
-	setFloatRange(reflectionFuzziness, 0.0f, 1.0f);
+	setdoubleRange(reflectionFuzziness, 0.0, 1.0);
 	this->_reflectionFuzziness = reflectionFuzziness;
 	this->_isDielectric = isDielectric;
 	this->_isEmissive = isEmissive;
@@ -48,19 +48,19 @@ void	Material::setColor(Color color)
 }
 
 // Returns the Material's metallic value
-float	Material::getMetallic(void) const
+double	Material::getMetallic(void) const
 {
 	return (this->_metallic);
 }
 
 // Returns the Material's albedo
-float	Material::getAlbedo(void) const
+double	Material::getAlbedo(void) const
 {
 	return (this->_albedo);
 }
 
 // Returns the Material's reflection fuzziness
-float	Material::getReflectionFuzziness(void) const
+double	Material::getReflectionFuzziness(void) const
 {
 	return (this->_reflectionFuzziness);
 }
@@ -78,7 +78,7 @@ bool	Material::getIsEmissive(void) const
 }
 
 // Returns the Material's light intensity
-float	Material::getLightIntensity(void) const
+double	Material::getLightIntensity(void) const
 {
 	return (this->_lightIntensity);
 }

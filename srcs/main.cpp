@@ -39,74 +39,74 @@ int	main(int argc, char *argv[])
 	scene.setMaxLightBounces(16);
 	scene.setGammaCorrected(true);
 	scene.setRenderSky(false);
-	scene.setBackgroundColor(Color(0.0f, 0.0f, 0.0f));
+	scene.setBackgroundColor(Color(0.0, 0.0, 0.0));
 
 	// Current coordinate system ~~ Forward: -Z | Up: -Y | Right: -X
 
 	// Cornell Box
-	scene.addCamera(Camera(Vector3(0.0f, 0.0f, 390.0f), Vector3(0.0f, 0.0f, -250.0f), 65, 0.0f));
+	scene.addCamera(Camera(Vector3(0.0, 0.0, 390.0), Vector3(0.0, 0.0, -250.0), 65, 0.0));
 
 	// Top Wall
 	scene.addHittable(std::make_shared<Rectangle>(
-		Transform(Vector3(0.0f, -250.0f, -250.0f), Vector3(0.0f, 1.0f, 0.0f), Vector3(1.0f, 1.0f, 1.0f)),
-		Material(Color(1.0f, 1.0f, 1.0f), 1.0f, 0.0f, 0.5f, 0.0f, false, false, 0.0f),
-		500.0f, 500.0f
+		Transform(Vector3(0.0, -250.0, -250.0), Vector3(0.0, 1.0, 0.0), Vector3(1.0, 1.0, 1.0)),
+		Material(Color(1.0, 1.0, 1.0), 1.0, 0.0, 0.5, 0.0, false, false, 0.0),
+		500.0, 500.0
 	));
 
 	// Light (Top)
 	scene.addHittable(std::make_shared<Rectangle>(
-		Transform(Vector3(0.0f, -250.0f, -125.0f), Vector3(0.0f, 1.0f, 0.0f), Vector3(1.0f, 1.0f, 1.0f)),
-		Material(Color(1.0f, 1.0f, 1.0f), 1.0f, 0.0f, 0.5f, 0.0f, false, true, 10.0f),
-		250.0f, 125.0f
+		Transform(Vector3(0.0, -250.0, -125.0), Vector3(0.0, 1.0, 0.0), Vector3(1.0, 1.0, 1.0)),
+		Material(Color(1.0, 1.0, 1.0), 1.0, 0.0, 0.5, 0.0, false, true, 10.0),
+		250.0, 125.0
 	));
 
 	// Back Wall
 	scene.addHittable(std::make_shared<Rectangle>(
-		Transform(Vector3(0.0f, 0.0f, -250.0f), Vector3(0.0f, 0.0f, 1.0f), Vector3(1.0f, 1.0f, 1.0f)),
-		Material(Color(1.0f, 1.0f, 1.0f), 1.0f, 0.0f, 0.5f, 0.0f, false, false, 0.0f),
-		500.0f, 500.0f
+		Transform(Vector3(0.0, 0.0, -250.0), Vector3(0.0, 0.0, 1.0), Vector3(1.0, 1.0, 1.0)),
+		Material(Color(1.0, 1.0, 1.0), 1.0, 0.0, 0.5, 0.0, false, false, 0.0),
+		500.0, 500.0
 	));
 
 	// Floor Wall
 	scene.addHittable(std::make_shared<Rectangle>(
-		Transform(Vector3(0.0f, 250.0f, -250.0f), Vector3(0.0f, -1.0f, 0.0f), Vector3(1.0f, 1.0f, 1.0f)),
-		Material(Color(1.0f, 1.0f, 1.0f), 1.0f, 0.0f, 0.5f, 0.0f, false, false, 0.0f),
-		500.0f, 500.0f
+		Transform(Vector3(0.0, 250.0, -250.0), Vector3(0.0, -1.0, 0.0), Vector3(1.0, 1.0, 1.0)),
+		Material(Color(1.0, 1.0, 1.0), 1.0, 0.0, 0.5, 0.0, false, false, 0.0),
+		500.0, 500.0
 	));
 
 	// Right Wall
 	scene.addHittable(std::make_shared<Rectangle>(
-		Transform(Vector3(-250.0f, 0.0f, -250.0f), Vector3(1.0f, 0.0f, 0.0f), Vector3(1.0f, 1.0f, 1.0f)),
-		Material(Color(0.0f, 1.0f, 0.0f), 1.0f, 0.0f, 0.5f, 0.0f, false, false, 0.0f),
-		500.0f, 500.0f
+		Transform(Vector3(-250.0, 0.0, -250.0), Vector3(1.0, 0.0, 0.0), Vector3(1.0, 1.0, 1.0)),
+		Material(Color(0.0, 1.0, 0.0), 1.0, 0.0, 0.5, 0.0, false, false, 0.0),
+		500.0, 500.0
 	));
 
 	// Left Wall
 	scene.addHittable(std::make_shared<Rectangle>(
-		Transform(Vector3(250.0f, 0.0f, -250.0f), Vector3(-1.0f, 0.0f, 0.0f), Vector3(1.0f, 1.0f, 1.0f)),
-		Material(Color(1.0f, 0.0f, 0.0f), 1.0f, 0.0f, 0.5f, 0.0f, false, false, 0.0f),
-		500.0f, 500.0f
+		Transform(Vector3(250.0, 0.0, -250.0), Vector3(-1.0, 0.0, 0.0), Vector3(1.0, 1.0, 1.0)),
+		Material(Color(1.0, 0.0, 0.0), 1.0, 0.0, 0.5, 0.0, false, false, 0.0),
+		500.0, 500.0
 	));
 
 	// Metal Sphere
 	scene.addHittable(std::make_shared<Sphere>(
-		Vector3(200.0f, 200.0f, -200.0f),
-		Material(Color(0.8f, 0.8f, 0.8f), 1.0f, 1.0f, 0.5f, 0.0f, false, false, 0.0f),
-		50.0f
+		Vector3(200.0, 200.0, -200.0),
+		Material(Color(0.8, 0.8, 0.8), 1.0, 1.0, 0.5, 0.0, false, false, 0.0),
+		50.0
 	));
 
 	// Glass Sphere
 	scene.addHittable(std::make_shared<Sphere>(
-		Vector3(0.0f, 100.0f, -150.0f),
-		Material(Color(1.0f, 1.0f, 1.0f), 1.0f, 0.0f, 0.5f, 0.0f, true, false, 0.0f),
-		100.0f
+		Vector3(0.0, 100.0, -150.0),
+		Material(Color(1.0, 1.0, 1.0), 1.0, 0.0, 0.5, 0.0, true, false, 0.0),
+		100.0
 	));
 
 	// Golden Metal Sphere
 	scene.addHittable(std::make_shared<Sphere>(
-		Vector3(-200.0f, 200.0f, -200.0f),
-		Material(Color(1.0f, 0.843f, 0.0f), 1.0f, 1.0f, 0.5f, 0.0f, false, false, 0.0f),
-		50.0f
+		Vector3(-200.0, 200.0, -200.0),
+		Material(Color(1.0, 0.843, 0.0), 1.0, 1.0, 0.5, 0.0, false, false, 0.0),
+		50.0
 	));
 
 	render(scene);

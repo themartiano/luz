@@ -5,11 +5,11 @@ class	Vector2
 {
 	public:
 		Vector2(void);
-		Vector2(float x, float y);
+		Vector2(double x, double y);
 
 	private:
-		float	_x;
-		float	_y;
+		double	_x;
+		double	_y;
 };
 
 #endif
