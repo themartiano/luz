@@ -64,6 +64,14 @@ Vector3&	Vector3::operator/=(const double f)
 	return (*this);
 }
 
+Vector3&	Vector3::operator+=(const Vector3 vector)
+{
+	this->_x += vector.getX();
+	this->_y += vector.getY();
+	this->_z += vector.getZ();
+	return (*this);
+}
+
 double	Vector3::operator[](int index) const
 {
 	if (index == 0)

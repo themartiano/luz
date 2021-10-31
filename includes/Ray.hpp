@@ -6,10 +6,11 @@
 
 struct HitRecord
 {
-    double       t;
-    Vector3     position;
-    Vector3     normal;
-    Material    material;
+    double      t0 = 0.0;
+    double      t1 = 0.0;
+    Vector3     position = Vector3(0.0, 0.0, 0.0);
+    Vector3     normal = Vector3(0.0, 0.0, 0.0);
+    Material    material = Material();
 };
 
 

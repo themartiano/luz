@@ -39,7 +39,7 @@ bool    Plane::hit(Ray& ray, double t_max) const
         return (false);
     }
 
-    ray.hitRecord.t = t;
+    ray.hitRecord.t0 = t;
     ray.hitRecord.normal = this->_orientation;
     ray.hitRecord.material = this->_material;
     ray.hitRecord.position = ray.pointAtRay(t);

@@ -13,6 +13,8 @@
 #include <fstream>
 #include <iostream>
 
+static void	mountCornellBox(Scene& scene);
+
 // Main function
 int	main(int argc, char *argv[])
 {
@@ -35,15 +37,43 @@ int	main(int argc, char *argv[])
 	scene.setXResolution(500);
 	scene.setYResolution(500);
 	scene.initializePixelArray();
-	scene.setSampleCount(16);
-	scene.setMaxLightBounces(16);
+	scene.setSampleCount(4);
+	scene.setMaxLightBounces(4);
 	scene.setGammaCorrected(true);
-	scene.setRenderSky(false);
+	scene.setRenderSky(true);
 	scene.setBackgroundColor(Color(0.0, 0.0, 0.0));
 
 	// Current coordinate system ~~ Forward: -Z | Up: -Y | Right: -X
 
-	// Cornell Box
+	//mountCornellBox(scene);
+	scene.addCamera(Camera(Vector3(0.0, -5.0, 0.0), Vector3(0.0, -5.0, -1.0), 65, 0.0));
+
+	scene.addHittable(std::make_shared<Plane>(
+		0.0,
+		Vector3(0.0, -1.0, 0.0),
+		Material(Color(0.33, 0.49, 0.27), 1.0, 0.0, 0.5, 0.0, false, false, 0.0)
+	));
+
+	scene.addHittable(std::make_shared<Sphere>(
+		Vector3(0.0, -3.0, -20.0),
+		Material(Color(0.8, 0.8, 0.8), 1.0, 0.0, 0.5, 0.0, false, true, 5.0),
+		3.0
+	));
+
+	render(scene);
+
+	// Writes BMP image file
+	BMP bmp("render");
+	bmp.writeFile(scene);
+
+	return (0);
+	(void)argv;
+}
+
+// Setups a Cornell Box for rendering
+static void	mountCornellBox(Scene& scene)
+{
+	// Camera
 	scene.addCamera(Camera(Vector3(0.0, 0.0, 390.0), Vector3(0.0, 0.0, -250.0), 65, 0.0));
 
 	// Top Wall
@@ -108,13 +138,4 @@ int	main(int argc, char *argv[])
 		Material(Color(1.0, 0.843, 0.0), 1.0, 1.0, 0.5, 0.0, false, false, 0.0),
 		50.0
 	));
-
-	render(scene);
-
-	// Writes BMP image file
-	BMP bmp("render");
-	bmp.writeFile(scene);
-
-	return (0);
-	(void)argv;
 }

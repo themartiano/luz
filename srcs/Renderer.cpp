@@ -8,6 +8,7 @@
 #include "Clock.hpp"
 #include "RefractiveIndexes.hpp"
 #include "SystemSpecifics.hpp"
+#include "Atmosphere.hpp"
 #include <cmath>
 #include <iostream>
 #include <stdlib.h>
@@ -80,6 +81,8 @@ void	render(Scene& scene)
 // Calculates the color for the pixel at 'x' and 'y'. Creates rays, checks for intersections with objects on 'scene' and bounce light rays
 static Color	calculatePixelColor(Scene& scene, int x, int y)
 {
+	static Atmosphere	atmosphere;
+
 	static double width = double(scene.getXResolution());
 	static double height = double(scene.getYResolution());
 
@@ -111,7 +114,9 @@ static Color	calculatePixelColor(Scene& scene, int x, int y)
 	static bool		renderSky = scene.getRenderSky();
 	if (renderSky == true)
 	{
-		return (calculateLightRaysColor(ray, scene, calculateSkyInterpolation(scene, ray), 0));
+		Ray ray2(cameraPosition + offset, lowerLeftCorner + (horizontal * xU) + (vertical * yV) - cameraPosition - offset);
+		ray2.setOrigin(ray2.getOrigin() + Vector3(0.0, atmosphere.getEarthRadius(), 0.0));
+		return (calculateLightRaysColor(ray, scene, atmosphere.computeIncidentLight(ray2), 0));
 	}
 	else
 	{
@@ -251,7 +256,7 @@ static bool	checkHits(Scene& scene, Ray& ray)
 	{
 		if (hittable->hit(ray, currentClosestObject))
 		{
-			currentClosestObject = ray.hitRecord.t;
+			currentClosestObject = ray.hitRecord.t0;
 			anyHit = true;
 		}
 	}

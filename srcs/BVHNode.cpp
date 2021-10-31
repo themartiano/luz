@@ -101,7 +101,7 @@ bool    BVHNode::hit(Ray& ray, double t_max) const
     }
 
     bool hitLeft = this->_left->hit(ray, t_max);
-    bool hitRight = this->_right->hit(ray, hitLeft ? ray.hitRecord.t : t_max);
+    bool hitRight = this->_right->hit(ray, hitLeft ? ray.hitRecord.t0 : t_max);
 
     return (hitLeft || hitRight);
 }

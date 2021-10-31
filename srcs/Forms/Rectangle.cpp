@@ -64,7 +64,7 @@ bool    Rectangle::hit(Ray& ray, double t_max) const
         }
     }
 
-    ray.hitRecord.t = t;
+    ray.hitRecord.t0 = t;
     ray.hitRecord.normal = this->_transform.getOrientation();
     ray.hitRecord.material = this->_material;
     ray.hitRecord.position = ray.pointAtRay(t);

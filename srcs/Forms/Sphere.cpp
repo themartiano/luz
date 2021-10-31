@@ -46,25 +46,25 @@ bool    Sphere::hit(Ray& ray, double t_max) const
 
 	if (discriminant > 0.0)
     {
-        double temp = (-b - sqrt((b * b) - (a * c))) / a;
-        if (temp < t_max && temp > T_MIN)
+        double temp1 = (-b - sqrt((b * b) - (a * c))) / a;
+        double temp2 = (-b + sqrt((b * b) - (a * c))) / a;
+
+        if (temp1 < t_max && temp1 > T_MIN)
         {
-            ray.hitRecord.t = temp;
-            ray.hitRecord.position = ray.pointAtRay(ray.hitRecord.t);
-            ray.hitRecord.normal = (ray.hitRecord.position - this->_position) / this->_radius;
-            ray.hitRecord.material = this->_material;
-            return (true);
+            ray.hitRecord.t0 = temp1;
+            ray.hitRecord.t1 = temp2;
+        }
+        else if (temp2 < t_max && temp2 > T_MIN)
+        {
+            ray.hitRecord.t0 = temp2;
+            ray.hitRecord.t1 = temp1;
         }
 
-        temp = (-b + sqrt((b * b) - (a * c))) / a;
-        if (temp < t_max && temp > T_MIN)
-        {
-            ray.hitRecord.t = temp;
-            ray.hitRecord.position = ray.pointAtRay(ray.hitRecord.t);
-            ray.hitRecord.normal = (ray.hitRecord.position - this->_position) / this->_radius;
-            ray.hitRecord.material = this->_material;
-            return (true);
-        }
+        ray.hitRecord.position = ray.pointAtRay(ray.hitRecord.t0);
+        ray.hitRecord.normal = (ray.hitRecord.position - this->_position) / this->_radius;
+        ray.hitRecord.material = this->_material;
+
+        return (true);
     }
 
     return (false);
