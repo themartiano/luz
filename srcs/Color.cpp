@@ -16,13 +16,8 @@ Color::Color(void)
 // Constructs the Color with custom float values [ 0.0 => 1.0 ]
 Color::Color(float r, float g, float b)
 {
-	setFloatRange(r, 0.0f, 1.0f);
 	this->_red = r;
-
-	setFloatRange(g, 0.0f, 1.0f);
 	this->_green = g;
-
-	setFloatRange(b, 0.0f, 1.0f);
 	this->_blue = b;
 }
 
@@ -32,16 +27,34 @@ float	Color::getRed(void) const
 	return (this->_red);
 }
 
+// Sets the Color's Red value
+void	Color::setRed(float red)
+{
+	this->_red = red;
+}
+
 // Returns the Color's Green value
 float	Color::getGreen(void) const
 {
 	return (this->_green);
 }
 
+// Sets the Color's Green value
+void	Color::setGreen(float green)
+{
+	this->_green = green;
+}
+
 // Returns the Color's Blue value
 float	Color::getBlue(void) const
 {
 	return (this->_blue);
+}
+
+// Sets the Color's Blue value
+void	Color::setBlue(float blue)
+{
+	this->_blue = blue;
 }
 
 Color&	Color::operator+=(const Color &color2)

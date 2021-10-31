@@ -56,11 +56,11 @@ int	main(int argc, char *argv[])
 	// Light (Top)
 	scene.addHittable(std::make_shared<Rectangle>(
 		Transform(Vector3(0.0f, -250.0f, -125.0f), Vector3(0.0f, 1.0f, 0.0f), Vector3(1.0f, 1.0f, 1.0f)),
-		Material(Color(1.0f, 1.0f, 1.0f), 1.0f, 0.0f, 0.5f, 0.0f, false, true, 100.0f),
+		Material(Color(1.0f, 1.0f, 1.0f), 1.0f, 0.0f, 0.5f, 0.0f, false, true, 10.0f),
 		250.0f, 125.0f
 	));
 
-	// Front Wall
+	// Back Wall
 	scene.addHittable(std::make_shared<Rectangle>(
 		Transform(Vector3(0.0f, 0.0f, -250.0f), Vector3(0.0f, 0.0f, 1.0f), Vector3(1.0f, 1.0f, 1.0f)),
 		Material(Color(1.0f, 1.0f, 1.0f), 1.0f, 0.0f, 0.5f, 0.0f, false, false, 0.0f),
