@@ -115,7 +115,7 @@ static Color	calculatePixelColor(Scene& scene, int x, int y)
 	static bool		renderSky = scene.getRenderSky();
 	if (renderSky == true)
 	{
-		Ray atmosphereRay(ray.getOrigin() + Vector3(0.0, atmosphere.getEarthRadius(), 0.0), ray.getDirection() * -1.0);
+		Ray atmosphereRay(ray.getOrigin() + Vector3(0.0, atmosphere.getEarthRadius(), 0.0), ray.getDirection() * Vector3(0.0, -1.0, 0.0));
 
 		double t_max = T_MAX;
 		Sphere  earth(Vector3(0.0, 0.0, 0.0), Material(), atmosphere.getEarthRadius());
@@ -265,8 +265,11 @@ static bool	checkHits(Scene& scene, Ray& ray)
 	{
 		if (hittable->hit(ray, currentClosestObject))
 		{
-			currentClosestObject = ray.hitRecord.t0;
-			anyHit = true;
+			if (ray.hitRecord.t0 > T_MIN)
+			{
+				currentClosestObject = ray.hitRecord.t0;
+				anyHit = true;
+			}
 		}
 	}
 
