@@ -6,10 +6,10 @@
 
 Atmosphere::Atmosphere(void)
 {
-    // double angle = 64 / float(128) * M_PI * 0.6;
-    // this->_sunDirection = Vector3(0.0, cos(angle), -sin(angle));
+    float angle = M_PI * 0;
+    Vector3 sunDir(0.0, std::cos(angle), -std::sin(angle));
 
-    this->_sunDirection = Vector3(0.0, 1.0, 0.0);
+    //this->_sunDirection = Vector3(0.0, 0.0, 0.0);
 
     this->_earthRadius = 6360e3;
     this->_atmosphereRadius = 6420e3;
@@ -139,8 +139,8 @@ Color   Atmosphere::computeIncidentLight(Ray& ray, double t_max)
         //std::cout << this->_sunDirection.getX() << ", " << this->_sunDirection.getY() << ", " << this->_sunDirection.getZ() << std::endl;
         for (j = 0; j < numSamplesLight; ++j)
         {
-            Vector3 samplePositionLight = samplePosition - (tCurrentLight + segmentLengthLight * 0.5) * this->_sunDirection;
-            double  heightLight = vectorLength(samplePositionLight) + this->_earthRadius;
+            Vector3 samplePositionLight = samplePosition + (tCurrentLight + segmentLengthLight * 0.5) * this->_sunDirection;
+            double  heightLight = vectorLength(samplePositionLight) - this->_earthRadius;
             if (heightLight < 0.0)
             {
                 break;

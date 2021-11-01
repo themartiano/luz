@@ -17,7 +17,7 @@
 // Static function prototypes
 static Color	calculatePixelColor(Scene& scene, int x, int y);
 static bool		checkHits(Scene& scene, Ray& ray);
-static Color	calculateLightRaysColor(Ray& ray, Scene& scene, Color backgroundColor, int bounces);
+static Color	calculateLightRaysColor(Ray& ray, Scene& scene, int bounces);
 static void		calculateLightRayBounceDirection(Ray& ray, Color& color);
 static Color	calculateSkyInterpolation(Scene& scene, Ray& ray);
 
@@ -82,8 +82,6 @@ void	render(Scene& scene)
 // Calculates the color for the pixel at 'x' and 'y'. Creates rays, checks for intersections with objects on 'scene' and bounce light rays
 static Color	calculatePixelColor(Scene& scene, int x, int y)
 {
-	static Atmosphere	atmosphere;
-
 	static double width = double(scene.getXResolution());
 	static double height = double(scene.getYResolution());
 
@@ -112,31 +110,14 @@ static Color	calculatePixelColor(Scene& scene, int x, int y)
 
 	Ray ray(cameraPosition + offset, lowerLeftCorner + (horizontal * xU) + (vertical * yV) - cameraPosition - offset);
 
-	static bool		renderSky = scene.getRenderSky();
-	if (renderSky == true)
-	{
-		Ray atmosphereRay(ray.getOrigin() + Vector3(0.0, atmosphere.getEarthRadius(), 0.0), ray.getDirection() * Vector3(0.0, -1.0, 0.0));
-
-		double t_max = T_MAX;
-		Sphere  earth(Vector3(0.0, 0.0, 0.0), Material(), atmosphere.getEarthRadius());
-
-		// Checks ray collision with Earth
-		if (hitAtmosphere(earth, atmosphereRay) && ray.hitRecord.t1 > 0.0)
-		{
-			t_max = std::max(0.0, ray.hitRecord.t0);
-		}
-		return (calculateLightRaysColor(ray, scene, atmosphere.computeIncidentLight(atmosphereRay, t_max), 0));
-	}
-	else
-	{
-		return (calculateLightRaysColor(ray, scene, scene.getBackgroundColor(), 0));
-	}
+	return (calculateLightRaysColor(ray, scene, 0));
 }
 
 // Properly calculates light rays bounces, reflections, etc and returns the resulting color
-static Color	calculateLightRaysColor(Ray& ray, Scene& scene, Color backgroundColor, int bounces)
+static Color	calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
 {
 	static int maxLightBounces = scene.getMaxLightBounces();
+	static Atmosphere	atmosphere;
 
 	if (bounces > maxLightBounces)
 	{
@@ -163,10 +144,28 @@ static Color	calculateLightRaysColor(Ray& ray, Scene& scene, Color backgroundCol
 			return (emitted + color);
 		}
 
-		return (emitted + color * calculateLightRaysColor(ray, scene, backgroundColor, bounces + 1));
+		return (emitted + color * calculateLightRaysColor(ray, scene, bounces + 1));
 	}
 
-	return (backgroundColor);
+	static bool renderSky = scene.getRenderSky();
+	if (renderSky == true)
+	{
+		Ray atmosphereRay(ray.getOrigin() + Vector3(0.0, atmosphere.getEarthRadius(), 0.0), ray.getDirection() * Vector3(0.0, -1.0, 0.0));
+
+		double t_max = T_MAX;
+		// Sphere  earth(Vector3(0.0, 0.0, 0.0), Material(), atmosphere.getEarthRadius());
+
+		// // Checks ray collision with Earth
+		// if (hitAtmosphere(earth, atmosphereRay) && atmosphereRay.hitRecord.t1 > 0.0)
+		// {
+		// 	t_max = std::max(0.0, atmosphereRay.hitRecord.t0);
+		// }
+		return (atmosphere.computeIncidentLight(atmosphereRay, t_max));
+	}
+	else
+	{
+		return (scene.getBackgroundColor());
+	}
 }
 
 // Calculates the sky interpolation for the background and reflexes

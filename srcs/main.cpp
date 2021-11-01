@@ -48,36 +48,36 @@ int	main(int argc, char *argv[])
 	//mountCornellBox(scene);
 	scene.addCamera(Camera(Vector3(0.0, -5.0, 0.0), Vector3(0.0, -5.0, -1.0), 65, 0.0));
 
-	// scene.addHittable(std::make_shared<Plane>(
-	// 	0.0,
-	// 	Vector3(0.0, -1.0, 0.0),
-	// 	Material(Color(0.33, 0.49, 0.27), 1.0, 0.0, 0.5, 0.0, false, false, 0.0)
-	// ));
+	scene.addHittable(std::make_shared<Plane>(
+		0.0,
+		Vector3(0.0, -1.0, 0.0),
+		Material(Color(0.33, 0.49, 0.27), 1.0, 1.0, 0.5, 0.0, false, false, 0.0)
+	));
 
-	scene.addHittable(std::make_shared<Sphere>(
-		Vector3(0.0, -3.0, -20.0),
-		//Material(Color(0.8, 0.8, 0.8), 1.0, 0.0, 0.5, 0.0, false, true, 5.0),
-		Material(Color(1.0, 0.0, 0.0), 1.0, 1.0, 0.5, 0.0, false, false, 0.0),
-		3.0
-	));
-	scene.addHittable(std::make_shared<Sphere>(
-		Vector3(0.0, -3.0, 20.0),
-		//Material(Color(0.8, 0.8, 0.8), 1.0, 0.0, 0.5, 0.0, false, true, 5.0),
-		Material(Color(0.0, 1.0, 0.0), 1.0, 1.0, 0.5, 0.0, false, false, 0.0),
-		3.0
-	));
-	scene.addHittable(std::make_shared<Sphere>(
-		Vector3(-20.0, -3.0, 0),
-		//Material(Color(0.8, 0.8, 0.8), 1.0, 0.0, 0.5, 0.0, false, true, 5.0),
-		Material(Color(0.0, 0.0, 1.0), 1.0, 1.0, 0.5, 0.0, false, false, 0.0),
-		3.0
-	));
-	scene.addHittable(std::make_shared<Sphere>(
-		Vector3(20.0, -3.0, 0.0),
-		//Material(Color(0.8, 0.8, 0.8), 1.0, 0.0, 0.5, 0.0, false, true, 5.0),
-		Material(Color(0.0, 1.0, 1.0), 1.0, 1.0, 0.5, 0.0, false, false, 0.0),
-		3.0
-	));
+	// scene.addHittable(std::make_shared<Sphere>(
+	// 	Vector3(0.0, -3.0, -20.0),
+	// 	//Material(Color(0.8, 0.8, 0.8), 1.0, 0.0, 0.5, 0.0, false, true, 5.0),
+	// 	Material(Color(1.0, 0.0, 0.0), 1.0, 1.0, 0.5, 0.0, false, false, 0.0),
+	// 	3.0
+	// ));
+	// scene.addHittable(std::make_shared<Sphere>(
+	// 	Vector3(0.0, -3.0, 20.0),
+	// 	//Material(Color(0.8, 0.8, 0.8), 1.0, 0.0, 0.5, 0.0, false, true, 5.0),
+	// 	Material(Color(0.0, 1.0, 0.0), 1.0, 1.0, 0.5, 0.0, false, false, 0.0),
+	// 	3.0
+	// ));
+	// scene.addHittable(std::make_shared<Sphere>(
+	// 	Vector3(-20.0, -3.0, 0),
+	// 	//Material(Color(0.8, 0.8, 0.8), 1.0, 0.0, 0.5, 0.0, false, true, 5.0),
+	// 	Material(Color(0.0, 0.0, 1.0), 1.0, 1.0, 0.5, 0.0, false, false, 0.0),
+	// 	3.0
+	// ));
+	// scene.addHittable(std::make_shared<Sphere>(
+	// 	Vector3(20.0, -3.0, 0.0),
+	// 	//Material(Color(0.8, 0.8, 0.8), 1.0, 0.0, 0.5, 0.0, false, true, 5.0),
+	// 	Material(Color(0.0, 1.0, 1.0), 1.0, 1.0, 0.5, 0.0, false, false, 0.0),
+	// 	3.0
+	// ));
 
 	render(scene);
 
