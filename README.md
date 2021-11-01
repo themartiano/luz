@@ -62,4 +62,20 @@ Developed with **C++** using only the *standard library*.
 * **NO_FLAGS**: Removes `-Wall`, `-Wextra` and `-Werror` flags
 * **COMPILER**: Uses `clang++` (0) or `mingw` (1)
 
+---
+
+## Useful links:
+* https://en.wikipedia.org/wiki/Schlick%27s_approximation
+* https://en.wikipedia.org/wiki/List_of_refractive_indices
+* https://raytracing.github.io/
+* https://mikeadev.net/2019/11/parallelizing-ray-tracing/
+* https://en.wikipedia.org/wiki/Photon_mapping
+* https://en.wikipedia.org/wiki/Spectral_rendering
+* https://noahpitts.github.io/godRay/
+* https://www.scratchapixel.com/lessons/procedural-generation-virtual-worlds/simulating-sky/simulating-colors-of-the-sky
+* http://nishitalab.org/user/nis/cdrom/sig93_nis.pdf
+* https://web.archive.org/web/20080912171714/http://www.fortunecity.com/skyscraper/windows/364/bmpffrmt.html
+* https://docs.fileformat.com/image/bmp/
+* https://en.wikipedia.org/wiki/BMP_file_format
+
 ##### by Brhaka
