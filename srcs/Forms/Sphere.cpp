@@ -44,30 +44,28 @@ bool    Sphere::hit(Ray& ray, double t_max) const
 	double c = dot(oc, oc) - (this->_radius * this->_radius);
 	double discriminant = (b * b) - (a * c);
 
-	if (discriminant > 0.0)
+	if (discriminant < 0.0)
     {
-        double temp1 = (-b - sqrt((b * b) - (a * c))) / a;
-        double temp2 = (-b + sqrt((b * b) - (a * c))) / a;
+        return (false);
+    }
+    double sqrtd = sqrt(discriminant);
 
-        if (temp1 < t_max && temp1 > T_MIN)
+    double root = (-b - sqrtd) / a;
+    if (root < T_MIN || root > t_max)
+    {
+        root = (-b + sqrtd) / a;
+        if (root < T_MIN || root > t_max)
         {
-            ray.hitRecord.t0 = temp1;
-            ray.hitRecord.t1 = temp2;
+            return (false);
         }
-        else if (temp2 < t_max && temp2 > T_MIN)
-        {
-            ray.hitRecord.t0 = temp2;
-            ray.hitRecord.t1 = temp1;
-        }
-
-        ray.hitRecord.position = ray.pointAtRay(ray.hitRecord.t0);
-        ray.hitRecord.normal = (ray.hitRecord.position - this->_position) / this->_radius;
-        ray.hitRecord.material = this->_material;
-
-        return (true);
     }
 
-    return (false);
+    ray.hitRecord.t0 = root;
+    ray.hitRecord.position = ray.pointAtRay(ray.hitRecord.t0);
+    ray.hitRecord.normal = (ray.hitRecord.position - this->_position) / this->_radius;
+    ray.hitRecord.material = this->_material;
+
+    return (true);
 }
 
 // Creates an AABB / bounding box for this Sphere

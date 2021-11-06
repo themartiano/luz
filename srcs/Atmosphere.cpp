@@ -108,8 +108,8 @@ Color   Atmosphere::computeIncidentLight(Ray& ray, double t_max)
         t_max = ray.hitRecord.t1;
     }
 
-    int numSamples = 64;
-    int numSamplesLight = 64;
+    int numSamples = 16;
+    int numSamplesLight = 8;
 
     double  segmentLength = (t_max - t_min) / numSamples;
     double  tCurrent = t_min;
@@ -119,8 +119,8 @@ Color   Atmosphere::computeIncidentLight(Ray& ray, double t_max)
     double  transmittanceM = 0.0;
     double  mu = dot(ray.getDirection(), this->_sunDirection);
     double  g = 0.76;
-    double  phaseR = (3 / (16 * M_PI)) * (1 + mu * mu);
-    double  phaseM = (3 / (8 * M_PI)) * ((1 - g * g) * (1 + mu * mu) / ((2 + g * g) * pow(1 + g * g - 2 * g * mu, 1.5)));
+    double  phaseR = (3.0 / (16.0 * M_PI)) * (1.0 + mu * mu);
+    double  phaseM = (3.0 / (8.0 * M_PI)) * ((1.0 - g * g) * (1.0 + mu * mu) / ((2.0 + g * g) * pow(1.0 + g * g - 2.0 * g * mu, 1.5)));
     for (int i = 0; i < numSamples; ++i)
     {
         Vector3 samplePosition = ray.getOrigin() + (tCurrent + segmentLength * 0.5) * ray.getDirection();
