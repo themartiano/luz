@@ -150,7 +150,7 @@ static Color	calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
 	if (skyType == SKY_ATMOSPHERE)
 	{
 		// If the Earth radius is not added, the origin will be inside the Earth
-		Ray atmosphereRay(ray.getOrigin() + Vector3(0.0, scene.getAtmosphere().getEarthRadius(), 0.0), normalize(ray.getDirection()));
+		Ray atmosphereRay(ray.getOrigin(), normalize(ray.getDirection()));
 
 		double t_max = T_MAX;
 

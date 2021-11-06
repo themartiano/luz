@@ -4,8 +4,6 @@
 #include "SystemSpecifics.hpp"
 #include <cmath>
 
-#include <iostream>
-
 Atmosphere::Atmosphere(void)
 {
     double angle = M_PI * 0.4;
@@ -13,10 +11,10 @@ Atmosphere::Atmosphere(void)
 
     this->_sunDirection = sunDir;
 
-    this->_earthRadius = 6360e3;
-    this->_atmosphereRadius = 6420e3;
-    this->_hR = 7994.0;
-    this->_hM = 1200.0;
+    this->_earthRadius = D_EARTH_RADIUS;
+    this->_atmosphereRadius = D_ATMOSPHERE_RADIUS;
+    this->_hR = D_HR;
+    this->_hM = D_HM;
     this->_samples = 16;
     this->_lightSamples = 8;
 }

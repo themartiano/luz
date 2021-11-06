@@ -12,4 +12,9 @@ const int	D_MAX_LIGHT_BOUNCES = 12; // Default maximum light bounces per ray
 const double T_MAX = std::numeric_limits<double>::max(); // Default T_MAX (as far as an object can be in order to be rendered, relatively to the camera's position)
 const double T_MIN = 0.001; // Default T_MIN (as near as an object can be in order to be rendered, relatively to the camera's position)
 
+const double D_EARTH_RADIUS = 6360e3;
+const double D_ATMOSPHERE_RADIUS = 6420e3;
+const double D_HR = 7994.0;
+const double D_HM = 1200.0;
+
 #endif
