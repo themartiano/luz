@@ -26,6 +26,6 @@ class   Atmosphere
         double  _hM; // The same as above but for Mie Scattering
 };
 
-bool hitAtmosphere(Sphere& atmosphere, Ray& ray);
+bool hitAtmosphere(Sphere atmosphere, Ray& ray);
 
 #endif

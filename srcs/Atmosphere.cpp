@@ -4,12 +4,14 @@
 #include "SystemSpecifics.hpp"
 #include <cmath>
 
+#include <iostream>
+
 Atmosphere::Atmosphere(void)
 {
-    float angle = M_PI * 0;
+    float angle = M_PI * 0.4;
     Vector3 sunDir(0.0, std::cos(angle), -std::sin(angle));
 
-    //this->_sunDirection = Vector3(0.0, 0.0, 0.0);
+    this->_sunDirection = sunDir;
 
     this->_earthRadius = 6360e3;
     this->_atmosphereRadius = 6420e3;
@@ -45,7 +47,7 @@ double  Atmosphere::getHM(void) const
     return (this->_hM);
 }
 
-bool hitAtmosphere(Sphere& atmosphere, Ray& ray)
+bool hitAtmosphere(Sphere atmosphere, Ray& ray)
 {
     double a = dot(ray.getDirection(), ray.getDirection());
     double b = 2.0 * dot(ray.getDirection(), ray.getOrigin());
@@ -86,7 +88,7 @@ bool hitAtmosphere(Sphere& atmosphere, Ray& ray)
 
     return (true);
 }
-#include <iostream>
+
 Color   Atmosphere::computeIncidentLight(Ray& ray, double t_max)
 {
     double  t_min = T_MIN;
@@ -106,8 +108,8 @@ Color   Atmosphere::computeIncidentLight(Ray& ray, double t_max)
         t_max = ray.hitRecord.t1;
     }
 
-    int numSamples = 8;
-    int numSamplesLight = 4;
+    int numSamples = 64;
+    int numSamplesLight = 64;
 
     double  segmentLength = (t_max - t_min) / numSamples;
     double  tCurrent = t_min;
@@ -116,9 +118,9 @@ Color   Atmosphere::computeIncidentLight(Ray& ray, double t_max)
     double  transmittanceR = 0.0;
     double  transmittanceM = 0.0;
     double  mu = dot(ray.getDirection(), this->_sunDirection);
-    double  phaseR = 3.0 / (16.0 * M_PI) * (1.0 + mu * mu);
     double  g = 0.76;
-    double  phaseM = 3.0 / (8.0 * M_PI) * ((1.0 - g * g) * (1.0 +  mu * mu)) / ((2.0 + g * g) * pow(1.0 + g * g - 2.0 * g * mu, 1.5));
+    double  phaseR = (3 / (16 * M_PI)) * (1 + mu * mu);
+    double  phaseM = (3 / (8 * M_PI)) * ((1 - g * g) * (1 + mu * mu) / ((2 + g * g) * pow(1 + g * g - 2 * g * mu, 1.5)));
     for (int i = 0; i < numSamples; ++i)
     {
         Vector3 samplePosition = ray.getOrigin() + (tCurrent + segmentLength * 0.5) * ray.getDirection();
@@ -129,14 +131,12 @@ Color   Atmosphere::computeIncidentLight(Ray& ray, double t_max)
         transmittanceR += hR;
         transmittanceM += hM;
         Ray ray2(samplePosition, this->_sunDirection);
-        Sphere atmosphere2(Vector3(0.0, 0.0, 0.0), Material(), this->_atmosphereRadius);
-        hitAtmosphere(atmosphere2, ray2);
+        hitAtmosphere(atmosphere, ray2);
         double  segmentLengthLight = ray2.hitRecord.t1 / numSamplesLight;
         double  tCurrentLight = 0.0;
         double  transmittanceLightR = 0.0;
         double  transmittanceLightM = 0.0;
         int     j;
-        //std::cout << this->_sunDirection.getX() << ", " << this->_sunDirection.getY() << ", " << this->_sunDirection.getZ() << std::endl;
         for (j = 0; j < numSamplesLight; ++j)
         {
             Vector3 samplePositionLight = samplePosition + (tCurrentLight + segmentLengthLight * 0.5) * this->_sunDirection;
@@ -159,7 +159,12 @@ Color   Atmosphere::computeIncidentLight(Ray& ray, double t_max)
         tCurrent += segmentLength;
     }
 
+    // Turns NaNs into zeros
+    // if (phaseM != phaseM)
+    // {
+    //     phaseM = 0.0;
+    // }
+
     Vector3 result = (sumR * betaR * phaseR + sumM * betaM * phaseM) * 20.0;
-    //std::cout << result.getX() << ", " << result.getY() << ", " << result.getZ() << std::endl;
     return (Color(result.getX(), result.getY(), result.getZ()));
 }

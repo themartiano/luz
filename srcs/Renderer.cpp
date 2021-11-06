@@ -89,14 +89,15 @@ static Color	calculatePixelColor(Scene& scene, int x, int y)
 	double yV = double(y + randomdouble()) / height;
 
 	static Vector3	cameraPosition = scene.getActiveCamera().getLookFrom();
+	static Vector3	cameraLookDirection = scene.getActiveCamera().getLookDirection() * Vector3(-1.0, -1.0, -1.0);
 
     static double	halfWidth = tan((((double)scene.getActiveCamera().getFOV() * M_PI) / 180.0) / 2.0);
     static double	halfHeight = (height / width) * halfWidth;
 
 	static double	lensRadius = scene.getActiveCamera().getAperture() / 2.0;
-	static double	focusDistance = vectorLength(cameraPosition - scene.getActiveCamera().getLookAt());
+	static double	focusDistance = vectorLength(cameraLookDirection);
 
-	static Vector3	w = normalize(cameraPosition - scene.getActiveCamera().getLookAt());
+	static Vector3	w = normalize(cameraLookDirection);
 	static Vector3	viewUp(0.0, 1.0, 0.0);
 	static Vector3	u = normalize(cross(viewUp, w));
 	static Vector3	v = cross(w, u);
@@ -150,16 +151,17 @@ static Color	calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
 	static bool renderSky = scene.getRenderSky();
 	if (renderSky == true)
 	{
-		Ray atmosphereRay(ray.getOrigin() + Vector3(0.0, atmosphere.getEarthRadius(), 0.0), ray.getDirection());
+		// If the Earth radius is not added, the origin will be inside the Earth
+		Ray atmosphereRay(ray.getOrigin() + Vector3(0.0, atmosphere.getEarthRadius(), 0.0), normalize(ray.getDirection()));
 
 		double t_max = T_MAX;
-		// Sphere  earth(Vector3(0.0, 0.0, 0.0), Material(), atmosphere.getEarthRadius());
+		Sphere  earth(Vector3(0.0, 0.0, 0.0), Material(), atmosphere.getEarthRadius());
 
-		// // Checks ray collision with Earth
-		// if (hitAtmosphere(earth, atmosphereRay) && atmosphereRay.hitRecord.t1 > 0.0)
-		// {
-		// 	t_max = std::max(0.0, atmosphereRay.hitRecord.t0);
-		// }
+		// Checks ray collisions with Earth
+		if (hitAtmosphere(earth, atmosphereRay) && atmosphereRay.hitRecord.t1 > 0.0)
+		{
+			t_max = std::max(0.0, atmosphereRay.hitRecord.t0);
+		}
 		return (atmosphere.computeIncidentLight(atmosphereRay, t_max));
 	}
 	else
