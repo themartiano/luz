@@ -25,9 +25,7 @@ static Color	calculateSkyInterpolation(Scene& scene, Ray& ray);
 // Renders the image using all the information present on 'scene'. (Objects, cameras, lights, settings, etc)
 void	render(Scene& scene)
 {
-	std::cout << CLR_YELLOW << "Rendering..." << CLR_YELLOW << " (" << CLR_WHITE << scene.getSampleCount() << CLR_CYAN << " sample"
-		<< pluralOrSingular(scene.getSampleCount()) << ", " << CLR_WHITE << scene.getMaxLightBounces() << CLR_CYAN << " max light bounce"
-		<< pluralOrSingular(scene.getMaxLightBounces()) << CLR_YELLOW << ")\n" << CLR_RESET;
+	std::cout << CLR_YELLOW << "Rendering..." << CLR_RESET << std::endl;
 
 	Clock	clock;
 	int		height = scene.getYResolution();
