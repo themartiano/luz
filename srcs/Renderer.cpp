@@ -97,7 +97,7 @@ static Color	calculatePixelColor(Scene& scene, int x, int y)
 	static double	focusDistance = vectorLength(cameraPosition - scene.getActiveCamera().getLookAt());
 
 	static Vector3	w = normalize(cameraPosition - scene.getActiveCamera().getLookAt());
-	static Vector3	viewUp(0.0, -1.0, 0.0);
+	static Vector3	viewUp(0.0, 1.0, 0.0);
 	static Vector3	u = normalize(cross(viewUp, w));
 	static Vector3	v = cross(w, u);
 
@@ -150,7 +150,7 @@ static Color	calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
 	static bool renderSky = scene.getRenderSky();
 	if (renderSky == true)
 	{
-		Ray atmosphereRay(ray.getOrigin() + Vector3(0.0, atmosphere.getEarthRadius(), 0.0), ray.getDirection() * Vector3(0.0, -1.0, 0.0));
+		Ray atmosphereRay(ray.getOrigin() + Vector3(0.0, atmosphere.getEarthRadius(), 0.0), ray.getDirection());
 
 		double t_max = T_MAX;
 		// Sphere  earth(Vector3(0.0, 0.0, 0.0), Material(), atmosphere.getEarthRadius());
