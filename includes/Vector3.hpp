@@ -12,6 +12,7 @@ class	Vector3
 		void		setY(double y);
 		double		getZ(void) const;
 		void		setZ(double z);
+		void		zeroNaNs(void);
 		Vector3&	operator/=(const double f);
 		Vector3&	operator+=(const Vector3 vector);
 		double		operator[](int index) const;
