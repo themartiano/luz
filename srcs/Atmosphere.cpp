@@ -8,7 +8,7 @@
 
 Atmosphere::Atmosphere(void)
 {
-    float angle = M_PI * 0.4;
+    double angle = M_PI * 0.4;
     Vector3 sunDir(0.0, std::cos(angle), -std::sin(angle));
 
     this->_sunDirection = sunDir;
@@ -17,6 +17,23 @@ Atmosphere::Atmosphere(void)
     this->_atmosphereRadius = 6420e3;
     this->_hR = 7994.0;
     this->_hM = 1200.0;
+    this->_samples = 16;
+    this->_lightSamples = 8;
+}
+
+Atmosphere::Atmosphere(double sunAngle, double earthRadius, double atmosphereRadius, double hR, double hM, int samples, int lightSamples)
+{
+    double angle = M_PI * sunAngle;
+    Vector3 sunDir(0.0, std::cos(angle), -std::sin(angle));
+
+    this->_sunDirection = sunDir;
+
+    this->_earthRadius = earthRadius;
+    this->_atmosphereRadius = atmosphereRadius;
+    this->_hR = hR;
+    this->_hM = hM;
+    this->_samples = samples;
+    this->_lightSamples = lightSamples;
 }
 
 const Vector3 Atmosphere::betaR(3.8e-6, 13.5e-6, 33.1e-6);
@@ -47,11 +64,11 @@ double  Atmosphere::getHM(void) const
     return (this->_hM);
 }
 
-bool hitAtmosphere(Sphere atmosphere, Ray& ray)
+bool planetaryHit(double radius, Ray& ray)
 {
     double a = dot(ray.getDirection(), ray.getDirection());
     double b = 2.0 * dot(ray.getDirection(), ray.getOrigin());
-    double c = dot(ray.getOrigin(), ray.getOrigin()) - atmosphere.getRadius() * atmosphere.getRadius();
+    double c = dot(ray.getOrigin(), ray.getOrigin()) - radius * radius;
 
     if (b == 0.0)
     {
@@ -93,9 +110,7 @@ Color   Atmosphere::computeIncidentLight(Ray& ray, double t_max)
 {
     double  t_min = T_MIN;
 
-    Sphere  atmosphere(Vector3(0.0, 0.0, 0.0), Material(), this->_atmosphereRadius);
-
-    if (!hitAtmosphere(atmosphere, ray) || ray.hitRecord.t1 < 0.0)
+    if (!planetaryHit(this->_atmosphereRadius, ray) || ray.hitRecord.t1 < 0.0)
     {
         return (Color(0.0, 0.0, 0.0));
     }
@@ -108,10 +123,7 @@ Color   Atmosphere::computeIncidentLight(Ray& ray, double t_max)
         t_max = ray.hitRecord.t1;
     }
 
-    int numSamples = 16;
-    int numSamplesLight = 8;
-
-    double  segmentLength = (t_max - t_min) / numSamples;
+    double  segmentLength = (t_max - t_min) / this->_samples;
     double  tCurrent = t_min;
     Vector3 sumR(0.0, 0.0, 0.0);
     Vector3 sumM(0.0, 0.0, 0.0);
@@ -121,7 +133,8 @@ Color   Atmosphere::computeIncidentLight(Ray& ray, double t_max)
     double  g = 0.76;
     double  phaseR = (3.0 / (16.0 * M_PI)) * (1.0 + mu * mu);
     double  phaseM = (3.0 / (8.0 * M_PI)) * ((1.0 - g * g) * (1.0 + mu * mu) / ((2.0 + g * g) * pow(1.0 + g * g - 2.0 * g * mu, 1.5)));
-    for (int i = 0; i < numSamples; ++i)
+
+    for (int i = 0; i < this->_samples; i++)
     {
         Vector3 samplePosition = ray.getOrigin() + (tCurrent + segmentLength * 0.5) * ray.getDirection();
         double  height = vectorLength(samplePosition) - this->_earthRadius;
@@ -131,13 +144,14 @@ Color   Atmosphere::computeIncidentLight(Ray& ray, double t_max)
         transmittanceR += hR;
         transmittanceM += hM;
         Ray ray2(samplePosition, this->_sunDirection);
-        hitAtmosphere(atmosphere, ray2);
-        double  segmentLengthLight = ray2.hitRecord.t1 / numSamplesLight;
+        planetaryHit(this->_atmosphereRadius, ray2);
+        double  segmentLengthLight = ray2.hitRecord.t1 / this->_lightSamples;
         double  tCurrentLight = 0.0;
         double  transmittanceLightR = 0.0;
         double  transmittanceLightM = 0.0;
-        int     j;
-        for (j = 0; j < numSamplesLight; ++j)
+
+        int j;
+        for (j = 0; j < this->_lightSamples; j++)
         {
             Vector3 samplePositionLight = samplePosition + (tCurrentLight + segmentLengthLight * 0.5) * this->_sunDirection;
             double  heightLight = vectorLength(samplePositionLight) - this->_earthRadius;
@@ -149,13 +163,15 @@ Color   Atmosphere::computeIncidentLight(Ray& ray, double t_max)
             transmittanceLightM += exp(-heightLight / this->_hM) * segmentLengthLight;
             tCurrentLight += segmentLengthLight;
         }
-        if (j == numSamplesLight)
+
+        if (j == this->_lightSamples)
         {
             Vector3 tau = betaR * (transmittanceR + transmittanceLightR) + betaM * 1.1 * (transmittanceM + transmittanceLightM);
             Vector3 attenuation(exp(-tau.getX()), exp(-tau.getY()), exp(-tau.getZ()));
             sumR += attenuation * hR;
             sumM += attenuation * hM;
         }
+
         tCurrent += segmentLength;
     }
 

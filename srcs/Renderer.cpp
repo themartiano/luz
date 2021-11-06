@@ -10,6 +10,7 @@
 #include "SystemSpecifics.hpp"
 #include "Atmosphere.hpp"
 #include "Forms/Sphere.hpp"
+#include "SkyTypes.hpp"
 #include <cmath>
 #include <iostream>
 #include <stdlib.h>
@@ -118,7 +119,6 @@ static Color	calculatePixelColor(Scene& scene, int x, int y)
 static Color	calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
 {
 	static int maxLightBounces = scene.getMaxLightBounces();
-	static Atmosphere	atmosphere;
 
 	if (bounces > maxLightBounces)
 	{
@@ -148,21 +148,24 @@ static Color	calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
 		return (emitted + color * calculateLightRaysColor(ray, scene, bounces + 1));
 	}
 
-	static bool renderSky = scene.getRenderSky();
-	if (renderSky == true)
+	static short skyType = scene.getRenderSky();
+	if (skyType == SKY_ATMOSPHERE)
 	{
 		// If the Earth radius is not added, the origin will be inside the Earth
-		Ray atmosphereRay(ray.getOrigin() + Vector3(0.0, atmosphere.getEarthRadius(), 0.0), normalize(ray.getDirection()));
+		Ray atmosphereRay(ray.getOrigin() + Vector3(0.0, scene.getAtmosphere().getEarthRadius(), 0.0), normalize(ray.getDirection()));
 
 		double t_max = T_MAX;
-		Sphere  earth(Vector3(0.0, 0.0, 0.0), Material(), atmosphere.getEarthRadius());
 
 		// Checks ray collisions with Earth
-		if (hitAtmosphere(earth, atmosphereRay) && atmosphereRay.hitRecord.t1 > 0.0)
+		if (planetaryHit(scene.getAtmosphere().getEarthRadius(), atmosphereRay) && atmosphereRay.hitRecord.t1 > 0.0)
 		{
 			t_max = std::max(0.0, atmosphereRay.hitRecord.t0);
 		}
-		return (atmosphere.computeIncidentLight(atmosphereRay, t_max));
+		return (scene.getAtmosphere().computeIncidentLight(atmosphereRay, t_max));
+	}
+	else if (skyType == SKY_LINEAR)
+	{
+		return (calculateSkyInterpolation(scene, ray));
 	}
 	else
 	{
@@ -177,7 +180,7 @@ static Color	calculateSkyInterpolation(Scene& scene, Ray& ray)
 
 	Vector3	normalizedDirection = normalize(ray.getDirection());
 
-	double temp = skyLine * (-normalizedDirection.getY() + 1.0);
+	double temp = skyLine * (normalizedDirection.getY() + 1.0);
 
 	return ((Color(1.0, 1.0, 1.0) * (1.0 - temp)) + (Color(0.5, 0.7, 1.0) * temp));
 }

@@ -4,6 +4,7 @@
 #include "Camera.hpp"
 #include "Light.hpp"
 #include "Hittable.hpp"
+#include "Atmosphere.hpp"
 #include <vector>
 #include <memory>
 
@@ -25,8 +26,10 @@ class	Scene
 		bool	getGammaCorrected(void) const;
 		void	setGammaCorrected(bool gamma);
 		double	getSkyline(void) const;
-		bool	getRenderSky(void) const;
-		void	setRenderSky(bool renderSky);
+		short	getRenderSky(void) const;
+		void	setRenderSky(short renderSky);
+		void	setAtmosphere(Atmosphere atmosphere);
+		Atmosphere	getAtmosphere(void) const;
 		Color	getBackgroundColor(void) const;
 		void	setBackgroundColor(Color backgroundColor);
 		void	setPixelArray(int index, Color pixelColor);
@@ -44,9 +47,9 @@ class	Scene
 		bool					_gammaCorrected;
 		unsigned char*			_pixelArray;
 		double					_skyline;
-		bool					_renderSky;
+		short					_renderSky;
+		Atmosphere				_atmosphere;
 		Color					_backgroundColor;
-		//Light					_ambientLight;
 		std::vector<Camera>		_cameras;
 		size_t					_activeCamera;
 		std::vector<Light>		_lights;

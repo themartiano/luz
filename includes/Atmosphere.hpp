@@ -9,6 +9,7 @@ class   Atmosphere
 {
     public:
         Atmosphere(void);
+        Atmosphere(double sunAngle, double earthRadius, double atmosphereRadius, double hR, double hM, int samples, int lightSamples);
         static const Vector3 betaR;
         static const Vector3 betaM;
         Vector3 getSunDirection(void) const;
@@ -24,8 +25,10 @@ class   Atmosphere
         double  _atmosphereRadius;
         double  _hR; // Thickness of the atmosphere if density was uniform
         double  _hM; // The same as above but for Mie Scattering
+        int     _samples; // Samples per ray
+        int     _lightSamples; // Number of samples per ray sample
 };
 
-bool hitAtmosphere(Sphere atmosphere, Ray& ray);
+bool planetaryHit(double radius, Ray& ray);
 
 #endif

@@ -18,6 +18,7 @@ Scene::Scene(void)
 	this->_gammaCorrected = true;
 	this->_skyline = 0.5;
 	this->_renderSky = true;
+	this->_atmosphere = Atmosphere();
 	this->_backgroundColor = Color(0.0, 0.0, 0.0);
 
 	this->_activeCamera = 0;
@@ -109,15 +110,27 @@ double	Scene::getSkyline(void) const
 }
 
 // Returns the RenderSky option
-bool	Scene::getRenderSky(void) const
+short	Scene::getRenderSky(void) const
 {
 	return (this->_renderSky);
 }
 
 // Sets the RenderSky option
-void	Scene::setRenderSky(bool renderSky)
+void	Scene::setRenderSky(short renderSky)
 {
 	this->_renderSky = renderSky;
+}
+
+// Sets the Atmosphere object
+void	Scene::setAtmosphere(Atmosphere atmosphere)
+{
+	this->_atmosphere = atmosphere;
+}
+
+// Returns the Atmosphere object
+Atmosphere	Scene::getAtmosphere(void) const
+{
+	return (this->_atmosphere);
 }
 
 // Returns the Background Color

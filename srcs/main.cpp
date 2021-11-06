@@ -10,6 +10,7 @@
 #include "BVHNode.hpp"
 #include "Utilities.hpp"
 #include "SystemSpecifics.hpp"
+#include "SkyTypes.hpp"
 #include <fstream>
 #include <iostream>
 
@@ -37,11 +38,12 @@ int	main(int argc, char *argv[])
 	scene.setXResolution(500);
 	scene.setYResolution(500);
 	scene.initializePixelArray();
-	scene.setSampleCount(16);
+	scene.setSampleCount(4);
 	scene.setMaxLightBounces(12);
 	scene.setGammaCorrected(true);
-	scene.setRenderSky(true);
-	scene.setBackgroundColor(Color(0.0, 0.0, 0.0));
+	scene.setRenderSky(SKY_ATMOSPHERE);
+	scene.setAtmosphere(Atmosphere(0.5, 6360e3, 6420e3, 7994.0, 1200.0, 16, 8));
+	//scene.setBackgroundColor(Color(0.0, 0.0, 0.0)); // Only needed if Scene.Sky == SKY_NONE
 
 	// Coordinate system ~~ Right Hand ~~ Forward: -Z | Up: +Y | Right: +X
 
