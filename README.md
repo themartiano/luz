@@ -19,8 +19,8 @@ Developed with **C++** using only the *standard library*.
 * **Metals** with custom reflection clarity
 * Dielectrics (**Glass**, etc)
 * Emissive materials (**light** emitting objects)
-* **Atmosphere** rendering (physically based)
-* **Sky** rendering with customizable skyline (interpolation)
+* **Atmosphere** scattering
+* **Sky** rendering with customizable skyline (linear interpolated)
 * Custom (solid) background color (if sky and atmosphere rendering is disabled)
 * **Anti-aliasing**
 * **Depth of Field**
