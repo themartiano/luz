@@ -87,8 +87,8 @@ static Color	calculatePixelColor(Scene& scene, int x, int y)
 	double xU = double(x + randomdouble()) / width;
 	double yV = double(y + randomdouble()) / height;
 
-	static Vector3	cameraPosition = scene.getActiveCamera().getLookFrom();
-	static Vector3	cameraLookDirection = scene.getActiveCamera().getLookDirection() * Vector3(-1.0, -1.0, -1.0);
+	static Vector3	cameraPosition = scene.getActiveCamera().getPosition();
+	static Vector3	cameraLookDirection = scene.getActiveCamera().getDirection() * Vector3(-1.0, -1.0, -1.0);
 
     static double	halfWidth = tan((((double)scene.getActiveCamera().getFOV() * M_PI) / 180.0) / 2.0);
     static double	halfHeight = (height / width) * halfWidth;

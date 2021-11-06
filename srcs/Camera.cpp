@@ -7,29 +7,31 @@
 // Constructs the Camera with default values
 Camera::Camera(void)
 {
-	this->_lookFrom = Vector3(0.0, 0.0, 15.0);
-	this->_lookDirection = Vector3(0.0, 0.0, 0.0);
+	this->_position = Vector3(0.0, 0.0, 15.0);
+	this->_direction = Vector3(0.0, 0.0, 0.0);
 	this->_fov = 65;
 	this->_aperture = 2.0;
 }
 
 // Constructs the Camera with custom values
-Camera::Camera(Vector3 lookFrom, Vector3 lookDirection, short fov, double aperture)
+Camera::Camera(Vector3 position, Vector3 direction, short fov, double aperture)
 {
-	this->_lookFrom = lookFrom;
-	this->_lookDirection = lookDirection;
+	this->_position = position;
+	this->_direction = direction;
 	this->_fov = fov;
 	this->_aperture = aperture;
 }
 
-Vector3		Camera::getLookFrom(void) const
+// Returns the Camera's position
+Vector3		Camera::getPosition(void) const
 {
-	return (this->_lookFrom);
+	return (this->_position);
 }
 
-Vector3		Camera::getLookDirection(void) const
+// Returns the Camera's direction (facing direction, look direction)
+Vector3		Camera::getDirection(void) const
 {
-	return (this->_lookDirection);
+	return (this->_direction);
 }
 
 // Returns the Camera's FOV (Field of View)

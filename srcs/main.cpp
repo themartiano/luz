@@ -18,24 +18,13 @@
 static void	mountCornellBox(Scene& scene);
 
 // Main function
-int	main(int argc, char *argv[])
+int	main(void)
 {
-	Scene	scene;
-
-	// if (argc <= 1)
-	// 	exitError(scene, "Scene not specified.");
-
 	std::cout << CLR_BLUE << "Preparing...\n\n" << CLR_RESET;
-	//read scene file
-	//check res
-
-	if (argc >= 3)
-	{
-		//read_flags();
-	}
 
 	srand(time(0));
 
+	Scene scene;
 	scene.setXResolution(500);
 	scene.setYResolution(500);
 	scene.initializePixelArray();
@@ -90,7 +79,6 @@ int	main(int argc, char *argv[])
 	bmp.writeFile(scene);
 
 	return (0);
-	(void)argv;
 }
 
 // Setups a Cornell Box for rendering

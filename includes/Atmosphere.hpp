@@ -12,11 +12,7 @@ class   Atmosphere
         Atmosphere(double sunAngle, double earthRadius, double atmosphereRadius, double hR, double hM, int samples, int lightSamples);
         static const Vector3 betaR;
         static const Vector3 betaM;
-        Vector3 getSunDirection(void) const;
         double  getEarthRadius(void) const;
-        double  getAtmosphereRadius(void) const;
-        double  getHR(void) const;
-        double  getHM(void) const;
         Color   computeIncidentLight(Ray& ray, double t_max);
 
     private:

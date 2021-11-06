@@ -7,15 +7,15 @@ class	Camera
 {
 	public:
 		Camera(void);
-		Camera(Vector3 lookFrom, Vector3 lookDirection, short fov, double aperture);
-		Vector3		getLookFrom(void) const;
-		Vector3		getLookDirection(void) const;
+		Camera(Vector3 position, Vector3 direction, short fov, double aperture);
+		Vector3		getPosition(void) const;
+		Vector3		getDirection(void) const;
 		short		getFOV(void) const;
 		double		getAperture(void) const;
 
 	private:
-		Vector3		_lookFrom;
-		Vector3		_lookDirection;
+		Vector3		_position;
+		Vector3		_direction;
 		short		_fov; // Horizontal FOV
 		double		_aperture;
 };

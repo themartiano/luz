@@ -4,6 +4,11 @@
 #include "SystemSpecifics.hpp"
 #include <cmath>
 
+/*
+	Constructors
+*/
+
+// Constructs the Atmosphere with default values
 Atmosphere::Atmosphere(void)
 {
     double angle = M_PI * 0.4;
@@ -19,6 +24,7 @@ Atmosphere::Atmosphere(void)
     this->_lightSamples = 8;
 }
 
+// Constructs the Atmosphere with custom values
 Atmosphere::Atmosphere(double sunAngle, double earthRadius, double atmosphereRadius, double hR, double hM, int samples, int lightSamples)
 {
     double angle = M_PI * sunAngle;
@@ -37,31 +43,13 @@ Atmosphere::Atmosphere(double sunAngle, double earthRadius, double atmosphereRad
 const Vector3 Atmosphere::betaR(3.8e-6, 13.5e-6, 33.1e-6);
 const Vector3 Atmosphere::betaM(21e-6, 21e-6, 21e-6);
 
-Vector3 Atmosphere::getSunDirection(void) const
-{
-    return (this->_sunDirection);
-}
-
+// Returns the Earth Radius
 double  Atmosphere::getEarthRadius(void) const
 {
     return (this->_earthRadius);
 }
 
-double  Atmosphere::getAtmosphereRadius(void) const
-{
-    return (this->_atmosphereRadius);
-}
-
-double  Atmosphere::getHR(void) const
-{
-    return (this->_hR);
-}
-
-double  Atmosphere::getHM(void) const
-{
-    return (this->_hM);
-}
-
+// (Sphere) Hit function for planets and atmospheres (sets both t0 and t1 on the Hit Record). Returns true if hit occurs, false otherwise
 bool planetaryHit(double radius, Ray& ray)
 {
     double a = dot(ray.getDirection(), ray.getDirection());
@@ -104,6 +92,7 @@ bool planetaryHit(double radius, Ray& ray)
     return (true);
 }
 
+// Returns the sky color for 'ray'
 Color   Atmosphere::computeIncidentLight(Ray& ray, double t_max)
 {
     double  t_min = T_MIN;

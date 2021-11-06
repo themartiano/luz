@@ -56,22 +56,6 @@ void	Vector3::setZ(double z)
 	this->_z = z;
 }
 
-void	Vector3::zeroNaNs(void)
-{
-	if (this->_x != this->_x)
-	{
-		this->_x = 0.0;
-	}
-	if (this->_y != this->_y)
-	{
-		this->_y = 0.0;
-	}
-	if (this->_z != this->_z)
-	{
-		this->_z = 0.0;
-	}
-}
-
 Vector3&	Vector3::operator/=(const double f)
 {
 	this->_x /= f;
