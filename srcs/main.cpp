@@ -37,29 +37,30 @@ int	main(int argc, char *argv[])
 	scene.setXResolution(500);
 	scene.setYResolution(500);
 	scene.initializePixelArray();
-	scene.setSampleCount(1);
-	scene.setMaxLightBounces(0);
+	scene.setSampleCount(16);
+	scene.setMaxLightBounces(12);
 	scene.setGammaCorrected(true);
 	scene.setRenderSky(true);
 	scene.setBackgroundColor(Color(0.0, 0.0, 0.0));
 
-	// Current coordinate system ~~ Forward: -Z | Up: +Y | Right: +X
+	// Coordinate system ~~ Right Hand ~~ Forward: -Z | Up: +Y | Right: +X
 
 	//mountCornellBox(scene);
-	scene.addCamera(Camera(Vector3(0.0, 500.0, 0.0), Vector3(0.0, 0.0, -1.0), 65, 0.0));
+
+	scene.addCamera(Camera(Vector3(0.0, 500.0, 0.0), Vector3(0.0, 0.0, 1.0), 65, 0.0));
 
 	// scene.addHittable(std::make_shared<Plane>(
 	// 	0.0,
-	// 	Vector3(0.0, -1.0, 0.0),
+	// 	Vector3(0.0, 499.0, 0.0),
 	// 	Material(Color(0.33, 0.49, 0.27), 1.0, 1.0, 0.5, 0.0, false, false, 0.0)
 	// ));
 
-	// scene.addHittable(std::make_shared<Sphere>(
-	// 	Vector3(3.0, -3.0, -20.0),
-	// 	//Material(Color(0.8, 0.8, 0.8), 1.0, 0.0, 0.5, 0.0, false, true, 5.0),
-	// 	Material(Color(1.0, 0.0, 0.0), 1.0, 1.0, 0.5, 0.0, false, false, 0.0),
-	// 	3.0
-	// ));
+	scene.addHittable(std::make_shared<Sphere>(
+		Vector3(0.0, 500.0, 20.0),
+		//Material(Color(0.8, 0.8, 0.8), 1.0, 0.0, 0.5, 0.0, false, true, 5.0),
+		Material(Color(0.8, 0.8, 0.8), 1.0, 1.0, 0.5, 0.0, false, false, 0.0),
+		3.0
+	));
 	// scene.addHittable(std::make_shared<Sphere>(
 	// 	Vector3(0.0, 3.0, 20.0),
 	// 	//Material(Color(0.8, 0.8, 0.8), 1.0, 0.0, 0.5, 0.0, false, true, 5.0),
@@ -97,14 +98,14 @@ static void	mountCornellBox(Scene& scene)
 
 	// Top Wall
 	scene.addHittable(std::make_shared<Rectangle>(
-		Transform(Vector3(0.0, -250.0, -250.0), Vector3(0.0, 1.0, 0.0), Vector3(1.0, 1.0, 1.0)),
+		Transform(Vector3(0.0, 250.0, -250.0), Vector3(0.0, -1.0, 0.0), Vector3(1.0, 1.0, 1.0)),
 		Material(Color(1.0, 1.0, 1.0), 1.0, 0.0, 0.5, 0.0, false, false, 0.0),
 		500.0, 500.0
 	));
 
 	// Light (Top)
 	scene.addHittable(std::make_shared<Rectangle>(
-		Transform(Vector3(0.0, -250.0, -125.0), Vector3(0.0, 1.0, 0.0), Vector3(1.0, 1.0, 1.0)),
+		Transform(Vector3(0.0, 250.0, -125.0), Vector3(0.0, -1.0, 0.0), Vector3(1.0, 1.0, 1.0)),
 		Material(Color(1.0, 1.0, 1.0), 1.0, 0.0, 0.5, 0.0, false, true, 10.0),
 		250.0, 125.0
 	));
@@ -118,42 +119,42 @@ static void	mountCornellBox(Scene& scene)
 
 	// Floor Wall
 	scene.addHittable(std::make_shared<Rectangle>(
-		Transform(Vector3(0.0, 250.0, -250.0), Vector3(0.0, -1.0, 0.0), Vector3(1.0, 1.0, 1.0)),
+		Transform(Vector3(0.0, -250.0, -250.0), Vector3(0.0, 1.0, 0.0), Vector3(1.0, 1.0, 1.0)),
 		Material(Color(1.0, 1.0, 1.0), 1.0, 0.0, 0.5, 0.0, false, false, 0.0),
 		500.0, 500.0
 	));
 
 	// Right Wall
 	scene.addHittable(std::make_shared<Rectangle>(
-		Transform(Vector3(-250.0, 0.0, -250.0), Vector3(1.0, 0.0, 0.0), Vector3(1.0, 1.0, 1.0)),
+		Transform(Vector3(250.0, 0.0, -250.0), Vector3(-1.0, 0.0, 0.0), Vector3(1.0, 1.0, 1.0)),
 		Material(Color(0.0, 1.0, 0.0), 1.0, 0.0, 0.5, 0.0, false, false, 0.0),
 		500.0, 500.0
 	));
 
 	// Left Wall
 	scene.addHittable(std::make_shared<Rectangle>(
-		Transform(Vector3(250.0, 0.0, -250.0), Vector3(-1.0, 0.0, 0.0), Vector3(1.0, 1.0, 1.0)),
+		Transform(Vector3(-250.0, 0.0, -250.0), Vector3(1.0, 0.0, 0.0), Vector3(1.0, 1.0, 1.0)),
 		Material(Color(1.0, 0.0, 0.0), 1.0, 0.0, 0.5, 0.0, false, false, 0.0),
 		500.0, 500.0
 	));
 
 	// Metal Sphere
 	scene.addHittable(std::make_shared<Sphere>(
-		Vector3(200.0, 200.0, -200.0),
+		Vector3(-200.0, -200.0, -200.0),
 		Material(Color(0.8, 0.8, 0.8), 1.0, 1.0, 0.5, 0.0, false, false, 0.0),
 		50.0
 	));
 
 	// Glass Sphere
 	scene.addHittable(std::make_shared<Sphere>(
-		Vector3(0.0, 100.0, -150.0),
+		Vector3(0.0, -100.0, -150.0),
 		Material(Color(1.0, 1.0, 1.0), 1.0, 0.0, 0.5, 0.0, true, false, 0.0),
 		100.0
 	));
 
 	// Golden Metal Sphere
 	scene.addHittable(std::make_shared<Sphere>(
-		Vector3(-200.0, 200.0, -200.0),
+		Vector3(200.0, -200.0, -200.0),
 		Material(Color(1.0, 0.843, 0.0), 1.0, 1.0, 0.5, 0.0, false, false, 0.0),
 		50.0
 	));
