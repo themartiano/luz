@@ -6,6 +6,7 @@
 #include "Forms/Sphere.hpp"
 #include "Forms/Rectangle.hpp"
 #include "Forms/Plane.hpp"
+#include "Forms/Triangle.hpp"
 #include "Material.hpp"
 #include "BVHNode.hpp"
 #include "Utilities.hpp"
@@ -31,15 +32,22 @@ int	main(void)
 	scene.setSampleCount(4);
 	scene.setMaxLightBounces(12);
 	scene.setGammaCorrected(true);
-	scene.setRenderSky(SKY_ATMOSPHERE);
-	scene.setAtmosphere(Atmosphere(0.3, D_EARTH_RADIUS, D_ATMOSPHERE_RADIUS, D_HR, D_HM, 16, 8)); // Only needed if Scene.Sky == SKY_ATMOSPHERE
+	scene.setRenderSky(SKY_LINEAR);
+	//scene.setAtmosphere(Atmosphere(-0.3, D_EARTH_RADIUS, D_ATMOSPHERE_RADIUS, D_HR, D_HM, 16, 8)); // Only needed if Scene.Sky == SKY_ATMOSPHERE
 	//scene.setBackgroundColor(Color(0.0, 0.0, 0.0)); // Only needed if Scene.Sky == SKY_NONE
 
 	// Coordinate system ~~ Right Hand ~~ Forward: -Z | Up: +Y | Right: +X
 
 	//mountCornellBox(scene);
 
-	scene.addCamera(Camera(Vector3(0.0, D_EARTH_RADIUS, 0.0), Vector3(0.0, 0.0, -1.0), 65, 0.0));
+	scene.addCamera(Camera(Vector3(0.0, 0.0, 5.0), Vector3(0.0, 0.0, -1.0), 65, 0.0));
+
+	scene.addHittable(std::make_shared<Triangle>(
+		Vector3(0.0, 1.0, 0.0),
+		Vector3(-1.0, 0.0, 0.0),
+		Vector3(1.0, 0.0, 0.0),
+		Material(Color(0.8, 1.0, 0.6), 1.0, 0.0, 0.5, 0.0, false, false, 0.0)
+	));
 
 	// scene.addHittable(std::make_shared<Plane>(
 	// 	0.0,

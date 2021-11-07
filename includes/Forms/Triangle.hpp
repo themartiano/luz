@@ -1,0 +1,25 @@
+#ifndef TRIANGLE_HPP
+#define TRIANGLE_HPP
+
+#include "Hittable.hpp"
+#include "Vector3.hpp"
+#include "Ray.hpp"
+#include "AABB.hpp"
+#include "Material.hpp"
+
+class   Triangle : public Hittable
+{
+    public:
+        Triangle(void);
+        Triangle(Vector3 vertex1, Vector3 vertex2, Vector3 vertex3, Material material);
+        virtual bool    hit(Ray& ray, double t_max) const override;
+        virtual bool    createBoundingBox(AABB& outputBoundingBox) const override;
+
+    private:
+        Vector3     _vertex1;
+        Vector3     _vertex2;
+        Vector3     _vertex3;
+        Material    _material;
+};
+
+#endif

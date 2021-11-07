@@ -88,7 +88,7 @@ static Color	calculatePixelColor(Scene& scene, int x, int y)
 	double yV = double(y + randomdouble()) / height;
 
 	static Vector3	cameraPosition = scene.getActiveCamera().getPosition();
-	static Vector3	cameraLookDirection = scene.getActiveCamera().getDirection() * Vector3(-1.0, -1.0, -1.0);
+	static Vector3	cameraLookDirection = scene.getActiveCamera().getDirection()/* * Vector3(-1.0, -1.0, -1.0)*/;
 
     static double	halfWidth = tan((((double)scene.getActiveCamera().getFOV() * M_PI) / 180.0) / 2.0);
     static double	halfHeight = (height / width) * halfWidth;
@@ -267,11 +267,11 @@ static bool	checkHits(Scene& scene, Ray& ray)
 	{
 		if (hittable->hit(ray, currentClosestObject))
 		{
-			if (ray.hitRecord.t0 > T_MIN)
-			{
+			/*if (ray.hitRecord.t0 > T_MIN)
+			{*/
 				currentClosestObject = ray.hitRecord.t0;
 				anyHit = true;
-			}
+			//}
 		}
 	}
 

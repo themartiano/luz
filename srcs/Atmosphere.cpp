@@ -11,7 +11,7 @@
 // Constructs the Atmosphere with default values
 Atmosphere::Atmosphere(void)
 {
-    double angle = M_PI * 0.4;
+    double angle = M_PI * -0.4;
     Vector3 sunDir(0.0, std::cos(angle), -std::sin(angle));
 
     this->_sunDirection = sunDir;
