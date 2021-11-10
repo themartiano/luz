@@ -13,3 +13,4 @@ Luz.exe
 *.bmp
 objs
 Makefile.tmp
+*.obj

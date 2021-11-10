@@ -9,7 +9,7 @@ class	BMP
 	public:
 		BMP(void);
 		BMP(std::string fileName);
-		void	writeFile(Scene& scene);
+		void	writeFile(Scene& scene, double* frameBuffer);
 
 	private:
 		std::string	_fileName;

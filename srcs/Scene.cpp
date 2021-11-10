@@ -145,37 +145,6 @@ void	Scene::setBackgroundColor(Color backgroundColor)
 	this->_backgroundColor = backgroundColor;
 }
 
-// Sets the color for the pixel at 'index', which is a simple X/Y index.
-void	Scene::setPixelArray(int index, Color pixelColor)
-{
-	// Check if index is in range. (x res * y res * RGB for each pixel)
-	if (index < this->_xResolution * this->_yResolution * 3)
-	{
-		double r = pixelColor.getRed();
-		setdoubleRange(r, 0.0, 1.0);
-		double g = pixelColor.getGreen();
-		setdoubleRange(g, 0.0, 1.0);
-		double b = pixelColor.getBlue();
-		setdoubleRange(b, 0.0, 1.0);
-
-		this->_pixelArray[(index * 3) + 2] = (unsigned char)(r * 255.0);
-		this->_pixelArray[(index * 3) + 1] = (unsigned char)(g * 255.0);
-		this->_pixelArray[index * 3] = (unsigned char)(b * 255.0);
-	}
-}
-
-// Returns the pixel array
-unsigned char*	Scene::getPixelArray(void) const
-{
-	return (this->_pixelArray);
-}
-
-// Initializes the pixel array using the Scene's width and height (X & Y pixel resolution)
-void	Scene::initializePixelArray(void)
-{
-	this->_pixelArray = new unsigned char[this->_xResolution * this->_yResolution * 3];
-}
-
 // Returns the vector (list) of Hittables
 std::vector<std::shared_ptr<Hittable>>	Scene::getHittables(void) const
 {

@@ -23,59 +23,59 @@ static void		calculateLightRayBounceDirection(Ray& ray, Color& color);
 static Color	calculateSkyInterpolation(Scene& scene, Ray& ray);
 
 // Renders the image using all the information present on 'scene'. (Objects, cameras, lights, settings, etc)
-void	render(Scene& scene)
+__global__ void	render(Scene& scene, double* frameBuffer)
 {
-	std::cout << CLR_YELLOW << "Rendering..." << CLR_RESET << std::endl;
+	//std::cout << CLR_YELLOW << "Rendering..." << CLR_RESET << std::endl;
 
-	Clock	clock;
-	int		height = scene.getYResolution();
-	int		width = scene.getXResolution();
-	int		sampleCount = scene.getSampleCount();
-	int		percentageUpdateFactor = height / 100;
-	bool	gammaCorrected = scene.getGammaCorrected();
+	//Clock	clock;
+	static int	height = scene.getYResolution();
+	static int	width = scene.getXResolution();
+	static int	sampleCount = scene.getSampleCount();
+	static int	percentageUpdateFactor = height / 100;
+	static bool	gammaCorrected = scene.getGammaCorrected();
 
-	for (int y = 0; y < height; y++)
+	// Calculates the X and Y values for the pixel
+	int x = threadIdx.x + blockIdx.x * blockDim.x;
+	int y = threadIdx.y + blockIdx.y * blockDim.y;
+
+	// Checks if X and Y value are inside the frame
+	if (x >= width || y >= height)
 	{
-		for (int x = 0; x < width; x++)
-		{
-			Color pixelColor(0.0, 0.0, 0.0);
-
-			for (int samples = 0; samples < sampleCount; samples++)
-			{
-				pixelColor += calculatePixelColor(scene, x, y);
-			}
-			pixelColor /= double(sampleCount);
-			if (gammaCorrected)
-			{
-				pixelColor = Color(sqrtf(pixelColor.getRed()), sqrtf(pixelColor.getGreen()), sqrtf(pixelColor.getBlue())); // Gamma (2) correction
-			}
-
-			// Replaces NaN with zeros (in case there's a problematic sample)
-			if (pixelColor.getRed() != pixelColor.getRed())
-			{
-				pixelColor.setRed(0.0);
-			}
-			if (pixelColor.getGreen() != pixelColor.getGreen())
-			{
-				pixelColor.setGreen(0.0);
-			}
-			if (pixelColor.getBlue() != pixelColor.getBlue())
-			{
-				pixelColor.setBlue(0.0);
-			}
-
-			scene.setPixelArray((y * width) + x, pixelColor);
-		}
-		if (y % percentageUpdateFactor == 0)
-		{
-			int percentage = (double(y) / double(height)) * 100.0;
-			std::cout << CLR_WHITE << "\r[ " << percentage << "% ]" << std::flush;
-		}
+		return;
 	}
 
-	double elapsedS = clock.stop();
-	std::cout << CLR_WHITE << "\r[ 100% ]";
-	std::cout << CLR_GREEN_BRIGHT << "\nRender done! " << CLR_BLUE_BRIGHT << "(Duration: " << CLR_WHITE << elapsedS << "s" << CLR_BLUE_BRIGHT << ")\n\n" << CLR_RESET;
+	Color pixelColor(0.0, 0.0, 0.0);
+
+	for (int samples = 0; samples < sampleCount; samples++)
+	{
+		pixelColor += calculatePixelColor(scene, x, y);
+	}
+	pixelColor /= double(sampleCount);
+	if (gammaCorrected)
+	{
+		pixelColor = Color(sqrtf(pixelColor.getRed()), sqrtf(pixelColor.getGreen()), sqrtf(pixelColor.getBlue())); // Gamma (2) correction
+	}
+
+	// Replaces NaN with zeros (in case there's a problematic sample)
+	if (pixelColor.getRed() != pixelColor.getRed())
+	{
+		pixelColor.setRed(0.0);
+	}
+	if (pixelColor.getGreen() != pixelColor.getGreen())
+	{
+		pixelColor.setGreen(0.0);
+	}
+	if (pixelColor.getBlue() != pixelColor.getBlue())
+	{
+		pixelColor.setBlue(0.0);
+	}
+
+	scene.setPixelArray((y * width) + x, pixelColor);
+
+
+	//double elapsedS = clock.stop();
+	//std::cout << CLR_WHITE << "\r[ 100% ]";
+	//std::cout << CLR_GREEN_BRIGHT << "\nRender done! " << CLR_BLUE_BRIGHT << "(Duration: " << CLR_WHITE << elapsedS << "s" << CLR_BLUE_BRIGHT << ")\n\n" << CLR_RESET;
 }
 
 // Calculates the color for the pixel at 'x' and 'y'. Creates rays, checks for intersections with objects on 'scene' and bounce light rays
