@@ -11,8 +11,8 @@
 Triangle::Triangle(void)
 {
     this->_vertex1 = Vector3(0.0, 1.0, 0.0);
-    this->_vertex2 = Vector3(1.0, 0.0, 0.0);
-    this->_vertex3 = Vector3(-1.0, 0.0, 0.0);
+    this->_vertex2 = Vector3(-1.0, 0.0, 0.0);
+    this->_vertex3 = Vector3(1.0, 0.0, 0.0);
     this->_material = Material(Color(0.49, 0.49, 0.49), 1.0, 0.0, 0.5, 0.0, false, false, 0.0);
 }
 
@@ -85,9 +85,46 @@ bool    Triangle::hit(Ray& ray, double t_max) const
 // Creates an AABB / bounding box for this Triangle
 bool    Triangle::createBoundingBox(AABB& outputBoundingBox) const
 {
-    // outputBoundingBox = AABB(
-    //     Vector3(this->_x0, this->_y0, this->_position.getZ() - T_MIN),
-    //     Vector3(this->_x1, this->_y1, this->_position.getZ() + T_MIN));
+    Vector3 minimum = this->_vertex1;
+    Vector3 maximum = this->_vertex1;
+
+    std::vector<Vector3> vectors;
+    vectors.push_back(this->_vertex2);
+    vectors.push_back(this->_vertex3);
+
+    for (Vector3 vector : vectors)
+    {
+        if (vector.getX() < minimum.getX())
+        {
+            minimum.setX(vector.getX());
+        }
+        if (vector.getY() < minimum.getY())
+        {
+            minimum.setY(vector.getY());
+        }
+        if (vector.getZ() < minimum.getZ())
+        {
+            minimum.setZ(vector.getZ());
+        }
+
+        if (vector.getX() > maximum.getX())
+        {
+            maximum.setX(vector.getX());
+        }
+        if (vector.getY() > maximum.getY())
+        {
+            maximum.setY(vector.getY());
+        }
+        if (vector.getZ() > maximum.getZ())
+        {
+            maximum.setZ(vector.getZ());
+        }
+    }
+
+    minimum.setZ(minimum.getZ() - T_MIN);
+    maximum.setZ(maximum.getZ() + T_MIN);
+
+    outputBoundingBox = AABB(minimum, maximum);
 
     return (true);
 }

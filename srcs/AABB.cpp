@@ -50,6 +50,7 @@ bool    AABB::hit(Ray& ray, double t_max) const
         t_max = t1 < t_max ? t1 : t_max;
         if (t_max <= t_min)
         {
+            //std::cout << this->_maximum[a] << std::endl;
             return (false);
         }
     }

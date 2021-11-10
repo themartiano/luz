@@ -1,6 +1,8 @@
 #ifndef VECTOR3_HPP
 #define VECTOR3_HPP
 
+#include <iostream>
+
 class	Vector3
 {
 	public:
@@ -50,6 +52,12 @@ inline Vector3 operator*(const Vector3& vector1, const Vector3& vector2)
 inline Vector3 operator/(const Vector3& vector, const double f)
 {
 	return ((1.0 / f) * vector);
+}
+
+inline std::ostream& operator<<(std::ostream& os, const Vector3& vector)
+{
+	os << vector.getX() << ", " << vector.getY() << ", " << vector.getZ();
+	return (os);
 }
 
 #endif

@@ -261,7 +261,7 @@ static bool	checkHits(Scene& scene, Ray& ray)
 {
 	bool	anyHit = false;
 	double	currentClosestObject = T_MAX;
-	static std::vector<std::shared_ptr<Hittable>> hittables = scene.getHittables();
+	static	std::vector<std::shared_ptr<Hittable>> hittables = scene.getHittables();
 
 	for (std::shared_ptr<Hittable> hittable : hittables)
 	{
