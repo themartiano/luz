@@ -33,26 +33,26 @@ int	main(void)
 	scene.setSampleCount(64);
 	scene.setMaxLightBounces(12);
 	scene.setGammaCorrected(true);
-	scene.setRenderSky(SKY_NONE);
+	scene.setRenderSky(SKY_LINEAR);
 	//scene.setAtmosphere(Atmosphere(0.2, D_EARTH_RADIUS, D_ATMOSPHERE_RADIUS, D_HR, D_HM, 16, 8)); // Only needed if Scene.Sky == SKY_ATMOSPHERE
-	scene.setBackgroundColor(Color(0.0, 0.0, 0.0)); // Only needed if Scene.Sky == SKY_NONE
+	//scene.setBackgroundColor(Color(0.0, 0.0, 0.0)); // Only needed if Scene.Sky == SKY_NONE
 
 	// Coordinate system ~~ Right Hand ~~ Forward: -Z | Up: +Y | Right: +X
 
-	mountCornellBox(scene);
+	//mountCornellBox(scene);
 
-	//scene.addCamera(Camera(Vector3(0.0, 0.0, 0.0), Vector3(0.0, 0.0, 1.0), 65, 0.0));
+	scene.addCamera(Camera(Vector3(0.0, 0.5, 10.0), Vector3(0.0, 0.0, -1.0), 65, 0.0));
 
-	// std::vector<std::shared_ptr<Hittable>> triangles;
+	std::vector<std::shared_ptr<Hittable>> triangles;
 
-	// triangles.push_back(std::make_shared<Triangle>(
-	// 	Vector3(0.0, 1.0, -5.0),
-	// 	Vector3(-1.0, 0.0, -4.0),
-	// 	Vector3(1.0, 0.0, -3.0),
-	// 	Material(Color(0.8, 1.0, 0.6), 1.0, 0.0, 0.5, 0.0, false, false, 0.0)
-	// ));
+	triangles.push_back(std::make_shared<Triangle>(
+		Vector3(-2.0, 0.0, 0.0),
+		Vector3(2.0, 0.0, 0.0),
+		Vector3(1.0, 1.0, 0.0),
+		Material(Color(0.8, 1.0, 0.6), 1.0, 0.0, 0.5, 0.0, false, false, 0.0)
+	));
 
-	// scene.addHittable(std::make_shared<BVHNode>(triangles));
+	scene.addHittable(std::make_shared<BVHNode>(triangles));
 
 	render(scene);
 

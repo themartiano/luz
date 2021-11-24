@@ -38,7 +38,7 @@ bool    AABB::hit(Ray& ray, double t_max) const
 {
     for (int a = 0; a < 3; a++)
     {
-        double invD = 1.0 / ray.getDirection()[a];
+        double invD = -1.0 / ray.getDirection()[a];
         double t0 = (this->_minimum[a] - ray.getOrigin()[a]) * invD;
         double t1 = (this->_maximum[a] - ray.getOrigin()[a]) * invD;
         if (invD < 0.0)
@@ -50,7 +50,6 @@ bool    AABB::hit(Ray& ray, double t_max) const
         t_max = t1 < t_max ? t1 : t_max;
         if (t_max <= t_min)
         {
-            //std::cout << this->_maximum[a] << std::endl;
             return (false);
         }
     }

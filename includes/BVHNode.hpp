@@ -2,6 +2,7 @@
 #define BVHNODE_HPP
 
 #include "Hittable.hpp"
+#include "AABB.hpp"
 #include <vector>
 #include <memory>
 

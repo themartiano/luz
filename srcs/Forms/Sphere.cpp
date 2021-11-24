@@ -73,7 +73,8 @@ bool    Sphere::createBoundingBox(AABB& outputBoundingBox) const
 {
 	outputBoundingBox = AABB(
         this->_position - Vector3(this->_radius, this->_radius, this->_radius),
-        this->_position + Vector3(this->_radius, this->_radius, this->_radius));
+        this->_position + Vector3(this->_radius, this->_radius, this->_radius)
+    );
 
     return (true);
 }
