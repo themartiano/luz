@@ -1,6 +1,7 @@
 #include "Scene.hpp"
 #include "Exit.hpp"
 #include "BMP.hpp"
+#include "Renderer.hpp"
 #include "ANSIColors.hpp"
 #include "Forms/Sphere.hpp"
 #include "Forms/Rectangle.hpp"
@@ -13,7 +14,6 @@
 #include "SkyTypes.hpp"
 #include "Defaults.hpp"
 #include "OBJReader.hpp"
-#include "CUDA/CudaRender.hpp"
 #include <fstream>
 #include <iostream>
 
@@ -29,7 +29,8 @@ int	main(void)
 	Scene scene;
 	scene.setXResolution(500);
 	scene.setYResolution(500);
-	scene.setSampleCount(6);
+	scene.initializePixelArray();
+	scene.setSampleCount(64);
 	scene.setMaxLightBounces(12);
 	scene.setGammaCorrected(true);
 	scene.setRenderSky(SKY_NONE);
@@ -53,7 +54,11 @@ int	main(void)
 
 	// scene.addHittable(std::make_shared<BVHNode>(triangles));
 
-	cudaRender(scene);
+	render(scene);
+
+	// Writes BMP image file
+	BMP bmp("render");
+	bmp.writeFile(scene);
 
 	return (0);
 }

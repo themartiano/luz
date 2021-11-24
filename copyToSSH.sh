@@ -1,1 +1,0 @@
-scp -r ./includes ./srcs ./Makefile ubuntu@$1:/home/ubuntu/Luz

@@ -23,8 +23,9 @@ BMP::BMP(std::string fileName)
 }
 
 // Writes a .bmp image file using the information present on 'scene'
-void	BMP::writeFile(Scene& scene, double* frameBuffer)
+void	BMP::writeFile(Scene& scene)
 {
+	unsigned char	padding[3] = {0, 0, 0};
 	int				paddingSize = (4 - (scene.getXResolution() * 3) % 4) % 4;
 	int				stride = (scene.getXResolution() * 3) + paddingSize;
 	unsigned char*	fileHeader = createBitmapFileHeader(scene.getYResolution(), stride);
@@ -37,21 +38,9 @@ void	BMP::writeFile(Scene& scene, double* frameBuffer)
 	fwrite(fileHeader, 1, 14, imageFile);
 	fwrite(infoHeader, 1, 40, imageFile);
 
-	for (int y = scene.getYResolution() - 1; y >= 0; y--)
-	{
-		for (int x = 0; x < scene.getXResolution(); x++)
-		{
-			int	pixelIndex = y * 3 * scene.getXResolution() + x * 3;
-
-			unsigned char r = (unsigned char)(frameBuffer[pixelIndex + 0] * 255.0);
-			unsigned char g = (unsigned char)(frameBuffer[pixelIndex + 1] * 255.0);
-			unsigned char b = (unsigned char)(frameBuffer[pixelIndex + 2] * 255.0);
-
-
-			fwrite(&r, 1, 1, imageFile);
-			fwrite(&g, 1, 1, imageFile);
-			fwrite(&b, 1, 1, imageFile);
-		}
+	for (int i = scene.getYResolution() - 1; i >= 0; i--) {
+		fwrite(scene.getPixelArray() + (i * scene.getXResolution() * 3), 3, scene.getXResolution(), imageFile);
+		fwrite(padding, 1, paddingSize, imageFile);
 	}
 
 	fclose(imageFile);
