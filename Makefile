@@ -16,19 +16,23 @@
 NAME := Luz
 SRCS_DIR := ./srcs
 OBJS_DIR := ./objs
-SRCS :=	./srcs/Camera.cpp ./srcs/ExitError.cpp ./srcs/main.cpp ./srcs/Scene.cpp ./srcs/Vector2.cpp \
-		./srcs/BMP.cpp ./srcs/Renderer.cpp ./srcs/Ray.cpp ./srcs/Utilities.cpp ./srcs/AABB.cpp \
+CPP_SRCS :=	./srcs/Camera.cpp ./srcs/ExitError.cpp ./srcs/main.cpp ./srcs/Scene.cpp ./srcs/Vector2.cpp \
+		./srcs/BMP.cpp ./srcs/Ray.cpp ./srcs/Utilities.cpp ./srcs/AABB.cpp ./srcs/OBJReader.cpp \
 		./srcs/Color.cpp ./srcs/Light.cpp ./srcs/Material.cpp ./srcs/Transform.cpp ./srcs/Vector3.cpp \
 		./srcs/Forms/Sphere.cpp ./srcs/Clock.cpp ./srcs/BVHNode.cpp ./srcs/Forms/Rectangle.cpp \
-		./srcs/Forms/Plane.cpp ./srcs/Atmosphere.cpp ./srcs/Forms/Triangle.cpp ./srcs/OBJReader.cpp \
-		./srcs/CUDA/CheckCudaErrors.cpp
-OBJS := $(patsubst $(SRCS_DIR)/%.cpp, $(OBJS_DIR)/%.o, $(SRCS))
+		./srcs/Forms/Plane.cpp ./srcs/Atmosphere.cpp ./srcs/Forms/Triangle.cpp
+CPP_OBJS := $(patsubst $(SRCS_DIR)/%.cpp, $(OBJS_DIR)/%.o, $(CPP_SRCS))
+CU_SRCS :=	./srcs/Renderer.cu ./srcs/CUDA/CheckCudaErrors.cu ./srcs/CUDA/CudaRender.cu ./srcs/CUDA/CudaUtils.cu
+CU_OBJS := $(patsubst $(SRCS_DIR)/%.cu, $(OBJS_DIR)/%.o, $(CU_SRCS))
+_CU_COMPILER = nvcc
 DPND := $(OBJS:.o=.d)
 INCLUDES := -Iincludes
 LANGUAGE_STD := -std=c++17
 WWW_FLAGS := -Wall -Wextra -Werror
 OPT_FLAGS := -O3
 INC_FLAGS := -MD
+LIBRARIES := -L/usr/local/cuda/lib64 -lcuda -lcudart
+CU_COMPILER_FLAGS := -m64 -gencode arch=compute_60,code=sm_60
 TMP_FILE := Makefile.tmp
 
 ####################################################
@@ -127,20 +131,24 @@ all: $(PRE_EXECUTE)
 	@printf "[\e[1;34mPreparing objects\e[0m]\n\n"
 	@$(MAKE) $(NAME) --no-print-directory
 
+$(OBJS_DIR)/%.o: $(SRCS_DIR)/%.cu
+	$(shell [ ! -d $(@D) ] && mkdir -p $(@D))
+	$(_CU_COMPILER) $(CU_COMPILER_FLAGS) $(WWW_FLAGS) $(INC_FLAGS) $(DEBUG_FLAGS) $(INCLUDES) -DOS=$(COMPILER) -c $< -o $@
+
 $(OBJS_DIR)/%.o: $(SRCS_DIR)/%.cpp
 	$(shell [ ! -d $(@D) ] && mkdir -p $(@D))
 	$(_COMPILER) $(COMPILER_FLAGS) $(LANGUAGE_STD) $(WWW_FLAGS) $(OPT_FLAGS) $(INC_FLAGS) $(DEBUG_FLAGS) $(INCLUDES) -DOS=$(COMPILER) -c $< -o $@
 
-$(NAME): $(OBJS)
+$(NAME): $(CPP_OBJS) $(CU_OBJS)
 	@printf "\n[\e[1;34mCompiling $(NAME)\e[0m]\n\n"
-	$(_COMPILER) $(COMPILER_FLAGS) $(LANGUAGE_STD) $(WWW_FLAGS) $(OPT_FLAGS) $(INC_FLAGS) $(DEBUG_FLAGS) $(INCLUDES) $(OBJS) -DOS=$(COMPILER) -o $(NAME)
+	$(_COMPILER) $(COMPILER_FLAGS) $(LANGUAGE_STD) $(WWW_FLAGS) $(OPT_FLAGS) $(INC_FLAGS) $(DEBUG_FLAGS) $(INCLUDES) $(LIBRARIES) $(CPP_OBJS) $(CU_OBJS) -DOS=$(COMPILER) -o $(NAME)
 
 	@printf "\n[\e[0;32mCompilation done. $(NAME) ready.\e[0m]\n"
 
 .PHONY: clean
 clean:
 	@printf "[\e[1;33mCleaning\e[0m]\n\n"
-	rm -f $(OBJS)
+	rm -f $(CPP_OBJS)
 	rm -f $(DPND)
 	@$(shell if [[ "$(shell test -d $(OBJS_DIR) && find $(OBJS_DIR) -type f | wc -l)" -eq 0 ]]; then rm -rf $(OBJS_DIR); fi;)
 

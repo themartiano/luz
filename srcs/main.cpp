@@ -29,7 +29,6 @@ int	main(void)
 	Scene scene;
 	scene.setXResolution(500);
 	scene.setYResolution(500);
-	scene.initializePixelArray();
 	scene.setSampleCount(6);
 	scene.setMaxLightBounces(12);
 	scene.setGammaCorrected(true);

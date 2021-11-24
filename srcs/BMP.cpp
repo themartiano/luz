@@ -25,7 +25,6 @@ BMP::BMP(std::string fileName)
 // Writes a .bmp image file using the information present on 'scene'
 void	BMP::writeFile(Scene& scene, double* frameBuffer)
 {
-	unsigned char	padding[3] = {0, 0, 0};
 	int				paddingSize = (4 - (scene.getXResolution() * 3) % 4) % 4;
 	int				stride = (scene.getXResolution() * 3) + paddingSize;
 	unsigned char*	fileHeader = createBitmapFileHeader(scene.getYResolution(), stride);

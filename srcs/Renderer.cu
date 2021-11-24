@@ -16,6 +16,7 @@
 #include <stdlib.h>
 
 // Static function prototypes
+static void		__render(Scene& scene, double* frameBuffer, int x, int y);
 static Color	calculatePixelColor(Scene& scene, int x, int y);
 static bool		checkHits(Scene& scene, Ray& ray);
 static Color	calculateLightRaysColor(Ray& ray, Scene& scene, int bounces);
@@ -25,18 +26,20 @@ static Color	calculateSkyInterpolation(Scene& scene, Ray& ray);
 // Renders the image using all the information present on 'scene'. (Objects, cameras, lights, settings, etc)
 __global__ void	render(Scene& scene, double* frameBuffer)
 {
-	//std::cout << CLR_YELLOW << "Rendering..." << CLR_RESET << std::endl;
-
-	//Clock	clock;
-	static int	height = scene.getYResolution();
-	static int	width = scene.getXResolution();
-	static int	sampleCount = scene.getSampleCount();
-	static int	percentageUpdateFactor = height / 100;
-	static bool	gammaCorrected = scene.getGammaCorrected();
-
 	// Calculates the X and Y values for the pixel
 	int x = threadIdx.x + blockIdx.x * blockDim.x;
 	int y = threadIdx.y + blockIdx.y * blockDim.y;
+
+	__render(scene, frameBuffer, x, y);
+}
+
+static void	__render(Scene& scene, double* frameBuffer, int x, int y)
+{
+	//std::cout << CLR_YELLOW << "Rendering..." << CLR_RESET << std::endl;
+
+	//Clock	clock;
+	int	height = scene.getYResolution();
+	int	width = scene.getXResolution();
 
 	// Checks if X and Y value are inside the frame
 	if (x >= width || y >= height)
@@ -44,6 +47,8 @@ __global__ void	render(Scene& scene, double* frameBuffer)
 		return;
 	}
 
+	int	sampleCount = scene.getSampleCount();
+	bool	gammaCorrected = scene.getGammaCorrected();
 	Color pixelColor(0.0, 0.0, 0.0);
 
 	for (int samples = 0; samples < sampleCount; samples++)
@@ -70,8 +75,9 @@ __global__ void	render(Scene& scene, double* frameBuffer)
 		pixelColor.setBlue(0.0);
 	}
 
-	scene.setPixelArray((y * width) + x, pixelColor);
-
+	frameBuffer[((y * width) + x) + 0] = pixelColor.getRed();
+	frameBuffer[((y * width) + x) + 1] = pixelColor.getGreen();
+	frameBuffer[((y * width) + x) + 1] = pixelColor.getBlue();
 
 	//double elapsedS = clock.stop();
 	//std::cout << CLR_WHITE << "\r[ 100% ]";
