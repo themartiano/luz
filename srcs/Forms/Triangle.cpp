@@ -82,6 +82,29 @@ bool    Triangle::hit(Ray& ray, double t_max) const
     return (true);
 }
 
+// bool    Triangle::hit(Ray& ray, double t_max) const
+// {
+// 	Vector3 v1 = this->_vertex2 - this->_vertex1;
+// 	Vector3 v2 = this->_vertex3 - this->_vertex1;
+// 	double d = dot(v1, cross(ray.getDirection(), v2));
+// 	if (fabs(d) < T_MIN)
+// 		return (false);
+// 	Vector3 t = ray.getOrigin() - this->_vertex1;
+// 	double u = dot(t, cross(ray.getDirection(), v2)) * (1.0f / d);
+// 	if (u < 0.0f || u > 1.0f || fabs(t.getZ()) > t_max)
+// 		return (false);
+// 	if (dot(ray.getDirection(), cross(t, v1)) * (1.0f / d) < 0.0f || u
+// 		+ (dot(ray.getDirection(), cross(t, v1)) * (1.0f / d)) > 1.0f)
+// 		return (false);
+
+//     ray.hitRecord.t0 = dot(v2, cross(t, v1)) * (1.0f / d);
+//     ray.hitRecord.normal = normalize(cross(v1, v2));
+//     ray.hitRecord.material = this->_material;
+//     ray.hitRecord.position = ray.pointAtRay(dot(v2, cross(t, v1)) * (1.0f / d));
+
+// 	return (true);
+// }
+
 // Creates an AABB / bounding box for this Triangle
 bool    Triangle::createBoundingBox(AABB& outputBoundingBox) const
 {
