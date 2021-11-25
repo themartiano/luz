@@ -56,20 +56,20 @@ void    readObj(Scene& scene, std::string fileName)
 			size_t newPos = 0;
 
 			newPos = line.find_first_of(' ', oldPos);
-			positions[0] = std::stoi(line.substr(oldPos, newPos - oldPos)) - 1;
+			positions[0] = std::stoi(line.substr(oldPos, newPos - oldPos));
 			oldPos = newPos + 1;
 
 			newPos = line.find_first_of(' ', oldPos);
-			positions[1] = std::stoi(line.substr(oldPos, newPos - oldPos)) - 1;
+			positions[1] = std::stoi(line.substr(oldPos, newPos - oldPos));
 			oldPos = newPos + 1;
 
 			newPos = line.find_first_of(' ', oldPos);
-			positions[2] = std::stoi(line.substr(oldPos, newPos - oldPos)) - 1;
+			positions[2] = std::stoi(line.substr(oldPos, newPos - oldPos));
 
 			triangles.push_back(std::make_shared<Triangle>(
-				vertices[positions[0]],
-				vertices[positions[1]],
-				vertices[positions[2]],
+				vertices[positions[0] - 1],
+				vertices[positions[1] - 1],
+				vertices[positions[2] - 1],
 				Material(Color(randomdouble(), randomdouble(), randomdouble()), 1.0, 0.0, 0.5, 0.0, false, false, 0.0)
 			));
 		}
