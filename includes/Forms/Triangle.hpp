@@ -16,9 +16,9 @@ class   Triangle : public Hittable
         virtual bool    createBoundingBox(AABB& outputBoundingBox) const override;
 
     private:
+        Vector3     _vertex0;
         Vector3     _vertex1;
         Vector3     _vertex2;
-        Vector3     _vertex3;
         Material    _material;
 };
 
