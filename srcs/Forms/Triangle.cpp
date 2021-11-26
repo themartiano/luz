@@ -33,7 +33,7 @@ bool    Triangle::hit(Ray& ray, double t_max) const
     Vector3 p = cross(ray.getDirection(), v2);
     double  det = dot(v1, p);
 
-    // If det is near 0, they're parallel. If it's negative, the triangle is backfacing.
+    // If det is near 0, they're parallel. If it's negative, the triangle is backfacing the camera.
     if (fabs(det) < T_MIN)
     {
         return (false);
@@ -49,7 +49,7 @@ bool    Triangle::hit(Ray& ray, double t_max) const
     }
 
     Vector3 q = cross(tVec, v1);
-    double v = dot(ray.getDirection(), q) * invDet;
+    double v = dot(ray.getDirection(), q) * invDet; // double v = dot(ray.getDirection() * -1.0, q) * invDet; //////////// alguns triângulos ficam invertidos pois a direção do raio em relação à orientação do triângulo result em um valor negativo no / do DOT product. AKA normal invertido, etc. https://stackoverflow.com/a/40619957/11578778
     if (v < 0.0 || u + v > 1.0)
     {
         return (false);

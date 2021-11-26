@@ -41,9 +41,9 @@ int	main(void)
 
 	//mountCornellBox(scene);
 
-	scene.addCamera(Camera(Vector3(0.0, 2.0, 13.0), Vector3(0.0, 0.0, -1.0), 65, 0.0));
+	scene.addCamera(Camera(Vector3(0.0, 2.0, 5.0), Vector3(0.0, 0.0, -1.0), 65, 0.0));
 
-	readObj(scene, "lamp");
+	readObj(scene, "pyramid");
 
 	render(scene);
 

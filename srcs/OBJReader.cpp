@@ -37,15 +37,15 @@ void    readObj(Scene& scene, std::string fileName)
 			size_t newPos = 0;
 
 			newPos = line.find_first_of(' ', oldPos);
-			vertex.setX(std::stof(line.substr(oldPos, newPos - oldPos)));
+			vertex.setX(std::stod(line.substr(oldPos, newPos - oldPos)));
 			oldPos = newPos + 1;
 
 			newPos = line.find_first_of(' ', oldPos);
-			vertex.setY(std::stof(line.substr(oldPos, newPos - oldPos)));
+			vertex.setY(std::stod(line.substr(oldPos, newPos - oldPos)));
 			oldPos = newPos + 1;
 
 			newPos = line.find_first_of(' ', oldPos);
-			vertex.setZ(std::stof(line.substr(oldPos, newPos - oldPos)));
+			vertex.setZ(std::stod(line.substr(oldPos, newPos - oldPos)));
 
 			vertices.push_back(vertex);
 		}
