@@ -169,5 +169,14 @@ Color   Atmosphere::computeIncidentLight(Ray& ray, double t_max)
     // }
 
     Vector3 result = (sumR * betaR * phaseR + sumM * betaM * phaseM) * 20.0;
-    return (Color(result.getX(), result.getY(), result.getZ()));
+    Color color(result.getX(), result.getY(), result.getZ());
+    if (color.getRed() <= 0.01 && color.getGreen() <= 0.01 && color.getBlue() <= 0.01)
+    {
+        double random = randomdouble(0.0, 1.0);
+        if (random >= 0.9996)
+        {
+            return (Color(1.0, 1.0, 1.0));
+        }
+    }
+    return (color);
 }
