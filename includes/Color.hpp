@@ -13,8 +13,10 @@ class	Color
 		double	getBlue(void) const;
 		void	setBlue(double blue);
 		Color&	operator+=(const Color &color2);
+		Color&	operator-=(const Color &color2);
 		Color&	operator/=(const double f);
 		Color	operator+(const Color color) const;
+		Color	operator-(const Color color) const;
 		Color	operator*(const double f) const;
 		Color	operator*(const Color color) const;
 		Color	operator/(const double f) const;

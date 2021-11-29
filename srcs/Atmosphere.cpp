@@ -22,10 +22,11 @@ Atmosphere::Atmosphere(void)
     this->_hM = D_HM;
     this->_samples = 16;
     this->_lightSamples = 8;
+    this->_starsBrightness = 0.5;
 }
 
 // Constructs the Atmosphere with custom values
-Atmosphere::Atmosphere(double sunAngle, double earthRadius, double atmosphereRadius, double hR, double hM, int samples, int lightSamples)
+Atmosphere::Atmosphere(double sunAngle, double earthRadius, double atmosphereRadius, double hR, double hM, int samples, int lightSamples, double starsBrightness)
 {
     double angle = M_PI * sunAngle;
     Vector3 sunDir(0.0, std::cos(angle), -std::sin(angle));
@@ -38,6 +39,7 @@ Atmosphere::Atmosphere(double sunAngle, double earthRadius, double atmosphereRad
     this->_hM = hM;
     this->_samples = samples;
     this->_lightSamples = lightSamples;
+    this->_starsBrightness = starsBrightness;
 }
 
 const Vector3 Atmosphere::betaR(3.8e-6, 13.5e-6, 33.1e-6);
@@ -47,6 +49,11 @@ const Vector3 Atmosphere::betaM(21e-6, 21e-6, 21e-6);
 double  Atmosphere::getEarthRadius(void) const
 {
     return (this->_earthRadius);
+}
+// Returns the Earth Radius
+double  Atmosphere::getStarsBrightness(void) const
+{
+    return (this->_starsBrightness);
 }
 
 // (Sphere) Hit function for planets and atmospheres (sets both t0 and t1 on the Hit Record). Returns true if hit occurs, false otherwise
@@ -169,14 +176,5 @@ Color   Atmosphere::computeIncidentLight(Ray& ray, double t_max)
     // }
 
     Vector3 result = (sumR * betaR * phaseR + sumM * betaM * phaseM) * 20.0;
-    Color color(result.getX(), result.getY(), result.getZ());
-    if (color.getRed() <= 0.01 && color.getGreen() <= 0.01 && color.getBlue() <= 0.01)
-    {
-        double random = randomdouble(0.0, 1.0);
-        if (random >= 0.9996)
-        {
-            return (Color(1.0, 1.0, 1.0));
-        }
-    }
-    return (color);
+    return (Color(result.getX(), result.getY(), result.getZ()));
 }
