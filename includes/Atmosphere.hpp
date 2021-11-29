@@ -9,10 +9,11 @@ class   Atmosphere
 {
     public:
         Atmosphere(void);
-        Atmosphere(double sunAngle, double earthRadius, double atmosphereRadius, double hR, double hM, int samples, int lightSamples);
+        Atmosphere(double sunAngle, double earthRadius, double atmosphereRadius, double hR, double hM, int samples, int lightSamples, double starsBrightness);
         static const Vector3 betaR;
         static const Vector3 betaM;
         double  getEarthRadius(void) const;
+        double  getStarsBrightness(void) const;
         Color   computeIncidentLight(Ray& ray, double t_max);
 
     private:
@@ -23,6 +24,7 @@ class   Atmosphere
         double  _hM; // The same as above but for Mie Scattering
         int     _samples; // Samples per ray
         int     _lightSamples; // Number of samples per ray sample
+        double  _starsBrightness;
 };
 
 bool planetaryHit(double radius, Ray& ray);

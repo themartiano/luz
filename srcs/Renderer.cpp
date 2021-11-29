@@ -159,7 +159,24 @@ static Color	calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
 		{
 			t_max = std::max(0.0, atmosphereRay.hitRecord.t0);
 		}
-		return (scene.getAtmosphere().computeIncidentLight(atmosphereRay, t_max));
+
+		Color atmosphereColor = scene.getAtmosphere().computeIncidentLight(atmosphereRay, t_max);
+
+		double random = randomdouble(0.0, 1.0);
+		if (random >= 0.9996)
+		{
+			double diff = randomdouble(scene.getAtmosphere().getStarsBrightness() - 0.2, scene.getAtmosphere().getStarsBrightness() + 0.2) - ((atmosphereColor.getRed() + atmosphereColor.getGreen() + atmosphereColor.getBlue()) / 3.0);
+			if (diff < 0.0)
+			{
+				diff = 0.0;
+			}
+			else if (diff > 1.0)
+			{
+				diff = 1.0;
+			}
+			atmosphereColor += Color(diff, diff, diff);
+		}
+		return (atmosphereColor);
 	}
 	else if (skyType == SKY_LINEAR)
 	{

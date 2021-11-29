@@ -65,6 +65,14 @@ Color&	Color::operator+=(const Color &color2)
 	return (*this);
 }
 
+Color&	Color::operator-=(const Color &color2)
+{
+	this->_red -= color2.getRed();
+	this->_green -= color2.getGreen();
+	this->_blue -= color2.getBlue();
+	return (*this);
+}
+
 Color&	Color::operator/=(const double f)
 {
 	this->_red /= f;
@@ -91,4 +99,9 @@ Color	Color::operator/(const double f) const
 Color	Color::operator+(const Color color) const
 {
 	return (Color(this->_red + color.getRed(), this->_green + color.getGreen(), this->_blue + color.getBlue()));
+}
+
+Color	Color::operator-(const Color color) const
+{
+	return (Color(this->_red - color.getRed(), this->_green - color.getGreen(), this->_blue - color.getBlue()));
 }
