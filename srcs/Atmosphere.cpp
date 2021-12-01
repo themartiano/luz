@@ -11,11 +11,8 @@
 // Constructs the Atmosphere with default values
 Atmosphere::Atmosphere(void)
 {
-    double angle = M_PI * -0.4;
-    Vector3 sunDir(0.0, std::cos(angle), -std::sin(angle));
-
-    this->_sunDirection = sunDir;
-
+    this->_sunAngle = -0.4;
+    updateSunDirectionVector();
     this->_earthRadius = D_EARTH_RADIUS;
     this->_atmosphereRadius = D_ATMOSPHERE_RADIUS;
     this->_hR = D_HR;
@@ -28,11 +25,8 @@ Atmosphere::Atmosphere(void)
 // Constructs the Atmosphere with custom values
 Atmosphere::Atmosphere(double sunAngle, double earthRadius, double atmosphereRadius, double hR, double hM, int samples, int lightSamples, double starsBrightness)
 {
-    double angle = M_PI * sunAngle;
-    Vector3 sunDir(0.0, std::cos(angle), -std::sin(angle));
-
-    this->_sunDirection = sunDir;
-
+    this->_sunAngle = sunAngle;
+    updateSunDirectionVector();
     this->_earthRadius = earthRadius;
     this->_atmosphereRadius = atmosphereRadius;
     this->_hR = hR;
@@ -54,6 +48,23 @@ double  Atmosphere::getEarthRadius(void) const
 double  Atmosphere::getStarsBrightness(void) const
 {
     return (this->_starsBrightness);
+}
+
+double  Atmosphere::getSunAngle(void) const
+{
+    return (this->_sunAngle);
+}
+
+void    Atmosphere::setSunAngle(double newAngle)
+{
+    this->_sunAngle = newAngle;
+    updateSunDirectionVector();
+}
+
+void    Atmosphere::updateSunDirectionVector(void)
+{
+    double angle = M_PI * this->_sunAngle;
+    this->_sunDirection = Vector3(0.0, std::cos(angle), -std::sin(angle));
 }
 
 // (Sphere) Hit function for planets and atmospheres (sets both t0 and t1 on the Hit Record). Returns true if hit occurs, false otherwise
