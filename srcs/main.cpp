@@ -14,6 +14,7 @@
 #include "SkyTypes.hpp"
 #include "Defaults.hpp"
 #include "OBJReader.hpp"
+#include "SequenceRenderer.hpp"
 #include <fstream>
 #include <iostream>
 
@@ -30,8 +31,8 @@ int	main(void)
 	scene.setXResolution(500);
 	scene.setYResolution(500);
 	scene.initializePixelArray();
-	scene.setSampleCount(1);
-	scene.setMaxLightBounces(5);
+	scene.setSampleCount(64);
+	scene.setMaxLightBounces(16);
 	scene.setGammaCorrected(true);
 	scene.setRenderSky(SKY_ATMOSPHERE);
 	scene.setAtmosphere(Atmosphere(0.0, D_EARTH_RADIUS, D_ATMOSPHERE_RADIUS, D_HR, D_HM, 16, 8, 0.268)); // Only needed if Scene.Sky == SKY_ATMOSPHERE
@@ -51,11 +52,13 @@ int	main(void)
 
 	//readObj(scene, "pyramid");
 
-	render(scene);
+	renderSequence(scene, Atmosphere(0.0, D_EARTH_RADIUS, D_ATMOSPHERE_RADIUS, D_HR, D_HM, 16, 8, 0.268), 24, 5.0);
 
-	// Writes BMP image file
-	BMP bmp("render");
-	bmp.writeFile(scene);
+	// render(scene);
+
+	// // Writes BMP image file
+	// BMP bmp("render");
+	// bmp.writeFile(scene);
 
 	return (0);
 }

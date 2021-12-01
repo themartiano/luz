@@ -15,9 +15,12 @@ class   Atmosphere
         double  getEarthRadius(void) const;
         double  getStarsBrightness(void) const;
         Color   computeIncidentLight(Ray& ray, double t_max);
+        double  getSunAngle(void) const;
+        void    setSunAngle(double newAngle);
 
     private:
         Vector3 _sunDirection;
+        double  _sunAngle;
         double  _earthRadius;
         double  _atmosphereRadius;
         double  _hR; // Thickness of the atmosphere if density was uniform
@@ -25,6 +28,7 @@ class   Atmosphere
         int     _samples; // Samples per ray
         int     _lightSamples; // Number of samples per ray sample
         double  _starsBrightness;
+        void    updateSunDirectionVector(void);
 };
 
 bool planetaryHit(double radius, Ray& ray);

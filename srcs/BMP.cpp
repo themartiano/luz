@@ -1,6 +1,7 @@
 #include "BMP.hpp"
 #include "ANSIColors.hpp"
 #include <iostream>
+#include <filesystem>
 
 // Static function prototypes
 static unsigned char*	createBitmapFileHeader(int height, int stride);
@@ -22,8 +23,7 @@ BMP::BMP(std::string fileName)
 	this->_fileName = fileName + ".bmp";
 }
 
-// Writes a .bmp image file using the information present on 'scene'
-void	BMP::writeFile(Scene& scene)
+void	BMP::writeFile(Scene& scene, bool insideDir, std::string dirName)
 {
 	unsigned char	padding[3] = {0, 0, 0};
 	int				paddingSize = (4 - (scene.getXResolution() * 3) % 4) % 4;
@@ -33,7 +33,14 @@ void	BMP::writeFile(Scene& scene)
 
 	std::cout << CLR_YELLOW << "Writing render to " << CLR_BLUE_BRIGHT << this->_fileName << CLR_YELLOW << "...\n" << CLR_RESET;
 
-	FILE* imageFile = fopen(this->_fileName.c_str(), "wb");
+	std::string filePath = this->_fileName;
+	if (insideDir == true)
+	{
+		std::filesystem::create_directory(dirName);
+		filePath = dirName + "/" + this->_fileName;
+	}
+
+	FILE* imageFile = fopen(filePath.c_str(), "wb");
 
 	fwrite(fileHeader, 1, 14, imageFile);
 	fwrite(infoHeader, 1, 40, imageFile);
@@ -45,6 +52,12 @@ void	BMP::writeFile(Scene& scene)
 
 	fclose(imageFile);
 	std::cout << CLR_GREEN_BRIGHT << "File ready.\n\n" << CLR_RESET;
+}
+
+// Writes a .bmp image file using the information present on 'scene'
+void	BMP::writeFile(Scene& scene)
+{
+	writeFile(scene, false, "");
 }
 
 // Creates and returns the BMP image "file header"
