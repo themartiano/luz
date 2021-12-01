@@ -31,34 +31,41 @@ int	main(void)
 	scene.setXResolution(500);
 	scene.setYResolution(500);
 	scene.initializePixelArray();
-	scene.setSampleCount(64);
-	scene.setMaxLightBounces(16);
+	scene.setSampleCount(1);
+	scene.setMaxLightBounces(6);
 	scene.setGammaCorrected(true);
-	scene.setRenderSky(SKY_ATMOSPHERE);
-	scene.setAtmosphere(Atmosphere(0.0, D_EARTH_RADIUS, D_ATMOSPHERE_RADIUS, D_HR, D_HM, 16, 8, 0.268)); // Only needed if Scene.Sky == SKY_ATMOSPHERE
-	//scene.setBackgroundColor(Color(1.0, 1.0, 1.0)); // Only needed if Scene.Sky == SKY_NONE
+	scene.setRenderSky(SKY_NONE);
+	//scene.setAtmosphere(Atmosphere(0.0, D_EARTH_RADIUS, D_ATMOSPHERE_RADIUS, D_HR, D_HM, 64, 32, 0.268)); // Only needed if Scene.Sky == SKY_ATMOSPHERE
+	scene.setBackgroundColor(Color(1.0, 1.0, 1.0)); // Only needed if Scene.Sky == SKY_NONE
 
 	// Coordinate system ~~ Right Hand ~~ Forward: -Z | Up: +Y | Right: +X
 
 	//mountCornellBox(scene);
 
-	scene.addCamera(Camera(Vector3(0.0, D_EARTH_RADIUS + 50.0, 0.0), Vector3(0.0, 0.0, -1.0), 65, 0.0));
+	scene.addCamera(Camera(Vector3(0.0, 0.0, 5.0), Vector3(0.0, 0.0, -1.0), 65, 0.0));
 
-	scene.addHittable(std::make_shared<Plane>(
-		D_EARTH_RADIUS,
-		Vector3(0.0, 1.0, 0.0),
-		Material(Color(0.11, 0.2, 0.01), 1.0, 0.0, 0.5, 0.0, false, false, 0.0)
+	// scene.addHittable(std::make_shared<Plane>(
+	// 	-1.0,
+	// 	Vector3(0.0, 1.0, 0.0),
+	// 	Material(Color(1.0, 1.0, 1.0), 1.0, 0.0, 0.5, 0.0, false, false, 0.0)
+	// ));
+
+	scene.addHittable(std::make_shared<Triangle>(
+		Vector3(-1.0, 0.0, 0.0),
+		Vector3(1.0, 0.0, 0.0),
+		Vector3(-2.0, 2.0, 0.0),
+		Material(Color(1.0, 1.0, 1.0), 1.0, 0.0, 0.5, 0.0, false, false, 0.0)
 	));
 
-	//readObj(scene, "pyramid");
+	//readObj(scene, "blender_cube");
 
-	renderSequence(scene, Atmosphere(0.0, D_EARTH_RADIUS, D_ATMOSPHERE_RADIUS, D_HR, D_HM, 16, 8, 0.268), 24, 5.0);
+	//renderSequence(scene, scene.getAtmosphere(), 5, 5.0);
 
-	// render(scene);
+	render(scene);
 
-	// // Writes BMP image file
-	// BMP bmp("render");
-	// bmp.writeFile(scene);
+	// Writes BMP image file
+	BMP bmp("render");
+	bmp.writeFile(scene);
 
 	return (0);
 }

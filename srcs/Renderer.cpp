@@ -126,6 +126,7 @@ static Color	calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
 	Color color, emitted = Color(0.0, 0.0, 0.0);
 	if (checkHits(scene, ray))
 	{
+		//ray.setOrigin(ray.hitRecord.position + (ray.hitRecord.normal * T_MIN));
 		ray.setOrigin(ray.hitRecord.position);
 
 		if (ray.hitRecord.material.getIsEmissive() == true)

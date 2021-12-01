@@ -11,7 +11,7 @@ class   Triangle : public Hittable
 {
     public:
         Triangle(void);
-        Triangle(Vector3 vertex1, Vector3 vertex2, Vector3 vertex3, Material material);
+        Triangle(Vector3 vertex0, Vector3 vertex1, Vector3 vertex2, Material material);
         virtual bool    hit(Ray& ray, double t_max) const override;
         virtual bool    createBoundingBox(AABB& outputBoundingBox) const override;
 

@@ -48,8 +48,8 @@ bool    Sphere::hit(Ray& ray, double t_max) const
     {
         return (false);
     }
-    double sqrtd = sqrt(discriminant);
 
+    double sqrtd = sqrt(discriminant);
     double root = (-b - sqrtd) / a;
     if (root < T_MIN || root > t_max)
     {

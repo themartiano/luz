@@ -17,11 +17,11 @@ Triangle::Triangle(void)
 }
 
 // Constructs the Triangle with custom values
-Triangle::Triangle(Vector3 vertex1, Vector3 vertex2, Vector3 vertex3, Material material)
+Triangle::Triangle(Vector3 vertex0, Vector3 vertex1, Vector3 vertex2, Material material)
 {
-    this->_vertex0 = vertex1;
-    this->_vertex1 = vertex2;
-    this->_vertex2 = vertex3;
+    this->_vertex0 = vertex0;
+    this->_vertex1 = vertex1;
+    this->_vertex2 = vertex2;
     this->_material = material;
 }
 
