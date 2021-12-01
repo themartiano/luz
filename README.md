@@ -20,10 +20,12 @@ Developed with **C++** using nothing but the *[standard library](https://en.m.wi
 * Dielectrics (**Glass**, etc)
 * Emissive materials (**light** emitting objects)
 * **Atmosphere** scattering
+* Stars
 * **Sky** rendering with customizable skyline (linear interpolated)
 * Custom (solid) background color (if sky and atmosphere rendering is disabled)
 * **Anti-aliasing**
 * **Depth of Field**
+* Sequence rendering (multiple frames)
 * Light bouncing (reflection & refraction)
 * Gamma (2) correction
 * **Multi-sampled** rendering
