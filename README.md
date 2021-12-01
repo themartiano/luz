@@ -5,7 +5,7 @@
 Developed with modern **C++ 17** using nothing but the *[standard library](https://en.m.wikipedia.org/wiki/C%2B%2B_Standard_Library)*.
 
 ![Luz Spheres](https://user-images.githubusercontent.com/32342284/138613098-84a5b9c0-e675-41a2-ac91-523510d41d7d.jpg)
-###### Raw output converted from .bmp to .jpg
+###### Raw output converted from bmp to jpg
 ---
 
 ## Features:
@@ -52,7 +52,7 @@ Developed with modern **C++ 17** using nothing but the *[standard library](https
 ### Atmosphere:
 #### Sunset gif
 ![Luz Atmosphere](https://user-images.githubusercontent.com/32342284/144286415-7fbcf17a-6e2a-454e-8f7c-641998d98e4e.gif)
-###### Raw output converted from .bmp to .jpg
+###### Raw output converted from bmp to jpg / gif
 
 ---
 
