@@ -2,7 +2,7 @@
 
 **Luz ~ Ray Tracer**
 
-Developed with **C++** using nothing but the *[standard library](https://en.m.wikipedia.org/wiki/C%2B%2B_Standard_Library)*.
+Developed with modern **C++ 17** using nothing but the *[standard library](https://en.m.wikipedia.org/wiki/C%2B%2B_Standard_Library)*.
 
 ![Luz Spheres](https://user-images.githubusercontent.com/32342284/138613098-84a5b9c0-e675-41a2-ac91-523510d41d7d.jpg)
 ###### Raw output converted from .bmp to .jpg
