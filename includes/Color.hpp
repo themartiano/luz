@@ -1,6 +1,8 @@
 #ifndef COLOR_HPP
 #define COLOR_HPP
 
+#include <iostream>
+
 class	Color
 {
 	public:
@@ -26,5 +28,11 @@ class	Color
 		double	_green;
 		double	_blue;
 };
+
+inline std::ostream& operator<<(std::ostream& os, const Color& color)
+{
+	os << color.getRed() << ", " << color.getGreen() << ", " << color.getBlue();
+	return (os);
+}
 
 #endif

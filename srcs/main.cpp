@@ -31,7 +31,7 @@ int	main(void)
 	scene.setYResolution(500);
 	scene.initializePixelArray();
 	scene.setSampleCount(1);
-	scene.setMaxLightBounces(1);
+	scene.setMaxLightBounces(5);
 	scene.setGammaCorrected(true);
 	scene.setRenderSky(SKY_ATMOSPHERE);
 	scene.setAtmosphere(Atmosphere(0.0, D_EARTH_RADIUS, D_ATMOSPHERE_RADIUS, D_HR, D_HM, 16, 8, 0.268)); // Only needed if Scene.Sky == SKY_ATMOSPHERE
@@ -41,7 +41,13 @@ int	main(void)
 
 	//mountCornellBox(scene);
 
-	scene.addCamera(Camera(Vector3(0.0, D_EARTH_RADIUS, 0.0), Vector3(0.0, -0.2, -1.0), 65, 0.0));
+	scene.addCamera(Camera(Vector3(0.0, D_EARTH_RADIUS + 50.0, 0.0), Vector3(0.0, 0.0, -1.0), 65, 0.0));
+
+	scene.addHittable(std::make_shared<Plane>(
+		D_EARTH_RADIUS,
+		Vector3(0.0, 1.0, 0.0),
+		Material(Color(0.11, 0.2, 0.01), 1.0, 0.0, 0.5, 0.0, false, false, 0.0)
+	));
 
 	//readObj(scene, "pyramid");
 
