@@ -47,18 +47,18 @@ Developed with modern **C++ 17** using nothing but the *[standard library](https
 ---
 
 ## Showcase:
-### Cornell Box:
+### Cornell Box
 ![Luz Cornell Box](https://user-images.githubusercontent.com/32342284/139581650-2f11c939-92e2-421a-aef8-a1de5809ca4c.jpg)
-### Atmosphere:
+### Atmosphere
 #### Sunset gif
 ![Luz Atmosphere](https://user-images.githubusercontent.com/32342284/144286415-7fbcf17a-6e2a-454e-8f7c-641998d98e4e.gif)
 ###### Raw output converted from bmp to jpg / gif
 
 ---
 
-## Compilation:
+## Compilation
 * Makefile ready for Linux, MacOS and Windows compilation
-* Requires **clang++** (Linux & MacOS compilation) **or mingw** (Windows compilation)
+* Requires **clang++** (Linux & MacOS compilation) and / or **mingw** (Windows compilation)
 ### Makefile flags:
 * **DEBUG**: Adds the `-g` flag
 * **SANITIZER**: Adds the `-g` and `-fsanitize=address` flags
