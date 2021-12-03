@@ -20,19 +20,19 @@ void	    setdoubleRange(double& flt, double min, double max);
 bool	    createMainBoundingBox(Scene& scene, AABB& newBoundingBox);
 AABB	    mergeBoundingBoxes(AABB boundingBox1, AABB boundingBox2);
 
-inline double	randomdouble(void)
+inline double	randomDouble(void)
 {
     return (rand() / (RAND_MAX + 1.0));
 }
 
-inline double	randomdouble(double min, double max)
+inline double	randomDouble(double min, double max)
 {
-    return (min + (max - min) * randomdouble());
+    return (min + (max - min) * randomDouble());
 }
 
 inline int	randomInt(int min, int max)
 {
-    return (static_cast<int>(randomdouble(min, max + 1)));
+    return (static_cast<int>(randomDouble(min, max + 1)));
 }
 
 #endif

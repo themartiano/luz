@@ -29,11 +29,11 @@ void	render(Scene& scene)
 	std::cout << CLR_YELLOW << "Rendering..." << CLR_RESET << std::endl;
 
 	Clock	clock;
-	int		height = scene.getYResolution();
-	int		width = scene.getXResolution();
-	int		sampleCount = scene.getSampleCount();
-	int		percentageUpdateFactor = height / 100;
-	bool	gammaCorrected = scene.getGammaCorrected();
+	static int	height = scene.getYResolution();
+	static int	width = scene.getXResolution();
+	static int	sampleCount = scene.getSampleCount();
+	static int	percentageUpdateFactor = height / 100;
+	static bool	gammaCorrected = scene.getGammaCorrected();
 
 	for (int y = 0; y < height; y++)
 	{
@@ -45,7 +45,7 @@ void	render(Scene& scene)
 			{
 				pixelColor += calculatePixelColor(scene, x, y);
 			}
-			pixelColor /= double(sampleCount);
+			pixelColor /= sampleCount;
 			if (gammaCorrected)
 			{
 				pixelColor = Color(sqrtf(pixelColor.getRed()), sqrtf(pixelColor.getGreen()), sqrtf(pixelColor.getBlue())); // Gamma (2) correction
@@ -85,8 +85,8 @@ static Color	calculatePixelColor(Scene& scene, int x, int y)
 	static double width = double(scene.getXResolution());
 	static double height = double(scene.getYResolution());
 
-	double xU = double(x + randomdouble()) / width;
-	double yV = double(y + randomdouble()) / height;
+	double xU = double(x + randomDouble()) / width;
+	double yV = double(y + randomDouble()) / height;
 
 	static Vector3	cameraPosition = scene.getActiveCamera().getPosition();
 	static Vector3	cameraLookDirection = scene.getActiveCamera().getDirection()/* * Vector3(-1.0, -1.0, -1.0)*/;
@@ -106,8 +106,12 @@ static Color	calculatePixelColor(Scene& scene, int x, int y)
 	static Vector3	horizontal = u * (halfWidth * 2.0 * focusDistance);
 	static Vector3	vertical = v * (halfHeight * 2.0 * focusDistance);
 
-	Vector3	rd = randomPointInsideUnitDisk() * lensRadius;
-	Vector3	offset = u * rd.getX() + v * rd.getY();
+	Vector3	offset(0.0, 0.0, 0.0);
+	if (lensRadius > 0.0)
+	{
+		Vector3	rd = randomPointInsideUnitDisk() * lensRadius;
+		Vector3	offset = u * rd.getX() + v * rd.getY();
+	}
 
 	Ray ray(cameraPosition + offset, lowerLeftCorner + (horizontal * xU) + (vertical * yV) - cameraPosition - offset);
 
@@ -117,21 +121,21 @@ static Color	calculatePixelColor(Scene& scene, int x, int y)
 // Properly calculates light rays bounces, reflections, etc and returns the resulting color
 static Color	calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
 {
-	static int maxLightBounces = scene.getMaxLightBounces();
-	static short skyType = scene.getRenderSky();
+	static int		maxLightBounces = scene.getMaxLightBounces();
+	static short	skyType = scene.getRenderSky();
+	static Color	staticBackgroundColor = scene.getBackgroundColor();
 
+	Color color, emitted, atmosphereColor = Color(0.0, 0.0, 0.0);
 	if (bounces > maxLightBounces)
 	{
-		return (Color(0.0, 0.0, 0.0));
+		return (color);
 	}
 
-	Color atmosphereColor = Color(0.0, 0.0, 0.0);
 	if (skyType == SKY_ATMOSPHERE)
 	{
 		atmosphereColor = computeAtmosphereColor(scene, ray);
 	}
 
-	Color color, emitted = Color(0.0, 0.0, 0.0);
 	if (checkHits(scene, ray))
 	{
 		//ray.setOrigin(ray.hitRecord.position + (ray.hitRecord.normal * T_MIN));
@@ -165,7 +169,7 @@ static Color	calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
 	}
 	else
 	{
-		return (scene.getBackgroundColor());
+		return (staticBackgroundColor);
 	}
 }
 
@@ -185,10 +189,10 @@ static Color	computeAtmosphereColor(Scene& scene, Ray& ray)
 
 	Color atmosphereColor = scene.getAtmosphere().computeIncidentLight(atmosphereRay, t_max);
 
-	double random = randomdouble(0.0, 1.0);
+	double random = randomDouble(0.0, 1.0);
 	if (random >= 0.9996)
 	{
-		double diff = randomdouble(scene.getAtmosphere().getStarsBrightness() - 0.2, scene.getAtmosphere().getStarsBrightness() + 0.2) - ((atmosphereColor.getRed() + atmosphereColor.getGreen() + atmosphereColor.getBlue()) / 3.0);
+		double diff = randomDouble(scene.getAtmosphere().getStarsBrightness() - 0.2, scene.getAtmosphere().getStarsBrightness() + 0.2) - ((atmosphereColor.getRed() + atmosphereColor.getGreen() + atmosphereColor.getBlue()) / 3.0);
 		if (diff < 0.0)
 		{
 			diff = 0.0;
@@ -254,7 +258,7 @@ static void	calculateLightRayBounceDirection(Ray& ray, Color& color)
 			reflectionProbability = 1.0;
 		}
 
-		if (randomdouble() < reflectionProbability)
+		if (randomDouble() < reflectionProbability)
 		{
 			ray.setOrigin(ray.hitRecord.position);
 			ray.setDirection(reflect(ray.getDirection(), ray.hitRecord.normal));
@@ -277,7 +281,7 @@ static void	calculateLightRayBounceDirection(Ray& ray, Color& color)
 		return;
 	}
 
-	if (randomdouble() < ray.hitRecord.material.getMetallic())
+	if (randomDouble() < ray.hitRecord.material.getMetallic())
 	{
 		ray.setDirection(reflect(ray.getDirection(), ray.hitRecord.normal) + (randomPointInsideUnitSphere() * ray.hitRecord.material.getReflectionFuzziness()));
 	}
