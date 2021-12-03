@@ -2,7 +2,6 @@
 #define SCENE_HPP
 
 #include "Camera.hpp"
-#include "Light.hpp"
 #include "Hittable.hpp"
 #include "Atmosphere.hpp"
 #include <vector>
@@ -13,7 +12,6 @@ class	Scene
 	public:
 		Scene(void);
 		void	addCamera(Camera camera);
-		void	addLight(Light light);
 		void	addHittable(std::shared_ptr<Hittable> hittable);
 		int		getXResolution(void) const;
 		void	setXResolution(const int xRes);
@@ -52,7 +50,6 @@ class	Scene
 		Color					_backgroundColor;
 		std::vector<Camera>		_cameras;
 		size_t					_activeCamera;
-		std::vector<Light>		_lights;
 		std::vector<std::shared_ptr<Hittable>>	_hittables;
 };
 

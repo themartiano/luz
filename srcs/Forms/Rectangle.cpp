@@ -80,4 +80,5 @@ bool    Rectangle::createBoundingBox(AABB& outputBoundingBox) const
     //     Vector3(this->_x1, this->_y1, this->_position.getZ() + T_MIN));
 
     return (true);
+    (void)outputBoundingBox;
 }

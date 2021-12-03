@@ -32,12 +32,6 @@ void	Scene::addCamera(Camera camera)
 	this->_cameras.push_back(camera);
 }
 
-// Appends 'light' to the light vector (list)
-void	Scene::addLight(Light light)
-{
-	this->_lights.push_back(light);
-}
-
 // Appends 'hittable' to the Hittable vector (list)
 void	Scene::addHittable(std::shared_ptr<Hittable> hittable)
 {

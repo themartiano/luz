@@ -1,7 +1,6 @@
 #include "Renderer.hpp"
 #include "ANSIColors.hpp"
 #include "Color.hpp"
-#include "Vector2.hpp"
 #include "Ray.hpp"
 #include "Defaults.hpp"
 #include "Utilities.hpp"
@@ -36,15 +35,13 @@ void	render(Scene& scene)
 	static int	height = scene.getYResolution();
 	static int	width = scene.getXResolution();
 	static int	pixelTotal = width * height;
-	static int	sampleCount = scene.getSampleCount();
-	static bool	gammaCorrected = scene.getGammaCorrected();
 
 	static unsigned int	threadCount = CORE_COUNT * 6;
 	volatile std::atomic<int> currentRenderPixel(0);
 	std::vector<std::future<void>> futureVector;
 
 	// Creates threads.
-	for (int i = 0; i < threadCount; i++)
+	for (unsigned int i = 0; i < threadCount; i++)
 	{
 		futureVector.emplace_back(
 			std::async([=, &scene, &currentRenderPixel]()
@@ -152,7 +149,7 @@ static Color	calculatePixelColor(Scene& scene, int x, int y)
 	if (lensRadius > 0.0)
 	{
 		Vector3	rd = randomPointInsideUnitDisk() * lensRadius;
-		Vector3	offset = u * rd.getX() + v * rd.getY();
+		offset = u * rd.getX() + v * rd.getY();
 	}
 
 	Ray ray(cameraPosition + offset, lowerLeftCorner + (horizontal * xU) + (vertical * yV) - cameraPosition - offset);

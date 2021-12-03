@@ -51,4 +51,5 @@ bool    Plane::hit(Ray& ray, double t_max) const
 bool    Plane::createBoundingBox(AABB& boundingBox) const
 {
     return (false);
+    (void)boundingBox;
 }

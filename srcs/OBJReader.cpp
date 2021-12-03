@@ -75,7 +75,7 @@ void    readObj(Scene& scene, std::string fileName)
 		}
 	} while (!stream.eof());
 
-	for (int i = 0; i < triangles.size(); i++)
+	for (std::size_t i = 0; i < triangles.size(); i++)
 	{
 		scene.addHittable(triangles[i]);
 	}
