@@ -12,6 +12,7 @@ Developed with modern **C++ 17** using nothing but the *[standard library](https
 ### Rendering:
 * **Path Tracing**
 * **Physically based** rendering
+* **Multithreaded** rendering
 * **Sphere rendering** with customizable position, radius and material
 * **Rectangle rendering** with customizable position, orientation, size and material
 * **Plane rendering** with customizable Y position, orientation and material
