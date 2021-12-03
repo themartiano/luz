@@ -44,23 +44,33 @@ double  Atmosphere::getEarthRadius(void) const
 {
     return (this->_earthRadius);
 }
+
+//Returns the Atmosphere Radius
+double  Atmosphere::getAtmosphereRadius(void) const
+{
+    return (this->_atmosphereRadius);
+}
+
 // Returns the Earth Radius
 double  Atmosphere::getStarsBrightness(void) const
 {
     return (this->_starsBrightness);
 }
 
+//Returns the Sun Angle (double)
 double  Atmosphere::getSunAngle(void) const
 {
     return (this->_sunAngle);
 }
 
+//Sets the Sun Angle and updates internal variables
 void    Atmosphere::setSunAngle(double newAngle)
 {
     this->_sunAngle = newAngle;
     updateSunDirectionVector();
 }
 
+//Updates Sun Direction (Vector3) using Sun Angle (double)
 void    Atmosphere::updateSunDirectionVector(void)
 {
     double angle = M_PI * this->_sunAngle;

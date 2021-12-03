@@ -13,6 +13,7 @@ class   Atmosphere
         static const Vector3 betaR;
         static const Vector3 betaM;
         double  getEarthRadius(void) const;
+        double  getAtmosphereRadius(void) const;
         double  getStarsBrightness(void) const;
         Color   computeIncidentLight(Ray& ray, double t_max);
         double  getSunAngle(void) const;

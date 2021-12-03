@@ -20,6 +20,7 @@ static Color	calculatePixelColor(Scene& scene, int x, int y);
 static bool		checkHits(Scene& scene, Ray& ray);
 static Color	calculateLightRaysColor(Ray& ray, Scene& scene, int bounces);
 static void		calculateLightRayBounceDirection(Ray& ray, Color& color);
+static Color	computeAtmosphereColor(Scene& scene, Ray& ray);
 static Color	calculateSkyInterpolation(Scene& scene, Ray& ray);
 
 // Renders the image using all the information present on 'scene'. (Objects, cameras, lights, settings, etc)
@@ -117,10 +118,17 @@ static Color	calculatePixelColor(Scene& scene, int x, int y)
 static Color	calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
 {
 	static int maxLightBounces = scene.getMaxLightBounces();
+	static short skyType = scene.getRenderSky();
 
 	if (bounces > maxLightBounces)
 	{
 		return (Color(0.0, 0.0, 0.0));
+	}
+
+	Color atmosphereColor = Color(0.0, 0.0, 0.0);
+	if (skyType == SKY_ATMOSPHERE)
+	{
+		atmosphereColor = computeAtmosphereColor(scene, ray);
 	}
 
 	Color color, emitted = Color(0.0, 0.0, 0.0);
@@ -144,39 +152,11 @@ static Color	calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
 			return (emitted + color);
 		}
 
-		return (emitted + color * calculateLightRaysColor(ray, scene, bounces + 1));
+		return (atmosphereColor + emitted + color * calculateLightRaysColor(ray, scene, bounces + 1));
 	}
 
-	static short skyType = scene.getRenderSky();
 	if (skyType == SKY_ATMOSPHERE)
 	{
-		// If the Earth radius is not added, the origin will be inside the Earth
-		Ray atmosphereRay(ray.getOrigin(), normalize(ray.getDirection()));
-
-		double t_max = T_MAX;
-
-		// Checks ray collisions with Earth
-		if (planetaryHit(scene.getAtmosphere().getEarthRadius(), atmosphereRay) && atmosphereRay.hitRecord.t1 > 0.0)
-		{
-			t_max = std::max(0.0, atmosphereRay.hitRecord.t0);
-		}
-
-		Color atmosphereColor = scene.getAtmosphere().computeIncidentLight(atmosphereRay, t_max);
-
-		double random = randomdouble(0.0, 1.0);
-		if (random >= 0.9996)
-		{
-			double diff = randomdouble(scene.getAtmosphere().getStarsBrightness() - 0.2, scene.getAtmosphere().getStarsBrightness() + 0.2) - ((atmosphereColor.getRed() + atmosphereColor.getGreen() + atmosphereColor.getBlue()) / 3.0);
-			if (diff < 0.0)
-			{
-				diff = 0.0;
-			}
-			else if (diff > 1.0)
-			{
-				diff = 1.0;
-			}
-			atmosphereColor += Color(diff, diff, diff);
-		}
 		return (atmosphereColor);
 	}
 	else if (skyType == SKY_LINEAR)
@@ -187,6 +167,39 @@ static Color	calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
 	{
 		return (scene.getBackgroundColor());
 	}
+}
+
+// Computes the atmosphere color
+static Color	computeAtmosphereColor(Scene& scene, Ray& ray)
+{
+	// If the Earth radius is not added, the origin will be inside the Earth
+	Ray atmosphereRay(ray.getOrigin(), normalize(ray.getDirection()));
+
+	double t_max = T_MAX;
+
+	// Checks ray collisions with Earth
+	if (planetaryHit(scene.getAtmosphere().getEarthRadius(), atmosphereRay) && atmosphereRay.hitRecord.t1 > 0.0)
+	{
+		t_max = std::max(0.0, atmosphereRay.hitRecord.t0);
+	}
+
+	Color atmosphereColor = scene.getAtmosphere().computeIncidentLight(atmosphereRay, t_max);
+
+	double random = randomdouble(0.0, 1.0);
+	if (random >= 0.9996)
+	{
+		double diff = randomdouble(scene.getAtmosphere().getStarsBrightness() - 0.2, scene.getAtmosphere().getStarsBrightness() + 0.2) - ((atmosphereColor.getRed() + atmosphereColor.getGreen() + atmosphereColor.getBlue()) / 3.0);
+		if (diff < 0.0)
+		{
+			diff = 0.0;
+		}
+		else if (diff > 1.0)
+		{
+			diff = 1.0;
+		}
+		atmosphereColor += Color(diff, diff, diff);
+	}
+	return (atmosphereColor);
 }
 
 // Calculates the sky interpolation for the background and reflexes
