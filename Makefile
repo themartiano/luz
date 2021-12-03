@@ -25,7 +25,7 @@ SRCS :=	./srcs/Camera.cpp ./srcs/ExitError.cpp ./srcs/main.cpp ./srcs/Scene.cpp 
 OBJS := $(patsubst $(SRCS_DIR)/%.cpp, $(OBJS_DIR)/%.o, $(SRCS))
 DPND := $(OBJS:.o=.d)
 INCLUDES := -Iincludes
-LANGUAGE_STD := -std=c++17
+GENERAL_FLAGS := -std=c++17 -pthread
 WWW_FLAGS := -Wall -Wextra -Werror
 OPT_FLAGS := -O3
 INC_FLAGS := -MD
@@ -129,11 +129,11 @@ all: $(PRE_EXECUTE)
 
 $(OBJS_DIR)/%.o: $(SRCS_DIR)/%.cpp
 	$(shell [ ! -d $(@D) ] && mkdir -p $(@D))
-	$(_COMPILER) $(COMPILER_FLAGS) $(LANGUAGE_STD) $(WWW_FLAGS) $(OPT_FLAGS) $(INC_FLAGS) $(DEBUG_FLAGS) $(INCLUDES) -DOS=$(COMPILER) -c $< -o $@
+	$(_COMPILER) $(COMPILER_FLAGS) $(GENERAL_FLAGS) $(WWW_FLAGS) $(OPT_FLAGS) $(INC_FLAGS) $(DEBUG_FLAGS) $(INCLUDES) -DOS=$(COMPILER) -c $< -o $@
 
 $(NAME): $(OBJS)
 	@printf "\n[\e[1;34mCompiling $(NAME)\e[0m]\n\n"
-	$(_COMPILER) $(COMPILER_FLAGS) $(LANGUAGE_STD) $(WWW_FLAGS) $(OPT_FLAGS) $(INC_FLAGS) $(DEBUG_FLAGS) $(INCLUDES) $(OBJS) -DOS=$(COMPILER) -o $(NAME)
+	$(_COMPILER) $(COMPILER_FLAGS) $(GENERAL_FLAGS) $(WWW_FLAGS) $(OPT_FLAGS) $(INC_FLAGS) $(DEBUG_FLAGS) $(INCLUDES) $(OBJS) -DOS=$(COMPILER) -o $(NAME)
 
 	@printf "\n[\e[0;32mCompilation done. $(NAME) ready.\e[0m]\n"
 

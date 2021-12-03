@@ -13,9 +13,13 @@
 #include "SkyTypes.hpp"
 #include <cmath>
 #include <iostream>
+#include <thread>
+#include <future>
 #include <stdlib.h>
+#include <unistd.h>
 
 // Static function prototypes
+static void		renderInternal(Scene& scene, int x, int y);
 static Color	calculatePixelColor(Scene& scene, int x, int y);
 static bool		checkHits(Scene& scene, Ray& ray);
 static Color	calculateLightRaysColor(Ray& ray, Scene& scene, int bounces);
@@ -31,52 +35,90 @@ void	render(Scene& scene)
 	Clock	clock;
 	static int	height = scene.getYResolution();
 	static int	width = scene.getXResolution();
+	static int	pixelTotal = width * height;
 	static int	sampleCount = scene.getSampleCount();
-	static int	percentageUpdateFactor = height / 100;
 	static bool	gammaCorrected = scene.getGammaCorrected();
 
-	for (int y = 0; y < height; y++)
+	static unsigned int	threadCount = CORE_COUNT * 6;
+	volatile std::atomic<int> currentRenderPixel(0);
+	std::vector<std::future<void>> futureVector;
+
+	// Creates threads.
+	for (int i = 0; i < threadCount; i++)
 	{
-		for (int x = 0; x < width; x++)
+		futureVector.emplace_back(
+			std::async([=, &scene, &currentRenderPixel]()
+			{
+				while (true)
+				{
+					int index = currentRenderPixel++;
+					if (index >= pixelTotal)
+					{
+						break;
+					}
+
+					int	x = index % width;
+					int	y = index / width;
+
+					renderInternal(scene, x, y);
+				}
+			}
+		));
+	}
+
+	// Outputs progress using the main thread until the render is complete.
+	while (true)
+	{
+		int localRenderPixel = currentRenderPixel;
+		if (localRenderPixel >= pixelTotal)
 		{
-			Color pixelColor(0.0, 0.0, 0.0);
-
-			for (int samples = 0; samples < sampleCount; samples++)
-			{
-				pixelColor += calculatePixelColor(scene, x, y);
-			}
-			pixelColor /= sampleCount;
-			if (gammaCorrected)
-			{
-				pixelColor = Color(sqrtf(pixelColor.getRed()), sqrtf(pixelColor.getGreen()), sqrtf(pixelColor.getBlue())); // Gamma (2) correction
-			}
-
-			// Replaces NaN with zeros (in case there's a problematic sample)
-			if (pixelColor.getRed() != pixelColor.getRed())
-			{
-				pixelColor.setRed(0.0);
-			}
-			if (pixelColor.getGreen() != pixelColor.getGreen())
-			{
-				pixelColor.setGreen(0.0);
-			}
-			if (pixelColor.getBlue() != pixelColor.getBlue())
-			{
-				pixelColor.setBlue(0.0);
-			}
-
-			scene.setPixelArray((y * width) + x, pixelColor);
+			break;
 		}
-		if (y % percentageUpdateFactor == 0)
-		{
-			int percentage = (double(y) / double(height)) * 100.0;
-			std::cout << CLR_WHITE << "\r[ " << percentage << "% ]" << std::flush;
-		}
+
+		int percentage = (double(localRenderPixel) / double(pixelTotal)) * 100.0;
+		std::cout << CLR_WHITE << "\r[ " << percentage << "% ]" << std::flush;
+
+		usleep(42 * 1000); // 42ms ~~~ (42 milliseconds * 1000 microseconds)
 	}
 
 	double elapsedS = clock.stop();
 	std::cout << CLR_WHITE << "\r[ 100% ]";
 	std::cout << CLR_GREEN_BRIGHT << "\nRender done! " << CLR_BLUE_BRIGHT << "(Duration: " << CLR_WHITE << elapsedS << "s" << CLR_BLUE_BRIGHT << ")\n\n" << CLR_RESET;
+}
+
+static void	renderInternal(Scene& scene, int x, int y)
+{
+	static int	width = scene.getXResolution();
+	static int	sampleCount = scene.getSampleCount();
+	static bool	gammaCorrected = scene.getGammaCorrected();
+
+	Color pixelColor(0.0, 0.0, 0.0);
+
+	for (int samples = 0; samples < sampleCount; samples++)
+	{
+		pixelColor += calculatePixelColor(scene, x, y);
+	}
+	pixelColor /= sampleCount;
+	if (gammaCorrected)
+	{
+		pixelColor = Color(sqrtf(pixelColor.getRed()), sqrtf(pixelColor.getGreen()), sqrtf(pixelColor.getBlue())); // Gamma (2) correction
+	}
+
+	// Replaces NaN with zeros (in case there's a problematic sample)
+	if (pixelColor.getRed() != pixelColor.getRed())
+	{
+		pixelColor.setRed(0.0);
+	}
+	if (pixelColor.getGreen() != pixelColor.getGreen())
+	{
+		pixelColor.setGreen(0.0);
+	}
+	if (pixelColor.getBlue() != pixelColor.getBlue())
+	{
+		pixelColor.setBlue(0.0);
+	}
+
+	scene.setPixelArray((y * width) + x, pixelColor);
 }
 
 // Calculates the color for the pixel at 'x' and 'y'. Creates rays, checks for intersections with objects on 'scene' and bounce light rays
