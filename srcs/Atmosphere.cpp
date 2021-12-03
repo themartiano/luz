@@ -145,9 +145,11 @@ Color   Atmosphere::computeIncidentLight(Ray& ray, double t_max)
     double  transmittanceR = 0.0;
     double  transmittanceM = 0.0;
     double  mu = dot(ray.getDirection(), this->_sunDirection);
-    double  g = 0.76;
-    double  phaseR = (3.0 / (16.0 * M_PI)) * (1.0 + mu * mu);
-    double  phaseM = (3.0 / (8.0 * M_PI)) * ((1.0 - g * g) * (1.0 + mu * mu) / ((2.0 + g * g) * pow(1.0 + g * g - 2.0 * g * mu, 1.5)));
+    static double   g = 0.76;
+    static double   phaseRStatic = 3.0 / (16.0 * M_PI);
+    static double   phaseMStatic = 3.0 / (8.0 * M_PI);
+    double  phaseR = phaseRStatic * (1.0 + mu * mu);
+    double  phaseM = phaseMStatic * ((1.0 - g * g) * (1.0 + mu * mu) / ((2.0 + g * g) * pow(1.0 + g * g - 2.0 * g * mu, 1.5)));
 
     for (int i = 0; i < this->_samples; i++)
     {

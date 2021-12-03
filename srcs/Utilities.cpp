@@ -43,7 +43,7 @@ Vector3 randomPointInsideUnitSphere(void)
 
 	do
 	{
-		position = (Vector3(randomdouble(), randomdouble(), randomdouble()) * 2.0) - Vector3(1.0, 1.0, 1.0);
+		position = (Vector3(randomDouble(), randomDouble(), randomDouble()) * 2.0) - Vector3(1.0, 1.0, 1.0);
 	} while (vectorLengthNoSQRT(position) >= 1.0);
 	return (position);
 }
@@ -55,7 +55,7 @@ Vector3 randomPointInsideUnitDisk(void)
 
 	do
 	{
-		position = (Vector3(randomdouble(), randomdouble(), 0) * 2.0) - Vector3(1.0, 1.0, 0);
+		position = (Vector3(randomDouble(), randomDouble(), 0) * 2.0) - Vector3(1.0, 1.0, 0);
 	} while (dot(position, position) >= 1.0);
 	return (position);
 }

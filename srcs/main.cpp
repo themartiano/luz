@@ -28,22 +28,22 @@ int	main(void)
 	srand(time(0));
 
 	Scene scene;
-	scene.setXResolution(500);
-	scene.setYResolution(500);
+	scene.setXResolution(1920);
+	scene.setYResolution(1080);
 	scene.initializePixelArray();
-	scene.setSampleCount(200);
-	scene.setMaxLightBounces(50);
+	scene.setSampleCount(2);
+	scene.setMaxLightBounces(4);
 	scene.setGammaCorrected(true);
-	scene.setRenderSky(SKY_ATMOSPHERE);
-	scene.setAtmosphere(Atmosphere(-0.189, D_EARTH_RADIUS, D_ATMOSPHERE_RADIUS, D_HR, D_HM, 64, 32, 0.468)); // Only needed if Scene.Sky == SKY_ATMOSPHERE
-	//scene.setBackgroundColor(Color(1.0, 1.0, 1.0)); // Only needed if Scene.Sky == SKY_NONE
+	scene.setRenderSky(SKY_NONE);
+	//scene.setAtmosphere(Atmosphere(-0.189, D_EARTH_RADIUS, D_ATMOSPHERE_RADIUS, D_HR, D_HM, 16, 8, 0.468)); // Only needed if Scene.Sky == SKY_ATMOSPHERE
+	scene.setBackgroundColor(Color(0.3, 0.3, 0.3)); // Only needed if Scene.Sky == SKY_NONE
 
 	// Coordinate system ~~ Right Hand ~~ Forward: -Z | Up: +Y | Right: +X
 
 	//mountCornellBox(scene);
 
-	scene.addCamera(Camera(Vector3(0.0, 0.0, D_ATMOSPHERE_RADIUS + 10000000), Vector3(0.0, 0.0, 1.0), 65, 0.0));
-	//scene.addCamera(Camera(Vector3(0.0, D_EARTH_RADIUS, 0.0), Vector3(0.0, 0.0, 1.0), 65, 0.0));
+	//scene.addCamera(Camera(Vector3(0.0, D_EARTH_RADIUS + 1.0, 0.0), Vector3(0.0, 0.0, -1.0), 65, 0.0));
+	scene.addCamera(Camera(Vector3(0.0, 0.0, 6.0), Vector3(0.0, 0.0, -1.0), 65, 0.0));
 
 	// scene.addHittable(std::make_shared<Plane>(
 	// 	D_EARTH_RADIUS,
@@ -51,20 +51,14 @@ int	main(void)
 	// 	Material(Color(0.0, 1.0, 0.0), 1.0, 0.0, 0.5, 0.0, false, false, 0.0)
 	// ));
 
-	// scene.addHittable(std::make_shared<Triangle>(
-	// 	Vector3(-1.0, 0.0, 0.0),
-	// 	Vector3(1.0, 0.0, 0.0),
-	// 	Vector3(-2.0, 2.0, 0.0),
-	// 	Material(Color(1.0, 1.0, 1.0), 1.0, 0.0, 0.5, 0.0, false, false, 0.0)
-	// ));
-
-	// scene.addHittable(std::make_shared<Sphere>(
-	// 	Vector3(0.0, 0.0, 0.0),
+	// scene.addHittable(std::make_shared<Rectangle>(
+	// 	Transform(Vector3(0.0, 0.0, 0.0), Vector3(0.0, 0.0, 1.0), Vector3(1.0, 1.0, 1.0)),
 	// 	Material(Color(0.0, 1.0, 0.0), 1.0, 0.0, 0.5, 0.0, false, false, 0.0),
-	// 	D_EARTH_RADIUS
+	// 	1.0,
+	// 	1.0
 	// ));
 
-	//readObj(scene, "blender_cube");
+	// readObj(scene, "blender_cube");
 
 	//renderSequence(scene, scene.getAtmosphere(), 5, 5.0);
 
