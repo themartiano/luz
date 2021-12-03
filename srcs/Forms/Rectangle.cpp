@@ -28,8 +28,8 @@ Rectangle::Rectangle(Transform transform, Material material, double width, doubl
 // Calculates if the Rectangle is hit by 'ray', is closer than 't_max' and farther than T_MIN
 bool    Rectangle::hit(Ray& ray, double t_max) const
 {
-    double a = dot(ray.getOrigin() - this->_transform.getPosition(), this->_transform.getOrientation());
-    double b = dot(ray.getDirection(), this->_transform.getOrientation());
+    double a = Utilities::dot(ray.getOrigin() - this->_transform.getPosition(), this->_transform.getOrientation());
+    double b = Utilities::dot(ray.getDirection(), this->_transform.getOrientation());
     if (b == 0.0 || (a < 0.0 && b < 0.0) || (a > 0.0 && b > 0.0))
     {
         return (false);

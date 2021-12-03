@@ -5,7 +5,7 @@
 #include <limits>
 
 /*
-	Constructors
+	Constructors & Destructor
 */
 
 // Constructs the Scene with default values
@@ -48,6 +48,7 @@ Scene::Scene(int width, int height)
 	this->_t_max = std::numeric_limits<double>::max();
 }
 
+// Properly frees all allocated memory (destructor)
 Scene::~Scene(void)
 {
 	delete[] this->_pixelArray;
@@ -161,11 +162,11 @@ void	Scene::setPixelArray(int index, Color pixelColor)
 	if (index < this->_xResolution * this->_yResolution * 3)
 	{
 		double r = pixelColor.getRed();
-		setdoubleRange(r, 0.0, 1.0);
+		Utilities::setDoubleRange(r, 0.0, 1.0);
 		double g = pixelColor.getGreen();
-		setdoubleRange(g, 0.0, 1.0);
+		Utilities::setDoubleRange(g, 0.0, 1.0);
 		double b = pixelColor.getBlue();
-		setdoubleRange(b, 0.0, 1.0);
+		Utilities::setDoubleRange(b, 0.0, 1.0);
 
 		this->_pixelArray[(index * 3) + 2] = (unsigned char)(r * 255.0);
 		this->_pixelArray[(index * 3) + 1] = (unsigned char)(g * 255.0);

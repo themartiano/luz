@@ -9,10 +9,10 @@
 class   BVHNode : public Hittable
 {
     public:
-        BVHNode(void);
-        virtual ~BVHNode(void) = default;
+        BVHNode(void) = default;
         BVHNode(std::vector<std::shared_ptr<Hittable>> hittables);
         BVHNode(std::vector<std::shared_ptr<Hittable>> hittables, size_t start, size_t end);
+        virtual ~BVHNode(void) = default;
 		virtual bool    hit(Ray& ray, double t_max) const override;
 		virtual bool    createBoundingBox(AABB& outputBoundingBox) const override;
 

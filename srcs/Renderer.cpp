@@ -83,6 +83,7 @@ void	render(Scene& scene)
 	std::cout << CLR_GREEN_BRIGHT << "\nRender done! " << CLR_BLUE_BRIGHT << "(Duration: " << CLR_WHITE << elapsedS << "s" << CLR_BLUE_BRIGHT << ")\n\n" << CLR_RESET;
 }
 
+// Renders the pixel (X, Y)
 static void	renderInternal(Scene& scene, int x, int y)
 {
 	static int	width = scene.getXResolution();
@@ -134,12 +135,12 @@ static Color	calculatePixelColor(Scene& scene, int x, int y)
     static double	halfHeight = (height / width) * halfWidth;
 
 	static double	lensRadius = scene.getActiveCamera().getAperture() / 2.0;
-	static double	focusDistance = vectorLength(cameraLookDirection);
+	static double	focusDistance = Utilities::vectorLength(cameraLookDirection);
 
-	static Vector3	w = normalize(cameraLookDirection);
+	static Vector3	w = Utilities::normalize(cameraLookDirection);
 	static Vector3	viewUp(0.0, 1.0, 0.0);
-	static Vector3	u = normalize(cross(viewUp, w));
-	static Vector3	v = cross(w, u);
+	static Vector3	u = Utilities::normalize(Utilities::cross(viewUp, w));
+	static Vector3	v = Utilities::cross(w, u);
 
 	static Vector3	lowerLeftCorner = cameraPosition - (u * halfWidth * focusDistance) - (v * halfHeight * focusDistance) - (w * focusDistance);
 	static Vector3	horizontal = u * (halfWidth * 2.0 * focusDistance);
@@ -148,7 +149,7 @@ static Color	calculatePixelColor(Scene& scene, int x, int y)
 	Vector3	offset(0.0, 0.0, 0.0);
 	if (lensRadius > 0.0)
 	{
-		Vector3	rd = randomPointInsideUnitDisk() * lensRadius;
+		Vector3	rd = Utilities::randomPointInsideUnitDisk() * lensRadius;
 		offset = u * rd.getX() + v * rd.getY();
 	}
 
@@ -190,7 +191,7 @@ static Color	calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
 			calculateLightRayBounceDirection(ray, color);
 		}
 
-		if ((ray.hitRecord.material.getMetallic() == 1.0 && dot(ray.getDirection(), ray.hitRecord.normal) <= 0.0))
+		if ((ray.hitRecord.material.getMetallic() == 1.0 && Utilities::dot(ray.getDirection(), ray.hitRecord.normal) <= 0.0))
 		{
 			return (emitted + color);
 		}
@@ -216,7 +217,7 @@ static Color	calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
 static Color	computeAtmosphereColor(Scene& scene, Ray& ray)
 {
 	// If the Earth radius is not added, the origin will be inside the Earth
-	Ray atmosphereRay(ray.getOrigin(), normalize(ray.getDirection()));
+	Ray atmosphereRay(ray.getOrigin(), Utilities::normalize(ray.getDirection()));
 
 	double t_max = T_MAX;
 
@@ -250,7 +251,7 @@ static Color	calculateSkyInterpolation(Scene& scene, Ray& ray)
 {
 	static double	skyLine = scene.getSkyline();
 
-	Vector3	normalizedDirection = normalize(ray.getDirection());
+	Vector3	normalizedDirection = Utilities::normalize(ray.getDirection());
 
 	double temp = skyLine * (normalizedDirection.getY() + 1.0);
 
@@ -262,7 +263,7 @@ static void	calculateLightRayBounceDirection(Ray& ray, Color& color)
 {
 	if (ray.hitRecord.material.getMetallic() == 1.0)
 	{
-		ray.setDirection(reflect(ray.getDirection(), ray.hitRecord.normal) + (randomPointInsideUnitSphere() * ray.hitRecord.material.getReflectionFuzziness()));
+		ray.setDirection(Utilities::reflect(ray.getDirection(), ray.hitRecord.normal) + (Utilities::randomPointInsideUnitSphere() * ray.hitRecord.material.getReflectionFuzziness()));
 		color = ray.hitRecord.material.getColor() * ray.hitRecord.material.getAlbedo();
 		return;
 	}
@@ -274,23 +275,23 @@ static void	calculateLightRayBounceDirection(Ray& ray, Color& color)
 		double	reflectionProbability;
 		double	cosine;
 		double	refractiveIndex = RI_GLASS;
-		double	directionNormalDot = dot(ray.getDirection(), ray.hitRecord.normal);
+		double	directionNormalDot = Utilities::dot(ray.getDirection(), ray.hitRecord.normal);
 
 		if (directionNormalDot > 0.0)
 		{
 			outwardsNormal = ray.hitRecord.normal * -1.0;
-			cosine = refractiveIndex * directionNormalDot / vectorLength(ray.getDirection());
+			cosine = refractiveIndex * directionNormalDot / Utilities::vectorLength(ray.getDirection());
 		}
 		else
 		{
 			outwardsNormal = ray.hitRecord.normal;
 			refractiveIndex = 1.0 / refractiveIndex;
-			cosine = -directionNormalDot / vectorLength(ray.getDirection());
+			cosine = -directionNormalDot / Utilities::vectorLength(ray.getDirection());
 		}
 
-		if (refract(ray.getDirection(), outwardsNormal, refractiveIndex, refractedVector))
+		if (Utilities::refract(ray.getDirection(), outwardsNormal, refractiveIndex, refractedVector))
 		{
-			reflectionProbability = schlick(cosine, refractiveIndex);
+			reflectionProbability = Utilities::schlick(cosine, refractiveIndex);
 		}
 		else
 		{
@@ -300,7 +301,7 @@ static void	calculateLightRayBounceDirection(Ray& ray, Color& color)
 		if (randomDouble() < reflectionProbability)
 		{
 			ray.setOrigin(ray.hitRecord.position);
-			ray.setDirection(reflect(ray.getDirection(), ray.hitRecord.normal));
+			ray.setDirection(Utilities::reflect(ray.getDirection(), ray.hitRecord.normal));
 		}
 		else
 		{
@@ -312,7 +313,7 @@ static void	calculateLightRayBounceDirection(Ray& ray, Color& color)
 		return;
 	}
 
-	Vector3	newTarget = ray.hitRecord.position + ray.hitRecord.normal + randomPointInsideUnitSphere();
+	Vector3	newTarget = ray.hitRecord.position + ray.hitRecord.normal + Utilities::randomPointInsideUnitSphere();
 	if (ray.hitRecord.material.getMetallic() == 0.0)
 	{
 		ray.setDirection(newTarget - ray.hitRecord.position);
@@ -322,7 +323,7 @@ static void	calculateLightRayBounceDirection(Ray& ray, Color& color)
 
 	if (randomDouble() < ray.hitRecord.material.getMetallic())
 	{
-		ray.setDirection(reflect(ray.getDirection(), ray.hitRecord.normal) + (randomPointInsideUnitSphere() * ray.hitRecord.material.getReflectionFuzziness()));
+		ray.setDirection(Utilities::reflect(ray.getDirection(), ray.hitRecord.normal) + (Utilities::randomPointInsideUnitSphere() * ray.hitRecord.material.getReflectionFuzziness()));
 	}
 	else
 	{

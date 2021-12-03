@@ -5,7 +5,7 @@
 #include "Defaults.hpp"
 #include "Atmosphere.hpp"
 
-// Renders a sequence of frames.
+// Renders a sequence of frames
 void    renderSequence(Scene& scene, Atmosphere baseAtmosphere, int fps, double duration)
 {
 	scene.setRenderSky(SKY_ATMOSPHERE);

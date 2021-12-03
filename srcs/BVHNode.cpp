@@ -12,15 +12,12 @@ static bool    boxCompare(std::shared_ptr<Hittable> hittable1, std::shared_ptr<H
 	Constructors
 */
 
-// Constructs the Triangle with default values
-BVHNode::BVHNode(void)
-{
-    //
-}
-
+// Constructor overload, only calls the actual constructor
 BVHNode::BVHNode(std::vector<std::shared_ptr<Hittable>> hittables) : BVHNode(hittables, 0, hittables.size())
 {}
 
+
+// Constructs the BVHNode
 BVHNode::BVHNode(std::vector<std::shared_ptr<Hittable>> hittables, size_t start, size_t end)
 {
     int axis = randomInt(0, 2);
@@ -61,24 +58,28 @@ BVHNode::BVHNode(std::vector<std::shared_ptr<Hittable>> hittables, size_t start,
     {
         // Error
     }
-    this->_boundingBox = mergeBoundingBoxes(boxLeft, boxRight);
+    this->_boundingBox = Utilities::mergeBoundingBoxes(boxLeft, boxRight);
 }
 
+// Comparator for the BVH box at the X axis
 static bool    boxXCompare(std::shared_ptr<Hittable> hittable1, std::shared_ptr<Hittable> hittable2)
 {
     return (boxCompare(hittable1, hittable2, 0));
 }
 
+// Comparator for the BVH box at the Y axis
 static bool    boxYCompare(std::shared_ptr<Hittable> hittable1, std::shared_ptr<Hittable> hittable2)
 {
     return (boxCompare(hittable1, hittable2, 1));
 }
 
+// Comparator for the BVH box at the Z axis
 static bool    boxZCompare(std::shared_ptr<Hittable> hittable1, std::shared_ptr<Hittable> hittable2)
 {
     return (boxCompare(hittable1, hittable2, 2));
 }
 
+// Compares 'hittable1' and 'hittable2'
 static bool    boxCompare(std::shared_ptr<Hittable> hittable1, std::shared_ptr<Hittable> hittable2, int axis)
 {
     AABB    boxA;
@@ -88,6 +89,7 @@ static bool    boxCompare(std::shared_ptr<Hittable> hittable1, std::shared_ptr<H
     {
         return (boxA.getMinimum()[axis] < boxB.getMinimum()[axis]);
     }
+
     // Error
     return (false);
 }

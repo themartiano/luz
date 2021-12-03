@@ -3,13 +3,13 @@
 #include <cmath>
 
 // Returns the dot product of 'vector1' and 'vector2'
-double	dot(Vector3 vector1, Vector3 vector2)
+double	Utilities::Utilities::dot(Vector3 vector1, Vector3 vector2)
 {
 	return ((vector1.getX() * vector2.getX()) + (vector1.getY() * vector2.getY()) + (vector1.getZ() * vector2.getZ()));
 }
 
 // Returns the cross product of 'vector1' and 'vector2'
-Vector3	cross(Vector3 vector1, Vector3 vector2)
+Vector3	Utilities::Utilities::cross(Vector3 vector1, Vector3 vector2)
 {
 	return (Vector3(
 		(vector1.getY() * vector2.getZ()) - (vector1.getZ() * vector2.getY()),
@@ -18,60 +18,60 @@ Vector3	cross(Vector3 vector1, Vector3 vector2)
 }
 
 // Returns the Vector3's length (no square root applied)
-double	vectorLengthNoSQRT(Vector3 vector)
+double	Utilities::Utilities::vectorLengthNoSQRT(Vector3 vector)
 {
 	return ((vector.getX() * vector.getX()) + (vector.getY() * vector.getY()) + (vector.getZ() * vector.getZ()));
 }
 
 // Returns the Vector3's length
-double	vectorLength(Vector3 vector)
+double	Utilities::Utilities::vectorLength(Vector3 vector)
 {
-	return (sqrt(vectorLengthNoSQRT(vector)));
+	return (sqrt(Utilities::vectorLengthNoSQRT(vector)));
 }
 
 // Normalizes 'vector'
-Vector3	normalize(Vector3 vector)
+Vector3	Utilities::Utilities::normalize(Vector3 vector)
 {
-	vector /= vectorLength(vector);
+	vector /= Utilities::vectorLength(vector);
 	return (vector);
 }
 
 // Returns a 3D point (Vector3) that's random and inside a unit sphere (normalized)
-Vector3 randomPointInsideUnitSphere(void)
+Vector3 Utilities::Utilities::randomPointInsideUnitSphere(void)
 {
 	Vector3	position;
 
 	do
 	{
 		position = (Vector3(randomDouble(), randomDouble(), randomDouble()) * 2.0) - Vector3(1.0, 1.0, 1.0);
-	} while (vectorLengthNoSQRT(position) >= 1.0);
+	} while (Utilities::vectorLengthNoSQRT(position) >= 1.0);
 	return (position);
 }
 
 // Returns a 3D point (Vector3) that's random and inside a unit disk (normalized)
-Vector3 randomPointInsideUnitDisk(void)
+Vector3 Utilities::Utilities::randomPointInsideUnitDisk(void)
 {
 	Vector3	position;
 
 	do
 	{
 		position = (Vector3(randomDouble(), randomDouble(), 0) * 2.0) - Vector3(1.0, 1.0, 0);
-	} while (dot(position, position) >= 1.0);
+	} while (Utilities::dot(position, position) >= 1.0);
 	return (position);
 }
 
 // Returns the reflected Vector3 of 'vector' using 'normal' in the calculation
-Vector3	reflect(Vector3 vector, Vector3 normal)
+Vector3	Utilities::Utilities::reflect(Vector3 vector, Vector3 normal)
 {
-	return (vector - (normal * (2.0 * dot(vector, normal))));
+	return (vector - (normal * (2.0 * Utilities::dot(vector, normal))));
 }
 
 // If refraction is possible on 'vector' taking 'normal' and 'refractiveIndex' into account, sets 'refractedVector' to the new Vector3 and returns TRUE. Otherwise, returns FALSE
-bool	refract(Vector3 vector, Vector3 normal, double refractiveIndex, Vector3& refractedVector)
+bool	Utilities::Utilities::refract(Vector3 vector, Vector3 normal, double refractiveIndex, Vector3& refractedVector)
 {
-	vector = normalize(vector);
+	vector = Utilities::normalize(vector);
 
-	double	dt = dot(vector, normal);
+	double	dt = Utilities::dot(vector, normal);
 	double	discriminant = 1.0 - refractiveIndex * refractiveIndex * (1.0 - dt * dt);
 	if (discriminant > 0.0)
 	{
@@ -85,7 +85,7 @@ bool	refract(Vector3 vector, Vector3 normal, double refractiveIndex, Vector3& re
 }
 
 // Christophe Schlick's formula for approximating the contribution of the Fresnel factor in the specular reflection of light from a non-conducting interface (surface) between two media
-double	schlick(double cosine, double refractiveIndex)
+double	Utilities::Utilities::schlick(double cosine, double refractiveIndex)
 {
 	double r0 = (1.0 - refractiveIndex) / (1.0 + refractiveIndex);
 	r0 *= r0;
@@ -94,7 +94,7 @@ double	schlick(double cosine, double refractiveIndex)
 }
 
 // Returns "s" if 'number' differs from 1
-std::string    pluralOrSingular(int number)
+std::string    Utilities::Utilities::pluralOrSingular(int number)
 {
 	if (number == 1)
 	{
@@ -107,7 +107,7 @@ std::string    pluralOrSingular(int number)
 }
 
 // If 'flt' surprasses the specified range ('min' & 'max'), it's set to the nearest possible value ('min' or 'max')
-void	setdoubleRange(double& flt, double min, double max)
+void	Utilities::Utilities::setDoubleRange(double& flt, double min, double max)
 {
 	if (flt < min)
 	{
@@ -120,7 +120,7 @@ void	setdoubleRange(double& flt, double min, double max)
 }
 
 // Creates the main AABB / bounding box that encapsulates all the objects inside the 'scene'
-bool	createMainBoundingBox(Scene& scene, AABB& newBoundingBox)
+bool	Utilities::Utilities::createMainBoundingBox(Scene& scene, AABB& newBoundingBox)
 {
 	if (scene.getHittables().size() <= 0)
 	{
@@ -136,14 +136,14 @@ bool	createMainBoundingBox(Scene& scene, AABB& newBoundingBox)
 		{
 			return (false);
 		}
-		newBoundingBox = firstBB ? tempBB : mergeBoundingBoxes(newBoundingBox, tempBB);
+		newBoundingBox = firstBB ? tempBB : Utilities::mergeBoundingBoxes(newBoundingBox, tempBB);
 		firstBB = false;
 	}
 	return (true);
 }
 
 // Merges 'boundingBox1' with 'boundingBox2' and returns the resulting (and new) AABB / bounding box
-AABB	mergeBoundingBoxes(AABB boundingBox1, AABB boundingBox2)
+AABB	Utilities::Utilities::mergeBoundingBoxes(AABB boundingBox1, AABB boundingBox2)
 {
 	Vector3 smallestPoints(
 		fmin(boundingBox1.getMinimum().getX(), boundingBox2.getMinimum().getX()),

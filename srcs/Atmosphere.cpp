@@ -80,9 +80,9 @@ void    Atmosphere::updateSunDirectionVector(void)
 // (Sphere) Hit function for planets and atmospheres (sets both t0 and t1 on the Hit Record). Returns true if hit occurs, false otherwise
 bool planetaryHit(double radius, Ray& ray)
 {
-    double a = dot(ray.getDirection(), ray.getDirection());
-    double b = 2.0 * dot(ray.getDirection(), ray.getOrigin());
-    double c = dot(ray.getOrigin(), ray.getOrigin()) - radius * radius;
+    double a = Utilities::dot(ray.getDirection(), ray.getDirection());
+    double b = 2.0 * Utilities::dot(ray.getDirection(), ray.getOrigin());
+    double c = Utilities::dot(ray.getOrigin(), ray.getOrigin()) - radius * radius;
 
     if (b == 0.0)
     {
@@ -144,7 +144,7 @@ Color   Atmosphere::computeIncidentLight(Ray& ray, double t_max)
     Vector3 sumM(0.0, 0.0, 0.0);
     double  transmittanceR = 0.0;
     double  transmittanceM = 0.0;
-    double  mu = dot(ray.getDirection(), this->_sunDirection);
+    double  mu = Utilities::dot(ray.getDirection(), this->_sunDirection);
     static double   g = 0.76;
     static double   phaseRStatic = 3.0 / (16.0 * M_PI);
     static double   phaseMStatic = 3.0 / (8.0 * M_PI);
@@ -154,7 +154,7 @@ Color   Atmosphere::computeIncidentLight(Ray& ray, double t_max)
     for (int i = 0; i < this->_samples; i++)
     {
         Vector3 samplePosition = ray.getOrigin() + (tCurrent + segmentLength * 0.5) * ray.getDirection();
-        double  height = vectorLength(samplePosition) - this->_earthRadius;
+        double  height = Utilities::vectorLength(samplePosition) - this->_earthRadius;
 
         double  hR = exp(-height / this->_hR) * segmentLength;
         double  hM = exp(-height / this->_hM) * segmentLength;
@@ -171,7 +171,7 @@ Color   Atmosphere::computeIncidentLight(Ray& ray, double t_max)
         for (j = 0; j < this->_lightSamples; j++)
         {
             Vector3 samplePositionLight = samplePosition + (tCurrentLight + segmentLengthLight * 0.5) * this->_sunDirection;
-            double  heightLight = vectorLength(samplePositionLight) - this->_earthRadius;
+            double  heightLight = Utilities::vectorLength(samplePositionLight) - this->_earthRadius;
             if (heightLight < 0.0)
             {
                 break;

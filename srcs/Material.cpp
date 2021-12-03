@@ -21,13 +21,13 @@ Material::Material(void)
 // Constructs the Material with custom values
 Material::Material(Color color, double opacity, double metallic, double albedo, double reflectionFuzziness, bool isDielectric, bool isEmissive, double lightIntensity)
 {
-	setdoubleRange(metallic, 0.0, 1.0);
+	Utilities::setDoubleRange(metallic, 0.0, 1.0);
 	this->_metallic = metallic;
-	setdoubleRange(albedo, 0.0, 1.0);
+	Utilities::setDoubleRange(albedo, 0.0, 1.0);
 	this->_albedo = albedo;
-	setdoubleRange(opacity, 0.0, 1.0);
+	Utilities::setDoubleRange(opacity, 0.0, 1.0);
 	this->_opacity = opacity;
-	setdoubleRange(reflectionFuzziness, 0.0, 1.0);
+	Utilities::setDoubleRange(reflectionFuzziness, 0.0, 1.0);
 	this->_reflectionFuzziness = reflectionFuzziness;
 	this->_isDielectric = isDielectric;
 	this->_isEmissive = isEmissive;

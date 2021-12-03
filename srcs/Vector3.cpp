@@ -56,6 +56,7 @@ void	Vector3::setZ(double z)
 	this->_z = z;
 }
 
+// (/=) Operator overload
 Vector3&	Vector3::operator/=(const double f)
 {
 	this->_x /= f;
@@ -64,6 +65,7 @@ Vector3&	Vector3::operator/=(const double f)
 	return (*this);
 }
 
+// (+=) Operator overload
 Vector3&	Vector3::operator+=(const Vector3 vector)
 {
 	this->_x += vector.getX();
@@ -72,6 +74,7 @@ Vector3&	Vector3::operator+=(const Vector3 vector)
 	return (*this);
 }
 
+// ([]) Operator overload
 double	Vector3::operator[](int index) const
 {
 	if (index == 0)

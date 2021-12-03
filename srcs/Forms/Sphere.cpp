@@ -39,9 +39,9 @@ double	Sphere::getRadius(void) const
 bool    Sphere::hit(Ray& ray, double t_max) const
 {
 	Vector3 oc = ray.getOrigin() - this->_position;
-	double a = dot(ray.getDirection(), ray.getDirection());
-	double b = dot(oc, ray.getDirection());
-	double c = dot(oc, oc) - (this->_radius * this->_radius);
+	double a = Utilities::dot(ray.getDirection(), ray.getDirection());
+	double b = Utilities::dot(oc, ray.getDirection());
+	double c = Utilities::dot(oc, oc) - (this->_radius * this->_radius);
 	double discriminant = (b * b) - (a * c);
 
 	if (discriminant < 0.0)

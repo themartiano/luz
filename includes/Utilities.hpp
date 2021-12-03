@@ -5,20 +5,24 @@
 #include "Scene.hpp"
 #include <string>
 
-double	    dot(Vector3 vector1, Vector3 vector2);
-Vector3	    cross(Vector3 vector1, Vector3 vector2);
-double	    vectorLengthNoSQRT(Vector3 vector);
-double	    vectorLength(Vector3 vector);
-Vector3	    normalize(Vector3 vector);
-Vector3     randomPointInsideUnitSphere(void);
-Vector3     randomPointInsideUnitDisk(void);
-Vector3 	reflect(Vector3 vector, Vector3 normal);
-bool        refract(Vector3 vector, Vector3 normal, double refractiveIndex, Vector3& refractedVector);
-double	    schlick(double cosine, double refractiveIndex);
-std::string pluralOrSingular(int number);
-void	    setdoubleRange(double& flt, double min, double max);
-bool	    createMainBoundingBox(Scene& scene, AABB& newBoundingBox);
-AABB	    mergeBoundingBoxes(AABB boundingBox1, AABB boundingBox2);
+class   Utilities
+{
+    public:
+        static double   dot(Vector3 vector1, Vector3 vector2);
+        static Vector3  cross(Vector3 vector1, Vector3 vector2);
+        static double   vectorLengthNoSQRT(Vector3 vector);
+        static double   vectorLength(Vector3 vector);
+        static Vector3  normalize(Vector3 vector);
+        static Vector3  randomPointInsideUnitSphere(void);
+        static Vector3  randomPointInsideUnitDisk(void);
+        static Vector3  reflect(Vector3 vector, Vector3 normal);
+        static bool     refract(Vector3 vector, Vector3 normal, double refractiveIndex, Vector3& refractedVector);
+        static double   schlick(double cosine, double refractiveIndex);
+        static std::string  pluralOrSingular(int number);
+        static void     setDoubleRange(double& flt, double min, double max);
+        static bool     createMainBoundingBox(Scene& scene, AABB& newBoundingBox);
+        static AABB     mergeBoundingBoxes(AABB boundingBox1, AABB boundingBox2);
+};
 
 inline double	randomDouble(void)
 {

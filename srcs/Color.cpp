@@ -57,6 +57,7 @@ void	Color::setBlue(double blue)
 	this->_blue = blue;
 }
 
+// (+=) Operator overload
 Color&	Color::operator+=(const Color &color2)
 {
 	this->_red += color2.getRed();
@@ -65,6 +66,7 @@ Color&	Color::operator+=(const Color &color2)
 	return (*this);
 }
 
+// (-=) Operator overload
 Color&	Color::operator-=(const Color &color2)
 {
 	this->_red -= color2.getRed();
@@ -73,6 +75,7 @@ Color&	Color::operator-=(const Color &color2)
 	return (*this);
 }
 
+// (/=) Operator overload
 Color&	Color::operator/=(const double f)
 {
 	this->_red /= f;
@@ -81,26 +84,31 @@ Color&	Color::operator/=(const double f)
 	return (*this);
 }
 
+// (*) Operator overload
 Color	Color::operator*(const double f) const
 {
 	return (Color(this->_red * f, this->_green * f, this->_blue * f));
 }
 
+// (*) Operator overload
 Color	Color::operator*(const Color color) const
 {
 	return (Color(this->_red * color.getRed(), this->_green * color.getGreen(), this->_blue * color.getBlue()));
 }
 
+// (/) Operator overload
 Color	Color::operator/(const double f) const
 {
 	return (Color(this->_red / f, this->_green / f, this->_blue / f));
 }
 
+// (+) Operator overload
 Color	Color::operator+(const Color color) const
 {
 	return (Color(this->_red + color.getRed(), this->_green + color.getGreen(), this->_blue + color.getBlue()));
 }
 
+// (-) Operator overload
 Color	Color::operator-(const Color color) const
 {
 	return (Color(this->_red - color.getRed(), this->_green - color.getGreen(), this->_blue - color.getBlue()));

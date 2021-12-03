@@ -27,13 +27,13 @@ bool    Plane::hit(Ray& ray, double t_max) const
 {
     Vector3 position(0.0, this->_y, 0.0);
 
-    double d = dot(ray.getDirection(), this->_orientation);
+    double d = Utilities::dot(ray.getDirection(), this->_orientation);
     if (d == 0.0)
     {
         return (false);
     }
 
-    double t = dot(position - ray.getOrigin(), this->_orientation) / d;
+    double t = Utilities::dot(position - ray.getOrigin(), this->_orientation) / d;
     if (t > t_max || t < T_MIN)
     {
         return (false);
