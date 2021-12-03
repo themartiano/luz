@@ -28,8 +28,8 @@ int	main(void)
 	srand(time(0));
 
 	Scene scene;
-	scene.setXResolution(1920);
-	scene.setYResolution(1080);
+	scene.setXResolution(500);
+	scene.setYResolution(500);
 	scene.initializePixelArray();
 	scene.setSampleCount(2);
 	scene.setMaxLightBounces(4);
@@ -58,7 +58,7 @@ int	main(void)
 	// 	1.0
 	// ));
 
-	// readObj(scene, "blender_cube");
+	readObj(scene, "lamp");
 
 	//renderSequence(scene, scene.getAtmosphere(), 5, 5.0);
 

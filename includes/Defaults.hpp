@@ -2,6 +2,7 @@
 #define DEFAULTS_HPP
 
 #include <limits>
+#include <thread>
 
 const int	D_WIDTH = 1920; // Default screen width in pixels
 const int	D_HEIGHT = 1080; // Default screen height in pixels
@@ -16,5 +17,7 @@ const double D_EARTH_RADIUS = 6360e3;
 const double D_ATMOSPHERE_RADIUS = 6420e3;
 const double D_HR = 7994.0;
 const double D_HM = 1200.0;
+
+const unsigned int CORE_COUNT = std::thread::hardware_concurrency();
 
 #endif
