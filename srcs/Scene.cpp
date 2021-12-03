@@ -13,6 +13,8 @@ Scene::Scene(void)
 {
 	this->_xResolution = D_WIDTH;
 	this->_yResolution = D_HEIGHT;
+	this->_pixelArray = new unsigned char[this->_xResolution * this->_yResolution * 3];
+
 	this->_sampleCount = D_SAMPLE_COUNT;
 	this->_maxLightBounces = D_MAX_LIGHT_BOUNCES;
 	this->_gammaCorrected = true;
@@ -24,6 +26,31 @@ Scene::Scene(void)
 	this->_activeCamera = 0;
 
 	this->_t_max = std::numeric_limits<double>::max();
+}
+
+// Constructs the Scene with cusotm values for width and height
+Scene::Scene(int width, int height)
+{
+	this->_xResolution = width;
+	this->_yResolution = height;
+	this->_pixelArray = new unsigned char[this->_xResolution * this->_yResolution * 3];
+
+	this->_sampleCount = D_SAMPLE_COUNT;
+	this->_maxLightBounces = D_MAX_LIGHT_BOUNCES;
+	this->_gammaCorrected = true;
+	this->_skyline = 0.5;
+	this->_renderSky = true;
+	this->_atmosphere = Atmosphere();
+	this->_backgroundColor = Color(0.0, 0.0, 0.0);
+
+	this->_activeCamera = 0;
+
+	this->_t_max = std::numeric_limits<double>::max();
+}
+
+Scene::~Scene(void)
+{
+	delete[] this->_pixelArray;
 }
 
 // Appends 'camera' to the camera vector (list)
@@ -44,22 +71,10 @@ int		Scene::getXResolution(void) const
 	return (this->_xResolution);
 }
 
-// Sets the X resolution (width)
-void	Scene::setXResolution(const int xRes)
-{
-	this->_xResolution = xRes;
-}
-
 // Returns the Y resolution (height)
 int		Scene::getYResolution(void) const
 {
 	return (this->_yResolution);
-}
-
-// Sets the Y resolution (height)
-void	Scene::setYResolution(const int yRes)
-{
-	this->_yResolution = yRes;
 }
 
 // Returns the current Sample Count (rays per pixel)
@@ -162,12 +177,6 @@ void	Scene::setPixelArray(int index, Color pixelColor)
 unsigned char*	Scene::getPixelArray(void) const
 {
 	return (this->_pixelArray);
-}
-
-// Initializes the pixel array using the Scene's width and height (X & Y pixel resolution)
-void	Scene::initializePixelArray(void)
-{
-	this->_pixelArray = new unsigned char[this->_xResolution * this->_yResolution * 3];
 }
 
 // Returns the vector (list) of Hittables

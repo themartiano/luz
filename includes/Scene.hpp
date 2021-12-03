@@ -11,12 +11,12 @@ class	Scene
 {
 	public:
 		Scene(void);
+		Scene(int width, int height);
+		~Scene(void);
 		void	addCamera(Camera camera);
 		void	addHittable(std::shared_ptr<Hittable> hittable);
 		int		getXResolution(void) const;
-		void	setXResolution(const int xRes);
 		int		getYResolution(void) const;
-		void	setYResolution(const int yRes);
 		int		getSampleCount(void) const;
 		void	setSampleCount(const int sampleCount);
 		int		getMaxLightBounces(void) const;
@@ -32,7 +32,6 @@ class	Scene
 		void	setBackgroundColor(Color backgroundColor);
 		void	setPixelArray(int index, Color pixelColor);
 		unsigned char*	getPixelArray() const;
-		void	initializePixelArray(void);
 		Camera	getActiveCamera(void) const;
 		std::vector<std::shared_ptr<Hittable>>	getHittables(void) const;
 
