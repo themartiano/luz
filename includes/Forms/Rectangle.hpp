@@ -18,8 +18,8 @@ class   Rectangle : public Hittable
     private:
         Transform   _transform;
         Material    _material;
-        double       _width;
-        double       _height;
+        double      _width;
+        double      _height;
 };
 
 #endif
