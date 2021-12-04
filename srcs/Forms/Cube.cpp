@@ -32,18 +32,37 @@ void    Cube::_generateFaces(void)
 {
     Vector3 position = this->_transform.getPosition();
 
-    this->_faces.push_back(Rectangle(Transform(position, Vector3(0.0, 0.0, 0.0), Vector3(1.0, 1.0, 1.0)), this->_material, this->_width, this->_height));
-    this->_faces.push_back(Rectangle(Transform(position, Vector3(0.0, 0.0, 0.0), Vector3(1.0, 1.0, 1.0)), this->_material, this->_width, this->_height));
-    this->_faces.push_back(Rectangle(Transform(position, Vector3(0.0, 0.0, 0.0), Vector3(1.0, 1.0, 1.0)), this->_material, this->_width, this->_height));
-    this->_faces.push_back(Rectangle(Transform(position, Vector3(0.0, 0.0, 0.0), Vector3(1.0, 1.0, 1.0)), this->_material, this->_width, this->_height));
-    this->_faces.push_back(Rectangle(Transform(position, Vector3(0.0, 0.0, 0.0), Vector3(1.0, 1.0, 1.0)), this->_material, this->_width, this->_height));
-    this->_faces.push_back(Rectangle(Transform(position, Vector3(0.0, 0.0, 0.0), Vector3(1.0, 1.0, 1.0)), this->_material, this->_width, this->_height));
+    // Front
+    this->_faces.push_back(Rectangle(Transform(position - Vector3(0.0, 0.0, this->_depth / 2.0), Vector3(0.0, 0.0, -1.0), Vector3(1.0, 1.0, 1.0)), this->_material, this->_width, this->_height));
+
+    // Back
+    this->_faces.push_back(Rectangle(Transform(position + Vector3(0.0, 0.0, this->_depth / 2.0), Vector3(0.0, 0.0, 1.0), Vector3(1.0, 1.0, 1.0)), this->_material, this->_width, this->_height));
+
+    // Top
+    this->_faces.push_back(Rectangle(Transform(position + Vector3(0.0, this->_height / 2.0, 0.0), Vector3(0.0, 1.0, 0.0), Vector3(1.0, 1.0, 1.0)), this->_material, this->_width, this->_height));
+
+    // Bottom
+    this->_faces.push_back(Rectangle(Transform(position - Vector3(0.0, this->_height / 2.0, 0.0), Vector3(0.0, -1.0, 0.0), Vector3(1.0, 1.0, 1.0)), this->_material, this->_width, this->_height));
+
+    // Right
+    this->_faces.push_back(Rectangle(Transform(position + Vector3(this->_width / 2.0, 0.0, 0.0), Vector3(1.0, 0.0, 0.0), Vector3(1.0, 1.0, 1.0)), this->_material, this->_width, this->_height));
+
+    // Left
+    this->_faces.push_back(Rectangle(Transform(position - Vector3(this->_width / 2.0, 0.0, 0.0), Vector3(-1.0, 0.0, 0.0), Vector3(1.0, 1.0, 1.0)), this->_material, this->_width, this->_height));
 }
 
 // Calculates if the Rectangle is hit by 'ray', is closer than 't_max' and farther than T_MIN
 bool    Cube::hit(Ray& ray, double t_max) const
 {
+    for (Rectangle rectangle : this->_faces)
+    {
+        if (rectangle.hit(ray, t_max))
+        {
+            return (true);
+        }
+    }
 
+    return (false);
 }
 
 // Creates an AABB / bounding box for this Cube
