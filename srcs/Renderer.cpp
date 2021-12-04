@@ -36,7 +36,7 @@ void	render(Scene& scene)
 	static int	width = scene.getXResolution();
 	static int	pixelTotal = width * height;
 
-	static unsigned int	threadCount = CORE_COUNT * 6;
+	static unsigned int	threadCount = CORE_COUNT * THREAD_MULTIPLIER;
 	volatile std::atomic<int> currentRenderPixel(0);
 	std::vector<std::future<void>> futureVector;
 

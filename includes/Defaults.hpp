@@ -18,6 +18,7 @@ const double D_ATMOSPHERE_RADIUS = 6420e3;
 const double D_HR = 7994.0;
 const double D_HM = 1200.0;
 
-const unsigned int CORE_COUNT = std::thread::hardware_concurrency();
+const unsigned int CORE_COUNT = std::thread::hardware_concurrency(); // CPU core count
+const unsigned int THREAD_MULTIPLIER = 6; // Render threads multiplier. The thread count used to render is CORE_COUNT * THREAD_MULTIPLIER
 
 #endif
