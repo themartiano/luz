@@ -165,17 +165,11 @@ static Color	calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
 	static short	skyType = scene.getRenderSky();
 	static Color	staticBackgroundColor = scene.getBackgroundColor();
 
-	Color color, emitted, atmosphereColor = Color(0.0, 0.0, 0.0);
+	Color color, emitted = Color(0.0, 0.0, 0.0);
 	if (bounces > maxLightBounces)
 	{
 		return (color);
 	}
-
-	if (skyType == SKY_ATMOSPHERE)
-	{
-		atmosphereColor = computeAtmosphereColor(scene, ray);
-	}
-
 	if (checkHits(scene, ray))
 	{
 		//ray.setOrigin(ray.hitRecord.position + (ray.hitRecord.normal * T_MIN));
@@ -196,12 +190,12 @@ static Color	calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
 			return (emitted + color);
 		}
 
-		return (atmosphereColor + emitted + color * calculateLightRaysColor(ray, scene, bounces + 1));
+		return ((Color(0.0, 0.0, 0.00001) * ray.hitRecord.t0) + emitted + color * calculateLightRaysColor(ray, scene, bounces + 1));
 	}
 
 	if (skyType == SKY_ATMOSPHERE)
 	{
-		return (atmosphereColor);
+		return (computeAtmosphereColor(scene, ray));
 	}
 	else if (skyType == SKY_LINEAR)
 	{
@@ -342,11 +336,11 @@ static bool	checkHits(Scene& scene, Ray& ray)
 	{
 		if (hittable->hit(ray, currentClosestObject))
 		{
-			/*if (ray.hitRecord.t0 > T_MIN)
-			{*/
+			// if (ray.hitRecord.t0 > T_MIN)
+			// {
 				currentClosestObject = ray.hitRecord.t0;
 				anyHit = true;
-			//}
+			// }
 		}
 	}
 
