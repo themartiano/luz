@@ -16,11 +16,11 @@ Sphere::Sphere(void)
 }
 
 // Constructs the Sphere with custom values
-Sphere::Sphere(Vector3 position, Material material, double radius)
+Sphere::Sphere(Vector3 position, double radius, Material material)
 {
 	this->_position = position;
-	this->_material = material;
 	this->_radius = radius;
+	this->_material = material;
 }
 
 // Returns the Sphere's position

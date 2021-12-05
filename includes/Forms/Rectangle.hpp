@@ -11,7 +11,7 @@ class   Rectangle : public Hittable
 {
     public:
         Rectangle(void);
-        Rectangle(Transform transform, Material material, double width, double height);
+        Rectangle(Transform transform, double width, double height, Material material);
         void            setTransform(Transform transform);
         void            setMaterial(Material material);
         void            setWidth(double width);

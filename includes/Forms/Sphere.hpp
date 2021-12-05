@@ -10,7 +10,7 @@ class	Sphere : public Hittable
 {
 	public:
 		Sphere(void);
-		Sphere(Vector3 position, Material material, double radius);
+		Sphere(Vector3 position, double radius, Material material);
 		Vector3				getPosition(void) const;
 		void				setPosition(Vector3 position);
 		double				getRadius(void) const;
