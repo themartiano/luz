@@ -4,14 +4,15 @@ samples=4
 maxlightbounces=3
 gamma=1
 #outputfilename=render.bmp
+sky=linear
 
 [scene]
 camera=(0,2,5),(0,0.1,-1),65,0,10
 objects{
-#sphere=(0,0,0),1,(material=(0.6,0.6,0.6),1,0,0.5,0,false,false,0)
-#cube=(0,-2,0),(0,0,0),2,2,2,(material=(0.6,0.6,0.6),1,0,0.5,0,false,false,0)
-#plane=-3,(0,1,0),(material=(0.6,0.6,0.6),1,0,0.5,0,false,false,0)
-#rectangle=(0,2,0),(0,0,0),1,1,(material=(0.6,0.6,0.6),1,0,0.5,0,false,false,0)
-#triangle=(0,0,0),(0,0,0),(0,0,0),(material=(0.6,0.6,0.6),1,0,0.5,0,false,false,0)
+#sphere=(0,0,0),1,(material=(0.6,0.6,0.6),1,0,0.5,0,0,0,0)
+#cube=(0,-2,0),(0,0,0),2,2,2,(material=(0.6,0.6,0.6),1,0,0.5,0,0,0,0)
+#plane=-3,(0,1,0),(material=(0.6,0.6,0.6),1,0,0.5,0,0,0,0)
+#rectangle=(0,2,0),(0,0,0),1,1,(material=(0.6,0.6,0.6),1,0,0.5,0,0,0,0)
+#triangle=(0,0,0),(0,0,0),(0,0,0),(material=(0.6,0.6,0.6),1,0,0.5,0,0,0,0)
 obj=pyramid.obj
 }
