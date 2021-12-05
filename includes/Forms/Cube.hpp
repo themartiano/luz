@@ -12,6 +12,11 @@ class   Cube : public Hittable
     public:
         Cube(void);
         Cube(Transform transform, Material material, double width, double height, double depth);
+        void    setTransform(Transform transform);
+        void    setMaterial(Material material);
+        void    setWidth(double width);
+        void    setHeight(double height);
+        void    setDepth(double depth);
 		virtual bool    hit(Ray& ray, double t_max) const override;
 		virtual bool    createBoundingBox(AABB& outputBoundingBox) const override;
 

@@ -8,6 +8,7 @@ gamma=1
 camera=(0,0,5),(0,0,1),65,0,10
 objects{
 sphere=(0,0,0),mat,2
+cube=(0,0,0),(0,0,0),mat,2,2,2
 }
 
 [materials]

@@ -14,9 +14,11 @@ Cube::Cube(void)
     this->_height = 1.0;
     this->_depth = 1.0;
 
+    // Update faces
     _generateFaces();
 }
 
+// Constructs the Cube with custom values
 Cube::Cube(Transform transform, Material material, double width, double height, double depth)
 {
     this->_transform = transform;
@@ -25,9 +27,41 @@ Cube::Cube(Transform transform, Material material, double width, double height, 
     this->_height = height;
     this->_depth = depth;
 
+    // Update faces
     _generateFaces();
 }
 
+// Sets the Cube's Transform
+void    Cube::setTransform(Transform transform)
+{
+    this->_transform = transform;
+}
+
+// Sets the Cube's Material
+void    Cube::setMaterial(Material material)
+{
+    this->_material = material;
+}
+
+// Sets the Cube's Width
+void    Cube::setWidth(double width)
+{
+    this->_width = width;
+}
+
+// Sets the Cube's Height
+void    Cube::setHeight(double height)
+{
+    this->_height = height;
+}
+
+// Sets the Cube's Depth
+void    Cube::setDepth(double depth)
+{
+    this->_depth = depth;
+}
+
+// Updates the Cube's faces
 void    Cube::_generateFaces(void)
 {
     Vector3 position = this->_transform.getPosition();

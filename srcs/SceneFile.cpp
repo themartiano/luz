@@ -3,6 +3,7 @@
 #include "Utilities.hpp"
 #include "Vector3.hpp"
 #include "Forms/Sphere.hpp"
+#include "Forms/Cube.hpp"
 #include <fstream>
 #include <memory>
 #include <stdio.h>
@@ -173,6 +174,24 @@ static void	readObjectsSubSection(Scene& scene, std::ifstream& stream)
                 sphere.setRadius(radius);
 
                 scene.addHittable(std::make_shared<Sphere>(sphere));
+            }
+        }
+        else if (line.rfind("cube=", 0) != std::string::npos)
+        {
+            double pX, pY, pZ, dX, dY, dZ, width, height, depth;
+            char* materialName = NULL;
+
+            if (sscanf(line.c_str(), "cube=(%lf,%lf,%lf),(%lf,%lf,%lf),%s,%lf,%lf,%lf\n", &pX, &pY, &pZ, &dX, &dY, &dZ, materialName, &width, &height, &depth) != EOF)
+            {
+                Cube cube;
+
+                cube.setTransform(Transform(Vector3(pX, pY, pZ), Vector3(dX, dY, dZ), Vector3(1.0, 1.0, 1.0)));
+                // Set material
+                cube.setWidth(width);
+                cube.setHeight(height);
+                cube.setDepth(depth);
+
+                scene.addHittable(std::make_shared<Cube>(cube));
             }
         }
 	} while (!stream.eof());
