@@ -125,26 +125,26 @@ static Color	calculatePixelColor(Scene& scene, int x, int y)
 	static double width = double(scene.getXResolution());
 	static double height = double(scene.getYResolution());
 
-	double xU = double(x + randomDouble()) / width;
-	double yV = double(y + randomDouble()) / height;
+	double xU = double(x + randomDouble()) / (width - 1);
+	double yV = double(y + randomDouble()) / (height - 1);
 
 	static Vector3	cameraPosition = scene.getActiveCamera().getPosition();
-	static Vector3	cameraLookDirection = scene.getActiveCamera().getDirection()/* * Vector3(-1.0, -1.0, -1.0)*/;
+	static Vector3	cameraLookDirection = scene.getActiveCamera().getDirection();
 
-    static double	halfWidth = tan((((double)scene.getActiveCamera().getFOV() * M_PI) / 180.0) / 2.0);
-    static double	halfHeight = (height / width) * halfWidth;
+    static double	viewportWidth = 2.0 * tan((((double)scene.getActiveCamera().getFOV() * M_PI) / 180.0) / 2.0);
+    static double	viewportHeight = (height / width) * viewportWidth;
 
 	static double	lensRadius = scene.getActiveCamera().getAperture() / 2.0;
-	static double	focusDistance = Utilities::vectorLength(cameraLookDirection);
+	static double	focusDistance = scene.getActiveCamera().getFocusDistance();
 
 	static Vector3	w = Utilities::normalize(cameraLookDirection);
 	static Vector3	viewUp(0.0, 1.0, 0.0);
 	static Vector3	u = Utilities::normalize(Utilities::cross(viewUp, w));
 	static Vector3	v = Utilities::cross(w, u);
 
-	static Vector3	lowerLeftCorner = cameraPosition - (u * halfWidth * focusDistance) - (v * halfHeight * focusDistance) - (w * focusDistance);
-	static Vector3	horizontal = u * (halfWidth * 2.0 * focusDistance);
-	static Vector3	vertical = v * (halfHeight * 2.0 * focusDistance);
+	static Vector3	horizontal = u * viewportWidth * focusDistance;
+	static Vector3	vertical = v * viewportHeight * focusDistance;
+	static Vector3	lowerLeftCorner = (cameraPosition - (horizontal / 2.0) - (vertical / 2.0) - (w * focusDistance)) * Vector3(1.0, 1.0, -1.0);
 
 	Vector3	offset(0.0, 0.0, 0.0);
 	if (lensRadius > 0.0)
@@ -170,6 +170,7 @@ static Color	calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
 	{
 		return (color);
 	}
+
 	if (checkHits(scene, ray))
 	{
 		//ray.setOrigin(ray.hitRecord.position + (ray.hitRecord.normal * T_MIN));
