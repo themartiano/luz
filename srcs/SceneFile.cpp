@@ -5,6 +5,8 @@
 #include "Forms/Sphere.hpp"
 #include "Forms/Cube.hpp"
 #include "Forms/Plane.hpp"
+#include "Forms/Rectangle.hpp"
+#include "Forms/Triangle.hpp"
 #include <fstream>
 #include <memory>
 #include <stdio.h>
@@ -209,6 +211,23 @@ static void	readObjectsSubSection(Scene& scene, std::ifstream& stream)
                 // Set material
 
                 scene.addHittable(std::make_shared<Plane>(plane));
+            }
+        }
+        else if (line.rfind("rectangle=", 0) != std::string::npos)
+        {
+            double pX, pY, pZ, oX, oY, oZ, width, height;
+            char* materialName = NULL;
+
+            if (sscanf(line.c_str(), "rectangle=(%lf,%lf,%lf),(%lf,%lf,%lf),%s,%lf,%lf\n", &pX, &pY, &pZ, &oX, &oY, &oZ, materialName, &width, &height) != EOF)
+            {
+                Rectangle rectangle;
+
+                rectangle.setTransform(Transform(Vector3(pX, pY, pZ), Vector3(oX, oY, oZ), Vector3(1.0, 1.0, 1.0)));
+                // Set material
+                rectangle.setWidth(width);
+                rectangle.setHeight(height);
+
+                scene.addHittable(std::make_shared<Rectangle>(rectangle));
             }
         }
 	} while (!stream.eof());

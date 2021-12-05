@@ -12,6 +12,10 @@ class   Rectangle : public Hittable
     public:
         Rectangle(void);
         Rectangle(Transform transform, Material material, double width, double height);
+        void            setTransform(Transform transform);
+        void            setMaterial(Material material);
+        void            setWidth(double width);
+        void            setHeight(double height);
 		virtual bool    hit(Ray& ray, double t_max) const override;
 		virtual bool    createBoundingBox(AABB& outputBoundingBox) const override;
 
