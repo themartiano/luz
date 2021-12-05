@@ -4,6 +4,7 @@
 #include "Forms/Triangle.hpp"
 #include "Vector3.hpp"
 #include "Utilities.hpp"
+#include "ANSIColors.hpp"
 #include <memory>
 #include <vector>
 #include <fstream>
@@ -15,7 +16,7 @@ void    readObj(Scene& scene, std::string fileName)
 	stream.open(fileName + ".obj");
 	if (!stream)
 	{
-		std::cerr << "The specified file could not be opened." << std::endl;
+		std::cerr << CLR_RED << "The specified file could not be opened." << CLR_RESET << std::endl;
 		exit(1);
 	}
 

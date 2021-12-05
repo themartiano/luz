@@ -27,8 +27,14 @@ static Color	computeAtmosphereColor(Scene& scene, Ray& ray);
 static Color	calculateSkyInterpolation(Scene& scene, Ray& ray);
 
 // Renders the image using all the information present on 'scene'. (Objects, cameras, lights, settings, etc)
-void	render(Scene& scene)
+bool	render(Scene& scene)
 {
+	if (!scene.hasCamera())
+	{
+		std::cerr << CLR_RED << "No camera on the Scene." << CLR_RESET << std::endl;
+		return (false);
+	}
+
 	std::cout << CLR_YELLOW << "Rendering..." << CLR_RESET << std::endl;
 
 	Clock	clock;
@@ -81,6 +87,8 @@ void	render(Scene& scene)
 	double elapsedS = clock.stop();
 	std::cout << CLR_WHITE << "\r[ 100% ]";
 	std::cout << CLR_GREEN_BRIGHT << "\nRender done! " << CLR_BLUE_BRIGHT << "(Duration: " << CLR_WHITE << elapsedS << "s" << CLR_BLUE_BRIGHT << ")\n\n" << CLR_RESET;
+
+	return (true);
 }
 
 // Renders the pixel (X, Y)

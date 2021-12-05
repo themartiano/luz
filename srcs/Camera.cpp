@@ -8,7 +8,7 @@
 Camera::Camera(void)
 {
 	this->_position = Vector3(0.0, 0.0, 15.0);
-	this->_direction = Vector3(0.0, 0.0, 0.0);
+	this->_direction = Vector3(0.0, 0.0, -1.0);
 	this->_fov = 65;
 	this->_aperture = 2.0;
 	this->_focusDistance = 10.0;

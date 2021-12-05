@@ -83,21 +83,22 @@ int	main(void)
 	// scene.addHittable(std::make_shared<BVHNode>(triangles));
 
 	// scene.addHittable(std::make_shared<Triangle>(
-	// 	Vector3(0.0, 0.0, 0.0),
-	// 	Vector3(10.0, 5.0, 0.0),
-	//  	Vector3(0.0, 10.0, 0.0),
+	// 	Vector3(-1.0, 0.0, 0.0),
+	// 	Vector3(1.0, 0.0, 0.0),
+	//  	Vector3(0.0, 2.0, 0.0),
 	// 	Material(Color(0.49, 0.49, 0.49), 1.0, 0.0, 0.5, 0.0, false, false, 0.0)
 	// ));
 
-	readObj(scene, "lamp");
+	//readObj(scene, "lamp");
 
 	//renderSequence(scene, scene.getAtmosphere(), 5, 5.0);
 
-	render(scene);
-
-	// Writes BMP image file
-	BMP bmp("render");
-	bmp.writeFile(scene);
+	if (render(scene))
+	{
+		// Writes BMP image file
+		BMP bmp("render");
+		bmp.writeFile(scene);
+	}
 
 	return (0);
 }

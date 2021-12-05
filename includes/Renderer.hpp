@@ -3,6 +3,6 @@
 
 #include "Scene.hpp"
 
-void	render(Scene& scene);
+bool	render(Scene& scene);
 
 #endif

@@ -189,5 +189,15 @@ std::vector<std::shared_ptr<Hittable>>	Scene::getHittables(void) const
 // Returns the currently active camera
 Camera	Scene::getActiveCamera(void) const
 {
-	return (this->_cameras[this->_activeCamera]);
+	if (this->_cameras.size() > 0)
+	{
+		return (this->_cameras[this->_activeCamera]);
+	}
+
+	return (Camera());
+}
+
+bool	Scene::hasCamera(void) const
+{
+	return (this->_cameras.size() > 0);
 }
