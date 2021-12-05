@@ -72,10 +72,28 @@ int		Scene::getXResolution(void) const
 	return (this->_xResolution);
 }
 
+// Sets the X resolution (width)
+void	Scene::setXResolution(int width)
+{
+	this->_xResolution = width;
+
+	delete[] this->_pixelArray;
+	this->_pixelArray = new unsigned char[this->_xResolution * this->_yResolution * 3];
+}
+
 // Returns the Y resolution (height)
 int		Scene::getYResolution(void) const
 {
 	return (this->_yResolution);
+}
+
+// Sets the Y resolution (height)
+void	Scene::setYResolution(int height)
+{
+	this->_yResolution = height;
+
+	delete[] this->_pixelArray;
+	this->_pixelArray = new unsigned char[this->_xResolution * this->_yResolution * 3];
 }
 
 // Returns the current Sample Count (rays per pixel)

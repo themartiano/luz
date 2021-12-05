@@ -22,6 +22,7 @@ class   Utilities
         static void     setDoubleRange(double& flt, double min, double max);
         static bool     createMainBoundingBox(Scene& scene, AABB& newBoundingBox);
         static AABB     mergeBoundingBoxes(AABB boundingBox1, AABB boundingBox2);
+        static void     toLower(std::string& str);
 };
 
 inline double	randomDouble(void)

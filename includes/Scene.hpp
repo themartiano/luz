@@ -16,7 +16,9 @@ class	Scene
 		void	addCamera(Camera camera);
 		void	addHittable(std::shared_ptr<Hittable> hittable);
 		int		getXResolution(void) const;
+		void	setXResolution(int width);
 		int		getYResolution(void) const;
+		void	setYResolution(int height);
 		int		getSampleCount(void) const;
 		void	setSampleCount(const int sampleCount);
 		int		getMaxLightBounces(void) const;

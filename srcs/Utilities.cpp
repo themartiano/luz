@@ -1,6 +1,7 @@
 #include "Utilities.hpp"
 #include "Forms/Sphere.hpp"
 #include <cmath>
+#include <algorithm>
 
 // Returns the dot product of 'vector1' and 'vector2'
 double	Utilities::Utilities::dot(Vector3 vector1, Vector3 vector2)
@@ -156,4 +157,12 @@ AABB	Utilities::Utilities::mergeBoundingBoxes(AABB boundingBox1, AABB boundingBo
 		fmax(boundingBox1.getMaximum().getZ(), boundingBox2.getMaximum().getZ()));
 
 	return (AABB(smallestPoints, biggestPoints));
+}
+
+void	Utilities::toLower(std::string& str)
+{
+	std::for_each(str.begin(), str.end(), [](char& c)
+	{
+		c = std::tolower(c);
+	});
 }

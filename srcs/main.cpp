@@ -16,6 +16,7 @@
 #include "Defaults.hpp"
 #include "OBJReader.hpp"
 #include "SequenceRenderer.hpp"
+#include "SceneFile.hpp"
 #include <fstream>
 #include <iostream>
 #include <vector>
@@ -23,73 +24,82 @@
 static void	mountCornellBox(Scene& scene);
 
 // Main function
-int	main(void)
+int	main(int argc, char *argv[])
 {
 	std::cout << CLR_BLUE << "Preparing...\n\n" << CLR_RESET;
 
 	srand(time(0));
 
-	Scene scene(500, 500);
-	scene.setSampleCount(1);
-	scene.setMaxLightBounces(4);
-	scene.setGammaCorrected(true);
-	scene.setRenderSky(SKY_NONE);
-	//scene.setAtmosphere(Atmosphere(-0.189, D_EARTH_RADIUS, D_ATMOSPHERE_RADIUS, D_HR, D_HM, 16, 8, 0.468)); // Only needed if Scene.Sky == SKY_ATMOSPHERE
-	scene.setBackgroundColor(Color(1.0, 1.0, 1.0)); // Only needed if Scene.Sky == SKY_NONE
+	Scene scene;
+	if (argc != 1)
+	{
+		readSceneFile(scene, argv[1]);
+	}
+	else
+	{
+		scene.setXResolution(500);
+		scene.setYResolution(500);
+		scene.setSampleCount(1);
+		scene.setMaxLightBounces(4);
+		scene.setGammaCorrected(true);
+		scene.setRenderSky(SKY_NONE);
+		//scene.setAtmosphere(Atmosphere(-0.189, D_EARTH_RADIUS, D_ATMOSPHERE_RADIUS, D_HR, D_HM, 16, 8, 0.468)); // Only needed if Scene.Sky == SKY_ATMOSPHERE
+		scene.setBackgroundColor(Color(1.0, 1.0, 1.0)); // Only needed if Scene.Sky == SKY_NONE
 
-	// Coordinate system ~~ Right Hand ~~ Forward: -Z | Up: +Y | Right: +X
+		// Coordinate system ~~ Right Hand ~~ Forward: -Z | Up: +Y | Right: +X
 
-	//mountCornellBox(scene);
+		//mountCornellBox(scene);
 
-	//scene.addCamera(Camera(Vector3(0.0, D_EARTH_RADIUS + 1.0, 0.0), Vector3(0.0, 0.0, -1.0), 65, 0.0));
-	scene.addCamera(Camera(Vector3(0.0, 2.5, 15.0), Vector3(0.0, 0.0, -1.0), 65, 0.0, 10.0));
+		//scene.addCamera(Camera(Vector3(0.0, D_EARTH_RADIUS + 1.0, 0.0), Vector3(0.0, 0.0, -1.0), 65, 0.0));
+		scene.addCamera(Camera(Vector3(0.0, 2.5, 15.0), Vector3(0.0, 0.0, -1.0), 65, 0.0, 10.0));
 
-	// scene.addHittable(std::make_shared<Plane>(
-	// 	D_EARTH_RADIUS,
-	// 	Vector3(0.0, 1.0, 0.0),
-	// 	Material(Color(0.0, 1.0, 0.0), 1.0, 0.0, 0.5, 0.0, false, false, 0.0)
-	// ));
+		// scene.addHittable(std::make_shared<Plane>(
+		// 	D_EARTH_RADIUS,
+		// 	Vector3(0.0, 1.0, 0.0),
+		// 	Material(Color(0.0, 1.0, 0.0), 1.0, 0.0, 0.5, 0.0, false, false, 0.0)
+		// ));
 
-	// scene.addHittable(std::make_shared<Rectangle>(
-	// 	Transform(Vector3(0.0, 0.0, 0.0), Vector3(0.0, 0.0, 1.0), Vector3(1.0, 1.0, 1.0)),
-	// 	Material(Color(0.0, 1.0, 0.0), 1.0, 0.0, 0.5, 0.0, false, false, 0.0),
-	// 	1.0,
-	// 	1.0
-	// ));
+		// scene.addHittable(std::make_shared<Rectangle>(
+		// 	Transform(Vector3(0.0, 0.0, 0.0), Vector3(0.0, 0.0, 1.0), Vector3(1.0, 1.0, 1.0)),
+		// 	Material(Color(0.0, 1.0, 0.0), 1.0, 0.0, 0.5, 0.0, false, false, 0.0),
+		// 	1.0,
+		// 	1.0
+		// ));
 
-	// scene.addHittable(std::make_shared<Cube>(
-	// 	Transform(Vector3(0.0, 0.0, 0.0), Vector3(0.0, 0.0, 1.0), Vector3(1.0, 1.0, 1.0)),
-	// 	Material(Color(1.0, 1.0, 1.0), 1.0, 0.0, 0.5, 0.0, false, false, 0.0),
-	// 	1.0,
-	// 	1.0,
-	// 	1.0
-	// ));
+		// scene.addHittable(std::make_shared<Cube>(
+		// 	Transform(Vector3(0.0, 0.0, 0.0), Vector3(0.0, 0.0, 1.0), Vector3(1.0, 1.0, 1.0)),
+		// 	Material(Color(1.0, 1.0, 1.0), 1.0, 0.0, 0.5, 0.0, false, false, 0.0),
+		// 	1.0,
+		// 	1.0,
+		// 	1.0
+		// ));
 
-	// std::vector<std::shared_ptr<Hittable>> tinySpheres;
-	// for (int i = 0; i < 21; i++)
-	// {
-	// 	tinySpheres.push_back(std::make_shared<Sphere>(Vector3(randomDouble(-5.0, 5.0), randomDouble(-5.0, 5.0), randomDouble(-5.0, 5.0)), Material(Color(randomDouble(0.0, 1.0), randomDouble(0.0, 1.0), randomDouble(0.0, 1.0)), 1.0, 0.0, 0.5, 0.0, false, false, 0.0), 0.5));
-	// 	//scene.addHittable(tinySpheres[i]);
-	// }
-	// scene.addHittable(std::make_shared<BVHNode>(tinySpheres));
+		// std::vector<std::shared_ptr<Hittable>> tinySpheres;
+		// for (int i = 0; i < 21; i++)
+		// {
+		// 	tinySpheres.push_back(std::make_shared<Sphere>(Vector3(randomDouble(-5.0, 5.0), randomDouble(-5.0, 5.0), randomDouble(-5.0, 5.0)), Material(Color(randomDouble(0.0, 1.0), randomDouble(0.0, 1.0), randomDouble(0.0, 1.0)), 1.0, 0.0, 0.5, 0.0, false, false, 0.0), 0.5));
+		// 	//scene.addHittable(tinySpheres[i]);
+		// }
+		// scene.addHittable(std::make_shared<BVHNode>(tinySpheres));
 
-	// std::vector<std::shared_ptr<Hittable>> triangles;
-	// triangles.push_back(std::make_shared<Triangle>(
-	// 	Vector3(-1.0, 0.0, 0.0),
-	// 	Vector3(1.0, 0.0, 0.0),
-	// 	Vector3(0.0, 2.0, 0.0),
-	// 	Material(Color(0.49, 0.49, 0.49), 1.0, 0.0, 0.5, 0.0, false, false, 0.0)
-	// ));
-	// scene.addHittable(std::make_shared<BVHNode>(triangles));
+		// std::vector<std::shared_ptr<Hittable>> triangles;
+		// triangles.push_back(std::make_shared<Triangle>(
+		// 	Vector3(-1.0, 0.0, 0.0),
+		// 	Vector3(1.0, 0.0, 0.0),
+		// 	Vector3(0.0, 2.0, 0.0),
+		// 	Material(Color(0.49, 0.49, 0.49), 1.0, 0.0, 0.5, 0.0, false, false, 0.0)
+		// ));
+		// scene.addHittable(std::make_shared<BVHNode>(triangles));
 
-	// scene.addHittable(std::make_shared<Triangle>(
-	// 	Vector3(-1.0, 0.0, 0.0),
-	// 	Vector3(1.0, 0.0, 0.0),
-	//  	Vector3(0.0, 2.0, 0.0),
-	// 	Material(Color(0.49, 0.49, 0.49), 1.0, 0.0, 0.5, 0.0, false, false, 0.0)
-	// ));
+		// scene.addHittable(std::make_shared<Triangle>(
+		// 	Vector3(-1.0, 0.0, 0.0),
+		// 	Vector3(1.0, 0.0, 0.0),
+		//  	Vector3(0.0, 2.0, 0.0),
+		// 	Material(Color(0.49, 0.49, 0.49), 1.0, 0.0, 0.5, 0.0, false, false, 0.0)
+		// ));
 
-	//readObj(scene, "lamp");
+		//readObj(scene, "lamp");
+	}
 
 	//renderSequence(scene, scene.getAtmosphere(), 5, 5.0);
 
