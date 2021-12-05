@@ -22,6 +22,24 @@ Plane::Plane(double y, Vector3 orientation, Material material)
     this->_material = material;
 }
 
+// Sets the Plane's Y value
+void    Plane::setY(double y)
+{
+    this->_y = y;
+}
+
+// Sets the Plane's Orientation
+void    Plane::setOrientation(Vector3 orientation)
+{
+    this->_orientation = orientation;
+}
+
+// Sets the Plane's Material
+void    Plane::setMaterial(Material material)
+{
+    this->_material = material;
+}
+
 // Calculates if the Plane is hit by 'ray', is closer than 't_max' and farther than T_MIN
 bool    Plane::hit(Ray& ray, double t_max) const
 {
