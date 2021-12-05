@@ -44,7 +44,7 @@ void	render(Scene& scene)
 	for (unsigned int i = 0; i < threadCount; i++)
 	{
 		futureVector.push_back(
-			std::async([=, &scene, &currentRenderPixel]()
+			std::async([&scene, &currentRenderPixel]()
 			{
 				while (true)
 				{

@@ -42,7 +42,7 @@ int	main(void)
 	//mountCornellBox(scene);
 
 	//scene.addCamera(Camera(Vector3(0.0, D_EARTH_RADIUS + 1.0, 0.0), Vector3(0.0, 0.0, -1.0), 65, 0.0));
-	scene.addCamera(Camera(Vector3(0.0, 1.0, 15.0), Vector3(0.0, 0.0, -1.0), 65, 0.0, 10.0));
+	scene.addCamera(Camera(Vector3(0.0, 2.5, 15.0), Vector3(0.0, 0.0, -1.0), 65, 0.0, 10.0));
 
 	// scene.addHittable(std::make_shared<Plane>(
 	// 	D_EARTH_RADIUS,
@@ -81,6 +81,13 @@ int	main(void)
 	// 	Material(Color(0.49, 0.49, 0.49), 1.0, 0.0, 0.5, 0.0, false, false, 0.0)
 	// ));
 	// scene.addHittable(std::make_shared<BVHNode>(triangles));
+
+	// scene.addHittable(std::make_shared<Triangle>(
+	// 	Vector3(0.0, 0.0, 0.0),
+	// 	Vector3(10.0, 5.0, 0.0),
+	//  	Vector3(0.0, 10.0, 0.0),
+	// 	Material(Color(0.49, 0.49, 0.49), 1.0, 0.0, 0.5, 0.0, false, false, 0.0)
+	// ));
 
 	readObj(scene, "lamp");
 
