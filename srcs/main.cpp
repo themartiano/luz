@@ -42,7 +42,7 @@ int	main(void)
 	//mountCornellBox(scene);
 
 	//scene.addCamera(Camera(Vector3(0.0, D_EARTH_RADIUS + 1.0, 0.0), Vector3(0.0, 0.0, -1.0), 65, 0.0));
-	scene.addCamera(Camera(Vector3(0.0, 1.0, 50.0), Vector3(0.0, 0.0, -1.0), 65, 0.0, 10.0));
+	scene.addCamera(Camera(Vector3(0.0, 1.0, 15.0), Vector3(0.0, 0.0, -1.0), 65, 0.0, 10.0));
 
 	// scene.addHittable(std::make_shared<Plane>(
 	// 	D_EARTH_RADIUS,

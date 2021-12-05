@@ -56,7 +56,7 @@ bool    Triangle::hit(Ray& ray, double t_max) const
     }
 
     double t = Utilities::dot(v2, q) * invDet;
-    if (t > t_max)
+    if (t > t_max || t < T_MIN)
     {
         return (false);
     }

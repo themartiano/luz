@@ -43,7 +43,7 @@ void	render(Scene& scene)
 	// Creates threads.
 	for (unsigned int i = 0; i < threadCount; i++)
 	{
-		futureVector.emplace_back(
+		futureVector.push_back(
 			std::async([=, &scene, &currentRenderPixel]()
 			{
 				while (true)
@@ -144,7 +144,7 @@ static Color	calculatePixelColor(Scene& scene, int x, int y)
 
 	static Vector3	horizontal = u * viewportWidth * focusDistance;
 	static Vector3	vertical = v * viewportHeight * focusDistance;
-	static Vector3	lowerLeftCorner = (cameraPosition - (horizontal / 2.0) - (vertical / 2.0) - (w * focusDistance)) * Vector3(1.0, 1.0, -1.0);
+	static Vector3	lowerLeftCorner = cameraPosition - (horizontal / 2.0) - (vertical / 2.0) - (w * focusDistance);
 
 	Vector3	offset(0.0, 0.0, 0.0);
 	if (lensRadius > 0.0)
