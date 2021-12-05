@@ -106,8 +106,7 @@ int	main(int argc, char *argv[])
 	if (render(scene))
 	{
 		// Writes BMP image file
-		BMP bmp("render");
-		bmp.writeFile(scene);
+		BMP::writeFile(scene);
 	}
 
 	return (0);

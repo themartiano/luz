@@ -23,6 +23,8 @@ Scene::Scene(void)
 	this->_atmosphere = Atmosphere();
 	this->_backgroundColor = Color(0.0, 0.0, 0.0);
 
+	this->_outputFileName = "render.bmp";
+
 	this->_activeCamera = 0;
 
 	this->_t_max = std::numeric_limits<double>::max();
@@ -215,7 +217,20 @@ Camera	Scene::getActiveCamera(void) const
 	return (Camera());
 }
 
+// Returns 'true' if this Scene has at least one Camera
 bool	Scene::hasCamera(void) const
 {
 	return (this->_cameras.size() > 0);
+}
+
+// Returns the Output File Name
+std::string	Scene::getOutputFileName(void) const
+{
+	return (this->_outputFileName);
+}
+
+// Sets the Output File Name
+void	Scene::setOutputFileName(std::string outputFileName)
+{
+	this->_outputFileName = outputFileName;
 }

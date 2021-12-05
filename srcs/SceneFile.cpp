@@ -32,7 +32,7 @@ void   readSceneFile(Scene& scene, std::string fileName)
 	{
 		getline(stream, line);
 
-		if (line.length() <= 0)
+		if (line.length() <= 0 || line.at(0) == '#')
 		{
 			continue;
 		}
@@ -61,7 +61,7 @@ static void	readSettingsSection(Scene& scene, std::ifstream& stream)
 	{
 		getline(stream, line);
 
-		if (line.length() <= 0)
+		if (line.length() <= 0 || line.at(0) == '#')
 		{
 			break;
 		}
@@ -104,6 +104,15 @@ static void	readSettingsSection(Scene& scene, std::ifstream& stream)
                 scene.setGammaCorrected(gammaCorrected);
             }
         }
+        else if (line.rfind("outputfilename=", 0) != std::string::npos)
+        {
+            char outputFileName[256];
+
+            if (sscanf(line.c_str(), "outputfilename=%s\n", outputFileName) != EOF)
+            {
+                scene.setOutputFileName(outputFileName);
+            }
+        }
 	} while (!stream.eof());
 }
 
@@ -115,7 +124,7 @@ static void	readSceneSection(Scene& scene, std::ifstream& stream)
 	{
 		getline(stream, line);
 
-		if (line.length() <= 0)
+		if (line.length() <= 0 || line.at(0) == '#')
 		{
 			break;
 		}
@@ -154,7 +163,7 @@ static void	readObjectsSubSection(Scene& scene, std::ifstream& stream)
 	{
 		getline(stream, line);
 
-		if (line.length() <= 0)
+		if (line.length() <= 0 || line.at(0) == '#')
 		{
 			continue;
 		}
@@ -259,8 +268,6 @@ static void	readObjectsSubSection(Scene& scene, std::ifstream& stream)
 
             if (sscanf(line.c_str(), "obj=%s\n", objFileName) != EOF)
             {
-                std::string objFile = objFileName;
-
                 readObj(scene, objFileName);
             }
         }

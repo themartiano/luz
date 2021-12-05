@@ -37,6 +37,8 @@ class	Scene
 		Camera	getActiveCamera(void) const;
 		bool	hasCamera(void) const;
 		std::vector<std::shared_ptr<Hittable>>	getHittables(void) const;
+		std::string	getOutputFileName(void) const;
+		void		setOutputFileName(std::string outputFileName);
 
 	private:
 		int						_xResolution;
@@ -45,6 +47,7 @@ class	Scene
 		int						_sampleCount;
 		int						_maxLightBounces;
 		bool					_gammaCorrected;
+		std::string				_outputFileName;
 		unsigned char*			_pixelArray;
 		double					_skyline;
 		short					_renderSky;
