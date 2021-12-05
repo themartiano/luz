@@ -1,12 +1,14 @@
 [settings]
 resolution=500,500
 samples=4
-maxLightBounces=3
-gamma=true
+maxlightbounces=3
+gamma=1
 
 [scene]
-camera=(0, 0, 0),(0, 0, -1),65,2,10
-objects=(sphere=(0,0,0),mat,2)
+camera=(0,0,0),(0,0,-1),65,2,10
+objects{
+sphere=(0,0,0),mat,2
+}
 
 [materials]
-mat=(0.6, 0.6, 0.6),1,0,0.5,0,false,false,0
+mat=(0.6,0.6,0.6),1,0,0.5,0,false,false,0

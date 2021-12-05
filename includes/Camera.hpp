@@ -9,10 +9,15 @@ class	Camera
 		Camera(void);
 		Camera(Vector3 position, Vector3 direction, short fov, double aperture, double focusDistance);
 		Vector3		getPosition(void) const;
+		void		setPosition(Vector3 position);
 		Vector3		getDirection(void) const;
+		void		setDirection(Vector3 direction);
 		short		getFOV(void) const;
+		void		setFOV(short fov);
 		double		getAperture(void) const;
+		void		setAperture(double aperture);
 		double		getFocusDistance(void) const;
+		void		setFocusDistance(double focusDistance);
 
 	private:
 		Vector3		_position;
