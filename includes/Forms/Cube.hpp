@@ -11,7 +11,7 @@ class   Cube : public Hittable
 {
     public:
         Cube(void);
-        Cube(Transform transform, Material material, double width, double height, double depth);
+        Cube(Transform transform, double width, double height, double depth, Material material);
         void    setTransform(Transform transform);
         void    setMaterial(Material material);
         void    setWidth(double width);

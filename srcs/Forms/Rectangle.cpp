@@ -17,12 +17,12 @@ Rectangle::Rectangle(void)
 }
 
 // Constructs the Rectangle with custom values
-Rectangle::Rectangle(Transform transform, Material material, double width, double height)
+Rectangle::Rectangle(Transform transform, double width, double height, Material material)
 {
     this->_transform = transform;
-    this->_material = material;
     this->_width = width;
     this->_height = height;
+    this->_material = material;
 }
 
 // Sets the Rectangle's Transform

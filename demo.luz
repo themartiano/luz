@@ -7,12 +7,9 @@ gamma=1
 [scene]
 camera=(0,0,5),(0,0,1),65,0,10
 objects{
-sphere=(0,0,0),mat,1
-cube=(0,-2,0),(0,0,0),mat,2,2,2
-plane=-3,(0,1,0),mat
-rectangle=(0,2,0),(0,0,0),mat,1,1
-triangle=(0,0,0),(0,0,0),(0,0,0),mat
+sphere=(0,0,0),1,(material=(0.6,0.6,0.6),1,0,0.5,0,false,false,0)
+cube=(0,-2,0),(0,0,0),2,2,2,(material=(0.6,0.6,0.6),1,0,0.5,0,false,false,0)
+plane=-3,(0,1,0),(material=(0.6,0.6,0.6),1,0,0.5,0,false,false,0)
+rectangle=(0,2,0),(0,0,0),1,1,(material=(0.6,0.6,0.6),1,0,0.5,0,false,false,0)
+triangle=(0,0,0),(0,0,0),(0,0,0),(material=(0.6,0.6,0.6),1,0,0.5,0,false,false,0)
 }
-
-[materials]
-mat=(0.6,0.6,0.6),1,0,0.5,0,false,false,0
