@@ -1,5 +1,6 @@
 #include "BVHNode.hpp"
 #include "Utilities.hpp"
+#include "Defaults.hpp"
 #include <algorithm>
 
 // Static function prototypes
@@ -58,6 +59,7 @@ BVHNode::BVHNode(std::vector<std::shared_ptr<Hittable>> hittables, size_t start,
     {
         // Error
     }
+
     this->_boundingBox = Utilities::mergeBoundingBoxes(boxLeft, boxRight);
 }
 
@@ -102,10 +104,19 @@ bool    BVHNode::hit(Ray& ray, double t_max) const
         return (false);
     }
 
-    bool hitLeft = this->_left->hit(ray, t_max);
-    bool hitRight = this->_right->hit(ray, hitLeft ? ray.hitRecord.t0 : t_max);
+    if (RENDER_AABB)
+    {
+        ray.hitRecord.material = Material(Color(0.0, 0.0, 0.0), 1.0, 0.0, 0.5, 0.0, false, false, 0.0);
 
-    return (hitLeft || hitRight);
+        return (true);
+    }
+    else
+    {
+        bool hitLeft = this->_left->hit(ray, t_max);
+        bool hitRight = this->_right->hit(ray, hitLeft ? ray.hitRecord.t0 : t_max);
+
+        return (hitLeft || hitRight);
+    }
 }
 
 // Sets 'outputBoundingBox' to the BVH Node's '_boundingBox'

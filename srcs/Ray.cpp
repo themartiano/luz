@@ -1,5 +1,6 @@
 #include "Ray.hpp"
 #include "Scene.hpp"
+#include "Utilities.hpp"
 #include <cmath>
 
 /*
@@ -17,7 +18,7 @@ Ray::Ray(void)
 Ray::Ray(Vector3 origin, Vector3 direction)
 {
 	this->_origin = origin;
-    this->_direction = direction;
+    this->_direction = Utilities::normalize(direction);
 }
 
 // Returns a point on the ray where 't' determines its position

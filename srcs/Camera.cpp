@@ -11,15 +11,17 @@ Camera::Camera(void)
 	this->_direction = Vector3(0.0, 0.0, 0.0);
 	this->_fov = 65;
 	this->_aperture = 2.0;
+	this->_focusDistance = 10.0;
 }
 
 // Constructs the Camera with custom values
-Camera::Camera(Vector3 position, Vector3 direction, short fov, double aperture)
+Camera::Camera(Vector3 position, Vector3 direction, short fov, double aperture, double focusDistance)
 {
 	this->_position = position;
 	this->_direction = direction;
 	this->_fov = fov;
 	this->_aperture = aperture;
+	this->_focusDistance = focusDistance;
 }
 
 // Returns the Camera's position
@@ -44,4 +46,10 @@ short		Camera::getFOV(void) const
 double	Camera::getAperture(void) const
 {
 	return (this->_aperture);
+}
+
+// Returns the Camera's Focus Distance (used for Depth of Field / DOF)
+double	Camera::getFocusDistance(void) const
+{
+	return (this->_focusDistance);
 }

@@ -161,10 +161,11 @@ bool    Triangle::hit(Ray& ray, double t_max) const
 // Creates an AABB / bounding box for this Triangle
 bool    Triangle::createBoundingBox(AABB& outputBoundingBox) const
 {
-    Vector3 minimum = this->_vertex0;
-    Vector3 maximum = this->_vertex0;
+    Vector3 minimum = Vector3(0.0, 0.0, 0.0);
+    Vector3 maximum = Vector3(0.0, 0.0, 0.0);
 
     std::vector<Vector3> vectors;
+    vectors.push_back(this->_vertex0);
     vectors.push_back(this->_vertex1);
     vectors.push_back(this->_vertex2);
 
