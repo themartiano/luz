@@ -13,7 +13,7 @@
 void    readObj(Scene& scene, std::string fileName)
 {
 	std::ifstream stream;
-	stream.open(fileName + ".obj");
+	stream.open(fileName);
 	if (!stream)
 	{
 		std::cerr << CLR_RED << "The specified file could not be opened." << CLR_RESET << std::endl;

@@ -7,6 +7,7 @@
 #include "Forms/Plane.hpp"
 #include "Forms/Rectangle.hpp"
 #include "Forms/Triangle.hpp"
+#include "OBJReader.hpp"
 #include <fstream>
 #include <memory>
 #include <stdio.h>
@@ -250,6 +251,17 @@ static void	readObjectsSubSection(Scene& scene, std::ifstream& stream)
                 triangle.setMaterial(Material(Color(mR, mG, mB), mOpacity, mMetallic, mAlbedo, mReflectionFuzziness, mIsDieletric, mIsEmissive, mLightIntensity));
 
                 scene.addHittable(std::make_shared<Triangle>(triangle));
+            }
+        }
+        else if (line.rfind("obj=", 0) != std::string::npos)
+        {
+            char objFileName[256];
+
+            if (sscanf(line.c_str(), "obj=%s\n", objFileName) != EOF)
+            {
+                std::string objFile = objFileName;
+
+                readObj(scene, objFileName);
             }
         }
 	} while (!stream.eof());

@@ -98,7 +98,7 @@ int	main(int argc, char *argv[])
 		// 	Material(Color(0.49, 0.49, 0.49), 1.0, 0.0, 0.5, 0.0, false, false, 0.0)
 		// ));
 
-		//readObj(scene, "lamp");
+		//readObj(scene, "lamp.obj");
 	}
 
 	//renderSequence(scene, scene.getAtmosphere(), 5, 5.0);
