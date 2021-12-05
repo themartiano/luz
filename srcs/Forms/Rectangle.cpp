@@ -25,6 +25,30 @@ Rectangle::Rectangle(Transform transform, Material material, double width, doubl
     this->_height = height;
 }
 
+// Sets the Rectangle's Transform
+void    Rectangle::setTransform(Transform transform)
+{
+    this->_transform = transform;
+}
+
+// Sets the Rectangle's Material
+void    Rectangle::setMaterial(Material material)
+{
+    this->_material = material;
+}
+
+// Sets the Rectangle's Width
+void    Rectangle::setWidth(double width)
+{
+    this->_width = width;
+}
+
+// Sets the Rectangle's Height
+void    Rectangle::setHeight(double height)
+{
+    this->_height = height;
+}
+
 // Calculates if the Rectangle is hit by 'ray', is closer than 't_max' and farther than T_MIN
 bool    Rectangle::hit(Ray& ray, double t_max) const
 {
