@@ -8,6 +8,7 @@
 #include "Forms/Rectangle.hpp"
 #include "Forms/Triangle.hpp"
 #include "OBJReader.hpp"
+#include "SkyTypes.hpp"
 #include <fstream>
 #include <memory>
 #include <stdio.h>
@@ -46,10 +47,6 @@ void   readSceneFile(Scene& scene, std::string fileName)
         {
             readSceneSection(scene, stream);
         }
-        else if (line.rfind("[materials]", 0) != std::string::npos)
-        {
-            //readMaterialsSection(scene, stream);
-        }
 	} while (!stream.eof());
 }
 
@@ -61,10 +58,14 @@ static void	readSettingsSection(Scene& scene, std::ifstream& stream)
 	{
 		getline(stream, line);
 
-		if (line.length() <= 0 || line.at(0) == '#')
+		if (line.length() <= 0)
 		{
 			break;
 		}
+        if (line.at(0) == '#')
+        {
+            continue;
+        }
         Utilities::toLower(line);
 
         if (line.rfind("resolution=", 0) != std::string::npos)
@@ -113,6 +114,29 @@ static void	readSettingsSection(Scene& scene, std::ifstream& stream)
                 scene.setOutputFileName(outputFileName);
             }
         }
+        else if (line.rfind("sky=", 0) != std::string::npos)
+        {
+            char sky[32];
+
+            if (sscanf(line.c_str(), "sky=%s\n", sky) != EOF)
+            {
+                std::string skyStr = sky;
+                Utilities::toLower(skyStr);
+
+                if (skyStr == "atmosphere")
+                {
+                    scene.setRenderSky(SKY_ATMOSPHERE);
+                }
+                else if (skyStr == "linear")
+                {
+                    scene.setRenderSky(SKY_LINEAR);
+                }
+                else
+                {
+                    scene.setRenderSky(SKY_NONE);
+                }
+            }
+        }
 	} while (!stream.eof());
 }
 
@@ -124,10 +148,14 @@ static void	readSceneSection(Scene& scene, std::ifstream& stream)
 	{
 		getline(stream, line);
 
-		if (line.length() <= 0 || line.at(0) == '#')
+		if (line.length() <= 0)
 		{
 			break;
 		}
+        if (line.at(0) == '#')
+        {
+            continue;
+        }
         Utilities::toLower(line);
 
         if (line.rfind("camera=", 0) != std::string::npos)
