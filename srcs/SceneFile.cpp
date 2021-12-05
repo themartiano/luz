@@ -230,5 +230,22 @@ static void	readObjectsSubSection(Scene& scene, std::ifstream& stream)
                 scene.addHittable(std::make_shared<Rectangle>(rectangle));
             }
         }
+        else if (line.rfind("triangle=", 0) != std::string::npos)
+        {
+            double v0X, v0Y, v0Z, v1X, v1Y, v1Z, v2X, v2Y, v2Z;
+            char* materialName = NULL;
+
+            if (sscanf(line.c_str(), "triangle=(%lf,%lf,%lf),(%lf,%lf,%lf),(%lf,%lf,%lf),%s\n", &v0X, &v0Y, &v0Z, &v1X, &v1Y, &v1Z, &v2X, &v2Y, &v2Z, materialName) != EOF)
+            {
+                Triangle triangle;
+
+                triangle.setVertex0(Vector3(v0X, v0Y, v0Z));
+                triangle.setVertex1(Vector3(v1X, v1Y, v1Z));
+                triangle.setVertex2(Vector3(v2X, v2Y, v2Z));
+                // Set material
+
+                scene.addHittable(std::make_shared<Triangle>(triangle));
+            }
+        }
 	} while (!stream.eof());
 }

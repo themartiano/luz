@@ -25,6 +25,30 @@ Triangle::Triangle(Vector3 vertex0, Vector3 vertex1, Vector3 vertex2, Material m
     this->_material = material;
 }
 
+// Sets the Triangle's Vertex-0
+void    Triangle::setVertex0(Vector3 vertex0)
+{
+    this->_vertex0 = vertex0;
+}
+
+// Sets the Triangle's Vertex-1
+void    Triangle::setVertex1(Vector3 vertex1)
+{
+    this->_vertex1 = vertex1;
+}
+
+// Sets the Triangle's Vertex-2
+void    Triangle::setVertex2(Vector3 vertex2)
+{
+    this->_vertex2 = vertex2;
+}
+
+// Sets the Triangle's Material
+void    Triangle::setMaterial(Material material)
+{
+    this->_material = material;
+}
+
 // Calculates if the Triangle is hit by 'ray', is closer than 't_max' and farther than T_MIN
 bool    Triangle::hit(Ray& ray, double t_max) const
 {
