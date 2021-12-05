@@ -7,22 +7,6 @@
 static unsigned char*	createBitmapFileHeader(int height, int stride);
 static unsigned char*	createBitmapInfoHeader(int height, int width);
 
-/*
-	Constructors
-*/
-
-// Constructs the BMP object with default values
-BMP::BMP(void)
-{
-	this->_fileName = "";
-}
-
-// Constructs the BMP object with custom values
-BMP::BMP(std::string fileName)
-{
-	this->_fileName = fileName + ".bmp";
-}
-
 // Writes a .bmp image file using the information present on 'scene'
 void	BMP::writeFile(Scene& scene, bool insideDir, std::string dirName)
 {
@@ -32,13 +16,13 @@ void	BMP::writeFile(Scene& scene, bool insideDir, std::string dirName)
 	unsigned char*	fileHeader = createBitmapFileHeader(scene.getYResolution(), stride);
 	unsigned char*	infoHeader = createBitmapInfoHeader(scene.getYResolution(), scene.getXResolution());
 
-	std::cout << CLR_YELLOW << "Writing render to " << CLR_BLUE_BRIGHT << this->_fileName << CLR_YELLOW << "...\n" << CLR_RESET;
+	std::cout << CLR_YELLOW << "Writing render to " << CLR_BLUE_BRIGHT << scene.getOutputFileName() << CLR_YELLOW << "...\n" << CLR_RESET;
 
-	std::string filePath = this->_fileName;
+	std::string filePath = scene.getOutputFileName();
 	if (insideDir == true)
 	{
 		std::filesystem::create_directory(dirName);
-		filePath = dirName + "/" + this->_fileName;
+		filePath = dirName + "/" + scene.getOutputFileName();
 	}
 
 	FILE* imageFile = fopen(filePath.c_str(), "wb");

@@ -13,7 +13,6 @@ void    renderSequence(Scene& scene, Atmosphere baseAtmosphere, int fps, double 
     int totalFPS = fps * duration;
     double sunChangePerFrame = 0.6 / totalFPS;
 
-    BMP frame;
     double sunPosition = baseAtmosphere.getSunAngle();
     for (int i = 0; i < totalFPS; i++)
     {
@@ -22,7 +21,7 @@ void    renderSequence(Scene& scene, Atmosphere baseAtmosphere, int fps, double 
         sunPosition -= sunChangePerFrame;
 
         render(scene);
-        frame = BMP("sequenceFrame" + std::to_string(i));
-        frame.writeFile(scene, true, "sequence");
+        scene.setOutputFileName("sequenceFrame" + std::to_string(i));
+        BMP::writeFile(scene, true, "sequence");
     }
 }

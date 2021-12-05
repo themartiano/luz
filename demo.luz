@@ -3,6 +3,7 @@ resolution=500,500
 samples=4
 maxlightbounces=3
 gamma=1
+#outputfilename=render.bmp
 
 [scene]
 camera=(0,2,5),(0,0.1,-1),65,0,10
