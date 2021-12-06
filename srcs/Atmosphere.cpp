@@ -70,6 +70,48 @@ void    Atmosphere::setSunAngle(double newAngle)
     updateSunDirectionVector();
 }
 
+// Sets the EarthRadius
+void    Atmosphere::setEarthRadius(double earthRadius)
+{
+    this->_earthRadius = earthRadius;
+}
+
+// Sets the AtmosphereRadius
+void    Atmosphere::setAtmosphereRadius(double atmosphereRadius)
+{
+    this->_atmosphereRadius = atmosphereRadius;
+}
+
+// Sets the HR value
+void    Atmosphere::setHR(double hR)
+{
+    this->_hR = hR;
+}
+
+// Sets the HM value
+void    Atmosphere::setHM(double hM)
+{
+    this->_hM = hM;
+}
+
+// Sets the Sample count
+void    Atmosphere::setSamples(int samples)
+{
+    this->_samples = samples;
+}
+
+// Sets the Light Sample count
+void    Atmosphere::setLightSamples(int lightSamples)
+{
+    this->_lightSamples = lightSamples;
+}
+
+// Sets the Stars Brightness
+void    Atmosphere::setStarsBrightness(double starsBrightness)
+{
+    this->_starsBrightness = starsBrightness;
+}
+
 //Updates Sun Direction (Vector3) using Sun Angle (double)
 void    Atmosphere::updateSunDirectionVector(void)
 {

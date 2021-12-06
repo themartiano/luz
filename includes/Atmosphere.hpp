@@ -18,6 +18,13 @@ class   Atmosphere
         Color   computeIncidentLight(Ray& ray, double t_max);
         double  getSunAngle(void) const;
         void    setSunAngle(double newAngle);
+        void    setEarthRadius(double earthRadius);
+        void    setAtmosphereRadius(double atmosphereRadius);
+        void    setHR(double hR);
+        void    setHM(double hM);
+        void    setSamples(int samples);
+        void    setLightSamples(int lightSamples);
+        void    setStarsBrightness(double starsBrightness);
 
     private:
         Vector3 _sunDirection;

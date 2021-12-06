@@ -137,6 +137,27 @@ static void	readSettingsSection(Scene& scene, std::ifstream& stream)
                 }
             }
         }
+        else if (scene.getRenderSky() == SKY_ATMOSPHERE && line.rfind("atmosphere=", 0) != std::string::npos)
+        {
+            double sunAngle, earthRadius, atmosphereRadius, hR, hM, starsBrightness;
+            int samples, lightSamples;
+
+            if (sscanf(line.c_str(), "atmosphere=%lf,%lf,%lf,%lf,%lf,%d,%d,%lf\n", &sunAngle, &earthRadius, &atmosphereRadius, &hR, &hM, &samples, &lightSamples, &starsBrightness) != EOF)
+            {
+                Atmosphere atmosphere;
+
+                atmosphere.setSunAngle(sunAngle);
+                atmosphere.setEarthRadius(earthRadius);
+                atmosphere.setAtmosphereRadius(atmosphereRadius);
+                atmosphere.setHR(hR);
+                atmosphere.setHM(hM);
+                atmosphere.setSamples(samples);
+                atmosphere.setLightSamples(lightSamples);
+                atmosphere.setStarsBrightness(starsBrightness);
+
+                scene.setAtmosphere(atmosphere);
+            }
+        }
 	} while (!stream.eof());
 }
 

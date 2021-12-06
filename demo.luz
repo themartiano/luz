@@ -5,6 +5,8 @@ maxlightbounces=3
 gamma=1
 #outputfilename=render.bmp
 sky=linear
+#sky=atmosphere
+#atmosphere=-0.3,6360000,6360000,7994,1200,16,8,0.4
 
 [scene]
 camera=(0,2,5),(0,0.1,-1),65,0,10
