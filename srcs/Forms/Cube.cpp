@@ -37,6 +37,12 @@ void    Cube::setTransform(Transform transform)
     this->_transform = transform;
 }
 
+// Returns the Cube's material
+Material    Cube::getMaterial(void) const
+{
+    return (this->_material);
+}
+
 // Sets the Cube's Material
 void    Cube::setMaterial(Material material)
 {

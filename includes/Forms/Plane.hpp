@@ -12,6 +12,7 @@ class   Plane : public Hittable
         Plane(double y, Vector3 orientation, Material material);
         void            setY(double y);
         void            setOrientation(Vector3 orientation);
+        virtual Material getMaterial(void) const override;
         void            setMaterial(Material material);
         virtual bool    hit(Ray& ray, double t_max) const override;
         virtual bool    createBoundingBox(AABB& boundingBox) const override;

@@ -103,6 +103,7 @@ int	main(int argc, char *argv[])
 
 	//renderSequence(scene, scene.getAtmosphere(), 5, 5.0);
 
+	scene.updateLights();
 	if (render(scene))
 	{
 		// Writes BMP image file

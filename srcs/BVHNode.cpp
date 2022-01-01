@@ -125,3 +125,9 @@ bool    BVHNode::createBoundingBox(AABB& outputBoundingBox) const
     outputBoundingBox = this->_boundingBox;
     return (true);
 }
+
+// Returns an empty Material (this function only exists because it must be implemented since the Hittable class has it)
+Material    BVHNode::getMaterial(void) const
+{
+    return (Material());
+}

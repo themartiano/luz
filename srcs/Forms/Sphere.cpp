@@ -47,7 +47,13 @@ void    Sphere::setRadius(double radius)
     this->_radius = radius;
 }
 
-// Sets the Sphere's ,aterial
+// Returns the Sphere's material
+Material    Sphere::getMaterial(void) const
+{
+    return (this->_material);
+}
+
+// Sets the Sphere's material
 void    Sphere::setMaterial(Material material)
 {
     this->_material = material;

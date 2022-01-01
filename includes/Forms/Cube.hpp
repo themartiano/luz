@@ -13,6 +13,7 @@ class   Cube : public Hittable
         Cube(void);
         Cube(Transform transform, double width, double height, double depth, Material material);
         void    setTransform(Transform transform);
+        virtual Material getMaterial(void) const override;
         void    setMaterial(Material material);
         void    setWidth(double width);
         void    setHeight(double height);
