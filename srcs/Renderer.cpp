@@ -12,7 +12,9 @@
 #include "Forms/Rectangle.hpp"
 #include "SkyTypes.hpp"
 #include "ONB.hpp"
+#include "CosinePDF.hpp"
 #include "HittablePDF.hpp"
+#include "MixturePDF.hpp"
 #include <cmath>
 #include <iostream>
 #include <thread>
@@ -25,7 +27,7 @@ static void		renderInternal(Scene& scene, int x, int y);
 static Color	calculatePixelColor(Scene& scene, int x, int y);
 static bool		checkHits(Scene& scene, Ray& ray);
 static Color	calculateLightRaysColor(Ray& ray, Scene& scene, int bounces);
-static void		calculateLightRayBounceDirection(Ray& ray, Color& color, const HittablePDF& lightPDF);
+static void		calculateLightRayBounceDirection(Ray& ray, Color& color, const MixturePDF& pdf);
 static Color	computeAtmosphereColor(Scene& scene, Ray& ray);
 static Color	calculateSkyInterpolation(Scene& scene, Ray& ray);
 
@@ -175,32 +177,19 @@ static Color	calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
 	static int		maxLightBounces = scene.getMaxLightBounces();
 	static short	skyType = scene.getRenderSky();
 	static Color	staticBackgroundColor = scene.getBackgroundColor();
-	std::shared_ptr<Hittable> light;
-
-	// Improve
-	for (std::shared_ptr<Hittable> h : scene.getHittables())
-	{
-		Rectangle* rect;
-
-		if ((rect = dynamic_cast<Rectangle*>(h.get())))
-		{
-			if (rect->getMaterial().getIsEmissive() == true)
-			{
-				light = std::make_shared<Rectangle>(*rect);
-			}
-		}
-	}
+	static auto		lights = scene.getLights();
 
 	Color color, emitted = Color(0.0, 0.0, 0.0);
 	if (bounces > maxLightBounces)
 	{
 		return (color);
 	}
-
 	if (checkHits(scene, ray))
 	{
 		Ray	oldRay = ray;
-		HittablePDF lightPDF(light, oldRay.hitRecord.position);
+		auto lightPDF = std::make_shared<HittablePDF>(lights, oldRay.hitRecord.position);
+		auto cosinePDF = std::make_shared<CosinePDF>(oldRay.hitRecord.normal);
+		MixturePDF mixturePDF(lightPDF, cosinePDF);
 
 		//ray.setOrigin(ray.hitRecord.position + (ray.hitRecord.normal * T_MIN));
 		ray.setOrigin(ray.hitRecord.position);
@@ -211,14 +200,14 @@ static Color	calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
 			return (emitted);
 		}
 
-		calculateLightRayBounceDirection(ray, color, lightPDF);
+		calculateLightRayBounceDirection(ray, color, mixturePDF);
 
 		if ((ray.hitRecord.material.getMetallic() == 1.0 && Utilities::dot(ray.getDirection(), ray.hitRecord.normal) <= 0.0))
 		{
 			return (emitted + color);
 		}
 
-		double pdfValue = lightPDF.value(ray.getDirection());
+		double pdfValue = mixturePDF.value(ray.getDirection());
 
 		Color	blueness;
 		if (scene.getDistanceBlueness())
@@ -293,7 +282,7 @@ static Color	calculateSkyInterpolation(Scene& scene, Ray& ray)
 }
 
 // Calculates the light rays bounce/reflection direction
-static void	calculateLightRayBounceDirection(Ray& ray, Color& color, const HittablePDF& lightPDF)
+static void	calculateLightRayBounceDirection(Ray& ray, Color& color, const MixturePDF& pdf)
 {
 	if (ray.hitRecord.material.getMetallic() == 1.0)
 	{
@@ -350,7 +339,7 @@ static void	calculateLightRayBounceDirection(Ray& ray, Color& color, const Hitta
 	Vector3	newTarget = ray.hitRecord.position + ray.hitRecord.normal + Utilities::randomPointInsideUnitSphere();
 	if (ray.hitRecord.material.getMetallic() == 0.0)
 	{
-		Vector3	direction = lightPDF.generate();
+		Vector3	direction = pdf.generate();
 		ray.setDirection(direction);
 		color = ray.hitRecord.material.getColor() * ray.hitRecord.material.getAlbedo();
 		return;
