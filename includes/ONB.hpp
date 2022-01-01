@@ -6,6 +6,7 @@
 class   ONB
 {
     public:
+        ONB(void) = default;
         ONB(const Vector3& n);
         Vector3 getU(void) const;
         Vector3 getV(void) const;
