@@ -41,6 +41,8 @@ class	Scene
 		std::vector<std::shared_ptr<Hittable>>	getHittables(void) const;
 		std::string	getOutputFileName(void) const;
 		void		setOutputFileName(std::string outputFileName);
+		void		updateLights(void);
+		std::vector<std::shared_ptr<Hittable>> getLights(void) const;
 
 	private:
 		int						_xResolution;
@@ -59,6 +61,7 @@ class	Scene
 		std::vector<Camera>		_cameras;
 		size_t					_activeCamera;
 		std::vector<std::shared_ptr<Hittable>>	_hittables;
+		std::vector<std::shared_ptr<Hittable>>	_lights;
 };
 
 #endif

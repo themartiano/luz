@@ -246,3 +246,19 @@ void	Scene::setOutputFileName(std::string outputFileName)
 {
 	this->_outputFileName = outputFileName;
 }
+
+void	Scene::updateLights(void)
+{
+	for (std::shared_ptr<Hittable> hittable : this->_hittables)
+	{
+		if (hittable->getMaterial().getIsEmissive())
+		{
+			this->_lights.push_back(hittable);
+		}
+	}
+}
+
+std::vector<std::shared_ptr<Hittable>>	Scene::getLights(void) const
+{
+	return (this->_lights);
+}

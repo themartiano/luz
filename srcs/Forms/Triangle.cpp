@@ -43,6 +43,12 @@ void    Triangle::setVertex2(Vector3 vertex2)
     this->_vertex2 = vertex2;
 }
 
+// Returns the Triangle's material
+Material    Triangle::getMaterial(void) const
+{
+    return (this->_material);
+}
+
 // Sets the Triangle's Material
 void    Triangle::setMaterial(Material material)
 {

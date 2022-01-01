@@ -15,6 +15,7 @@ class   Triangle : public Hittable
         void            setVertex0(Vector3 vertex0);
         void            setVertex1(Vector3 vertex1);
         void            setVertex2(Vector3 vertex2);
+        virtual Material getMaterial(void) const override;
         void            setMaterial(Material material);
         virtual bool    hit(Ray& ray, double t_max) const override;
         virtual bool    createBoundingBox(AABB& outputBoundingBox) const override;

@@ -14,7 +14,7 @@ class   Rectangle : public Hittable
         Rectangle(const Rectangle& toCopy);
         Rectangle(Transform transform, double width, double height, Material material);
         void            setTransform(Transform transform);
-        Material        getMaterial(void) const;
+        virtual Material getMaterial(void) const override;
         void            setMaterial(Material material);
         void            setWidth(double width);
         void            setHeight(double height);

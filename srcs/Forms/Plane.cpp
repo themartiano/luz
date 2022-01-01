@@ -34,6 +34,12 @@ void    Plane::setOrientation(Vector3 orientation)
     this->_orientation = orientation;
 }
 
+// Returns the Plane's material
+Material    Plane::getMaterial(void) const
+{
+    return (this->_material);
+}
+
 // Sets the Plane's Material
 void    Plane::setMaterial(Material material)
 {
