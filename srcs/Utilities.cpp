@@ -159,10 +159,19 @@ AABB	Utilities::Utilities::mergeBoundingBoxes(AABB boundingBox1, AABB boundingBo
 	return (AABB(smallestPoints, biggestPoints));
 }
 
+// Converts all characters on 'str' to lower case
 void	Utilities::toLower(std::string& str)
 {
 	std::for_each(str.begin(), str.end(), [](char& c)
 	{
 		c = std::tolower(c);
 	});
+}
+
+// Calculates the PDF (Probability Density Function) for scattering
+double	Utilities::scatteringPDF(Ray& ray, Ray& scatteredRay)
+{
+	double cosine = Utilities::dot(ray.hitRecord.normal, Utilities::normalize(scatteredRay.getDirection()));
+
+	return (cosine < 0.0 ? 0.0 : cosine / M_PI);
 }

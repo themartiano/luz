@@ -10,6 +10,7 @@
 #include "Atmosphere.hpp"
 #include "Forms/Sphere.hpp"
 #include "SkyTypes.hpp"
+#include "ONB.hpp"
 #include <cmath>
 #include <iostream>
 #include <thread>
@@ -181,6 +182,8 @@ static Color	calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
 
 	if (checkHits(scene, ray))
 	{
+		Ray	oldRay = ray;
+
 		//ray.setOrigin(ray.hitRecord.position + (ray.hitRecord.normal * T_MIN));
 		ray.setOrigin(ray.hitRecord.position);
 
@@ -199,7 +202,9 @@ static Color	calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
 			return (emitted + color);
 		}
 
-		return ((Color(0.0, 0.0, 0.00001) * ray.hitRecord.t0) + emitted + color * calculateLightRaysColor(ray, scene, bounces + 1));
+		double	pdf = Utilities::dot(oldRay.hitRecord.normal, ray.getDirection()) / M_PI;
+		Color	blueness = Color(0.0, 0.0, 0.00001 * ray.hitRecord.t0);
+		return (blueness + emitted + color * Utilities::scatteringPDF(oldRay, ray) * calculateLightRaysColor(ray, scene, bounces + 1) / pdf);
 	}
 
 	if (skyType == SKY_ATMOSPHERE)

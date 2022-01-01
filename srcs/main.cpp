@@ -31,7 +31,7 @@ int	main(int argc, char *argv[])
 	srand(time(0));
 
 	Scene scene;
-	if (argc != 1)
+	if (argc == 2)
 	{
 		readSceneFile(scene, argv[1]);
 	}

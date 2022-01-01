@@ -23,6 +23,7 @@ class   Utilities
         static bool     createMainBoundingBox(Scene& scene, AABB& newBoundingBox);
         static AABB     mergeBoundingBoxes(AABB boundingBox1, AABB boundingBox2);
         static void     toLower(std::string& str);
+        static double   scatteringPDF(Ray& ray, Ray& scatteredRay);
 };
 
 inline double	randomDouble(void)
