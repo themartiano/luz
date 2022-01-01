@@ -20,6 +20,7 @@ Scene::Scene(void)
 	this->_gammaCorrected = true;
 	this->_skyline = 0.5;
 	this->_renderSky = true;
+	this->_distanceBlueness = true;
 	this->_atmosphere = Atmosphere();
 	this->_backgroundColor = Color(0.0, 0.0, 0.0);
 
@@ -42,6 +43,7 @@ Scene::Scene(int width, int height)
 	this->_gammaCorrected = true;
 	this->_skyline = 0.5;
 	this->_renderSky = true;
+	this->_distanceBlueness = true;
 	this->_atmosphere = Atmosphere();
 	this->_backgroundColor = Color(0.0, 0.0, 0.0);
 
@@ -149,6 +151,16 @@ short	Scene::getRenderSky(void) const
 void	Scene::setRenderSky(short renderSky)
 {
 	this->_renderSky = renderSky;
+}
+
+bool	Scene::getDistanceBlueness(void) const
+{
+	return (this->_distanceBlueness);
+}
+
+void	Scene::setDistanceBlueness(bool distanceBlueness)
+{
+	this->_distanceBlueness = distanceBlueness;
 }
 
 // Sets the Atmosphere object

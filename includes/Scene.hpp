@@ -28,6 +28,8 @@ class	Scene
 		double	getSkyline(void) const;
 		short	getRenderSky(void) const;
 		void	setRenderSky(short renderSky);
+		bool	getDistanceBlueness(void) const;
+		void	setDistanceBlueness(bool distanceBlueness);
 		void	setAtmosphere(Atmosphere atmosphere);
 		Atmosphere	getAtmosphere(void) const;
 		Color	getBackgroundColor(void) const;
@@ -51,6 +53,7 @@ class	Scene
 		unsigned char*			_pixelArray;
 		double					_skyline;
 		short					_renderSky;
+		bool					_distanceBlueness;
 		Atmosphere				_atmosphere;
 		Color					_backgroundColor;
 		std::vector<Camera>		_cameras;

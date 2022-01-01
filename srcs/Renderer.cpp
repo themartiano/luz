@@ -220,7 +220,16 @@ static Color	calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
 
 		double pdfValue = lightPDF.value(ray.getDirection());
 
-		Color	blueness = Color(0.0, 0.0, 0.00001 * ray.hitRecord.t0);
+		Color	blueness;
+		if (scene.getDistanceBlueness())
+		{
+			blueness = Color(0.0, 0.0, 0.00001 * ray.hitRecord.t0);
+		}
+		else
+		{
+			blueness = Color(0.0, 0.0, 0.0);
+		}
+
 		return (blueness + emitted + color * Utilities::scatteringPDF(oldRay, ray) * calculateLightRaysColor(ray, scene, bounces + 1) / pdfValue);
 	}
 
