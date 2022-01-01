@@ -23,7 +23,7 @@ static void		renderInternal(Scene& scene, int x, int y);
 static Color	calculatePixelColor(Scene& scene, int x, int y);
 static bool		checkHits(Scene& scene, Ray& ray);
 static Color	calculateLightRaysColor(Ray& ray, Scene& scene, int bounces);
-static void		calculateLightRayBounceDirection(Ray& ray, Color& color);
+static void		calculateLightRayBounceDirection(Ray& ray, Color& color, const ONB& uvw);
 static Color	computeAtmosphereColor(Scene& scene, Ray& ray);
 static Color	calculateSkyInterpolation(Scene& scene, Ray& ray);
 
@@ -183,6 +183,7 @@ static Color	calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
 	if (checkHits(scene, ray))
 	{
 		Ray	oldRay = ray;
+		ONB	uvw(oldRay.hitRecord.normal);
 
 		//ray.setOrigin(ray.hitRecord.position + (ray.hitRecord.normal * T_MIN));
 		ray.setOrigin(ray.hitRecord.position);
@@ -194,7 +195,7 @@ static Color	calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
 		}
 		else
 		{
-			calculateLightRayBounceDirection(ray, color);
+			calculateLightRayBounceDirection(ray, color, uvw);
 		}
 
 		if ((ray.hitRecord.material.getMetallic() == 1.0 && Utilities::dot(ray.getDirection(), ray.hitRecord.normal) <= 0.0))
@@ -202,7 +203,7 @@ static Color	calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
 			return (emitted + color);
 		}
 
-		double	pdf = Utilities::dot(oldRay.hitRecord.normal, ray.getDirection()) / M_PI;
+		double	pdf = Utilities::dot(uvw.getW(), ray.getDirection()) / M_PI;
 		Color	blueness = Color(0.0, 0.0, 0.00001 * ray.hitRecord.t0);
 		return (blueness + emitted + color * Utilities::scatteringPDF(oldRay, ray) * calculateLightRaysColor(ray, scene, bounces + 1) / pdf);
 	}
@@ -267,7 +268,7 @@ static Color	calculateSkyInterpolation(Scene& scene, Ray& ray)
 }
 
 // Calculates the light rays bounce/reflection direction
-static void	calculateLightRayBounceDirection(Ray& ray, Color& color)
+static void	calculateLightRayBounceDirection(Ray& ray, Color& color, const ONB& uvw)
 {
 	if (ray.hitRecord.material.getMetallic() == 1.0)
 	{
@@ -324,7 +325,9 @@ static void	calculateLightRayBounceDirection(Ray& ray, Color& color)
 	Vector3	newTarget = ray.hitRecord.position + ray.hitRecord.normal + Utilities::randomPointInsideUnitSphere();
 	if (ray.hitRecord.material.getMetallic() == 0.0)
 	{
-		ray.setDirection(newTarget - ray.hitRecord.position);
+		Vector3	direction = uvw.local(Utilities::randomCosineDirection());
+		//ray.setDirection(newTarget - ray.hitRecord.position);
+		ray.setDirection(direction);
 		color = ray.hitRecord.material.getColor() * ray.hitRecord.material.getAlbedo();
 		return;
 	}

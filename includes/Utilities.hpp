@@ -24,6 +24,7 @@ class   Utilities
         static AABB     mergeBoundingBoxes(AABB boundingBox1, AABB boundingBox2);
         static void     toLower(std::string& str);
         static double   scatteringPDF(Ray& ray, Ray& scatteredRay);
+        static Vector3  randomCosineDirection(void);
 };
 
 inline double	randomDouble(void)

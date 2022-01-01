@@ -175,3 +175,17 @@ double	Utilities::scatteringPDF(Ray& ray, Ray& scatteredRay)
 
 	return (cosine < 0.0 ? 0.0 : cosine / M_PI);
 }
+
+// Generates uniform random directions
+Vector3	Utilities::randomCosineDirection(void)
+{
+	double rand1 = randomDouble();
+	double rand2 = randomDouble();
+	double z = sqrt(1.0 - rand2);
+
+	double phi = 2.0 * M_PI * rand1;
+	double x = cos(phi) * sqrt(rand2);
+	double y = sin(phi) * sqrt(rand2);
+
+	return (Vector3(x, y, z));
+}
