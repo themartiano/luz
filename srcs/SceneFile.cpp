@@ -158,6 +158,15 @@ static void	readSettingsSection(Scene& scene, std::ifstream& stream)
                 scene.setAtmosphere(atmosphere);
             }
         }
+        else if (line.rfind("distanceblueness=", 0) != std::string::npos)
+        {
+            int distanceBlueness;
+
+            if (sscanf(line.c_str(), "distanceblueness=%d\n", &distanceBlueness) != EOF)
+            {
+                scene.setDistanceBlueness(distanceBlueness);
+            }
+        }
 	} while (!stream.eof());
 }
 

@@ -4,6 +4,7 @@ samples=10
 maxlightbounces=50
 gamma=1
 sky=none
+distanceblueness=0
 #outputfilename=cornell2
 
 [scene]
