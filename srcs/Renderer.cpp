@@ -11,6 +11,7 @@
 #include "Forms/Sphere.hpp"
 #include "SkyTypes.hpp"
 #include "ONB.hpp"
+#include "CosinePDF.hpp"
 #include <cmath>
 #include <iostream>
 #include <thread>
@@ -23,7 +24,7 @@ static void		renderInternal(Scene& scene, int x, int y);
 static Color	calculatePixelColor(Scene& scene, int x, int y);
 static bool		checkHits(Scene& scene, Ray& ray);
 static Color	calculateLightRaysColor(Ray& ray, Scene& scene, int bounces);
-static void		calculateLightRayBounceDirection(Ray& ray, Color& color, const ONB& uvw);
+static void		calculateLightRayBounceDirection(Ray& ray, Color& color, const CosinePDF& p);
 static Color	computeAtmosphereColor(Scene& scene, Ray& ray);
 static Color	calculateSkyInterpolation(Scene& scene, Ray& ray);
 
@@ -183,7 +184,7 @@ static Color	calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
 	if (checkHits(scene, ray))
 	{
 		Ray	oldRay = ray;
-		ONB	uvw(oldRay.hitRecord.normal);
+		CosinePDF p(oldRay.hitRecord.normal);
 
 		//ray.setOrigin(ray.hitRecord.position + (ray.hitRecord.normal * T_MIN));
 		ray.setOrigin(ray.hitRecord.position);
@@ -195,7 +196,7 @@ static Color	calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
 		}
 		else
 		{
-			calculateLightRayBounceDirection(ray, color, uvw);
+			calculateLightRayBounceDirection(ray, color, p);
 		}
 
 		if ((ray.hitRecord.material.getMetallic() == 1.0 && Utilities::dot(ray.getDirection(), ray.hitRecord.normal) <= 0.0))
@@ -203,9 +204,10 @@ static Color	calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
 			return (emitted + color);
 		}
 
-		double	pdf = Utilities::dot(uvw.getW(), ray.getDirection()) / M_PI;
+		double pdfValue = p.value(ray.getDirection());
+
 		Color	blueness = Color(0.0, 0.0, 0.00001 * ray.hitRecord.t0);
-		return (blueness + emitted + color * Utilities::scatteringPDF(oldRay, ray) * calculateLightRaysColor(ray, scene, bounces + 1) / pdf);
+		return (blueness + emitted + color * Utilities::scatteringPDF(oldRay, ray) * calculateLightRaysColor(ray, scene, bounces + 1) / pdfValue);
 	}
 
 	if (skyType == SKY_ATMOSPHERE)
@@ -268,7 +270,7 @@ static Color	calculateSkyInterpolation(Scene& scene, Ray& ray)
 }
 
 // Calculates the light rays bounce/reflection direction
-static void	calculateLightRayBounceDirection(Ray& ray, Color& color, const ONB& uvw)
+static void	calculateLightRayBounceDirection(Ray& ray, Color& color, const CosinePDF& p)
 {
 	if (ray.hitRecord.material.getMetallic() == 1.0)
 	{
@@ -325,8 +327,7 @@ static void	calculateLightRayBounceDirection(Ray& ray, Color& color, const ONB& 
 	Vector3	newTarget = ray.hitRecord.position + ray.hitRecord.normal + Utilities::randomPointInsideUnitSphere();
 	if (ray.hitRecord.material.getMetallic() == 0.0)
 	{
-		Vector3	direction = uvw.local(Utilities::randomCosineDirection());
-		//ray.setDirection(newTarget - ray.hitRecord.position);
+		Vector3	direction = p.generate();
 		ray.setDirection(direction);
 		color = ray.hitRecord.material.getColor() * ray.hitRecord.material.getAlbedo();
 		return;
