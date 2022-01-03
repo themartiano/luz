@@ -92,8 +92,8 @@ Color	Renderer::_calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
 		{
 			blueness = Color(0.0, 0.0, 0.0);
 		}
-
-		return (blueness + emitted + color * Utilities::scatteringPDF(oldRay, ray) * _calculateLightRaysColor(ray, scene, bounces + 1) / mixturePDF.value(ray.getDirection()));
+		double pdfValue = mixturePDF.value(ray.getDirection());
+		return (blueness + emitted + color * Utilities::scatteringPDF(oldRay, ray) * _calculateLightRaysColor(ray, scene, bounces + 1) / pdfValue);
 	}
 
 	if (skyType == SKY_ATMOSPHERE)
