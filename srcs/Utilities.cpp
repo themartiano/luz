@@ -1,5 +1,6 @@
 #include "Utilities.hpp"
 #include "Forms/Sphere.hpp"
+#include "Defaults.hpp"
 #include <cmath>
 #include <algorithm>
 
@@ -173,7 +174,7 @@ double	Utilities::scatteringPDF(Ray& ray, Ray& scatteredRay)
 {
 	double cosine = Utilities::dot(ray.hitRecord.normal, Utilities::normalize(scatteredRay.getDirection()));
 
-	return ((cosine <= 0.0) ? 0.0 : cosine / M_PI);
+	return ((cosine <= 0.0) ? 0.0 : cosine / D_PI);
 }
 
 // Generates uniform random directions
@@ -183,7 +184,7 @@ Vector3	Utilities::randomCosineDirection(void)
 	double rand2 = randomDouble();
 	double z = sqrt(1.0 - rand2);
 
-	double phi = 2.0 * M_PI * rand1;
+	double phi = 2.0 * D_PI * rand1;
 	double x = cos(phi) * sqrt(rand2);
 	double y = sin(phi) * sqrt(rand2);
 

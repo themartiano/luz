@@ -1,6 +1,6 @@
 [settings]
 resolution=500,500
-samples=100
+samples=10
 maxlightbounces=50
 gamma=1
 sky=none
