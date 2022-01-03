@@ -10,6 +10,7 @@ Luz.exe
 .idea
 .DS_Store
 .vscode
-*.bmp
+render.bmp
+sequence/**
 objs
 Makefile.tmp
