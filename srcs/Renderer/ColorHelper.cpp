@@ -61,7 +61,7 @@ Color	Renderer::_calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
 	}
 	if (_checkHits(scene, ray))
 	{
-		Ray	oldRay = ray;
+		Ray	oldRay = ray; // make const
 
 		//ray.setOrigin(ray.hitRecord.position + (ray.hitRecord.normal * T_MIN));
 		ray.setOrigin(ray.hitRecord.position);

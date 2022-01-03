@@ -12,7 +12,6 @@ class   Renderer
         static bool	render(Scene& scene);
 
     private:
-        // Main functions
         static void		_threadRender(Scene& scene, int x, int y);
         static Color	_calculatePixelColor(Scene& scene, int x, int y);
         static bool		_checkHits(Scene& scene, Ray& ray);
@@ -21,7 +20,6 @@ class   Renderer
         static Color	_computeAtmosphereColor(Scene& scene, Ray& ray);
         static Color	_calculateSkyInterpolation(Scene& scene, Ray& ray);
         static void     _manageThreads(Scene& scene);
-        // Helper functions
 };
 
 #endif
