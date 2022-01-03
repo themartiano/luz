@@ -115,7 +115,7 @@ void    Atmosphere::setStarsBrightness(double starsBrightness)
 //Updates Sun Direction (Vector3) using Sun Angle (double)
 void    Atmosphere::updateSunDirectionVector(void)
 {
-    double angle = M_PI * this->_sunAngle;
+    double angle = D_PI * this->_sunAngle;
     this->_sunDirection = Vector3(0.0, std::cos(angle), -std::sin(angle));
 }
 
@@ -188,8 +188,8 @@ Color   Atmosphere::computeIncidentLight(Ray& ray, double t_max)
     double  transmittanceM = 0.0;
     double  mu = Utilities::dot(ray.getDirection(), this->_sunDirection);
     static double   g = 0.76;
-    static double   phaseRStatic = 3.0 / (16.0 * M_PI);
-    static double   phaseMStatic = 3.0 / (8.0 * M_PI);
+    static double   phaseRStatic = 3.0 / (16.0 * D_PI);
+    static double   phaseMStatic = 3.0 / (8.0 * D_PI);
     double  phaseR = phaseRStatic * (1.0 + mu * mu);
     double  phaseM = phaseMStatic * ((1.0 - g * g) * (1.0 + mu * mu) / ((2.0 + g * g) * pow(1.0 + g * g - 2.0 * g * mu, 1.5)));
 

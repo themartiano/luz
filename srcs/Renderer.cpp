@@ -144,7 +144,7 @@ static Color	calculatePixelColor(Scene& scene, int x, int y)
 	static Vector3	cameraPosition = scene.getActiveCamera().getPosition();
 	static Vector3	cameraLookDirection = scene.getActiveCamera().getDirection();
 
-    static double	viewportWidth = 2.0 * tan((((double)scene.getActiveCamera().getFOV() * M_PI) / 180.0) / 2.0);
+    static double	viewportWidth = 2.0 * tan((((double)scene.getActiveCamera().getFOV() * D_PI) / 180.0) / 2.0);
     static double	viewportHeight = (height / width) * viewportWidth;
 
 	static double	lensRadius = scene.getActiveCamera().getAperture() / 2.0;
@@ -217,9 +217,7 @@ static Color	calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
 			blueness = Color(0.0, 0.0, 0.0);
 		}
 
-		// For some reason the render is becoming dark from the top to the bottom. How far it goes depends on the amount of samples
-		double pdfValue = mixturePDF.value(ray.getDirection());
-		return (blueness + emitted + color * Utilities::scatteringPDF(oldRay, ray) * calculateLightRaysColor(ray, scene, bounces + 1) / pdfValue);
+		return (blueness + emitted + color * Utilities::scatteringPDF(oldRay, ray) * calculateLightRaysColor(ray, scene, bounces + 1) / mixturePDF.value(ray.getDirection()));
 	}
 
 	if (skyType == SKY_ATMOSPHERE)
