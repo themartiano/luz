@@ -130,7 +130,7 @@ double  Rectangle::pdfValue(const Vector3& origin, const Vector3& vec) const
     }
 
     double area = this->_height * this->_width;
-    double distanceSquared = ray.hitRecord.t0 * ray.hitRecord.t0 * Utilities::vectorLength(vec);
+    double distanceSquared = ray.hitRecord.t0 * ray.hitRecord.t0 * Utilities::vectorLengthSquared(vec);
     double cosine = fabs(Utilities::dot(vec, ray.hitRecord.normal) / Utilities::vectorLength(vec));
 
     return (distanceSquared / (cosine * area));
@@ -141,17 +141,24 @@ Vector3 Rectangle::random(const Vector3& origin) const
 {
     Vector3 randomPointInsideRectangle(0.0, 0.0, 0.0);
 
+    double x = this->_transform.getPosition().getX();
+    double y = this->_transform.getPosition().getY();
+    double z = this->_transform.getPosition().getZ();
+
+    double halfWidth = this->_width / 2.0;
+    double halfHeight = this->_height / 2.0;
+
     if (fabs(this->_transform.getOrientation().getY()) > 0.0)
     {
-        randomPointInsideRectangle = Vector3(randomDouble(this->_transform.getPosition().getX() - (this->_width / 2.0), this->_transform.getPosition().getX() + (this->_width / 2.0)), this->_transform.getPosition().getY(), randomDouble(this->_transform.getPosition().getZ() - (this->_height / 2.0), this->_transform.getPosition().getZ() + (this->_height / 2.0)));
+        randomPointInsideRectangle = Vector3(randomDouble(x - halfWidth, x + halfWidth), z, randomDouble(y - halfHeight, y + halfHeight));
     }
     else if (fabs(this->_transform.getOrientation().getZ()) > 0.0)
     {
-        randomPointInsideRectangle = Vector3(randomDouble(this->_transform.getPosition().getX() - (this->_width / 2.0), this->_transform.getPosition().getX() + (this->_width / 2.0)), this->_transform.getPosition().getY(), randomDouble(this->_transform.getPosition().getY() - (this->_height / 2.0), this->_transform.getPosition().getY() + (this->_height / 2.0)));
+        randomPointInsideRectangle = Vector3(randomDouble(z - halfWidth, z + halfWidth), x, randomDouble(y - halfHeight, y + halfHeight));
     }
     else if (fabs(this->_transform.getOrientation().getX()) > 0.0)
     {
-        randomPointInsideRectangle = Vector3(randomDouble(this->_transform.getPosition().getZ() - (this->_width / 2.0), this->_transform.getPosition().getZ() + (this->_width / 2.0)), this->_transform.getPosition().getY(), randomDouble(this->_transform.getPosition().getY() - (this->_height / 2.0), this->_transform.getPosition().getY() + (this->_height / 2.0)));
+        randomPointInsideRectangle = Vector3(randomDouble(x - halfWidth, x + halfWidth), y, randomDouble(z - halfHeight, z + halfHeight));
     }
 
     return (randomPointInsideRectangle - origin);

@@ -10,7 +10,7 @@ class   Utilities
     public:
         static double   dot(Vector3 vector1, Vector3 vector2);
         static Vector3  cross(Vector3 vector1, Vector3 vector2);
-        static double   vectorLengthNoSQRT(Vector3 vector);
+        static double   vectorLengthSquared(Vector3 vector);
         static double   vectorLength(Vector3 vector);
         static Vector3  normalize(Vector3 vector);
         static Vector3  randomPointInsideUnitSphere(void);

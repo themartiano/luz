@@ -18,8 +18,8 @@ Vector3	Utilities::Utilities::cross(Vector3 vector1, Vector3 vector2)
 		(vector1.getX() * vector2.getY()) - (vector1.getY() * vector2.getX())));
 }
 
-// Returns the Vector3's length (no square root applied)
-double	Utilities::Utilities::vectorLengthNoSQRT(Vector3 vector)
+// Returns the Vector3's length (squared)
+double	Utilities::Utilities::vectorLengthSquared(Vector3 vector)
 {
 	return ((vector.getX() * vector.getX()) + (vector.getY() * vector.getY()) + (vector.getZ() * vector.getZ()));
 }
@@ -27,7 +27,7 @@ double	Utilities::Utilities::vectorLengthNoSQRT(Vector3 vector)
 // Returns the Vector3's length
 double	Utilities::Utilities::vectorLength(Vector3 vector)
 {
-	return (sqrt(Utilities::vectorLengthNoSQRT(vector)));
+	return (sqrt(Utilities::vectorLengthSquared(vector)));
 }
 
 // Normalizes 'vector'
@@ -45,7 +45,7 @@ Vector3 Utilities::Utilities::randomPointInsideUnitSphere(void)
 	do
 	{
 		position = (Vector3(randomDouble(), randomDouble(), randomDouble()) * 2.0) - Vector3(1.0, 1.0, 1.0);
-	} while (Utilities::vectorLengthNoSQRT(position) >= 1.0);
+	} while (Utilities::vectorLengthSquared(position) >= 1.0);
 	return (position);
 }
 
@@ -173,7 +173,7 @@ double	Utilities::scatteringPDF(Ray& ray, Ray& scatteredRay)
 {
 	double cosine = Utilities::dot(ray.hitRecord.normal, Utilities::normalize(scatteredRay.getDirection()));
 
-	return (cosine < 0.0 ? 0.0 : cosine / M_PI);
+	return ((cosine <= 0.0) ? 0.0 : cosine / M_PI);
 }
 
 // Generates uniform random directions

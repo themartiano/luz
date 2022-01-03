@@ -9,7 +9,7 @@ MixturePDF::MixturePDF(std::shared_ptr<PDF> pdf0, std::shared_ptr<PDF> pdf1)
 
 double MixturePDF::value(const Vector3& direction) const
 {
-    return ((this->_pdfs[0]->value(direction) / 2.0) + (this->_pdfs[1]->value(direction) / 2.0));
+    return (0.5 * this->_pdfs[0]->value(direction) + 0.5 * this->_pdfs[1]->value(direction));
 }
 
 Vector3 MixturePDF::generate(void) const

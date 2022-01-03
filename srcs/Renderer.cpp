@@ -207,8 +207,6 @@ static Color	calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
 			return (emitted + color);
 		}
 
-		double pdfValue = mixturePDF.value(ray.getDirection());
-
 		Color	blueness;
 		if (scene.getDistanceBlueness())
 		{
@@ -219,6 +217,8 @@ static Color	calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
 			blueness = Color(0.0, 0.0, 0.0);
 		}
 
+		// For some reason the render is becoming dark from the top to the bottom. How far it goes depends on the amount of samples
+		double pdfValue = mixturePDF.value(ray.getDirection());
 		return (blueness + emitted + color * Utilities::scatteringPDF(oldRay, ray) * calculateLightRaysColor(ray, scene, bounces + 1) / pdfValue);
 	}
 
@@ -339,8 +339,7 @@ static void	calculateLightRayBounceDirection(Ray& ray, Color& color, const Mixtu
 	Vector3	newTarget = ray.hitRecord.position + ray.hitRecord.normal + Utilities::randomPointInsideUnitSphere();
 	if (ray.hitRecord.material.getMetallic() == 0.0)
 	{
-		Vector3	direction = pdf.generate();
-		ray.setDirection(direction);
+		ray.setDirection(pdf.generate());
 		color = ray.hitRecord.material.getColor() * ray.hitRecord.material.getAlbedo();
 		return;
 	}
