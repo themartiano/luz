@@ -1,6 +1,6 @@
 #include "Scene.hpp"
 #include "BMP.hpp"
-#include "Renderer.hpp"
+#include "Renderer/Renderer.hpp"
 #include "SkyTypes.hpp"
 #include "Defaults.hpp"
 #include "Atmosphere.hpp"
@@ -20,7 +20,7 @@ void    renderSequence(Scene& scene, Atmosphere baseAtmosphere, int fps, double 
         scene.setAtmosphere(baseAtmosphere);
         sunPosition -= sunChangePerFrame;
 
-        render(scene);
+        Renderer::render(scene);
         scene.setOutputFileName("sequenceFrame" + std::to_string(i));
         BMP::writeFile(scene, true, "sequence");
     }

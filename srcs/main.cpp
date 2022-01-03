@@ -1,7 +1,8 @@
 #include "Scene.hpp"
 #include "Exit.hpp"
 #include "BMP.hpp"
-#include "Renderer.hpp"
+#include "Renderer/Renderer.hpp"
+#include "Renderer/SequenceRenderer.hpp"
 #include "ANSIColors.hpp"
 #include "Forms/Sphere.hpp"
 #include "Forms/Rectangle.hpp"
@@ -15,7 +16,6 @@
 #include "SkyTypes.hpp"
 #include "Defaults.hpp"
 #include "OBJReader.hpp"
-#include "SequenceRenderer.hpp"
 #include "SceneFile.hpp"
 #include <fstream>
 #include <iostream>
@@ -104,7 +104,7 @@ int	main(int argc, char *argv[])
 	//renderSequence(scene, scene.getAtmosphere(), 5, 5.0);
 
 	scene.updateLights();
-	if (render(scene))
+	if (Renderer::render(scene))
 	{
 		// Writes BMP image file
 		BMP::writeFile(scene);
