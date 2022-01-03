@@ -1,4 +1,4 @@
-#include "CosinePDF.hpp"
+#include "PDFs/CosinePDF.hpp"
 #include "Utilities.hpp"
 #include "Defaults.hpp"
 #include <cmath>

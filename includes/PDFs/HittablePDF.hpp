@@ -1,7 +1,7 @@
 #ifndef HITTABLEPDF_HPP
 #define HITTABLEPDF_HPP
 
-#include "PDF.hpp"
+#include "PDFs/PDF.hpp"
 #include "Vector3.hpp"
 #include "Hittable.hpp"
 #include <memory>

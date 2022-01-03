@@ -1,7 +1,7 @@
 #ifndef MIXTUREPDF_HPP
 #define MIXTUREPDF_HPP
 
-#include "PDF.hpp"
+#include "PDFs/PDF.hpp"
 #include "Vector3.hpp"
 #include <memory>
 

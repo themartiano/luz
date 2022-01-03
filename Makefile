@@ -1,7 +1,6 @@
 #~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#
 #                                                                           #
 #   Makefile                                                                #
-#    by ejuliao- (Brhaka)                                                   #
 #                                                                           #
 #    Options: (make FLAG=1/0)                                               #
 #     DEBUG -> Compiles with "-g" flag                                      #
@@ -21,8 +20,8 @@ SRCS :=	./srcs/Camera.cpp ./srcs/ExitError.cpp ./srcs/main.cpp ./srcs/Scene.cpp 
 		./srcs/Color.cpp ./srcs/Material.cpp ./srcs/Transform.cpp ./srcs/SequenceRenderer.cpp \
 		./srcs/Forms/Sphere.cpp ./srcs/Clock.cpp ./srcs/BVHNode.cpp ./srcs/Forms/Rectangle.cpp \
 		./srcs/Forms/Plane.cpp ./srcs/Atmosphere.cpp ./srcs/Forms/Triangle.cpp ./srcs/OBJReader.cpp \
-		./srcs/Forms/Cube.cpp ./srcs/SceneFile.cpp ./srcs/ONB.cpp ./srcs/CosinePDF.cpp \
-		./srcs/HittablePDF.cpp ./srcs/Hittable.cpp ./srcs/MixturePDF.cpp
+		./srcs/Forms/Cube.cpp ./srcs/SceneFile.cpp ./srcs/ONB.cpp ./srcs/PDFs/CosinePDF.cpp \
+		./srcs/PDFs/HittablePDF.cpp ./srcs/Hittable.cpp ./srcs/PDFs/MixturePDF.cpp
 OBJS := $(patsubst $(SRCS_DIR)/%.cpp, $(OBJS_DIR)/%.o, $(SRCS))
 DPND := $(OBJS:.o=.d)
 INCLUDES := -Iincludes

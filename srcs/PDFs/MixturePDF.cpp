@@ -1,4 +1,4 @@
-#include "MixturePDF.hpp"
+#include "PDFs/MixturePDF.hpp"
 #include "Utilities.hpp"
 
 MixturePDF::MixturePDF(std::shared_ptr<PDF> pdf0, std::shared_ptr<PDF> pdf1)

@@ -1,7 +1,7 @@
 #ifndef COSINEPDF_HPP
 #define COSINEPDF_HPP
 
-#include "PDF.hpp"
+#include "PDFs/PDF.hpp"
 #include "Vector3.hpp"
 #include "ONB.hpp"
 

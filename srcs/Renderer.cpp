@@ -12,9 +12,9 @@
 #include "Forms/Rectangle.hpp"
 #include "SkyTypes.hpp"
 #include "ONB.hpp"
-#include "CosinePDF.hpp"
-#include "HittablePDF.hpp"
-#include "MixturePDF.hpp"
+#include "PDFs/CosinePDF.hpp"
+#include "PDFs/HittablePDF.hpp"
+#include "PDFs/MixturePDF.hpp"
 #include <cmath>
 #include <iostream>
 #include <thread>

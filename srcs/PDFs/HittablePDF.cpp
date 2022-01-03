@@ -1,4 +1,4 @@
-#include "HittablePDF.hpp"
+#include "PDFs/HittablePDF.hpp"
 #include "Utilities.hpp"
 
 HittablePDF::HittablePDF(std::shared_ptr<Hittable> hittable, const Vector3& origin)
