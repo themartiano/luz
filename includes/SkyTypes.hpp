@@ -1,8 +1,11 @@
 #ifndef SKYTYPES_HPP
 #define SKYTYPES_HPP
 
-const short SKY_NONE = 0x00;
-const short SKY_LINEAR = 0x01;
-const short SKY_ATMOSPHERE = 0x02;
+enum    SkyTypes
+{
+    SKY_NONE,
+    SKY_LINEAR,
+    SKY_ATMOSPHERE
+};
 
 #endif

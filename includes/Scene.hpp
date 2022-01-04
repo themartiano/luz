@@ -4,6 +4,7 @@
 #include "Camera.hpp"
 #include "Hittable.hpp"
 #include "Atmosphere.hpp"
+#include "SkyTypes.hpp"
 #include <vector>
 #include <memory>
 
@@ -26,8 +27,8 @@ class	Scene
 		bool	getGammaCorrected(void) const;
 		void	setGammaCorrected(bool gamma);
 		double	getSkyline(void) const;
-		short	getRenderSky(void) const;
-		void	setRenderSky(short renderSky);
+		SkyTypes	getRenderSky(void) const;
+		void	setRenderSky(SkyTypes renderSky);
 		bool	getDistanceBlueness(void) const;
 		void	setDistanceBlueness(bool distanceBlueness);
 		void	setAtmosphere(Atmosphere atmosphere);
@@ -54,7 +55,7 @@ class	Scene
 		std::string				_outputFileName;
 		unsigned char*			_pixelArray;
 		double					_skyline;
-		short					_renderSky;
+		SkyTypes				_renderSky;
 		bool					_distanceBlueness;
 		Atmosphere				_atmosphere;
 		Color					_backgroundColor;
