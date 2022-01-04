@@ -11,6 +11,8 @@ bool	Renderer::render(Scene& scene)
 		return (false);
 	}
 
+	scene.updateLights();
+
 	std::cout << CLR_YELLOW << "Rendering..." << CLR_RESET << std::endl;
 
 	Clock	clock;

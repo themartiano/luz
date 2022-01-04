@@ -28,7 +28,7 @@ OBJS := $(patsubst $(SRCS_DIR)/%.cpp, $(OBJS_DIR)/%.o, $(SRCS))
 DPND := $(OBJS:.o=.d)
 INCLUDES := -Iincludes
 GENERAL_FLAGS := -std=c++17 -pthread
-WWW_FLAGS := -Wall -Wextra -Werror
+WWW_FLAGS := -Wall -Wextra -Werror -pedantic-errors
 OPT_FLAGS := -O3
 INC_FLAGS := -MD
 TMP_FILE := Makefile.tmp
