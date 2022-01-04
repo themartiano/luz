@@ -13,8 +13,8 @@ Color	Renderer::_calculatePixelColor(Scene& scene, int x, int y)
 	static double width = double(scene.getXResolution());
 	static double height = double(scene.getYResolution());
 
-	double xU = double(x + randomDouble()) / (width - 1);
-	double yV = double(y + randomDouble()) / (height - 1);
+	double xU = double(x + Utilities::randomDouble()) / (width - 1);
+	double yV = double(y + Utilities::randomDouble()) / (height - 1);
 
 	static Vector3	cameraPosition = scene.getActiveCamera().getPosition();
 	static Vector3	cameraLookDirection = scene.getActiveCamera().getDirection();

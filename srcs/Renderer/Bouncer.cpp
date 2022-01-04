@@ -43,7 +43,7 @@ void	Renderer::_calculateLightRayBounceDirection(Ray& ray, Color& color, const M
 			reflectionProbability = 1.0;
 		}
 
-		if (randomDouble() < reflectionProbability)
+		if (Utilities::randomDouble() < reflectionProbability)
 		{
 			ray.setOrigin(ray.hitRecord.position);
 			ray.setDirection(Utilities::reflect(ray.getDirection(), ray.hitRecord.normal));
@@ -66,7 +66,7 @@ void	Renderer::_calculateLightRayBounceDirection(Ray& ray, Color& color, const M
 		return;
 	}
 
-	if (randomDouble() < ray.hitRecord.material.getMetallic())
+	if (Utilities::randomDouble() < ray.hitRecord.material.getMetallic())
 	{
 		ray.setDirection(Utilities::reflect(ray.getDirection(), ray.hitRecord.normal) + (Utilities::randomPointInsideUnitSphere() * ray.hitRecord.material.getReflectionFuzziness()));
 	}
