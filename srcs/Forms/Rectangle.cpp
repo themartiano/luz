@@ -148,18 +148,20 @@ Vector3 Rectangle::random(const Vector3& origin) const
     double halfWidth = this->_width / 2.0;
     double halfHeight = this->_height / 2.0;
 
-    if (fabs(this->_transform.getOrientation().getY()) > 0.0)
-    {
-        randomPointInsideRectangle = Vector3(randomDouble(x - halfWidth, x + halfWidth), z, randomDouble(y - halfHeight, y + halfHeight));
-    }
-    else if (fabs(this->_transform.getOrientation().getZ()) > 0.0)
-    {
-        randomPointInsideRectangle = Vector3(randomDouble(z - halfWidth, z + halfWidth), x, randomDouble(y - halfHeight, y + halfHeight));
-    }
-    else if (fabs(this->_transform.getOrientation().getX()) > 0.0)
-    {
-        randomPointInsideRectangle = Vector3(randomDouble(x - halfWidth, x + halfWidth), y, randomDouble(z - halfHeight, z + halfHeight));
-    }
+    randomPointInsideRectangle = Vector3(randomDouble(x - halfWidth, x + halfWidth), y, randomDouble(z - halfHeight, z + halfHeight));
 
-    return (randomPointInsideRectangle - origin);
+    // if (fabs(this->_transform.getOrientation().getY()) > 0.0)
+    // {
+    //     randomPointInsideRectangle = Vector3(randomDouble(x - halfWidth, x + halfWidth), y, randomDouble(z - halfHeight, z + halfHeight));
+    // }
+    // else if (fabs(this->_transform.getOrientation().getZ()) > 0.0)
+    // {
+    //     randomPointInsideRectangle = Vector3(randomDouble(x - halfWidth, x + halfWidth), z, randomDouble(y - halfHeight, y + halfHeight));
+    // }
+    // else if (fabs(this->_transform.getOrientation().getX()) > 0.0)
+    // {
+    //     randomPointInsideRectangle = Vector3(randomDouble(z - halfWidth, z + halfWidth), x, randomDouble(y - halfHeight, y + halfHeight));
+    // }
+
+    return (Utilities::normalize(randomPointInsideRectangle - origin));
 }

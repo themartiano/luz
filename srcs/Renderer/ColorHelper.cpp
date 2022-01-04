@@ -92,7 +92,13 @@ Color	Renderer::_calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
 		{
 			blueness = Color(0.0, 0.0, 0.0);
 		}
+
 		double pdfValue = mixturePDF.value(ray.getDirection());
+		if (pdfValue == 0.0)
+		{
+			pdfValue = 1.0;
+		}
+
 		return (blueness + emitted + color * Utilities::scatteringPDF(oldRay, ray) * _calculateLightRaysColor(ray, scene, bounces + 1) / pdfValue);
 	}
 
