@@ -3,7 +3,6 @@
 
 #include "Vector3.hpp"
 #include "Ray.hpp"
-#include "Forms/Sphere.hpp"
 
 class   Atmosphere
 {
