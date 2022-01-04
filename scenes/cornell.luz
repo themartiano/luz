@@ -1,11 +1,11 @@
 [settings]
 resolution=500,500
-samples=1
+samples=10
 maxlightbounces=50
 gamma=1
 sky=none
 distanceblueness=0
-outputfilename=cornellTest
+#outputfilename=cornellBox
 
 [scene]
 camera=(0,0,390),(0,0,1),65,0,200

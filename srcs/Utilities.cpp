@@ -170,7 +170,7 @@ void	Utilities::toLower(std::string& str)
 }
 
 // Calculates the PDF (Probability Density Function) for scattering
-double	Utilities::scatteringPDF(Ray& ray, Ray& scatteredRay)
+double	Utilities::scatteringPDF(const Ray& ray, const Ray& scatteredRay)
 {
 	double cosine = Utilities::dot(ray.hitRecord.normal, Utilities::normalize(scatteredRay.getDirection()));
 

@@ -53,17 +53,18 @@ Color	Renderer::_calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
 	static short	skyType = scene.getRenderSky();
 	static Color	staticBackgroundColor = scene.getBackgroundColor();
 	static auto		lights = scene.getLights();
+	static bool		distanceBlueness = scene.getDistanceBlueness();
 
 	Color color, emitted = Color(0.0, 0.0, 0.0);
 	if (bounces > maxLightBounces)
 	{
 		return (color);
 	}
+
 	if (_checkHits(scene, ray))
 	{
-		Ray	oldRay = ray; // make const
+		const Ray oldRay = ray;
 
-		//ray.setOrigin(ray.hitRecord.position + (ray.hitRecord.normal * T_MIN));
 		ray.setOrigin(ray.hitRecord.position);
 
 		if (ray.hitRecord.material.getIsEmissive() == true)
@@ -78,13 +79,13 @@ Color	Renderer::_calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
 
 		_calculateLightRayBounceDirection(ray, color, mixturePDF);
 
-		if ((ray.hitRecord.material.getMetallic() == 1.0 && Utilities::dot(ray.getDirection(), ray.hitRecord.normal) <= 0.0))
+		if (ray.hitRecord.material.getMetallic() == 1.0 && Utilities::dot(ray.getDirection(), ray.hitRecord.normal) <= 0.0)
 		{
 			return (emitted + color);
 		}
 
 		Color	blueness;
-		if (scene.getDistanceBlueness())
+		if (distanceBlueness)
 		{
 			blueness = Color(0.0, 0.0, 0.00001 * ray.hitRecord.t0);
 		}
