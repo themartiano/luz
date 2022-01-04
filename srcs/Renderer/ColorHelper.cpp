@@ -50,7 +50,7 @@ Color	Renderer::_calculatePixelColor(Scene& scene, int x, int y)
 Color	Renderer::_calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
 {
 	static int		maxLightBounces = scene.getMaxLightBounces();
-	static short	skyType = scene.getRenderSky();
+	static auto		skyType = scene.getRenderSky();
 	static Color	staticBackgroundColor = scene.getBackgroundColor();
 	static auto		lights = scene.getLights();
 	static bool		distanceBlueness = scene.getDistanceBlueness();

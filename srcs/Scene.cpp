@@ -19,7 +19,7 @@ Scene::Scene(void)
 	this->_maxLightBounces = D_MAX_LIGHT_BOUNCES;
 	this->_gammaCorrected = true;
 	this->_skyline = 0.5;
-	this->_renderSky = true;
+	this->_renderSky = SKY_ATMOSPHERE;
 	this->_distanceBlueness = true;
 	this->_atmosphere = Atmosphere();
 	this->_backgroundColor = Color(0.0, 0.0, 0.0);
@@ -42,7 +42,7 @@ Scene::Scene(int width, int height)
 	this->_maxLightBounces = D_MAX_LIGHT_BOUNCES;
 	this->_gammaCorrected = true;
 	this->_skyline = 0.5;
-	this->_renderSky = true;
+	this->_renderSky = SKY_ATMOSPHERE;
 	this->_distanceBlueness = true;
 	this->_atmosphere = Atmosphere();
 	this->_backgroundColor = Color(0.0, 0.0, 0.0);
@@ -142,13 +142,13 @@ double	Scene::getSkyline(void) const
 }
 
 // Returns the RenderSky option
-short	Scene::getRenderSky(void) const
+SkyTypes	Scene::getRenderSky(void) const
 {
 	return (this->_renderSky);
 }
 
 // Sets the RenderSky option
-void	Scene::setRenderSky(short renderSky)
+void	Scene::setRenderSky(SkyTypes renderSky)
 {
 	this->_renderSky = renderSky;
 }
