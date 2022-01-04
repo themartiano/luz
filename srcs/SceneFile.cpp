@@ -107,18 +107,27 @@ static void	readSettingsSection(Scene& scene, std::ifstream& stream)
         }
         else if (line.rfind("outputfilename=", 0) != std::string::npos)
         {
-            char outputFileName[256];
+            char* outputFileName = nullptr;
 
-            if (sscanf(line.c_str(), "outputfilename=%s\n", outputFileName) != EOF)
+            if (sscanf(line.c_str(), "outputfilename=%ms\n", &outputFileName) != EOF)
             {
-                scene.setOutputFileName(outputFileName);
+                std::string strOutputFileName(outputFileName);
+
+                if (!Utilities::stringEndsWith(strOutputFileName, ".bmp"))
+                {
+                    strOutputFileName += ".bmp";
+                }
+
+                scene.setOutputFileName(strOutputFileName);
             }
+
+            delete outputFileName;
         }
         else if (line.rfind("sky=", 0) != std::string::npos)
         {
-            char sky[32];
+            char* sky = nullptr;
 
-            if (sscanf(line.c_str(), "sky=%s\n", sky) != EOF)
+            if (sscanf(line.c_str(), "sky=%ms\n", &sky) != EOF)
             {
                 std::string skyStr = sky;
                 Utilities::toLower(skyStr);
@@ -136,6 +145,8 @@ static void	readSettingsSection(Scene& scene, std::ifstream& stream)
                     scene.setRenderSky(SKY_NONE);
                 }
             }
+
+            delete sky;
         }
         else if (scene.getRenderSky() == SKY_ATMOSPHERE && line.rfind("atmosphere=", 0) != std::string::npos)
         {
@@ -322,12 +333,14 @@ static void	readObjectsSubSection(Scene& scene, std::ifstream& stream)
         }
         else if (line.rfind("obj=", 0) != std::string::npos)
         {
-            char objFileName[256];
+            char* objFileName = nullptr;
 
-            if (sscanf(line.c_str(), "obj=%s\n", objFileName) != EOF)
+            if (sscanf(line.c_str(), "obj=%ms\n", &objFileName) != EOF)
             {
                 readObj(scene, objFileName);
             }
+
+            delete objFileName;
         }
 	} while (!stream.eof());
 }
