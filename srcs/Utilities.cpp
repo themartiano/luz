@@ -190,3 +190,17 @@ Vector3	Utilities::randomCosineDirection(void)
 
 	return (Vector3(x, y, z));
 }
+
+// Returns true if 'str' ends with 'ending'. Otherwise, returns false
+bool	Utilities::stringEndsWith(std::string str, std::string ending)
+{
+	if (str.size() >= ending.size())
+	{
+		if (str.compare(str.size() - ending.size(), ending.size(), ending) == 0)
+		{
+			return (true);
+		}
+	}
+
+	return (false);
+}

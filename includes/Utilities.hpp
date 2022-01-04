@@ -25,6 +25,7 @@ class   Utilities
         static void     toLower(std::string& str);
         static double   scatteringPDF(Ray& ray, Ray& scatteredRay);
         static Vector3  randomCosineDirection(void);
+        static bool     stringEndsWith(std::string str, std::string ending);
 };
 
 inline double	randomDouble(void)
