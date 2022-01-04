@@ -1,10 +1,10 @@
 #ifndef SPHERE_HPP
 #define SPHERE_HPP
 
-#include "Transform.hpp"
 #include "Material.hpp"
 #include "AABB.hpp"
 #include "Hittable.hpp"
+#include "Vector3.hpp"
 
 class	Sphere : public Hittable
 {
