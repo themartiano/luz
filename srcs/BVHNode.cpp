@@ -21,7 +21,7 @@ BVHNode::BVHNode(std::vector<std::shared_ptr<Hittable>> hittables) : BVHNode(hit
 // Constructs the BVHNode
 BVHNode::BVHNode(std::vector<std::shared_ptr<Hittable>> hittables, size_t start, size_t end)
 {
-    int axis = randomInt(0, 2);
+    int axis = Utilities::randomInt(0, 2);
     auto comparator = (axis == 0) ? boxXCompare : (axis == 1) ? boxYCompare : boxZCompare;
 
     int hittableCount = end - start;
