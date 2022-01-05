@@ -60,44 +60,70 @@ bool    Triangle::hit(Ray& ray, double t_max) const
 {
     Vector3 v1 = this->_vertex1 - this->_vertex0;
     Vector3 v2 = this->_vertex2 - this->_vertex0;
-    Vector3 p = Utilities::cross(ray.getDirection(), v2);
-    double  det = Utilities::dot(v1, p);
-
-    // If det is near 0, they're parallel. If it's negative, the triangle is backfacing the camera.
-    if (fabs(det) < T_MIN)
+	Vector3 n = Utilities::cross(v1, v2);
+	Vector3 tVec = ray.getOrigin() - this->_vertex0;
+	double t = Utilities::dot(n, tVec) / Utilities::dot(n, ray.getDirection());
+	if (t > t_max || t < T_MIN)
     {
         return (false);
     }
-
-    double invDet = 1.0 / det;
-
-    Vector3 tVec = ray.getOrigin() - this->_vertex0;
-    double u = Utilities::dot(tVec, p) * invDet;
-    if (u < 0.0 || u > 1.0)
-    {
-        return (false);
-    }
-
-    Vector3 q = Utilities::cross(tVec, v1);
-    double v = Utilities::dot(ray.getDirection(), q) * invDet; // double v = Utilities::dot(ray.getDirection() * -1.0, q) * invDet; //////////// alguns triângulos ficam invertidos pois a direção do raio em relação à orientação do triângulo result em um valor negativo no / do DOT product. AKA normal invertido, etc. https://stackoverflow.com/a/40619957/11578778
-    if (v < 0.0 || u + v > 1.0)
-    {
-        return (false);
-    }
-
-    double t = Utilities::dot(v2, q) * invDet;
-    if (t > t_max || t < T_MIN)
-    {
-        return (false);
-    }
+	Vector3 p = ray.pointAtRay(t);
+	Vector3 v = p - this->_vertex0;
+	double a = Utilities::dot(v1, v) / Utilities::dot(v1, v1);
+	double b = Utilities::dot(v2, v) / Utilities::dot(v2, v2);
+	if (a < 0 || b < 0 || a + b > 1)
+		return (false);
 
     ray.hitRecord.t0 = t;
-    ray.hitRecord.normal = Utilities::cross(v1, v2);
+    ray.hitRecord.normal = n;
     ray.hitRecord.material = this->_material;
-    ray.hitRecord.position = ray.pointAtRay(ray.hitRecord.t0);
+    ray.hitRecord.position = p;
 
     return (true);
 }
+
+// bool    Triangle::hit(Ray& ray, double t_max) const
+// {
+//     Vector3 v1 = this->_vertex1 - this->_vertex0;
+//     Vector3 v2 = this->_vertex2 - this->_vertex0;
+//     Vector3 p = Utilities::cross(ray.getDirection(), v2);
+//     double  det = Utilities::dot(v1, p);
+
+//     // If det is near 0, they're parallel. If it's negative, the triangle is backfacing the camera.
+//     if (fabs(det) < T_MIN)
+//     {
+//         return (false);
+//     }
+
+//     double invDet = 1.0 / det;
+
+//     Vector3 tVec = ray.getOrigin() - this->_vertex0;
+//     double u = Utilities::dot(tVec, p) * invDet;
+//     if (u < 0.0 || u > 1.0)
+//     {
+//         return (false);
+//     }
+
+//     Vector3 q = Utilities::cross(tVec, v1);
+//     double v = Utilities::dot(ray.getDirection(), q) * invDet; // double v = Utilities::dot(ray.getDirection() * -1.0, q) * invDet; //////////// alguns triângulos ficam invertidos pois a direção do raio em relação à orientação do triângulo result em um valor negativo no / do DOT product. AKA normal invertido, etc. https://stackoverflow.com/a/40619957/11578778
+//     if (v < 0.0 || u + v > 1.0)
+//     {
+//         return (false);
+//     }
+
+//     double t = Utilities::dot(v2, q) * invDet;
+//     if (t > t_max || t < T_MIN)
+//     {
+//         return (false);
+//     }
+
+//     ray.hitRecord.t0 = t;
+//     ray.hitRecord.normal = Utilities::cross(v1, v2);
+//     ray.hitRecord.material = this->_material;
+//     ray.hitRecord.position = ray.pointAtRay(ray.hitRecord.t0);
+
+//     return (true);
+// }
 
 //bool    Triangle::hit(Ray& ray, double t_max) const
 // {
