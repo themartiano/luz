@@ -19,12 +19,12 @@ class   Triangle : public Hittable
         void            setMaterial(Material material);
         virtual bool    hit(Ray& ray, double t_max) const override;
         virtual bool    createBoundingBox(AABB& outputBoundingBox) const override;
-
-    private:
         Vector3     _vertex0;
         Vector3     _vertex1;
         Vector3     _vertex2;
         Material    _material;
+
+    private:
 };
 
 #endif

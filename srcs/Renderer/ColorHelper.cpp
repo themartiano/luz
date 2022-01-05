@@ -32,7 +32,7 @@ Color	Renderer::_calculatePixelColor(Scene& scene, int x, int y)
 
 	static Vector3	horizontal = u * viewportWidth * focusDistance;
 	static Vector3	vertical = v * viewportHeight * focusDistance;
-	static Vector3	lowerLeftCorner = cameraPosition - (horizontal / 2.0) - (vertical / 2.0) - (w * focusDistance);
+	static Vector3	lowerLeftCorner = cameraPosition - (horizontal / 2.0) - (vertical / 2.0) + (w * focusDistance);
 
 	Vector3	offset(0.0, 0.0, 0.0);
 	if (lensRadius > 0.0)
@@ -53,6 +53,7 @@ Color	Renderer::_calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
 	static auto		skyType = scene.getRenderSky();
 	static Color	staticBackgroundColor = scene.getBackgroundColor();
 	static auto		lights = scene.getLights();
+	static auto		lightCount = scene.getLights().size();
 	static bool		distanceBlueness = scene.getDistanceBlueness();
 
 	Color color, emitted = Color(0.0, 0.0, 0.0);
@@ -73,11 +74,30 @@ Color	Renderer::_calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
 			return (emitted);
 		}
 
-		std::shared_ptr<HittablePDF> lightPDF = std::make_shared<HittablePDF>(lights, oldRay.hitRecord.position);
-		std::shared_ptr<CosinePDF> cosinePDF = std::make_shared<CosinePDF>(oldRay.hitRecord.normal);
-		MixturePDF mixturePDF(lightPDF, cosinePDF);
+		double pdfValue = 1.0;
+		if (lightCount > 0)
+		{
+			std::shared_ptr<HittablePDF> lightPDF = std::make_shared<HittablePDF>(lights, oldRay.hitRecord.position);
+			std::shared_ptr<CosinePDF> cosinePDF = std::make_shared<CosinePDF>(oldRay.hitRecord.normal);
+			MixturePDF mixturePDF(lightPDF, cosinePDF);
 
-		_calculateLightRayBounceDirection(ray, color, mixturePDF);
+			_calculateLightRayBounceDirection(ray, color, mixturePDF.generate());
+
+			pdfValue = mixturePDF.value(ray.getDirection());
+		}
+		else
+		{
+			CosinePDF cosinePDF(oldRay.hitRecord.normal);
+
+			_calculateLightRayBounceDirection(ray, color, cosinePDF.generate());
+
+			pdfValue = cosinePDF.value(ray.getDirection());
+		}
+
+		if (pdfValue == 0.0)
+		{
+			pdfValue = 1.0;
+		}
 
 		if (ray.hitRecord.material.getMetallic() == 1.0 && Utilities::dot(ray.getDirection(), ray.hitRecord.normal) <= 0.0)
 		{
@@ -92,12 +112,6 @@ Color	Renderer::_calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
 		else
 		{
 			blueness = Color(0.0, 0.0, 0.0);
-		}
-
-		double pdfValue = mixturePDF.value(ray.getDirection());
-		if (pdfValue == 0.0)
-		{
-			pdfValue = 1.0;
 		}
 
 		return (blueness + emitted + color * Utilities::scatteringPDF(oldRay, ray) * _calculateLightRaysColor(ray, scene, bounces + 1) / pdfValue);

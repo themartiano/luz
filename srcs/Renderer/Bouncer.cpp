@@ -4,7 +4,7 @@
 #include "PDFs/MixturePDF.hpp"
 
 // Calculates the light rays bounce/reflection direction
-void	Renderer::_calculateLightRayBounceDirection(Ray& ray, Color& color, const MixturePDF& pdf)
+void	Renderer::_calculateLightRayBounceDirection(Ray& ray, Color& color, const Vector3& pdfGen)
 {
 	if (ray.hitRecord.material.getMetallic() == 1.0)
 	{
@@ -61,7 +61,7 @@ void	Renderer::_calculateLightRayBounceDirection(Ray& ray, Color& color, const M
 	Vector3	newTarget = ray.hitRecord.position + ray.hitRecord.normal + Utilities::randomPointInsideUnitSphere();
 	if (ray.hitRecord.material.getMetallic() == 0.0)
 	{
-		ray.setDirection(pdf.generate());
+		ray.setDirection(pdfGen);
 		color = ray.hitRecord.material.getColor() * ray.hitRecord.material.getAlbedo();
 		return;
 	}
