@@ -16,7 +16,7 @@ class   Renderer
         static Color	_calculatePixelColor(Scene& scene, int x, int y);
         static bool		_checkHits(Scene& scene, Ray& ray);
         static Color	_calculateLightRaysColor(Ray& ray, Scene& scene, int bounces);
-        static void		_calculateLightRayBounceDirection(Ray& ray, Color& color, const MixturePDF& pdf);
+        static void		_calculateLightRayBounceDirection(Ray& ray, Color& color, const Vector3& pdfGen);
         static Color	_computeAtmosphereColor(Scene& scene, Ray& ray);
         static Color	_calculateSkyInterpolation(Scene& scene, Ray& ray);
         static void     _manageThreads(Scene& scene);

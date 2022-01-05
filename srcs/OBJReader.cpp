@@ -79,7 +79,13 @@ void    readObj(Scene& scene, std::string fileName)
 
 	for (std::size_t i = 0; i < triangles.size(); i++)
 	{
+		if (i > 0)
+			break ;
 		scene.addHittable(triangles[i]);
+		auto triangle = std::dynamic_pointer_cast<Triangle>(triangles[i]);
+
+		std::cout << triangle->_vertex0 << " ~~ " << triangle->_vertex1 << " ~~ " << triangle->_vertex2 << std::endl;
+
 	}
 	// scene.addHittable(std::make_shared<BVHNode>(triangles));
 }

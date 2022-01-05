@@ -58,11 +58,19 @@ void    Triangle::setMaterial(Material material)
 // Calculates if the Triangle is hit by 'ray', is closer than 't_max' and farther than T_MIN
 bool    Triangle::hit(Ray& ray, double t_max) const
 {
+	static bool temp = false;
+
+	if (!temp)
+	{
+		std::cout << this->_vertex0 << " ~~ " << this->_vertex1 << " ~~ " << this->_vertex2 << std::endl;
+		temp = true;
+	}
+
     Vector3 v1 = this->_vertex1 - this->_vertex0;
     Vector3 v2 = this->_vertex2 - this->_vertex0;
 	Vector3 n = Utilities::cross(v1, v2);
 	Vector3 tVec = ray.getOrigin() - this->_vertex0;
-	double t = Utilities::dot(n, tVec) / Utilities::dot(n, ray.getDirection());
+	double t = (Utilities::dot(n, tVec) / Utilities::dot(n, ray.getDirection())) * -1.0;
 	if (t > t_max || t < T_MIN)
     {
         return (false);
@@ -75,6 +83,8 @@ bool    Triangle::hit(Ray& ray, double t_max) const
 		return (false);
 
     ray.hitRecord.t0 = t;
+	if (Utilities::dot(n, ray.getDirection()) > 0)
+		n = n * (-1);
     ray.hitRecord.normal = n;
     ray.hitRecord.material = this->_material;
     ray.hitRecord.position = p;
