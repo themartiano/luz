@@ -35,7 +35,7 @@ double	Utilities::vectorLength(Vector3 vector)
 // Normalizes 'vector'
 Vector3	Utilities::normalize(Vector3 vector)
 {
-	vector /= Utilities::vectorLength(vector);
+	vector /= Utilities::vectorLength(vector); // vectorLength or vectorLengthSquared?
 	return (vector);
 }
 

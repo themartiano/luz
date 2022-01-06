@@ -60,24 +60,26 @@ bool    Triangle::hit(Ray& ray, double t_max) const
 {
     Vector3 v1 = this->_vertex1 - this->_vertex0;
     Vector3 v2 = this->_vertex2 - this->_vertex0;
-	Vector3 n = Utilities::cross(v1, v2);
-	Vector3 tVec = ray.getOrigin() - this->_vertex0;
-	double t = (Utilities::dot(n, tVec) / Utilities::dot(n, ray.getDirection())) * -1.0;
+	Vector3 n = Utilities::normalize(Utilities::cross(v2, v1));
+	Vector3 w = ray.getOrigin() - this->_vertex0;
+	double t = (Utilities::dot(n, w) / Utilities::dot(n, ray.getDirection())) * -1.0;
 	if (t > t_max || t < T_MIN)
     {
-        return (false);
+       return (false);
     }
 
 	Vector3 p = ray.pointAtRay(t);
-	Vector3 v = p - this->_vertex0;
-	double a = Utilities::dot(v1, v) / Utilities::dot(v1, v1);
-	double b = Utilities::dot(v2, v) / Utilities::dot(v2, v2);
+	//Vector3 v = p - this->_vertex0;
+	double a = Utilities::dot(v1, p) / Utilities::vectorLengthSquared(v1);
+	double b = Utilities::dot(v2, p) / Utilities::vectorLengthSquared(v2);
 	if (a < 0 || b < 0 || a + b > 1)
 		return (false);
 
     ray.hitRecord.t0 = t;
 	if (Utilities::dot(n, ray.getDirection()) > 0)
-		n = n * (-1);
+    {
+		n = n * -1.0;
+    }
     ray.hitRecord.normal = n;
     ray.hitRecord.material = this->_material;
     ray.hitRecord.position = p;
