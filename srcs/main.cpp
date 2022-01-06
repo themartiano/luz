@@ -8,6 +8,7 @@
 #include "Forms/Triangle.hpp"
 #include "Forms/Plane.hpp"
 #include "Forms/Sphere.hpp"
+#include "Utilities.hpp"
 
 // Main function
 int	main(int argc, char *argv[])
@@ -40,10 +41,17 @@ int	main(int argc, char *argv[])
 		// readObj(scene, "objects/cube.obj");
 
 		scene.addHittable(std::make_shared<Triangle>(
+			Vector3(1, 0, 0),
+			Vector3(0, 1, 0),
+			Vector3(0, 0, 0),
+			Material(Color(0.6, 1.0, 0.6), 1.0, 0.0, 0.5, 0.0, false, false, 0.0)
+		));
+
+		scene.addHittable(std::make_shared<Triangle>(
 			Vector3(0, 0, 0),
 			Vector3(0, 1, 0),
 			Vector3(1, 0, 0),
-			Material(Color(0.6, 1.0, 0.6), 1.0, 0.0, 0.5, 0.0, false, false, 0.0)
+			Material(Color(0.6, 0.6, 1.0), 1.0, 0.0, 0.5, 0.0, false, false, 0.0)
 		));
 
 		// scene.addHittable(std::make_shared<Sphere>(

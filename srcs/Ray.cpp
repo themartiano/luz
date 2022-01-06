@@ -24,7 +24,7 @@ Ray::Ray(Vector3 origin, Vector3 direction)
 // Returns a point on the ray where 't' determines its position
 Vector3 Ray::pointAtRay(double t)
 {
-    return (this->_origin + (Vector3)(this->_direction * t));
+    return (this->_origin + (this->_direction * t));
 }
 
 // Returns the Ray's origin
@@ -48,5 +48,5 @@ Vector3 Ray::getDirection(void) const
 // Sets the Ray's direction
 void Ray::setDirection(Vector3 direction)
 {
-    this->_direction = direction;
+    this->_direction = Utilities::normalize(direction);
 }
