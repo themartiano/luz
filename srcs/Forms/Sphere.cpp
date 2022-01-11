@@ -85,8 +85,8 @@ bool	Sphere::hit(Ray& ray, double t_max) const
 	}
 
 	ray.hitRecord.t0 = root;
-	ray.hitRecord.position = ray.pointAtRay(ray.hitRecord.t0);
-	ray.hitRecord.normal = (ray.hitRecord.position - this->_position) / this->_radius;
+	ray.hitRecord.position = ray.pointAtRay(root);
+	ray.hitRecord.normal = Utilities::normalize((ray.hitRecord.position - this->_position) / this->_radius);
 	ray.hitRecord.material = this->_material;
 
 	return (true);
