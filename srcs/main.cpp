@@ -36,7 +36,7 @@ int	main(int argc, char *argv[])
 		// Coordinate system ~~ Right Hand ~~ Forward: -Z | Up: +Y | Right: +X
 
 		//scene.addCamera(Camera(Vector3(5.0, 0.0, 0.0), Vector3(-1.0, 0.0, 0.0), 65, 0.0, 1.0));
-		scene.addCamera(Camera(Vector3(0.0, 0.0, 10.0), Vector3(0.0, 0.0, -1.0), 65, 0.0, 1.0));
+		scene.addCamera(Camera(Vector3(0.0, 0.0, 5.0), Vector3(0.0, 0.0, -1.0), 65, 0.0, 1.0));
 
 		// readObj(scene, "objects/cube.obj");
 
