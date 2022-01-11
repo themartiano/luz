@@ -15,7 +15,7 @@ Vector3	Utilities::cross(Vector3 vector1, Vector3 vector2)
 {
 	return (Vector3(
 		(vector1.getY() * vector2.getZ()) - (vector1.getZ() * vector2.getY()),
-		(vector1.getX() * vector2.getZ()) - (vector1.getZ() * vector2.getX()),
+		(vector1.getZ() * vector2.getX()) - (vector1.getX() * vector2.getZ()),
 		(vector1.getX() * vector2.getY()) - (vector1.getY() * vector2.getX()))
 	);
 }
@@ -35,7 +35,7 @@ double	Utilities::vectorLength(Vector3 vector)
 // Normalizes 'vector'
 Vector3	Utilities::normalize(Vector3 vector)
 {
-	vector /= Utilities::vectorLength(vector); // vectorLength or vectorLengthSquared?
+	vector /= Utilities::vectorLength(vector);
 	return (vector);
 }
 

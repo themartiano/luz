@@ -17,9 +17,9 @@ Color	Renderer::internal::_calculatePixelColor(Scene& scene, int x, int y)
 	double yV = double(y + Utilities::randomDouble()) / (height - 1);
 
 	static Vector3	cameraPosition = scene.getActiveCamera().getPosition();
-	static Vector3	cameraLookDirection = scene.getActiveCamera().getDirection() * Vector3(0.0, 0.0, -1.0);
+	static Vector3	cameraLookDirection = scene.getActiveCamera().getDirection();
 
-	static double	viewportWidth = 2.0 * tan((((double)scene.getActiveCamera().getFOV() * D_PI) / 180.0) / 2.0);
+	static double	viewportWidth = 2.0 * tan(((scene.getActiveCamera().getFOV() * D_PI) / 180.0) / 2.0);
 	static double	viewportHeight = (height / width) * viewportWidth;
 
 	static double	lensRadius = scene.getActiveCamera().getAperture() / 2.0;
@@ -32,7 +32,7 @@ Color	Renderer::internal::_calculatePixelColor(Scene& scene, int x, int y)
 
 	static Vector3	horizontal = u * viewportWidth * focusDistance;
 	static Vector3	vertical = v * viewportHeight * focusDistance;
-	static Vector3	lowerLeftCorner = cameraPosition - (horizontal / 2.0) - (vertical / 2.0) - (w * focusDistance);
+	static Vector3	lowerLeftCorner = cameraPosition + (horizontal / 2.0) + (vertical / 2.0) + (w * focusDistance);
 
 	Vector3	offset(0.0, 0.0, 0.0);
 	if (lensRadius > 0.0)
@@ -41,7 +41,7 @@ Color	Renderer::internal::_calculatePixelColor(Scene& scene, int x, int y)
 		offset = u * rd.getX() + v * rd.getY();
 	}
 
-	Ray ray(cameraPosition + offset, lowerLeftCorner + (horizontal * xU) + (vertical * yV) - cameraPosition - offset);
+	Ray ray(cameraPosition + offset, lowerLeftCorner - (horizontal * xU) - (vertical * yV) - cameraPosition - offset);
 
 	return (_calculateLightRaysColor(ray, scene, 0));
 }
