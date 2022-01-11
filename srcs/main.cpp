@@ -38,7 +38,7 @@ int	main(int argc, char *argv[])
 		//scene.addCamera(Camera(Vector3(5.0, 0.0, 0.0), Vector3(-1.0, 0.0, 0.0), 65, 0.0, 1.0));
 		scene.addCamera(Camera(Vector3(0.0, 2.0, 12.0), Vector3(0.0, 0.0, -1.0), 65, 0.0, 1.0));
 
-		readObj(scene, "objects/lamp.obj");
+		readObj(scene, "objects/blender_lamp.obj");
 
 		// scene.addHittable(std::make_shared<Triangle>(
 		// 	Vector3(1, 0, 0),

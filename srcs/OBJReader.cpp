@@ -68,7 +68,7 @@ void	readObj(Scene& scene, std::string fileName)
 			newPos = line.find_first_of(' ', oldPos);
 			positions[2] = std::stoi(line.substr(oldPos, newPos - oldPos));
 
-			triangles.push_back(std::make_shared<Triangle>( // Maybe try ordering the vertices from smallest => medium => biggest value or something?
+			triangles.push_back(std::make_shared<Triangle>(
 				vertices[positions[0] - 1],
 				vertices[positions[1] - 1],
 				vertices[positions[2] - 1],
