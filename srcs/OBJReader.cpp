@@ -78,10 +78,5 @@ void	readObj(Scene& scene, std::string fileName)
 		}
 	} while (!stream.eof());
 
-	for (std::size_t i = 0; i < triangles.size(); i++)
-	{
-		scene.addHittable(triangles[i]);
-
-	}
-	// scene.addHittable(std::make_shared<BVHNode>(triangles));
+	scene.addHittable(std::make_shared<BVHNode>(triangles));
 }
