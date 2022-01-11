@@ -3,7 +3,7 @@
 #include "Defaults.hpp"
 
 // Computes the atmosphere color
-Color	Renderer::_computeAtmosphereColor(Scene& scene, Ray& ray)
+Color	Renderer::internal::_computeAtmosphereColor(Scene& scene, Ray& ray)
 {
 	// If the Earth radius is not added, the origin will be inside the Earth
 	Ray atmosphereRay(ray.getOrigin(), Utilities::normalize(ray.getDirection()));
@@ -36,7 +36,7 @@ Color	Renderer::_computeAtmosphereColor(Scene& scene, Ray& ray)
 }
 
 // Calculates the sky interpolation for the background and reflexes
-Color	Renderer::_calculateSkyInterpolation(Scene& scene, Ray& ray)
+Color	Renderer::internal::_calculateSkyInterpolation(Scene& scene, Ray& ray)
 {
 	static double	skyLine = scene.getSkyline();
 
