@@ -9,6 +9,8 @@
 #include <vector>
 #include <fstream>
 
+static void	parseObjFile(Scene& scene, std::ifstream& stream, bool& done, std::size_t& currentLine);
+
 // Search and read / parse the obj file named 'fileName' (current directory)
 void	readObj(Scene& scene, std::string fileName)
 {
@@ -20,12 +22,24 @@ void	readObj(Scene& scene, std::string fileName)
 		exit(1);
 	}
 
+	Clock		clock;
+	std::size_t	totalLines = std::count(std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>(), '\n');
+	std::size_t	currentLine = 0;
+	bool		done = false;
+
+	parseObjFile(scene, stream, done, currentLine);
+}
+
+static void	parseObjFile(Scene& scene, std::ifstream& stream, bool& done, std::size_t& currentLine)
+{
 	std::string line;
 	std::vector<Vector3> vertices;
 	std::vector<std::shared_ptr<Hittable>> triangles;
+
 	do
 	{
 		getline(stream, line);
+		currentLine++;
 
 		if (line.length() <= 0)
 		{

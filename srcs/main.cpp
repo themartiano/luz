@@ -13,7 +13,7 @@
 // Main function
 int	main(int argc, char *argv[])
 {
-	std::cout << CLR_BLUE << "Preparing...\n\n" << CLR_RESET;
+	std::cout << CLR_BLUE << "Preparing..." << CLR_RESET << std::endl << std::endl;
 
 	srand(time(0));
 

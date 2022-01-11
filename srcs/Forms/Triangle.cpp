@@ -77,7 +77,7 @@ bool	Triangle::hit(Ray& ray, double t_max) const
 	}
 
 	Vector3 q = Utilities::cross(tVec, v1);
-	double v = Utilities::dot(ray.getDirection(), q) / det; // double v = Utilities::dot(ray.getDirection() * -1.0, q) * invDet; //////////// alguns triângulos ficam invertidos pois a direção do raio em relação à orientação do triângulo result em um valor negativo no / do DOT product. AKA normal invertido, etc. https://stackoverflow.com/a/40619957/11578778
+	double v = Utilities::dot(ray.getDirection(), q) / det;
 	if (v < 0.0 || u + v > 1.0)
 	{
 		return (false);
