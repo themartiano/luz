@@ -5,16 +5,16 @@
 
 class   Clock
 {
-    public:
-        Clock(void);
-        Clock(bool startNow);
-        void    start(void);
-        double  elapsed(void);
-        double  stop(void);
+	public:
+		Clock(void);
+		Clock(bool startNow);
+		void	start(void);
+		double  elapsed(void);
+		double  stop(void);
 
-    private:
-        std::chrono::steady_clock::time_point   _startTimeMS;
-        bool                                    _running;
+	private:
+		std::chrono::steady_clock::time_point   _startTimeMS;
+		bool									_running;
 };
 
 #endif

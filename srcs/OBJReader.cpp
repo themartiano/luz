@@ -10,7 +10,7 @@
 #include <fstream>
 
 // Search and read / parse the obj file named 'fileName' (current directory)
-void    readObj(Scene& scene, std::string fileName)
+void	readObj(Scene& scene, std::string fileName)
 {
 	std::ifstream stream;
 	stream.open(fileName);

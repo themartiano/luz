@@ -7,13 +7,13 @@
 
 class   MixturePDF : public PDF
 {
-    public:
-        MixturePDF(std::shared_ptr<PDF> pdf0, std::shared_ptr<PDF> pdf1);
-        virtual double value(const Vector3& direction) const override;
-        virtual Vector3 generate(void) const override;
+	public:
+		MixturePDF(std::shared_ptr<PDF> pdf0, std::shared_ptr<PDF> pdf1);
+		virtual double value(const Vector3& direction) const override;
+		virtual Vector3 generate(void) const override;
 
-    private:
-        std::shared_ptr<PDF> _pdfs[2];
+	private:
+		std::shared_ptr<PDF> _pdfs[2];
 };
 
 #endif

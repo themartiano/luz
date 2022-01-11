@@ -19,8 +19,8 @@ Color	Renderer::_calculatePixelColor(Scene& scene, int x, int y)
 	static Vector3	cameraPosition = scene.getActiveCamera().getPosition();
 	static Vector3	cameraLookDirection = scene.getActiveCamera().getDirection() * Vector3(0.0, 0.0, -1.0);
 
-    static double	viewportWidth = 2.0 * tan((((double)scene.getActiveCamera().getFOV() * D_PI) / 180.0) / 2.0);
-    static double	viewportHeight = (height / width) * viewportWidth;
+	static double	viewportWidth = 2.0 * tan((((double)scene.getActiveCamera().getFOV() * D_PI) / 180.0) / 2.0);
+	static double	viewportHeight = (height / width) * viewportWidth;
 
 	static double	lensRadius = scene.getActiveCamera().getAperture() / 2.0;
 	static double	focusDistance = scene.getActiveCamera().getFocusDistance();

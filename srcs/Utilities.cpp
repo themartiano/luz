@@ -99,7 +99,7 @@ double	Utilities::schlick(double cosine, double refractiveIndex)
 }
 
 // Returns "s" if 'number' differs from 1
-std::string    Utilities::pluralOrSingular(int number)
+std::string	Utilities::pluralOrSingular(int number)
 {
 	if (number == 1)
 	{
