@@ -17,7 +17,7 @@ bool	Renderer::render(Scene& scene)
 
 	Clock	clock;
 
-	_manageThreads(scene);
+	internal::_manageThreads(scene);
 
 	double elapsedS = clock.stop();
 	std::cout << CLR_WHITE << "\r[ 100% ]";

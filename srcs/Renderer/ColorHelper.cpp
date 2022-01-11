@@ -8,7 +8,7 @@
 #include <cmath>
 
 // Calculates the color for the pixel at 'x' and 'y'. Creates rays, checks for intersections with objects on 'scene' and bounce light rays
-Color	Renderer::_calculatePixelColor(Scene& scene, int x, int y)
+Color	Renderer::internal::_calculatePixelColor(Scene& scene, int x, int y)
 {
 	static double width = double(scene.getXResolution());
 	static double height = double(scene.getYResolution());
@@ -47,7 +47,7 @@ Color	Renderer::_calculatePixelColor(Scene& scene, int x, int y)
 }
 
 // Properly calculates light rays bounces, reflections, etc and returns the resulting color
-Color	Renderer::_calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
+Color	Renderer::internal::_calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
 {
 	static int		maxLightBounces = scene.getMaxLightBounces();
 	static auto		skyType = scene.getRenderSky();

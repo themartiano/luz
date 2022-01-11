@@ -7,7 +7,7 @@
 #include <cmath>
 #include <unistd.h>
 
-void	Renderer::_manageThreads(Scene& scene)
+void	Renderer::internal::_manageThreads(Scene& scene)
 {
 	static int	height = scene.getYResolution();
 	static int	width = scene.getXResolution();
@@ -57,7 +57,7 @@ void	Renderer::_manageThreads(Scene& scene)
 }
 
 // Renders the pixel color at X, Y
-void	Renderer::_threadRender(Scene& scene, int x, int y)
+void	Renderer::internal::_threadRender(Scene& scene, int x, int y)
 {
 	static int	width = scene.getXResolution();
 	static int	sampleCount = scene.getSampleCount();

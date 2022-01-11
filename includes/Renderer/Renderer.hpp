@@ -6,20 +6,22 @@
 #include "Color.hpp"
 #include "PDFs/MixturePDF.hpp"
 
-class   Renderer
+namespace	Renderer
 {
-	public:
-		static bool	render(Scene& scene);
+	bool	render(Scene& scene);
+	void	renderSequence(Scene& scene, Atmosphere baseAtmosphere, int fps, double duration);
 
-	private:
-		static void		_threadRender(Scene& scene, int x, int y);
-		static Color	_calculatePixelColor(Scene& scene, int x, int y);
-		static bool		_checkHits(Scene& scene, Ray& ray);
-		static Color	_calculateLightRaysColor(Ray& ray, Scene& scene, int bounces);
-		static void		_calculateLightRayBounceDirection(Ray& ray, Color& color, const Vector3& pdfGen);
-		static Color	_computeAtmosphereColor(Scene& scene, Ray& ray);
-		static Color	_calculateSkyInterpolation(Scene& scene, Ray& ray);
-		static void	 _manageThreads(Scene& scene);
-};
+	namespace internal
+	{
+		void	_threadRender(Scene& scene, int x, int y);
+		Color	_calculatePixelColor(Scene& scene, int x, int y);
+		bool	_checkHits(Scene& scene, Ray& ray);
+		Color	_calculateLightRaysColor(Ray& ray, Scene& scene, int bounces);
+		void	_calculateLightRayBounceDirection(Ray& ray, Color& color, const Vector3& pdfGen);
+		Color	_computeAtmosphereColor(Scene& scene, Ray& ray);
+		Color	_calculateSkyInterpolation(Scene& scene, Ray& ray);
+		void	_manageThreads(Scene& scene);
+	}
+}
 
 #endif

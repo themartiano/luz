@@ -2,7 +2,7 @@
 #include "Defaults.hpp"
 
 // Checks if 'ray' hits objects present 'scene'. On hit, sets 'pixelColor' to the hitted object's material color
-bool	Renderer::_checkHits(Scene& scene, Ray& ray)
+bool	Renderer::internal::_checkHits(Scene& scene, Ray& ray)
 {
 	bool	anyHit = false;
 	double	currentClosestObject = T_MAX;
