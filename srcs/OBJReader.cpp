@@ -5,11 +5,15 @@
 #include "Vector3.hpp"
 #include "Utilities.hpp"
 #include "ANSIColors.hpp"
+#include "Clock.hpp"
 #include <memory>
 #include <vector>
 #include <fstream>
+#include <algorithm>
+#include <string>
+#include <unistd.h>
 
-static void	parseObjFile(Scene& scene, std::ifstream& stream, bool& done, std::size_t& currentLine);
+static void	parseObjFile(Scene& scene, std::ifstream& stream);
 
 // Search and read / parse the obj file named 'fileName' (current directory)
 void	readObj(Scene& scene, std::string fileName)
@@ -22,15 +26,17 @@ void	readObj(Scene& scene, std::string fileName)
 		exit(1);
 	}
 
-	Clock		clock;
-	std::size_t	totalLines = std::count(std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>(), '\n');
-	std::size_t	currentLine = 0;
-	bool		done = false;
+	std::cout << CLR_YELLOW << "Parsing " << CLR_BLUE << fileName << CLR_YELLOW << "..." << CLR_RESET << std::endl;
 
-	parseObjFile(scene, stream, done, currentLine);
+	Clock	clock;
+
+	parseObjFile(scene, stream);
+
+	double elapsedS = clock.stop();
+	std::cout << CLR_BLUE << fileName << CLR_GREEN_BRIGHT << " parsing done! " << CLR_BLUE_BRIGHT << "(Duration: " << CLR_WHITE << elapsedS << "s" << CLR_BLUE_BRIGHT << ")\n\n" << CLR_RESET;
 }
 
-static void	parseObjFile(Scene& scene, std::ifstream& stream, bool& done, std::size_t& currentLine)
+static void	parseObjFile(Scene& scene, std::ifstream& stream)
 {
 	std::string line;
 	std::vector<Vector3> vertices;
@@ -39,7 +45,6 @@ static void	parseObjFile(Scene& scene, std::ifstream& stream, bool& done, std::s
 	do
 	{
 		getline(stream, line);
-		currentLine++;
 
 		if (line.length() <= 0)
 		{
