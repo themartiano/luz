@@ -73,7 +73,7 @@ void	readObj(Scene& scene, std::string fileName)
 				vertices[positions[1] - 1],
 				vertices[positions[2] - 1],
 				//Material(Color(Utilities::randomDouble(), Utilities::randomDouble(), Utilities::randomDouble()), 1.0, 0.0, 0.5, 0.0, false, false, 0.0)
-				Material(Color(0.6, 0.6, 0.6), 1.0, 0.0, 0.5, 0.0, false, false, 0.0)
+				Material(Color(0.3, 0.3, 0.3), 1.0, 0.0, 0.5, 0.0, false, false, 0.0)
 			));
 		}
 	} while (!stream.eof());

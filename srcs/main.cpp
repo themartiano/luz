@@ -26,7 +26,7 @@ int	main(int argc, char *argv[])
 	{
 		scene.setXResolution(500);
 		scene.setYResolution(500);
-		scene.setSampleCount(1);
+		scene.setSampleCount(10);
 		scene.setMaxLightBounces(8);
 		scene.setGammaCorrected(true);
 		scene.setRenderSky(SKY_NONE);

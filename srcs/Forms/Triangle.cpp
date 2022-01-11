@@ -121,7 +121,12 @@ bool	Triangle::hit(Ray& ray, double t_max) const
 	}
 
 	ray.hitRecord.t0 = t;
-	ray.hitRecord.normal = Utilities::cross(v1, v2);
+	Vector3 n = Utilities::cross(v1, v2);
+	if (Utilities::dot(n, ray.getDirection()) > 0)
+	{
+		n = n * -1.0;
+	}
+	ray.hitRecord.normal = n;
 	ray.hitRecord.material = this->_material;
 	ray.hitRecord.position = ray.pointAtRay(ray.hitRecord.t0);
 
