@@ -2,7 +2,7 @@
 
 **Luz ~ Ray Tracer**
 
-Developed with modern **C++ 17** using nothing but the *[standard library](https://en.m.wikipedia.org/wiki/C%2B%2B_Standard_Library)*.
+Developed with modern **C++ 17** using nothing but the language itself.
 
 ![Luz Spheres](https://user-images.githubusercontent.com/32342284/138613098-84a5b9c0-e675-41a2-ac91-523510d41d7d.jpg)
 ###### Raw output converted from bmp to jpg
@@ -10,22 +10,17 @@ Developed with modern **C++ 17** using nothing but the *[standard library](https
 
 ## Features:
 ### Rendering:
-* **Path Tracing**
+* **Monte Carlo Path Tracing**
 * **Physically based** rendering
 * **Multithreaded** rendering
-* **Sphere rendering** with customizable position, radius and material
-* **Rectangle rendering** with customizable position, orientation, size and material
-* **Plane rendering** with customizable Y position, orientation and material
-* **Triangle rendering** with 3 customizable vertices and a material
-* **Cube rendering** with customizable width, height, depth and material
-* Rendering of custom **Scene file** (**.luz** extension)
+* **Objects** rendering (sphere, plane, rectangle, triangle, cube)
+* Custom **Scene file** (**.luz** extension)
 * **OBJ file** rendering (**.obj** extension)
 * Lambertian (**Diffuse**) Rendering
-* **Metals** with custom reflection clarity
+* **Metals**
 * Dielectrics (**Glass**, etc)
 * Emissive materials (**light** emitting objects)
-* **Atmosphere** scattering
-* Stars
+* **Atmospheric** scattering
 * **Sky** rendering with customizable skyline (linear interpolated)
 * Custom (solid) background color (if sky and atmosphere rendering is disabled)
 * **Anti-aliasing**
@@ -36,7 +31,7 @@ Developed with modern **C++ 17** using nothing but the *[standard library](https
 * **Multi-sampled** rendering
 * Bounding Volumes
 * **Per-pixel** rendering
-* Customizable maximum light bounces count
+* Customizable rendering parameters
 ### Camera:
 * Customizable **Field of View**
 * Customizable **Position**
