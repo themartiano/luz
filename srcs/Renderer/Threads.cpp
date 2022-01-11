@@ -7,13 +7,13 @@
 #include <cmath>
 #include <unistd.h>
 
-void    Renderer::_manageThreads(Scene& scene)
+void	Renderer::_manageThreads(Scene& scene)
 {
 	static int	height = scene.getYResolution();
 	static int	width = scene.getXResolution();
 	static int	pixelTotal = width * height;
 
-    static unsigned int	threadCount = CORE_COUNT * THREAD_MULTIPLIER;
+	static unsigned int	threadCount = CORE_COUNT * THREAD_MULTIPLIER;
 	volatile std::atomic<int> currentRenderPixel(0);
 	std::vector<std::future<void>> futureVector;
 

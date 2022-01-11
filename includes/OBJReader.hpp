@@ -3,6 +3,6 @@
 
 #include "Scene.hpp"
 
-void    readObj(Scene& scene, std::string fileName);
+void	readObj(Scene& scene, std::string fileName);
 
 #endif

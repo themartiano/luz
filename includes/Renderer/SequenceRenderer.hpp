@@ -4,6 +4,6 @@
 #include "Scene.hpp"
 #include "Atmosphere.hpp"
 
-void    renderSequence(Scene& scene, Atmosphere baseAtmosphere, int fps, double duration);
+void	renderSequence(Scene& scene, Atmosphere baseAtmosphere, int fps, double duration);
 
 #endif
