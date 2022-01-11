@@ -70,9 +70,9 @@ bool    Triangle::hit(Ray& ray, double t_max) const
 
 	Vector3 p = ray.pointAtRay(t);
 	//Vector3 v = p - this->_vertex0;
-	double a = Utilities::dot(v1, p) / Utilities::vectorLengthSquared(v1);
-	double b = Utilities::dot(v2, p) / Utilities::vectorLengthSquared(v2);
-	if (a < 0 || b < 0 || a + b > 1)
+	double a = Utilities::vectorLengthSquared(v1) / Utilities::dot(v1, p);
+	double b = Utilities::vectorLengthSquared(v2) / Utilities::dot(v2, p);
+	if (a < 0.0 || b < 0.0 || a + b > 1.0)
 		return (false);
 
     ray.hitRecord.t0 = t;
