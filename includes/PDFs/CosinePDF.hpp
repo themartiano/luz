@@ -1,5 +1,4 @@
-#ifndef COSINEPDF_HPP
-#define COSINEPDF_HPP
+#pragma once
 
 #include "PDFs/PDF.hpp"
 #include "Vector3.hpp"
@@ -15,5 +14,3 @@ class   CosinePDF : public PDF
 	private:
 		ONB _uvw;
 };
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef SCENE_HPP
-#define SCENE_HPP
+#pragma once
 
 #include "Camera.hpp"
 #include "Hittable.hpp"
@@ -64,5 +63,3 @@ class	Scene
 		std::vector<std::shared_ptr<Hittable>>	_hittables;
 		std::vector<std::shared_ptr<Hittable>>	_lights;
 };
-
-#endif

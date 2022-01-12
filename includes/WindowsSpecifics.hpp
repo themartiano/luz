@@ -1,6 +1,3 @@
-#ifndef WINDOWSPECIFIC_HPP
-#define WINDOWSPECIFIC_HPP
+#pragma once
 
 #include <time.h>
-
-#endif

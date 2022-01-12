@@ -1,5 +1,4 @@
-#ifndef SKYTYPES_HPP
-#define SKYTYPES_HPP
+#pragma once
 
 enum	SkyTypes
 {
@@ -7,5 +6,3 @@ enum	SkyTypes
 	SKY_LINEAR,
 	SKY_ATMOSPHERE
 };
-
-#endif

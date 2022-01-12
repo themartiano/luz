@@ -1,5 +1,4 @@
-#ifndef RENDERER_HPP
-#define RENDERER_HPP
+#pragma once
 
 #include "Scene.hpp"
 #include "Ray.hpp"
@@ -23,5 +22,3 @@ namespace	Renderer
 		void	_manageThreads(Scene& scene);
 	}
 }
-
-#endif

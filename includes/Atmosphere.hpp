@@ -1,5 +1,4 @@
-#ifndef ATMOSPHERE_HPP
-#define ATMOSPHERE_HPP
+#pragma once
 
 #include "Vector3.hpp"
 #include "Ray.hpp"
@@ -39,5 +38,3 @@ class   Atmosphere
 };
 
 bool planetaryHit(double radius, Ray& ray);
-
-#endif

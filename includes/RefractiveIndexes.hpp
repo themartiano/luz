@@ -1,5 +1,4 @@
-#ifndef REFRACTIVEINDEXES_HPP
-#define REFRACTIVEINDEXES_HPP
+#pragma once
 
 const double RI_GLASS = 1.52;
 const double RI_WATER = 1.333;
@@ -15,5 +14,3 @@ const double RI_ACETONE = 1.36;
 const double RI_AMBER = 1.55;
 const double RI_LIQUID_HELIUM = 1.025;
 const double RI_SILICON = 3.45;
-
-#endif

@@ -1,9 +1,6 @@
-#ifndef EXIT_HPP
-#define EXIT_HPP
+#pragma once
 
 #include "Scene.hpp"
 #include <string>
 
 void	exitError(Scene &scene, std::string message);
-
-#endif

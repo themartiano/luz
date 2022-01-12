@@ -1,5 +1,4 @@
-#ifndef CUBE_HPP
-#define CUBE_HPP
+#pragma once
 
 #include "Hittable.hpp"
 #include "Rectangle.hpp"
@@ -30,5 +29,3 @@ class   Cube : public Hittable
 		std::vector<Rectangle>  _faces;
 		void	_generateFaces(void);
 };
-
-#endif

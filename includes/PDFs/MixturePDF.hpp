@@ -1,5 +1,4 @@
-#ifndef MIXTUREPDF_HPP
-#define MIXTUREPDF_HPP
+#pragma once
 
 #include "PDFs/PDF.hpp"
 #include "Vector3.hpp"
@@ -15,5 +14,3 @@ class   MixturePDF : public PDF
 	private:
 		std::shared_ptr<PDF> _pdfs[2];
 };
-
-#endif

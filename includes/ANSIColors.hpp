@@ -1,5 +1,4 @@
-#ifndef ANSICOLORS_H
-#define ANSICOLORS_H
+#pragma once
 
 #include <string>
 
@@ -75,5 +74,3 @@ const std::string CLR_BLUE_BK_BRIGHT("\033[0;104m");
 const std::string CLR_PURPLE_BK_BRIGHT("\033[0;105m");
 const std::string CLR_CYAN_BK_BRIGHT("\033[0;106m");
 const std::string CLR_WHITE_BK_BRIGHT("\033[0;107m");
-
-#endif

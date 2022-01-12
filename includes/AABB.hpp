@@ -1,5 +1,4 @@
-#ifndef AABB_HPP
-#define AABB_HPP
+#pragma once
 
 #include "Vector3.hpp"
 #include "Ray.hpp"
@@ -17,5 +16,3 @@ class   AABB
 		Vector3 _minimum;
 		Vector3 _maximum;
 };
-
-#endif

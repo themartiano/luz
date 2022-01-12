@@ -1,5 +1,4 @@
-#ifndef RECTANGLE_HPP
-#define RECTANGLE_HPP
+#pragma once
 
 #include "Hittable.hpp"
 #include "Vector3.hpp"
@@ -29,5 +28,3 @@ class   Rectangle : public Hittable
 		double	  _width;
 		double	  _height;
 };
-
-#endif

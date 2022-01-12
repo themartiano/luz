@@ -1,5 +1,4 @@
-#ifndef BMP_HPP
-#define BMP_HPP
+#pragma once
 
 #include "Scene.hpp"
 #include <string>
@@ -14,5 +13,3 @@ class	BMP
 	private:
 		std::string	_fileName;
 };
-
-#endif

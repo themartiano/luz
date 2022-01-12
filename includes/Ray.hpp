@@ -1,5 +1,4 @@
-#ifndef RAY_HPP
-#define RAY_HPP
+#pragma once
 
 #include "Vector3.hpp"
 #include "Material.hpp"
@@ -31,5 +30,3 @@ class   Ray
 		Vector3 _direction;
 
 };
-
-#endif

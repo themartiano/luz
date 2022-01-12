@@ -1,5 +1,4 @@
-#ifndef TRIANGLE_HPP
-#define TRIANGLE_HPP
+#pragma once
 
 #include "Hittable.hpp"
 #include "Vector3.hpp"
@@ -26,5 +25,3 @@ class   Triangle : public Hittable
 		Vector3	 _vertex2;
 		Material	_material;
 };
-
-#endif

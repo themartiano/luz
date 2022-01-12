@@ -1,5 +1,4 @@
-#ifndef SPHERE_HPP
-#define SPHERE_HPP
+#pragma once
 
 #include "Material.hpp"
 #include "AABB.hpp"
@@ -25,5 +24,3 @@ class	Sphere : public Hittable
 		Material	_material;
 		double		_radius;
 };
-
-#endif

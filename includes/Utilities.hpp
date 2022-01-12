@@ -1,5 +1,4 @@
-#ifndef UTILITIES_HPP
-#define UTILITIES_HPP
+#pragma once
 
 #include "Vector3.hpp"
 #include "Scene.hpp"
@@ -29,5 +28,3 @@ namespace Utilities
 	double	randomDouble(double min, double max);
 	int	randomInt(int min, int max);
 }
-
-#endif

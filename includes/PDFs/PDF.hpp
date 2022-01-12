@@ -1,5 +1,4 @@
-#ifndef PDF_HPP
-#define PDF_HPP
+#pragma once
 
 #include "Vector3.hpp"
 
@@ -11,5 +10,3 @@ class   PDF
 		virtual double value(const Vector3& direction) const = 0;
 		virtual Vector3 generate(void) const = 0;
 };
-
-#endif

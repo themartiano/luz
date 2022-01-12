@@ -1,5 +1,4 @@
-#ifndef HITTABLEPDF_HPP
-#define HITTABLEPDF_HPP
+#pragma once
 
 #include "PDFs/PDF.hpp"
 #include "Vector3.hpp"
@@ -19,5 +18,3 @@ class   HittablePDF : public PDF
 		Vector3 _origin;
 		std::shared_ptr<Hittable> _hittable;
 };
-
-#endif

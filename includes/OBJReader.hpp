@@ -1,8 +1,5 @@
-#ifndef OBJREADER_HPP
-#define OBJREADER_HPP
+#pragma once
 
 #include "Scene.hpp"
 
 void	readObj(Scene& scene, std::string fileName);
-
-#endif

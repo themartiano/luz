@@ -1,5 +1,4 @@
-#ifndef ONB_HPP
-#define ONB_HPP
+#pragma once
 
 #include "Vector3.hpp"
 
@@ -17,5 +16,3 @@ class   ONB
 	private:
 		Vector3 _axis[3];
 };
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef MATERIAL_HPP
-#define MATERIAL_HPP
+#pragma once
 
 #include "Color.hpp"
 
@@ -27,5 +26,3 @@ class	Material
 		double	_lightIntensity;
 		double	_opacity; //work on it
 };
-
-#endif

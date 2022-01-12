@@ -1,5 +1,4 @@
-#ifndef TRANSFORM_HPP
-#define TRANSFORM_HPP
+#pragma once
 
 #include "Vector3.hpp"
 
@@ -18,5 +17,3 @@ class	Transform
 		Vector3	_orientation;
 		Vector3	_scale;
 };
-
-#endif

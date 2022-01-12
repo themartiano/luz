@@ -1,5 +1,4 @@
-#ifndef CLOCK_HPP
-#define CLOCK_HPP
+#pragma once
 
 #include <chrono>
 
@@ -16,5 +15,3 @@ class   Clock
 		std::chrono::steady_clock::time_point   _startTimeMS;
 		bool									_running;
 };
-
-#endif

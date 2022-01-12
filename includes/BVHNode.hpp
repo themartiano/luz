@@ -1,5 +1,4 @@
-#ifndef BVHNODE_HPP
-#define BVHNODE_HPP
+#pragma once
 
 #include "Hittable.hpp"
 #include "AABB.hpp"
@@ -23,5 +22,3 @@ class   BVHNode : public Hittable
 		std::shared_ptr<Hittable>   _right;
 		AABB						_boundingBox;
 };
-
-#endif

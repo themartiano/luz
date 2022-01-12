@@ -1,5 +1,4 @@
-#ifndef CAMERA_HPP
-#define CAMERA_HPP
+#pragma once
 
 #include "Vector3.hpp"
 
@@ -26,5 +25,3 @@ class	Camera
 		double		_aperture;
 		double		_focusDistance;
 };
-
-#endif

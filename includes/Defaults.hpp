@@ -1,5 +1,4 @@
-#ifndef DEFAULTS_HPP
-#define DEFAULTS_HPP
+#pragma once
 
 #include <limits>
 #include <thread>
@@ -24,5 +23,3 @@ const unsigned int THREAD_MULTIPLIER = 6; // Render threads multiplier. The thre
 const bool RENDER_AABB = false; // Used to determine if AABBs should be rendered (for debugging purposes).
 
 const double D_PI = 3.14159265358979323846; // Default PI value (same as the one from <cmath>, ATM)
-
-#endif

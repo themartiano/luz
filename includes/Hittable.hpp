@@ -1,5 +1,4 @@
-#ifndef HITTABLE_HPP
-#define HITTABLE_HPP
+#pragma once
 
 #include "AABB.hpp"
 #include "Material.hpp"
@@ -16,5 +15,3 @@ class   Hittable
 		virtual double pdfValue(const Vector3& origin, const Vector3& vec) const;
 		virtual Vector3 random(const Vector3& origin) const;
 };
-
-#endif
