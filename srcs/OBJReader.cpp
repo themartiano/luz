@@ -14,10 +14,16 @@
 #include <string>
 #include <unistd.h>
 
-static void	parseObjFile(Mesh& mesh, std::ifstream& stream);
+static void	parseObjFile(Mesh& mesh, std::ifstream& stream, Vector3 positionOffset);
+
+// Calls the actual 'readObj' function with a zeroed offset position
+Mesh	readObj(std::string fileName)
+{
+	return (readObj(fileName, Vector3(0.0, 0.0, 0.0)));
+}
 
 // Search and read / parse the obj file named 'fileName' (current directory)
-Mesh	readObj(std::string fileName)
+Mesh	readObj(std::string fileName, Vector3 positionOffset)
 {
 	std::ifstream stream;
 	stream.open(fileName);
@@ -32,7 +38,7 @@ Mesh	readObj(std::string fileName)
 	Clock	clock;
 
 	Mesh	mesh;
-	parseObjFile(mesh, stream);
+	parseObjFile(mesh, stream, positionOffset);
 
 	double elapsedS = clock.stop();
 	std::cout << CLR_BLUE << fileName << CLR_GREEN_BRIGHT << " parsing done! " << CLR_BLUE_BRIGHT << "(Duration: " << CLR_WHITE << elapsedS << "s" << CLR_BLUE_BRIGHT << ")\n\n" << CLR_RESET;
@@ -40,7 +46,7 @@ Mesh	readObj(std::string fileName)
 	return (mesh);
 }
 
-static void	parseObjFile(Mesh& mesh, std::ifstream& stream)
+static void	parseObjFile(Mesh& mesh, std::ifstream& stream, Vector3 positionOffset)
 {
 	std::string line;
 	std::vector<Vector3> vertices;
@@ -92,9 +98,9 @@ static void	parseObjFile(Mesh& mesh, std::ifstream& stream)
 			positions[2] = std::stoi(line.substr(oldPos, newPos - oldPos));
 
 			triangles.push_back(std::make_shared<Triangle>(
-				vertices[positions[0] - 1],
-				vertices[positions[1] - 1],
-				vertices[positions[2] - 1],
+				vertices[positions[0] - 1] + positionOffset,
+				vertices[positions[1] - 1] + positionOffset,
+				vertices[positions[2] - 1] + positionOffset,
 				//Material(Color(Utilities::randomDouble(), Utilities::randomDouble(), Utilities::randomDouble()), 1.0, 0.0, 0.5, 0.0, false, false, 0.0)
 				Material(Color(0.3, 0.3, 0.3), 1.0, 0.0, 0.5, 0.0, false, false, 0.0)
 			));

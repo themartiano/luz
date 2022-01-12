@@ -4,3 +4,4 @@
 #include <string>
 
 Mesh	readObj(std::string fileName);
+Mesh	readObj(std::string fileName, Vector3 positionOffset);
