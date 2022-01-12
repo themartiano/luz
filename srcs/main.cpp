@@ -10,6 +10,7 @@
 #include "Forms/Sphere.hpp"
 #include "Forms/Mesh.hpp"
 #include "Utilities.hpp"
+#include "Defaults.hpp"
 
 // Main function
 int	main(int argc, char *argv[])
@@ -27,20 +28,27 @@ int	main(int argc, char *argv[])
 	{
 		scene.setXResolution(500);
 		scene.setYResolution(500);
-		scene.setSampleCount(10);
-		scene.setMaxLightBounces(8);
+		scene.setSampleCount(250);
+		scene.setMaxLightBounces(24);
 		scene.setGammaCorrected(true);
-		scene.setRenderSky(SKY_NONE);
-		//scene.setAtmosphere(Atmosphere(-0.189, D_EARTH_RADIUS, D_ATMOSPHERE_RADIUS, D_HR, D_HM, 16, 8, 0.468)); // Only needed if Scene.Sky == SKY_ATMOSPHERE
-		scene.setBackgroundColor(Color(1.0, 1.0, 1.0)); // Only needed if Scene.Sky == SKY_NONE
+		scene.setRenderSky(SKY_ATMOSPHERE);
+		scene.setDistanceBlueness(true);
+		scene.setAtmosphere(Atmosphere(0.3, D_EARTH_RADIUS, D_ATMOSPHERE_RADIUS, D_HR, D_HM, 16, 8, 0.468)); // Only needed if Scene.Sky == SKY_ATMOSPHERE
+		//scene.setBackgroundColor(Color(1.0, 1.0, 1.0)); // Only needed if Scene.Sky == SKY_NONE
 
 		// Coordinate system ~~ Right Hand ~~ Forward: -Z | Up: +Y | Right: +X
 
 		//scene.addCamera(Camera(Vector3(5.0, 0.0, 0.0), Vector3(-1.0, 0.0, 0.0), 65, 0.0, 1.0));
-		scene.addCamera(Camera(Vector3(0.0, 2.0, 12.0), Vector3(0.0, 0.0, -1.0), 65, 0.0, 1.0));
+		scene.addCamera(Camera(Vector3(7.0, D_EARTH_RADIUS + 10.0, 33.0), Vector3(-0.3, -0.31, -1.0), 65, 0.0, 1.0));
 
-		Mesh mesh = readObj("objects/blender_lamp.obj");
+		Mesh mesh = readObj("objects/koenigsegg.obj", Vector3(0.0, D_EARTH_RADIUS, 0.0));
 		scene.addHittable(std::make_shared<Mesh>(mesh));
+
+		scene.addHittable(std::make_shared<Plane>(
+			D_EARTH_RADIUS,
+			Vector3(0.0, 1.0, 0.0),
+			Material(Color(0.6, 0.6, 0.6), 1.0, 0.0, 0.5, 0.0, false, false, 0.0)
+		));
 
 		// scene.addHittable(std::make_shared<Triangle>(
 		// 	Vector3(1, 0, 0),
@@ -60,12 +68,6 @@ int	main(int argc, char *argv[])
 		// 	Vector3(1, 1, 1),
 		// 	2,
 		// 	Material(Color(0.6, 0.6, 1.0), 1.0, 0.0, 0.5, 0.0, false, false, 0.0)
-		// ));
-
-		// scene.addHittable(std::make_shared<Plane>(
-		// 	-1.0,
-		// 	Vector3(0.0, 1.0, 0.0),
-		// 	Material(Color(0.6, 0.6, 0.6), 1.0, 0.0, 0.5, 0.0, false, false, 0.0)
 		// ));
 	}
 
