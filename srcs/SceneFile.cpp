@@ -336,7 +336,8 @@ static void	readObjectsSubSection(Scene& scene, std::ifstream& stream)
 			{
 				std::string strObjFileName(objFileName);
 
-				readObj(scene, strObjFileName);
+				Mesh mesh = readObj(strObjFileName);
+				scene.addHittable(std::make_shared<Mesh>(mesh));
 			}
 		}
 	} while (!stream.eof());

@@ -2,6 +2,7 @@
 #include "Hittable.hpp"
 #include "BVHNode.hpp"
 #include "Forms/Triangle.hpp"
+#include "Forms/Mesh.hpp"
 #include "Vector3.hpp"
 #include "Utilities.hpp"
 #include "ANSIColors.hpp"
@@ -13,10 +14,10 @@
 #include <string>
 #include <unistd.h>
 
-static void	parseObjFile(Scene& scene, std::ifstream& stream);
+static void	parseObjFile(Mesh& mesh, std::ifstream& stream);
 
 // Search and read / parse the obj file named 'fileName' (current directory)
-void	readObj(Scene& scene, std::string fileName)
+Mesh	readObj(std::string fileName)
 {
 	std::ifstream stream;
 	stream.open(fileName);
@@ -30,13 +31,16 @@ void	readObj(Scene& scene, std::string fileName)
 
 	Clock	clock;
 
-	parseObjFile(scene, stream);
+	Mesh	mesh;
+	parseObjFile(mesh, stream);
 
 	double elapsedS = clock.stop();
 	std::cout << CLR_BLUE << fileName << CLR_GREEN_BRIGHT << " parsing done! " << CLR_BLUE_BRIGHT << "(Duration: " << CLR_WHITE << elapsedS << "s" << CLR_BLUE_BRIGHT << ")\n\n" << CLR_RESET;
+
+	return (mesh);
 }
 
-static void	parseObjFile(Scene& scene, std::ifstream& stream)
+static void	parseObjFile(Mesh& mesh, std::ifstream& stream)
 {
 	std::string line;
 	std::vector<Vector3> vertices;
@@ -97,5 +101,5 @@ static void	parseObjFile(Scene& scene, std::ifstream& stream)
 		}
 	} while (!stream.eof());
 
-	scene.addHittable(std::make_shared<BVHNode>(triangles));
+	mesh = Mesh(Vector3(), Material(), BVHNode(triangles));
 }
