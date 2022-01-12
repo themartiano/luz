@@ -1,5 +1,6 @@
 #pragma once
 
-#include "Scene.hpp"
+#include "Forms/Mesh.hpp"
+#include <string>
 
-void	readObj(Scene& scene, std::string fileName);
+Mesh	readObj(std::string fileName);
