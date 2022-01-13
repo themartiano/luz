@@ -2,7 +2,7 @@
 #include "Renderer/Renderer.hpp"
 #include "ANSIColors.hpp"
 #include "SceneFile.hpp"
-#include "BMP.hpp"
+#include "TIFF.hpp"
 #include "OBJReader.hpp"
 #include "Material.hpp"
 #include "Forms/Triangle.hpp"
@@ -26,26 +26,26 @@ int	main(int argc, char *argv[])
 	}
 	else
 	{
-		scene.setXResolution(500);
-		scene.setYResolution(500);
-		scene.setSampleCount(250);
+		scene.setXResolution(256);
+		scene.setYResolution(256);
+		scene.setSampleCount(10);
 		scene.setMaxLightBounces(24);
 		scene.setGammaCorrected(true);
-		scene.setRenderSky(SKY_ATMOSPHERE);
+		scene.setRenderSky(SKY_NONE);
 		scene.setDistanceBlueness(false);
-		scene.setAtmosphere(Atmosphere(0.28, D_EARTH_RADIUS, D_ATMOSPHERE_RADIUS, D_HR, D_HM, 64, 24, 0.468)); // Only needed if Scene.Sky == SKY_ATMOSPHERE
-		//scene.setBackgroundColor(Color(1.0, 1.0, 1.0)); // Only needed if Scene.Sky == SKY_NONE
+		//scene.setAtmosphere(Atmosphere(0.28, D_EARTH_RADIUS, D_ATMOSPHERE_RADIUS, D_HR, D_HM, 64, 24, 0.468)); // Only needed if Scene.Sky == SKY_ATMOSPHERE
+		scene.setBackgroundColor(Color(1.0, 1.0, 1.0)); // Only needed if Scene.Sky == SKY_NONE
 
 		// Coordinate system ~~ Right Hand ~~ Forward: -Z | Up: +Y | Right: +X
 
 		//scene.addCamera(Camera(Vector3(5.0, 0.0, 0.0), Vector3(-1.0, 0.0, 0.0), 65, 0.0, 1.0));
-		scene.addCamera(Camera(Vector3(7.0, D_EARTH_RADIUS + 10.5, 33.0), Vector3(-0.3, -0.31, -1.0), 65, 0.0, 1.0));
+		scene.addCamera(Camera(Vector3(0.0, 0.0, 5.0), Vector3(0.0, 0.0, -1.0), 65, 0.0, 1.0));
 
-		Mesh mesh = readObj("objects/koenigsegg.obj", Vector3(0.0, D_EARTH_RADIUS, 0.0));
-		scene.addHittable(std::make_shared<Mesh>(mesh));
+		// Mesh mesh = readObj("objects/blender_cube.obj");
+		// scene.addHittable(std::make_shared<Mesh>(mesh));
 
 		scene.addHittable(std::make_shared<Plane>(
-			D_EARTH_RADIUS,
+			-1.0,
 			Vector3(0.0, 1.0, 0.0),
 			Material(Color(0.6, 0.6, 0.6), 1.0, 0.0, 0.5, 0.0, false, false, 0.0)
 		));
@@ -64,17 +64,17 @@ int	main(int argc, char *argv[])
 		// 	Material(Color(0.6, 0.6, 1.0), 1.0, 0.0, 0.5, 0.0, false, false, 0.0)
 		// ));
 
-		// scene.addHittable(std::make_shared<Sphere>(
-		// 	Vector3(1, 1, 1),
-		// 	2,
-		// 	Material(Color(0.6, 0.6, 1.0), 1.0, 0.0, 0.5, 0.0, false, false, 0.0)
-		// ));
+		scene.addHittable(std::make_shared<Sphere>(
+			Vector3(1, 1, 1),
+			2,
+			Material(Color(0.6, 0.6, 1.0), 1.0, 0.0, 0.5, 0.0, false, false, 0.0)
+		));
 	}
 
 	if (Renderer::render(scene))
 	{
-		// Writes BMP image file
-		BMP::writeFile(scene);
+		// Writes TIFF image file
+		TIFF::writeFile(scene);
 	}
 
 	return (0);

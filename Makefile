@@ -23,7 +23,7 @@ SRCS :=	./srcs/Camera.cpp ./srcs/ExitError.cpp ./srcs/main.cpp ./srcs/Scene.cpp 
 		./srcs/Forms/Cube.cpp ./srcs/SceneFile.cpp ./srcs/ONB.cpp ./srcs/PDFs/CosinePDF.cpp \
 		./srcs/PDFs/HittablePDF.cpp ./srcs/Hittable.cpp ./srcs/PDFs/MixturePDF.cpp ./srcs/Renderer/HitHelper.cpp \
 		./srcs/Renderer/Atmospherics.cpp ./srcs/Renderer/Bouncer.cpp ./srcs/Renderer/Threads.cpp \
-		./srcs/Renderer/ColorHelper.cpp ./srcs/Forms/Mesh.cpp
+		./srcs/Renderer/ColorHelper.cpp ./srcs/Forms/Mesh.cpp ./srcs/TIFF.cpp
 OBJS := $(patsubst $(SRCS_DIR)/%.cpp, $(OBJS_DIR)/%.o, $(SRCS))
 DPND := $(OBJS:.o=.d)
 INCLUDES := -Iincludes
