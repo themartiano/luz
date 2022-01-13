@@ -24,7 +24,7 @@ Scene::Scene(void)
 	this->_atmosphere = Atmosphere();
 	this->_backgroundColor = Color(0.0, 0.0, 0.0);
 
-	this->_outputFileName = "render.bmp";
+	this->_outputFileName = "render.tiff";
 
 	this->_activeCamera = 0;
 
@@ -200,9 +200,9 @@ void	Scene::setPixelArray(int index, Color pixelColor)
 		double b = pixelColor.getBlue();
 		Utilities::setDoubleRange(b, 0.0, 1.0);
 
-		this->_pixelArray[(index * 3) + 2] = (unsigned char)(r * 255.0);
+		this->_pixelArray[(index * 3)] = (unsigned char)(r * 255.0);
 		this->_pixelArray[(index * 3) + 1] = (unsigned char)(g * 255.0);
-		this->_pixelArray[index * 3] = (unsigned char)(b * 255.0);
+		this->_pixelArray[(index * 3) + 2] = (unsigned char)(b * 255.0);
 	}
 }
 
