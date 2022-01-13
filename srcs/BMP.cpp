@@ -31,7 +31,7 @@ void	BMP::writeFile(Scene& scene, bool insideDir, std::string dirName)
 	fwrite(infoHeader, 1, 40, imageFile);
 
 	for (int i = scene.getYResolution() - 1; i >= 0; i--) {
-		fwrite(scene.getPixelArray() + (i * scene.getXResolution() * 3), 3, scene.getXResolution(), imageFile);
+		//fwrite(scene.getPixelArray() + (i * scene.getXResolution() * 3), 3, scene.getXResolution(), imageFile);
 		fwrite(padding, 1, paddingSize, imageFile);
 	}
 

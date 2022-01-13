@@ -13,7 +13,7 @@ Scene::Scene(void)
 {
 	this->_xResolution = D_WIDTH;
 	this->_yResolution = D_HEIGHT;
-	this->_pixelArray = new unsigned char[this->_xResolution * this->_yResolution * 3];
+	this->_pixelArray = new double[this->_xResolution * this->_yResolution * 3];
 
 	this->_sampleCount = D_SAMPLE_COUNT;
 	this->_maxLightBounces = D_MAX_LIGHT_BOUNCES;
@@ -36,7 +36,7 @@ Scene::Scene(int width, int height)
 {
 	this->_xResolution = width;
 	this->_yResolution = height;
-	this->_pixelArray = new unsigned char[this->_xResolution * this->_yResolution * 3];
+	this->_pixelArray = new double[this->_xResolution * this->_yResolution * 3];
 
 	this->_sampleCount = D_SAMPLE_COUNT;
 	this->_maxLightBounces = D_MAX_LIGHT_BOUNCES;
@@ -82,7 +82,7 @@ void	Scene::setXResolution(int width)
 	this->_xResolution = width;
 
 	delete[] this->_pixelArray;
-	this->_pixelArray = new unsigned char[this->_xResolution * this->_yResolution * 3];
+	this->_pixelArray = new double[this->_xResolution * this->_yResolution * 3];
 }
 
 // Returns the Y resolution (height)
@@ -97,7 +97,7 @@ void	Scene::setYResolution(int height)
 	this->_yResolution = height;
 
 	delete[] this->_pixelArray;
-	this->_pixelArray = new unsigned char[this->_xResolution * this->_yResolution * 3];
+	this->_pixelArray = new double[this->_xResolution * this->_yResolution * 3];
 }
 
 // Returns the current Sample Count (rays per pixel)
@@ -193,21 +193,25 @@ void	Scene::setPixelArray(int index, Color pixelColor)
 	// Check if index is in range. (x res * y res * RGB for each pixel)
 	if (index < this->_xResolution * this->_yResolution * 3)
 	{
-		double r = pixelColor.getRed();
-		Utilities::setDoubleRange(r, 0.0, 1.0);
-		double g = pixelColor.getGreen();
-		Utilities::setDoubleRange(g, 0.0, 1.0);
-		double b = pixelColor.getBlue();
-		Utilities::setDoubleRange(b, 0.0, 1.0);
+		// double r = pixelColor.getRed();
+		// Utilities::setDoubleRange(r, 0.0, 1.0);
+		// double g = pixelColor.getGreen();
+		// Utilities::setDoubleRange(g, 0.0, 1.0);
+		// double b = pixelColor.getBlue();
+		// Utilities::setDoubleRange(b, 0.0, 1.0);
 
-		this->_pixelArray[(index * 3)] = (unsigned char)(r * 255.0);
-		this->_pixelArray[(index * 3) + 1] = (unsigned char)(g * 255.0);
-		this->_pixelArray[(index * 3) + 2] = (unsigned char)(b * 255.0);
+		// this->_pixelArray[(index * 3) + 0] = (unsigned char)(r * 255.0);
+		// this->_pixelArray[(index * 3) + 1] = (unsigned char)(g * 255.0);
+		// this->_pixelArray[(index * 3) + 2] = (unsigned char)(b * 255.0);
+
+		this->_pixelArray[(index * 3) + 0] = pixelColor.getRed();
+		this->_pixelArray[(index * 3) + 1] = pixelColor.getGreen();
+		this->_pixelArray[(index * 3) + 2] = pixelColor.getBlue();
 	}
 }
 
 // Returns the pixel array
-unsigned char*	Scene::getPixelArray(void) const
+double*	Scene::getPixelArray(void) const
 {
 	return (this->_pixelArray);
 }
