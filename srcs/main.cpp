@@ -32,7 +32,7 @@ int	main(int argc, char *argv[])
 		scene.setMaxLightBounces(24);
 		scene.setGammaCorrected(true);
 		scene.setRenderSky(SKY_ATMOSPHERE);
-		scene.setDistanceBlueness(true);
+		scene.setDistanceBlueness(false);
 		scene.setAtmosphere(Atmosphere(0.28, D_EARTH_RADIUS, D_ATMOSPHERE_RADIUS, D_HR, D_HM, 64, 24, 0.468)); // Only needed if Scene.Sky == SKY_ATMOSPHERE
 		//scene.setBackgroundColor(Color(1.0, 1.0, 1.0)); // Only needed if Scene.Sky == SKY_NONE
 
