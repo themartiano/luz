@@ -196,17 +196,6 @@ void	Scene::setPixelArray(int index, Color pixelColor)
 	// Check if index is in range. (x res * y res * RGB for each pixel)
 	if (index < this->_xResolution * this->_yResolution * 3)
 	{
-		// double r = pixelColor.getRed();
-		// Utilities::setDoubleRange(r, 0.0, 1.0);
-		// double g = pixelColor.getGreen();
-		// Utilities::setDoubleRange(g, 0.0, 1.0);
-		// double b = pixelColor.getBlue();
-		// Utilities::setDoubleRange(b, 0.0, 1.0);
-
-		// this->_pixelArray[(index * 3) + 0] = (unsigned char)(r * 255.0);
-		// this->_pixelArray[(index * 3) + 1] = (unsigned char)(g * 255.0);
-		// this->_pixelArray[(index * 3) + 2] = (unsigned char)(b * 255.0);
-
 		this->_pixelArray[(index * 3) + 0] = pixelColor.getRed();
 		this->_pixelArray[(index * 3) + 1] = pixelColor.getGreen();
 		this->_pixelArray[(index * 3) + 2] = pixelColor.getBlue();

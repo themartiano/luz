@@ -18,6 +18,9 @@ class	Sphere : public Hittable
 		void				setMaterial(Material material);
 		virtual bool		hit(Ray& ray, double t_max) const override;
 		virtual bool		createBoundingBox(AABB& outputBoundingBox) const override;
+		virtual double  	pdfValue(const Vector3& origin, const Vector3& vec) const override;
+		virtual Vector3 	random(const Vector3& origin) const override;
+		Vector3				randomToSphere(double distanceSquared) const;
 
 	private:
 		Vector3		_position;

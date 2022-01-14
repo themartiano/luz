@@ -8,6 +8,7 @@
 #include "Forms/Plane.hpp"
 #include "Forms/Sphere.hpp"
 #include "Forms/Mesh.hpp"
+#include "Forms/Rectangle.hpp"
 #include "Utilities.hpp"
 #include "Defaults.hpp"
 #include "ImageFiles/Types.hpp"
@@ -26,55 +27,45 @@ int	main(int argc, char *argv[])
 	}
 	else
 	{
-		scene.setXResolution(256);
-		scene.setYResolution(256);
-		scene.setSampleCount(10);
+		scene.setXResolution(828);
+		scene.setYResolution(1792);
+		scene.setSampleCount(1);
 		scene.setMaxLightBounces(24);
 		scene.setGammaCorrected(true);
 		scene.setRenderSky(SKY_NONE);
 		scene.setDistanceBlueness(false);
 		//scene.setAtmosphere(Atmosphere(0.28, D_EARTH_RADIUS, D_ATMOSPHERE_RADIUS, D_HR, D_HM, 64, 24, 0.468)); // Only needed if Scene.Sky == SKY_ATMOSPHERE
-		scene.setBackgroundColor(Color(1.0, 1.0, 1.0)); // Only needed if Scene.Sky == SKY_NONE
+		scene.setBackgroundColor(Color(0.0, 0.0, 0.0)); // Only needed if Scene.Sky == SKY_NONE
 
 		// Coordinate system ~~ Right Hand ~~ Forward: -Z | Up: +Y | Right: +X
 
-		//scene.addCamera(Camera(Vector3(5.0, 0.0, 0.0), Vector3(-1.0, 0.0, 0.0), 65, 0.0, 1.0));
-		scene.addCamera(Camera(Vector3(0.0, 0.0, 5.0), Vector3(0.0, 0.0, -1.0), 65, 0.0, 1.0));
-
-		// Mesh mesh = readObj("objects/blender_cube.obj");
-		// scene.addHittable(std::make_shared<Mesh>(mesh));
+		//scene.addCamera(Camera(Vector3(0.0, 5.0, 0.0), Vector3(0.0, -1.0, -T_MIN), 65, 0.0, 1.0));
+		scene.addCamera(Camera(Vector3(0.0, 1.0, 5.0), Vector3(0.0, 0.0, -1.0), 65, 0.0, 1.0));
 
 		scene.addHittable(std::make_shared<Plane>(
-			-1.0,
+			0.0,
 			Vector3(0.0, 1.0, 0.0),
 			Material(Color(0.6, 0.6, 0.6), 1.0, 0.0, 0.5, 0.0, false, false, 0.0)
 		));
 
-		// scene.addHittable(std::make_shared<Triangle>(
-		// 	Vector3(1, 0, 0),
-		// 	Vector3(0, 1, 0),
-		// 	Vector3(0, 0, 0),
-		// 	Material(Color(0.6, 1.0, 0.6), 1.0, 0.0, 0.5, 0.0, false, false, 0.0)
-		// ));
-
-		// scene.addHittable(std::make_shared<Triangle>(
-		// 	Vector3(0, 0, 0),
-		// 	Vector3(0, 1, 0),
-		// 	Vector3(1, 0, 0),
-		// 	Material(Color(0.6, 0.6, 1.0), 1.0, 0.0, 0.5, 0.0, false, false, 0.0)
-		// ));
-
 		scene.addHittable(std::make_shared<Sphere>(
-			Vector3(1, 1, 1),
-			2,
-			Material(Color(0.6, 0.6, 1.0), 1.0, 0.0, 0.5, 0.0, false, false, 0.0)
+			Vector3(0.0, 1.0, 0.0),
+			1.0,
+			Material(Color(1.0, 1.0, 1.0), 1.0, 0.0, 0.5, 0.0, true, false, 0.0)
+		));
+
+		scene.addHittable(std::make_shared<Rectangle>(
+			Transform(Vector3(0.0, 1.0, -8.0), Vector3(0.0, 0.0, 1.0), Vector3(1.0, 1.0, 1.0)),
+			10.0,
+			10.0,
+			Material(Color(1.0, 1.0, 1.0), 1.0, 0.0, 0.5, 0.0, false, true, 20.0)
 		));
 	}
 
 	if (Renderer::render(scene))
 	{
 		// Writes render image file
-		scene.saveRenderToFile("render", TIFF_FILE);
+		scene.saveRenderToFile("render", BMP_FILE);
 	}
 
 	return (0);
