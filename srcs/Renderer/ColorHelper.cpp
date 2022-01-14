@@ -89,7 +89,7 @@ Color	Renderer::internal::_calculateLightRaysColor(Ray& ray, Scene& scene, int b
 	}
 
 	double	pdfValue;
-	Ray scattered;
+	Ray		scattered;
 	if (lightCount > 0)
 	{
 		std::shared_ptr<HittablePDF> lightPDF = std::make_shared<HittablePDF>(lights, hitRecord.position);
@@ -102,6 +102,11 @@ Color	Renderer::internal::_calculateLightRaysColor(Ray& ray, Scene& scene, int b
 		std::shared_ptr<PDF> pdf = scatterRecord.pdfPtr;
 		scattered = Ray(hitRecord.position, pdf->generate());
 		pdfValue = pdf->value(scattered.getDirection());
+	}
+
+	if (pdfValue < 0.5) // Clamping to fix fireflies
+	{
+		pdfValue = 0.5;
 	}
 
 	return (emitted + scatterRecord.attenuation * hitRecord.material->scatteringPDF(scattered, hitRecord) * _calculateLightRaysColor(scattered, scene, bounces + 1) / pdfValue);

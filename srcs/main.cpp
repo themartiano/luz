@@ -8,6 +8,7 @@
 #include "Forms/Sphere.hpp"
 #include "Forms/Mesh.hpp"
 #include "Forms/Rectangle.hpp"
+#include "Forms/Cube.hpp"
 #include "Utilities.hpp"
 #include "Defaults.hpp"
 #include "ImageFiles/Types.hpp"
@@ -30,10 +31,10 @@ int	main(int argc, char *argv[])
 	}
 	else
 	{
-		scene.setXResolution(500);
-		scene.setYResolution(500);
-		scene.setSampleCount(10);
-		scene.setMaxLightBounces(24);
+		scene.setYResolution(1792);
+		scene.setXResolution(828);
+		scene.setSampleCount(2121);
+		scene.setMaxLightBounces(32);
 		scene.setGammaCorrected(true);
 		scene.setRenderSky(SKY_NONE);
 		scene.setDistanceBlueness(false);
@@ -42,7 +43,7 @@ int	main(int argc, char *argv[])
 
 		// Coordinate system ~~ Right Hand ~~ Forward: -Z | Up: +Y | Right: +X
 
-		scene.addCamera(Camera(Vector3(0.0, 5.0, 0.0), Vector3(0.0, -1.0, -T_MIN), 65, 0.0, 1.0));
+		scene.addCamera(Camera(Vector3(0.0, 5.0, 0.0), Vector3(0.0, -1.0, -T_MIN), 65, 0.0, 3.999));
 		//scene.addCamera(Camera(Vector3(0.0, 1.0, 5.0), Vector3(0.0, 0.0, -1.0), 65, 0.0, 1.0));
 
 		scene.addHittable(std::make_shared<Plane>(
@@ -52,16 +53,23 @@ int	main(int argc, char *argv[])
 		));
 
 		scene.addHittable(std::make_shared<Sphere>(
-			Vector3(0.0, 1.0, 0.0),
+			Vector3(0.0, 1.001, 0.21),
 			1.0,
-			std::make_shared<Dielectric>(Color(0.0, 0.8, 0.2))
+			std::make_shared<Dielectric>(Color(0.5, 0.6, 0.4))
 		));
 
 		scene.addHittable(std::make_shared<Rectangle>(
-			Transform(Vector3(0.0, 1.0, -8.0), Vector3(0.0, 0.0, 1.0), Vector3(1.0, 1.0, 1.0)),
-			10.0,
-			10.0,
-			std::make_shared<Emissive>(Color(1.0, 1.0, 1.0), 3.0)
+			Transform(Vector3(1.5, 1.0, -4.5), Vector3(-0.5, 0.0, 1.2), Vector3(1.0, 1.0, 1.0)),
+			4.2,
+			2.0,
+			std::make_shared<Emissive>(Color(1.0, 1.0, 1.0), 5.0)
+		));
+
+		scene.addHittable(std::make_shared<Rectangle>(
+			Transform(Vector3(-1.5, 1.0, -4.5), Vector3(0.5, 0.0, 1.2), Vector3(1.0, 1.0, 1.0)),
+			4.2,
+			2.0,
+			std::make_shared<Metal>(Color(1.0, 1.0, 1.0), 0.05)
 		));
 	}
 

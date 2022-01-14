@@ -103,6 +103,7 @@ static void	parseObjFile(Mesh& mesh, std::ifstream& stream, Vector3 positionOffs
 				vertices[positions[1] - 1] + positionOffset,
 				vertices[positions[2] - 1] + positionOffset,
 				//Material(Color(Utilities::randomDouble(), Utilities::randomDouble(), Utilities::randomDouble()), 1.0, 0.0, 0.5, 0.0, false, false, 0.0)
+				//std::make_shared<Dielectric>(Color(0.8, 0.8, 0.8))
 				std::make_shared<Lambertian>(Color(0.3, 0.3, 0.3))
 			));
 		}
