@@ -2,9 +2,9 @@
 
 #include "Hittable.hpp"
 #include "Vector3.hpp"
-#include "Ray.hpp"
+#include "Ray/Ray.hpp"
 #include "AABB.hpp"
-#include "Material.hpp"
+#include "Materials/Material.hpp"
 
 class   Triangle : public Hittable
 {

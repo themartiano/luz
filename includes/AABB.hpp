@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Vector3.hpp"
-#include "Ray.hpp"
+#include "Ray/Ray.hpp"
 
 class   AABB
 {

@@ -2,7 +2,7 @@
 
 #include "Hittable.hpp"
 #include "Vector3.hpp"
-#include "Material.hpp"
+#include "Materials/Material.hpp"
 #include "AABB.hpp"
 #include "Transform.hpp"
 

@@ -68,25 +68,17 @@ Vector3 Utilities::randomPointInsideUnitDisk(void)
 // Returns the reflected Vector3 of 'vector' using 'normal' in the calculation
 Vector3	Utilities::reflect(Vector3 vector, Vector3 normal)
 {
-	return (vector - (normal * (2.0 * Utilities::dot(vector, normal))));
+	return (vector - 2.0 * dot(vector, normal) * normal);
 }
 
 // If refraction is possible on 'vector' taking 'normal' and 'refractiveIndex' into account, sets 'refractedVector' to the new Vector3 and returns TRUE. Otherwise, returns FALSE
-bool	Utilities::refract(Vector3 vector, Vector3 normal, double refractiveIndex, Vector3& refractedVector)
+Vector3	Utilities::refract(Vector3 vector, Vector3 normal, double refractiveIndex)
 {
-	vector = Utilities::normalize(vector);
+	double	cosTheta = fmin(dot(vector * -1.0, normal), 1.0);
+	Vector3	perpendicularRefract = refractiveIndex * (vector + cosTheta * normal);
+	Vector3	parallelRefract = -sqrt(fabs(1.0 - Utilities::vectorLengthSquared(perpendicularRefract))) * normal;
 
-	double	dt = Utilities::dot(vector, normal);
-	double	discriminant = 1.0 - refractiveIndex * refractiveIndex * (1.0 - dt * dt);
-	if (discriminant > 0.0)
-	{
-		refractedVector = ((vector - normal * dt) * refractiveIndex) - normal * sqrt(discriminant);
-		return (true);
-	}
-	else
-	{
-		return (false);
-	}
+	return (perpendicularRefract + parallelRefract);
 }
 
 // Christophe Schlick's formula for approximating the contribution of the Fresnel factor in the specular reflection of light from a non-conducting interface (surface) between two media

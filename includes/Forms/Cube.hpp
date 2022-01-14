@@ -3,7 +3,7 @@
 #include "Hittable.hpp"
 #include "Rectangle.hpp"
 #include "Transform.hpp"
-#include "Material.hpp"
+#include "Materials/Material.hpp"
 #include <vector>
 
 class   Cube : public Hittable
