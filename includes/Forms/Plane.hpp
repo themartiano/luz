@@ -13,7 +13,7 @@ class   Plane : public Hittable
 		void			setOrientation(Vector3 orientation);
 		virtual std::shared_ptr<Material> getMaterial(void) const override;
 		void			setMaterial(std::shared_ptr<Material> material);
-		virtual bool	hit(Ray& ray, double t_max) const override;
+		virtual bool	hit(Ray& ray, HitRecord& hitRecord, double t_max) const override;
 		virtual bool	createBoundingBox(AABB& boundingBox) const override;
 
 	private:

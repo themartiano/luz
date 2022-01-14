@@ -65,7 +65,7 @@ void	Rectangle::setHeight(double height)
 }
 
 // Calculates if the Rectangle is hit by 'ray', is closer than 't_max' and farther than T_MIN
-bool	Rectangle::hit(Ray& ray, double t_max) const
+bool	Rectangle::hit(Ray& ray, HitRecord& hitRecord, double t_max) const
 {
 	double a = Utilities::dot(ray.getOrigin() - this->_transform.getPosition(), this->_transform.getOrientation());
 	double b = Utilities::dot(ray.getDirection(), this->_transform.getOrientation());
@@ -103,10 +103,10 @@ bool	Rectangle::hit(Ray& ray, double t_max) const
 		}
 	}
 
-	ray.hitRecord.t0 = t;
-	ray.hitRecord.normal = this->_transform.getOrientation();
-	ray.hitRecord.material = this->_material;
-	ray.hitRecord.position = ray.pointAtRay(t);
+	hitRecord.t0 = t;
+	hitRecord.normal = this->_transform.getOrientation();
+	hitRecord.material = this->_material;
+	hitRecord.position = ray.pointAtRay(t);
 
 	return (true);
 }
@@ -125,14 +125,15 @@ bool	Rectangle::createBoundingBox(AABB& outputBoundingBox) const
 double  Rectangle::pdfValue(const Vector3& origin, const Vector3& vec) const
 {
 	Ray ray(origin, vec);
-	if (!this->hit(ray, T_MAX))
+	HitRecord	hitRecord;
+	if (!this->hit(ray, hitRecord, T_MAX))
 	{
 		return (0.0);
 	}
 
 	double area = this->_height * this->_width;
-	double distanceSquared = ray.hitRecord.t0 * ray.hitRecord.t0 * Utilities::vectorLengthSquared(vec);
-	double cosine = fabs(Utilities::dot(vec, ray.hitRecord.normal) / Utilities::vectorLength(vec));
+	double distanceSquared = hitRecord.t0 * hitRecord.t0 * Utilities::vectorLengthSquared(vec);
+	double cosine = fabs(Utilities::dot(vec, hitRecord.normal) / Utilities::vectorLength(vec));
 
 	return (distanceSquared / (cosine * area));
 }

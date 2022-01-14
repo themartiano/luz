@@ -165,14 +165,6 @@ void	Utilities::toLower(std::string& str)
 	});
 }
 
-// Calculates the PDF (Probability Density Function) for scattering
-double	Utilities::scatteringPDF(const Ray& ray, const Ray& scatteredRay)
-{
-	double cosine = Utilities::dot(ray.hitRecord.normal, Utilities::normalize(scatteredRay.getDirection()));
-
-	return ((cosine <= 0.0) ? 0.0 : cosine / D_PI);
-}
-
 // Generates uniform random directions
 Vector3	Utilities::randomCosineDirection(void)
 {

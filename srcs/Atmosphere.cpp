@@ -120,7 +120,7 @@ void	Atmosphere::updateSunDirectionVector(void)
 }
 
 // (Sphere) Hit function for planets and atmospheres (sets both t0 and t1 on the Hit Record). Returns true if hit occurs, false otherwise
-bool planetaryHit(double radius, Ray& ray)
+bool planetaryHit(double radius, Ray& ray, HitRecord& hitRecord)
 {
 	double a = Utilities::dot(ray.getDirection(), ray.getDirection());
 	double b = 2.0 * Utilities::dot(ray.getDirection(), ray.getOrigin());
@@ -133,12 +133,12 @@ bool planetaryHit(double radius, Ray& ray)
 			return (false);
 		}
 
-		ray.hitRecord.t0 = 0.0;
-		ray.hitRecord.t1 = std::sqrt(-c / a);
+		hitRecord.t0 = 0.0;
+		hitRecord.t1 = std::sqrt(-c / a);
 
-		if (ray.hitRecord.t0 > ray.hitRecord.t1)
+		if (hitRecord.t0 > hitRecord.t1)
 		{
-			std::swap(ray.hitRecord.t0, ray.hitRecord.t1);
+			std::swap(hitRecord.t0, hitRecord.t1);
 		}
 
 		return (true);
@@ -151,33 +151,33 @@ bool planetaryHit(double radius, Ray& ray)
 	}
 
 	double q = (b < 0.0) ? -0.5 * (b - std::sqrt(discriminant)) : -0.5 * (b + std::sqrt(discriminant));
-	ray.hitRecord.t0 = q / a;
-	ray.hitRecord.t1 = c / q;
+	hitRecord.t0 = q / a;
+	hitRecord.t1 = c / q;
 
-	if (ray.hitRecord.t0 > ray.hitRecord.t1)
+	if (hitRecord.t0 > hitRecord.t1)
 	{
-		std::swap(ray.hitRecord.t0, ray.hitRecord.t1);
+		std::swap(hitRecord.t0, hitRecord.t1);
 	}
 
 	return (true);
 }
 
 // Returns the sky color for 'ray'
-Color   Atmosphere::computeIncidentLight(Ray& ray, double t_max)
+Color   Atmosphere::computeIncidentLight(Ray& ray, HitRecord& hitRecord, double t_max)
 {
 	double  t_min = T_MIN;
 
-	if (!planetaryHit(this->_atmosphereRadius, ray) || ray.hitRecord.t1 < 0.0)
+	if (!planetaryHit(this->_atmosphereRadius, ray, hitRecord) || hitRecord.t1 < 0.0)
 	{
 		return (Color(0.0, 0.0, 0.0));
 	}
-	if (ray.hitRecord.t0 > T_MIN && ray.hitRecord.t0 > 0.0)
+	if (hitRecord.t0 > T_MIN && hitRecord.t0 > 0.0)
 	{
-		t_min = ray.hitRecord.t0;
+		t_min = hitRecord.t0;
 	}
-	if (ray.hitRecord.t1 < t_max)
+	if (hitRecord.t1 < t_max)
 	{
-		t_max = ray.hitRecord.t1;
+		t_max = hitRecord.t1;
 	}
 
 	double  segmentLength = (t_max - t_min) / this->_samples;
@@ -203,8 +203,9 @@ Color   Atmosphere::computeIncidentLight(Ray& ray, double t_max)
 		transmittanceR += hR;
 		transmittanceM += hM;
 		Ray ray2(samplePosition, this->_sunDirection);
-		planetaryHit(this->_atmosphereRadius, ray2);
-		double  segmentLengthLight = ray2.hitRecord.t1 / this->_lightSamples;
+		HitRecord hitRecord2;
+		planetaryHit(this->_atmosphereRadius, ray2, hitRecord2);
+		double  segmentLengthLight = hitRecord2.t1 / this->_lightSamples;
 		double  tCurrentLight = 0.0;
 		double  transmittanceLightR = 0.0;
 		double  transmittanceLightM = 0.0;

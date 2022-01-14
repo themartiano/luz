@@ -2,6 +2,8 @@
 
 #include "Vector3.hpp"
 #include "Ray/Ray.hpp"
+#include "Color.hpp"
+#include "Hittable.hpp"
 
 class   Atmosphere
 {
@@ -13,7 +15,7 @@ class   Atmosphere
 		double  getEarthRadius(void) const;
 		double  getAtmosphereRadius(void) const;
 		double  getStarsBrightness(void) const;
-		Color   computeIncidentLight(Ray& ray, double t_max);
+		Color   computeIncidentLight(Ray& ray, HitRecord& hitRecord, double t_max);
 		double  getSunAngle(void) const;
 		void	setSunAngle(double newAngle);
 		void	setEarthRadius(double earthRadius);
@@ -37,4 +39,4 @@ class   Atmosphere
 		void	updateSunDirectionVector(void);
 };
 
-bool planetaryHit(double radius, Ray& ray);
+bool planetaryHit(double radius, Ray& ray, HitRecord& hitRecord);

@@ -2,6 +2,7 @@
 
 #include "Vector3.hpp"
 #include "Scene.hpp"
+#include "Hittable.hpp"
 #include <string>
 
 namespace Utilities
@@ -21,7 +22,6 @@ namespace Utilities
 	bool	createMainBoundingBox(Scene& scene, AABB& newBoundingBox);
 	AABB	mergeBoundingBoxes(AABB boundingBox1, AABB boundingBox2);
 	void	toLower(std::string& str);
-	double  scatteringPDF(const Ray& ray, const Ray& scatteredRay);
 	Vector3 randomCosineDirection(void);
 	bool	stringEndsWith(std::string str, std::string ending);
 	double	randomDouble(void);

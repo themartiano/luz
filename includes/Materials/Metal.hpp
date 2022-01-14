@@ -7,7 +7,7 @@ class	Metal : public Material
 		Metal(Color color);
 		Metal(double reflectionFuzziness);
 		Metal(Color color, double reflectionFuzziness);
-		bool	scatter(Ray& ray);
+		bool	scatter(Ray& ray, HitRecord& hitRecord, ScatterRecord& scatterRecord);
 		MaterialType	getType(void) const;
 
 	private:

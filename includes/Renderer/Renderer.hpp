@@ -14,7 +14,7 @@ namespace	Renderer
 	{
 		void	_threadRender(Scene& scene, int x, int y);
 		Color	_calculatePixelColor(Scene& scene, int x, int y);
-		bool	_checkHits(Scene& scene, Ray& ray);
+		bool	_checkHits(Scene& scene, Ray& ray, HitRecord& hitRecord);
 		Color	_calculateLightRaysColor(Ray& ray, Scene& scene, int bounces);
 		Color	_computeAtmosphereColor(Scene& scene, Ray& ray);
 		Color	_calculateSkyInterpolation(Scene& scene, Ray& ray);

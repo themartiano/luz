@@ -48,7 +48,7 @@ void	Plane::setMaterial(std::shared_ptr<Material> material)
 }
 
 // Calculates if the Plane is hit by 'ray', is closer than 't_max' and farther than T_MIN
-bool	Plane::hit(Ray& ray, double t_max) const
+bool	Plane::hit(Ray& ray, HitRecord& hitRecord, double t_max) const
 {
 	Vector3 position(0.0, this->_y, 0.0);
 
@@ -64,10 +64,10 @@ bool	Plane::hit(Ray& ray, double t_max) const
 		return (false);
 	}
 
-	ray.hitRecord.t0 = t;
-	ray.hitRecord.normal = this->_orientation;
-	ray.hitRecord.material = this->_material;
-	ray.hitRecord.position = ray.pointAtRay(t);
+	hitRecord.t0 = t;
+	hitRecord.normal = this->_orientation;
+	hitRecord.material = this->_material;
+	hitRecord.position = ray.pointAtRay(t);
 
 	return (true);
 }

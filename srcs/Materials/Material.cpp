@@ -28,10 +28,12 @@ void	Material::setColor(Color color)
 	this->_color = color;
 }
 
-bool	Material::scatter(Ray& ray)
+bool	Material::scatter(Ray& ray, HitRecord& hitRecord, ScatterRecord& scatterRecord)
 {
 	return (false);
 	(void)ray;
+	(void)hitRecord;
+	(void)scatterRecord;
 }
 
 Color	Material::emitted(void)
@@ -39,10 +41,11 @@ Color	Material::emitted(void)
 	return (Color(0.0, 0.0, 0.0));
 }
 
-double	Material::scatteringPDF(Ray& ray)
+double	Material::scatteringPDF(Ray& ray, HitRecord& hitRecord)
 {
 	return (0.0);
 	(void)ray;
+	(void)hitRecord;
 }
 
 MaterialType	Material::getType(void) const

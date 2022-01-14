@@ -7,16 +7,17 @@ Color	Renderer::internal::_computeAtmosphereColor(Scene& scene, Ray& ray)
 {
 	// If the Earth radius is not added, the origin will be inside the Earth
 	Ray atmosphereRay(ray.getOrigin(), Utilities::normalize(ray.getDirection()));
+	HitRecord atmosphereHitRecord;
 
 	double t_max = T_MAX;
 
 	// Checks ray collisions with Earth
-	if (planetaryHit(scene.getAtmosphere().getEarthRadius(), atmosphereRay) && atmosphereRay.hitRecord.t1 > 0.0)
+	if (planetaryHit(scene.getAtmosphere().getEarthRadius(), atmosphereRay, atmosphereHitRecord) && atmosphereHitRecord.t1 > 0.0)
 	{
-		t_max = std::max(0.0, atmosphereRay.hitRecord.t0);
+		t_max = std::max(0.0, atmosphereHitRecord.t0);
 	}
 
-	Color atmosphereColor = scene.getAtmosphere().computeIncidentLight(atmosphereRay, t_max);
+	Color atmosphereColor = scene.getAtmosphere().computeIncidentLight(atmosphereRay, atmosphereHitRecord, t_max);
 
 	double random = Utilities::randomDouble(0.0, 1.0);
 	if (random >= 0.9996)

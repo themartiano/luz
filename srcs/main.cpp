@@ -13,6 +13,7 @@
 #include "ImageFiles/Types.hpp"
 #include "Materials/Lambertian.hpp"
 #include "Materials/Emissive.hpp"
+#include "Materials/Dielectric.hpp"
 
 // Main function
 int	main(int argc, char *argv[])
@@ -52,7 +53,7 @@ int	main(int argc, char *argv[])
 		scene.addHittable(std::make_shared<Sphere>(
 			Vector3(0.0, 1.0, 0.0),
 			1.0,
-			std::make_shared<Lambertian>(Color(1.0, 1.0, 1.0))
+			std::make_shared<Dielectric>(Color(1.0, 1.0, 1.0))
 		));
 
 		scene.addHittable(std::make_shared<Rectangle>(

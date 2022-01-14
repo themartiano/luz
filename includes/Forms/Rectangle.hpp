@@ -17,7 +17,7 @@ class   Rectangle : public Hittable
 		void			setMaterial(std::shared_ptr<Material> material);
 		void			setWidth(double width);
 		void			setHeight(double height);
-		virtual bool	hit(Ray& ray, double t_max) const override;
+		virtual bool	hit(Ray& ray, HitRecord& hitRecord, double t_max) const override;
 		virtual bool	createBoundingBox(AABB& outputBoundingBox) const override;
 		virtual double  pdfValue(const Vector3& origin, const Vector3& vec) const override;
 		virtual Vector3 random(const Vector3& origin) const override;
