@@ -8,6 +8,7 @@
 // Static function prototypes
 static unsigned char*	createBitmapFileHeader(int height, int stride);
 static unsigned char*	createBitmapInfoHeader(int height, int width);
+static unsigned char*	generateNewPixelArray(Scene& scene);
 
 BMP::BMP(void)
 {
@@ -48,10 +49,14 @@ void	BMP::writeFile(Scene& scene, bool insideDir, std::string dirName)
 	fwrite(fileHeader, 1, 14, imageFile);
 	fwrite(infoHeader, 1, 40, imageFile);
 
+	unsigned char*	newPixelArray = generateNewPixelArray(scene);
+
 	for (int i = scene.getYResolution() - 1; i >= 0; i--) {
-		//fwrite(scene.getPixelArray() + (i * scene.getXResolution() * 3), 3, scene.getXResolution(), imageFile);
+		fwrite(newPixelArray + (i * scene.getXResolution() * 3), 3, scene.getXResolution(), imageFile);
 		fwrite(padding, 1, paddingSize, imageFile);
 	}
+
+	delete[] newPixelArray;
 
 	fclose(imageFile);
 	std::cout << CLR_GREEN_BRIGHT << "File ready.\n\n" << CLR_RESET;
@@ -61,6 +66,27 @@ void	BMP::writeFile(Scene& scene, bool insideDir, std::string dirName)
 void	BMP::writeFile(Scene& scene)
 {
 	writeFile(scene, false, "");
+}
+
+static unsigned char*	generateNewPixelArray(Scene& scene)
+{
+	unsigned char* newPixelArray = new unsigned char[scene.getXResolution() * scene.getYResolution() * 3];
+
+	for (int i = 0; i < scene.getXResolution() * scene.getYResolution(); i++)
+	{
+		double r = scene.getPixelArray()[(i * 3) + 0];
+		Utilities::setDoubleRange(r, 0.0, 1.0);
+		double g = scene.getPixelArray()[(i * 3) + 1];
+		Utilities::setDoubleRange(g, 0.0, 1.0);
+		double b = scene.getPixelArray()[(i * 3) + 2];
+		Utilities::setDoubleRange(b, 0.0, 1.0);
+
+		newPixelArray[(i * 3) + 2] = (unsigned char)(r * 255.0);
+		newPixelArray[(i * 3) + 1] = (unsigned char)(g * 255.0);
+		newPixelArray[(i * 3) + 0] = (unsigned char)(b * 255.0);
+	}
+
+	return (newPixelArray);
 }
 
 // Creates and returns the BMP image "file header"
