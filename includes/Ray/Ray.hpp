@@ -1,17 +1,14 @@
 #pragma once
 
 #include "Vector3.hpp"
-#include "Material.hpp"
+#include "Materials/Material.hpp"
+#include "PDFs/PDF.hpp"
+#include "Ray/HitRecord.hpp"
+#include "Ray/ScatterRecord.hpp"
+#include <memory>
 
-struct HitRecord
-{
-	double	  t0 = 0.0;
-	double	  t1 = 0.0;
-	Vector3	 position = Vector3(0.0, 0.0, 0.0);
-	Vector3	 normal = Vector3(0.0, 0.0, 0.0);
-	Material	material = Material();
-};
-
+class	Material;
+struct	ScatterRecord;
 
 class   Ray
 {
@@ -23,7 +20,8 @@ class   Ray
 		void	setOrigin(Vector3 origin);
 		Vector3 getDirection(void) const;
 		void	setDirection(Vector3 direction);
-		struct HitRecord	hitRecord;
+		struct HitRecord		hitRecord;
+		struct ScatterRecord	scatterRecord;
 
 	private:
 		Vector3 _origin;

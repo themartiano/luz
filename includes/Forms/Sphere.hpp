@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Material.hpp"
+#include "Materials/Material.hpp"
 #include "AABB.hpp"
 #include "Hittable.hpp"
 #include "Vector3.hpp"

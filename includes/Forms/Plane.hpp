@@ -2,7 +2,7 @@
 
 #include "Hittable.hpp"
 #include "Vector3.hpp"
-#include "Material.hpp"
+#include "Materials/Material.hpp"
 
 class   Plane : public Hittable
 {

@@ -3,7 +3,7 @@
 #include "ANSIColors.hpp"
 #include "SceneFile.hpp"
 #include "OBJReader.hpp"
-#include "Material.hpp"
+#include "Materials/Material.hpp"
 #include "Forms/Triangle.hpp"
 #include "Forms/Plane.hpp"
 #include "Forms/Sphere.hpp"

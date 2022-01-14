@@ -1,8 +1,8 @@
 #pragma once
 
 #include "AABB.hpp"
-#include "Material.hpp"
-#include "Ray.hpp"
+#include "Materials/Material.hpp"
+#include "Ray/Ray.hpp"
 #include "Vector3.hpp"
 
 class   Hittable

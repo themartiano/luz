@@ -1,4 +1,4 @@
-#include "Ray.hpp"
+#include "Ray/Ray.hpp"
 #include "Scene.hpp"
 #include "Utilities.hpp"
 #include <cmath>
