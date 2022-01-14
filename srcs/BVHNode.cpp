@@ -107,7 +107,7 @@ bool	BVHNode::hit(Ray& ray, double t_max) const
 
 	if (RENDER_AABB)
 	{
-		ray.hitRecord.material = std::make_unique<Lambertian>();
+		ray.hitRecord.material = std::make_shared<Lambertian>();
 
 		return (true);
 	}
@@ -128,7 +128,7 @@ bool	BVHNode::createBoundingBox(AABB& outputBoundingBox) const
 }
 
 // Returns an empty Material (this function only exists because it must be implemented since the Hittable class has it)
-Material	BVHNode::getMaterial(void) const
+std::shared_ptr<Material>	BVHNode::getMaterial(void) const
 {
-	return (Lambertian());
+	return (std::make_shared<Lambertian>());
 }

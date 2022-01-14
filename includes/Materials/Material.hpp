@@ -15,8 +15,9 @@ class	Material
 		Color	getColor(void) const;
 		void	setColor(Color color);
 		virtual bool	scatter(Ray& ray);
-
-		MaterialType	type = BASIC;
+		virtual Color	emitted(void);
+		virtual double	scatteringPDF(Ray& ray);
+		virtual MaterialType	getType(void) const;
 
 	protected:
 		Color	_color;

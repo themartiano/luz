@@ -28,7 +28,24 @@ void	Material::setColor(Color color)
 	this->_color = color;
 }
 
-bool	scatter(Ray& ray)
+bool	Material::scatter(Ray& ray)
 {
 	return (false);
+	(void)ray;
+}
+
+Color	Material::emitted(void)
+{
+	return (Color(0.0, 0.0, 0.0));
+}
+
+double	Material::scatteringPDF(Ray& ray)
+{
+	return (0.0);
+	(void)ray;
+}
+
+MaterialType	Material::getType(void) const
+{
+	return (BASIC);
 }

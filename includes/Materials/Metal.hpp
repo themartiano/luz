@@ -7,9 +7,8 @@ class	Metal : public Material
 		Metal(Color color);
 		Metal(double reflectionFuzziness);
 		Metal(Color color, double reflectionFuzziness);
-		virtual bool	scatter(Ray& ray);
-
-		MaterialType	type = METAL;
+		bool	scatter(Ray& ray);
+		MaterialType	getType(void) const;
 
 	private:
 		double	_reflectionFuzziness;

@@ -22,7 +22,7 @@ Emissive::Emissive(Color color, double intensity)
 	this->_intensity = intensity;
 }
 
-Color	Emissive::emitted(Ray& ray)
+Color	Emissive::emitted(void)
 {
 	return (this->_color * this->_intensity);
 }
@@ -30,4 +30,9 @@ Color	Emissive::emitted(Ray& ray)
 void	Emissive::setIntensity(double newIntensity)
 {
 	this->_intensity = newIntensity;
+}
+
+MaterialType	Emissive::getType(void) const
+{
+	return (EMISSIVE);
 }

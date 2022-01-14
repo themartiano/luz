@@ -44,3 +44,8 @@ bool	Dielectric::scatter(Ray& ray)
 
 	return (true);
 }
+
+MaterialType	Dielectric::getType(void) const
+{
+	return (DIELECTRIC);
+}

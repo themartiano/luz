@@ -250,7 +250,7 @@ void	Scene::updateLights(void)
 
 	for (std::shared_ptr<Hittable> hittable : this->_hittables)
 	{
-		if (hittable->getMaterial().type == EMISSIVE)
+		if (hittable->getMaterial()->getType() == EMISSIVE)
 		{
 			lights.push_back(hittable);
 		}

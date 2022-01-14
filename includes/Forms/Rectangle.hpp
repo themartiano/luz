@@ -11,10 +11,10 @@ class   Rectangle : public Hittable
 	public:
 		Rectangle(void);
 		Rectangle(const Rectangle& toCopy);
-		Rectangle(Transform transform, double width, double height, Material material);
+		Rectangle(Transform transform, double width, double height, std::shared_ptr<Material> material);
 		void			setTransform(Transform transform);
-		virtual Material getMaterial(void) const override;
-		void			setMaterial(Material material);
+		virtual std::shared_ptr<Material> getMaterial(void) const override;
+		void			setMaterial(std::shared_ptr<Material> material);
 		void			setWidth(double width);
 		void			setHeight(double height);
 		virtual bool	hit(Ray& ray, double t_max) const override;
@@ -24,7 +24,7 @@ class   Rectangle : public Hittable
 
 	private:
 		Transform   _transform;
-		Material	_material;
+		std::shared_ptr<Material>	_material;
 		double	  _width;
 		double	  _height;
 };

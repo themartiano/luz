@@ -53,80 +53,98 @@ Color	Renderer::internal::_calculateLightRaysColor(Ray& ray, Scene& scene, int b
 	static auto		skyType = scene.getRenderSky();
 	static Color	staticBackgroundColor = scene.getBackgroundColor();
 	static auto		lights = scene.getLights();
-	static auto		lightCount = scene.getLights().size();
-	static bool		distanceBlueness = scene.getDistanceBlueness();
+	//static auto		lightCount = scene.getLights().size();
+	//static bool		distanceBlueness = scene.getDistanceBlueness();
 
-	Color color, emitted = Color(0.0, 0.0, 0.0);
 	if (bounces > maxLightBounces)
 	{
-		return (color);
+		return (Color(0.0, 0.0, 0.0));
 	}
 
-	if (_checkHits(scene, ray))
+	if (!_checkHits(scene, ray))
 	{
-		const Ray oldRay = ray;
-
-		ray.setOrigin(ray.hitRecord.position);
-
-		if (ray.hitRecord.material.getIsEmissive() == true)
+		switch(skyType)
 		{
-			emitted = ray.hitRecord.material.getColor() * ray.hitRecord.material.getLightIntensity();
-			return (emitted);
+			case (SKY_ATMOSPHERE):
+				return (_computeAtmosphereColor(scene, ray));
+			case (SKY_LINEAR):
+				return (_calculateSkyInterpolation(scene, ray));
+			default:
+				return (staticBackgroundColor);
 		}
-
-		double pdfValue = 1.0;
-		if (lightCount > 0)
-		{
-			std::shared_ptr<HittablePDF> lightPDF = std::make_shared<HittablePDF>(lights, oldRay.hitRecord.position);
-			std::shared_ptr<CosinePDF> cosinePDF = std::make_shared<CosinePDF>(oldRay.hitRecord.normal);
-			MixturePDF mixturePDF(lightPDF, cosinePDF);
-
-			_calculateLightRayBounceDirection(ray, color, mixturePDF.generate());
-
-			pdfValue = mixturePDF.value(ray.getDirection());
-		}
-		else
-		{
-			CosinePDF cosinePDF(oldRay.hitRecord.normal);
-
-			_calculateLightRayBounceDirection(ray, color, cosinePDF.generate());
-
-			pdfValue = cosinePDF.value(ray.getDirection());
-		}
-
-		if (pdfValue == 0.0)
-		{
-			pdfValue = 1.0;
-		}
-
-		if (ray.hitRecord.material.getMetallic() == 1.0 && Utilities::dot(ray.getDirection(), ray.hitRecord.normal) <= 0.0)
-		{
-			return (emitted + color);
-		}
-
-		Color	blueness;
-		if (distanceBlueness)
-		{
-			blueness = Color(0.0, 0.0, 0.00001 * ray.hitRecord.t0);
-		}
-		else
-		{
-			blueness = Color(0.0, 0.0, 0.0);
-		}
-
-		return (blueness + emitted + color * Utilities::scatteringPDF(oldRay, ray) * _calculateLightRaysColor(ray, scene, bounces + 1) / pdfValue);
 	}
 
-	if (skyType == SKY_ATMOSPHERE)
+	Color emitted = ray.hitRecord.material->emitted();
+
+	if (!ray.hitRecord.material->scatter(ray))
 	{
-		return (_computeAtmosphereColor(scene, ray));
+		return (emitted);
 	}
-	else if (skyType == SKY_LINEAR)
+
+	if (ray.scatterRecord.isSpecular)
 	{
-		return (_calculateSkyInterpolation(scene, ray));
+		return (ray.scatterRecord.attenuation * _calculateLightRaysColor(ray, scene, bounces + 1));
 	}
-	else
-	{
-		return (staticBackgroundColor);
-	}
+
+	std::shared_ptr<HittablePDF> lightPDF = std::make_shared<HittablePDF>(lights, ray.hitRecord.position);
+	MixturePDF mixturePDF(lightPDF, ray.scatterRecord.pdfPtr);
+	Ray	scattered = Ray(ray.hitRecord.position, mixturePDF.generate());
+	double	pdfValue = mixturePDF.value(scattered.getDirection());
+
+	return (emitted + ray.scatterRecord.attenuation * ray.hitRecord.material->scatteringPDF(ray) * _calculateLightRaysColor(ray, scene, bounces + 1) / pdfValue);
+
+	// if (_checkHits(scene, ray))
+	// {
+	// 	const Ray oldRay = ray;
+
+	// 	ray.setOrigin(ray.hitRecord.position);
+
+	// 	if (ray.hitRecord.material.getIsEmissive() == true)
+	// 	{
+	// 		emitted = ray.hitRecord.material.getColor() * ray.hitRecord.material.getLightIntensity();
+	// 		return (emitted);
+	// 	}
+
+	// 	double pdfValue = 1.0;
+	// 	if (lightCount > 0)
+	// 	{
+	// 		std::shared_ptr<HittablePDF> lightPDF = std::make_shared<HittablePDF>(lights, oldRay.hitRecord.position);
+	// 		std::shared_ptr<CosinePDF> cosinePDF = std::make_shared<CosinePDF>(oldRay.hitRecord.normal);
+	// 		MixturePDF mixturePDF(lightPDF, cosinePDF);
+
+	// 		_calculateLightRayBounceDirection(ray, color, mixturePDF.generate());
+
+	// 		pdfValue = mixturePDF.value(ray.getDirection());
+	// 	}
+	// 	else
+	// 	{
+	// 		CosinePDF cosinePDF(oldRay.hitRecord.normal);
+
+	// 		_calculateLightRayBounceDirection(ray, color, cosinePDF.generate());
+
+	// 		pdfValue = cosinePDF.value(ray.getDirection());
+	// 	}
+
+	// 	if (pdfValue == 0.0)
+	// 	{
+	// 		pdfValue = 1.0;
+	// 	}
+
+	// 	if (ray.hitRecord.material.getMetallic() == 1.0 && Utilities::dot(ray.getDirection(), ray.hitRecord.normal) <= 0.0)
+	// 	{
+	// 		return (emitted + color);
+	// 	}
+
+	// 	Color	blueness;
+	// 	if (distanceBlueness)
+	// 	{
+	// 		blueness = Color(0.0, 0.0, 0.00001 * ray.hitRecord.t0);
+	// 	}
+	// 	else
+	// 	{
+	// 		blueness = Color(0.0, 0.0, 0.0);
+	// 	}
+
+	// 	return (blueness + emitted + color * Utilities::scatteringPDF(oldRay, ray) * _calculateLightRaysColor(ray, scene, bounces + 1) / pdfValue);
+	// }
 }

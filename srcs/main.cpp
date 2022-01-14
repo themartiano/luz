@@ -28,8 +28,8 @@ int	main(int argc, char *argv[])
 	}
 	else
 	{
-		scene.setXResolution(828);
-		scene.setYResolution(1792);
+		scene.setXResolution(500);
+		scene.setYResolution(500);
 		scene.setSampleCount(1);
 		scene.setMaxLightBounces(24);
 		scene.setGammaCorrected(true);
@@ -46,27 +46,27 @@ int	main(int argc, char *argv[])
 		scene.addHittable(std::make_shared<Plane>(
 			0.0,
 			Vector3(0.0, 1.0, 0.0),
-			Lambertian(Color(0.6, 0.6, 0.6))
+			std::make_shared<Lambertian>(Color(0.6, 0.6, 0.6))
 		));
 
 		scene.addHittable(std::make_shared<Sphere>(
 			Vector3(0.0, 1.0, 0.0),
 			1.0,
-			Lambertian(Color(1.0, 1.0, 1.0))
+			std::make_shared<Lambertian>(Color(1.0, 1.0, 1.0))
 		));
 
 		scene.addHittable(std::make_shared<Rectangle>(
 			Transform(Vector3(0.0, 1.0, -8.0), Vector3(0.0, 0.0, 1.0), Vector3(1.0, 1.0, 1.0)),
 			10.0,
 			10.0,
-			Emissive(Color(1.0, 1.0, 1.0), 20)
+			std::make_shared<Emissive>(Color(1.0, 1.0, 1.0), 20)
 		));
 	}
 
 	if (Renderer::render(scene))
 	{
 		// Writes render image file
-		scene.saveRenderToFile("render", BMP_FILE);
+		scene.saveRenderToFile(BMP_FILE);
 	}
 
 	return (0);

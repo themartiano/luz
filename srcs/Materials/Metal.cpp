@@ -32,4 +32,11 @@ bool	Metal::scatter(Ray& ray)
 	ray.scatterRecord.attenuation = this->_color;
 	ray.scatterRecord.isSpecular = true;
 	ray.scatterRecord.pdfPtr = nullptr;
+
+	return (true);
+}
+
+MaterialType	Metal::getType(void) const
+{
+	return (METAL);
 }
