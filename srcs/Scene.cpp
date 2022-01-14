@@ -5,6 +5,7 @@
 #include "ANSIColors.hpp"
 #include "ImageFiles/BMP.hpp"
 #include "ImageFiles/TIFF.hpp"
+#include "Materials/Emissive.hpp"
 #include <limits>
 
 /*
@@ -249,7 +250,7 @@ void	Scene::updateLights(void)
 
 	for (std::shared_ptr<Hittable> hittable : this->_hittables)
 	{
-		if (hittable->getMaterial().getIsEmissive())
+		if (hittable->getMaterial().type == EMISSIVE)
 		{
 			lights.push_back(hittable);
 		}

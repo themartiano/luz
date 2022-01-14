@@ -1,6 +1,7 @@
 #include "BVHNode.hpp"
 #include "Utilities.hpp"
 #include "Defaults.hpp"
+#include "Materials/Lambertian.hpp"
 #include <algorithm>
 
 // Static function prototypes
@@ -106,7 +107,7 @@ bool	BVHNode::hit(Ray& ray, double t_max) const
 
 	if (RENDER_AABB)
 	{
-		ray.hitRecord.material = Material(Color(0.0, 0.0, 0.0), 1.0, 0.0, 0.5, 0.0, false, false, 0.0);
+		ray.hitRecord.material = std::make_unique<Lambertian>();
 
 		return (true);
 	}
@@ -129,5 +130,5 @@ bool	BVHNode::createBoundingBox(AABB& outputBoundingBox) const
 // Returns an empty Material (this function only exists because it must be implemented since the Hittable class has it)
 Material	BVHNode::getMaterial(void) const
 {
-	return (Material());
+	return (Lambertian());
 }

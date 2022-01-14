@@ -3,6 +3,16 @@
 #include "RefractiveIndexes.hpp"
 #include <cmath>
 
+Dielectric::Dielectric(void)
+{
+	this->_color = Color(0.6, 0.6, 0.6);
+}
+
+Dielectric::Dielectric(Color color)
+{
+	this->_color = color;
+}
+
 bool	Dielectric::scatter(Ray& ray)
 {
 	ray.scatterRecord.isSpecular = true;

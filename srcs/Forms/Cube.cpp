@@ -1,5 +1,6 @@
 #include "Forms/Cube.hpp"
 #include "Vector3.hpp"
+#include "Materials/Lambertian.hpp"
 
 /*
 	Constructors
@@ -9,7 +10,7 @@
 Cube::Cube(void)
 {
 	this->_transform = Transform(Vector3(0.0, 0.0, 0.0), Vector3(0.0, 0.0, 1.0), Vector3(1.0, 1.0, 1.0));
-	this->_material = Material(Color(0.49, 0.49, 0.49), 1.0, 0.0, 0.5, 0.0, false, false, 0.0);
+	this->_material = Lambertian(Color(0.6, 0.6, 0.6));
 	this->_width = 1.0;
 	this->_height = 1.0;
 	this->_depth = 1.0;

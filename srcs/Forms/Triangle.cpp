@@ -1,6 +1,7 @@
 #include "Forms/Triangle.hpp"
 #include "Utilities.hpp"
 #include "Defaults.hpp"
+#include "Materials/Lambertian.hpp"
 #include <cmath>
 
 /*
@@ -13,7 +14,7 @@ Triangle::Triangle(void)
 	this->_vertex0 = Vector3(0.0, 1.0, 0.0);
 	this->_vertex1 = Vector3(-1.0, 0.0, 0.0);
 	this->_vertex2 = Vector3(1.0, 0.0, 0.0);
-	this->_material = Material(Color(0.49, 0.49, 0.49), 1.0, 0.0, 0.5, 0.0, false, false, 0.0);
+	this->_material = Lambertian(Color(0.6, 0.6, 0.6));
 }
 
 // Constructs the Triangle with custom values
@@ -96,7 +97,7 @@ bool	Triangle::hit(Ray& ray, double t_max) const
 		n = n * -1.0;
 	}
 	ray.hitRecord.normal = n;
-	ray.hitRecord.material = this->_material;
+	ray.hitRecord.material = std::make_unique<Material>(this->_material);
 	ray.hitRecord.position = ray.pointAtRay(ray.hitRecord.t0);
 
 	return (true);

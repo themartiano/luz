@@ -1,6 +1,7 @@
 #include "Forms/Plane.hpp"
 #include "Utilities.hpp"
 #include "Defaults.hpp"
+#include "Materials/Lambertian.hpp"
 
 /*
 	Constructors
@@ -11,7 +12,7 @@ Plane::Plane(void)
 {
 	this->_y = 0.0;
 	this->_orientation = Vector3(0.0, -1.0, 0.0);
-	this->_material = Material(Color(0.49, 0.49, 0.49), 1.0, 0.0, 0.5, 0.0, false, false, 0.0);
+	this->_material = Lambertian(Color(0.6, 0.6, 0.6));
 }
 
 // Constructs the Plane with custom values
@@ -65,7 +66,7 @@ bool	Plane::hit(Ray& ray, double t_max) const
 
 	ray.hitRecord.t0 = t;
 	ray.hitRecord.normal = this->_orientation;
-	ray.hitRecord.material = this->_material;
+	ray.hitRecord.material = std::make_unique<Material>(this->_material);
 	ray.hitRecord.position = ray.pointAtRay(t);
 
 	return (true);

@@ -1,6 +1,7 @@
 #include "Forms/Rectangle.hpp"
 #include "Defaults.hpp"
 #include "Utilities.hpp"
+#include "Materials/Lambertian.hpp"
 #include <cmath>
 
 /*
@@ -11,7 +12,7 @@
 Rectangle::Rectangle(void)
 {
 	this->_transform = Transform(Vector3(0.0, 0.0, 0.0), Vector3(0.0, 0.0, 1.0), Vector3(1.0, 1.0, 1.0));
-	this->_material = Material(Color(0.49, 0.49, 0.49), 1.0, 0.0, 0.5, 0.0, false, false, 0.0);
+	this->_material = Lambertian(Color(0.6, 0.6, 0.6));
 	this->_width = 1.0;
 	this->_height = 1.0;
 }
@@ -104,7 +105,7 @@ bool	Rectangle::hit(Ray& ray, double t_max) const
 
 	ray.hitRecord.t0 = t;
 	ray.hitRecord.normal = this->_transform.getOrientation();
-	ray.hitRecord.material = this->_material;
+	ray.hitRecord.material = std::make_unique<Material>(this->_material);
 	ray.hitRecord.position = ray.pointAtRay(t);
 
 	return (true);
