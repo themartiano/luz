@@ -10,12 +10,12 @@
 Mesh::Mesh(void)
 {
 	this->_position = Vector3();
-	this->_material = Lambertian(Color(0.6, 0.6, 0.6));
+	this->_material = std::make_shared<Lambertian>(Color(0.6, 0.6, 0.6));
 	this->_bvh = BVHNode();
 }
 
 // Constructs the Mesh with custom values
-Mesh::Mesh(Vector3 position, Material material, BVHNode bvh)
+Mesh::Mesh(Vector3 position, std::shared_ptr<Material> material, BVHNode bvh)
 {
 	this->_position = position;
 	this->_material = material;
@@ -23,7 +23,7 @@ Mesh::Mesh(Vector3 position, Material material, BVHNode bvh)
 }
 
 // Constructs the Mesh with custom values
-Mesh::Mesh(Vector3 position, Material material, std::vector<std::shared_ptr<Hittable>> triangles)
+Mesh::Mesh(Vector3 position, std::shared_ptr<Material> material, std::vector<std::shared_ptr<Hittable>> triangles)
 {
 	this->_position = position;
 	this->_material = material;
@@ -31,7 +31,7 @@ Mesh::Mesh(Vector3 position, Material material, std::vector<std::shared_ptr<Hitt
 }
 
 // Returns the Mesh's material
-Material	Mesh::getMaterial(void) const
+std::shared_ptr<Material>	Mesh::getMaterial(void) const
 {
 	return (this->_material);
 }

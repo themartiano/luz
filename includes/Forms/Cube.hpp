@@ -10,10 +10,10 @@ class   Cube : public Hittable
 {
 	public:
 		Cube(void);
-		Cube(Transform transform, double width, double height, double depth, Material material);
+		Cube(Transform transform, double width, double height, double depth, std::shared_ptr<Material> material);
 		void	setTransform(Transform transform);
-		virtual Material getMaterial(void) const override;
-		void	setMaterial(Material material);
+		virtual std::shared_ptr<Material> getMaterial(void) const override;
+		void	setMaterial(std::shared_ptr<Material> material);
 		void	setWidth(double width);
 		void	setHeight(double height);
 		void	setDepth(double depth);
@@ -22,7 +22,7 @@ class   Cube : public Hittable
 
 	private:
 		Transform   _transform;
-		Material	_material;
+		std::shared_ptr<Material>	_material;
 		double	  _width;
 		double	  _height;
 		double	  _depth;

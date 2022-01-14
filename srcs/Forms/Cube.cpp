@@ -10,7 +10,7 @@
 Cube::Cube(void)
 {
 	this->_transform = Transform(Vector3(0.0, 0.0, 0.0), Vector3(0.0, 0.0, 1.0), Vector3(1.0, 1.0, 1.0));
-	this->_material = Lambertian(Color(0.6, 0.6, 0.6));
+	this->_material = std::make_shared<Lambertian>(Color(0.6, 0.6, 0.6));
 	this->_width = 1.0;
 	this->_height = 1.0;
 	this->_depth = 1.0;
@@ -20,7 +20,7 @@ Cube::Cube(void)
 }
 
 // Constructs the Cube with custom values
-Cube::Cube(Transform transform, double width, double height, double depth, Material material)
+Cube::Cube(Transform transform, double width, double height, double depth, std::shared_ptr<Material> material)
 {
 	this->_transform = transform;
 	this->_width = width;
@@ -39,13 +39,13 @@ void	Cube::setTransform(Transform transform)
 }
 
 // Returns the Cube's material
-Material	Cube::getMaterial(void) const
+std::shared_ptr<Material>	Cube::getMaterial(void) const
 {
 	return (this->_material);
 }
 
 // Sets the Cube's Material
-void	Cube::setMaterial(Material material)
+void	Cube::setMaterial(std::shared_ptr<Material> material)
 {
 	this->_material = material;
 }

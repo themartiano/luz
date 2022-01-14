@@ -12,11 +12,11 @@ Plane::Plane(void)
 {
 	this->_y = 0.0;
 	this->_orientation = Vector3(0.0, -1.0, 0.0);
-	this->_material = Lambertian(Color(0.6, 0.6, 0.6));
+	this->_material = std::make_shared<Lambertian>(Color(0.6, 0.6, 0.6));
 }
 
 // Constructs the Plane with custom values
-Plane::Plane(double y, Vector3 orientation, Material material)
+Plane::Plane(double y, Vector3 orientation, std::shared_ptr<Material> material)
 {
 	this->_y = y;
 	this->_orientation = orientation;
@@ -36,13 +36,13 @@ void	Plane::setOrientation(Vector3 orientation)
 }
 
 // Returns the Plane's material
-Material	Plane::getMaterial(void) const
+std::shared_ptr<Material>	Plane::getMaterial(void) const
 {
 	return (this->_material);
 }
 
 // Sets the Plane's Material
-void	Plane::setMaterial(Material material)
+void	Plane::setMaterial(std::shared_ptr<Material> material)
 {
 	this->_material = material;
 }
@@ -66,7 +66,7 @@ bool	Plane::hit(Ray& ray, double t_max) const
 
 	ray.hitRecord.t0 = t;
 	ray.hitRecord.normal = this->_orientation;
-	ray.hitRecord.material = std::make_unique<Material>(this->_material);
+	ray.hitRecord.material = this->_material;
 	ray.hitRecord.position = ray.pointAtRay(t);
 
 	return (true);

@@ -14,11 +14,11 @@ Triangle::Triangle(void)
 	this->_vertex0 = Vector3(0.0, 1.0, 0.0);
 	this->_vertex1 = Vector3(-1.0, 0.0, 0.0);
 	this->_vertex2 = Vector3(1.0, 0.0, 0.0);
-	this->_material = Lambertian(Color(0.6, 0.6, 0.6));
+	this->_material = std::make_shared<Lambertian>(Color(0.6, 0.6, 0.6));
 }
 
 // Constructs the Triangle with custom values
-Triangle::Triangle(Vector3 vertex0, Vector3 vertex1, Vector3 vertex2, Material material)
+Triangle::Triangle(Vector3 vertex0, Vector3 vertex1, Vector3 vertex2, std::shared_ptr<Material> material)
 {
 	this->_vertex0 = vertex0;
 	this->_vertex1 = vertex1;
@@ -45,13 +45,13 @@ void	Triangle::setVertex2(Vector3 vertex2)
 }
 
 // Returns the Triangle's material
-Material	Triangle::getMaterial(void) const
+std::shared_ptr<Material>	Triangle::getMaterial(void) const
 {
 	return (this->_material);
 }
 
 // Sets the Triangle's Material
-void	Triangle::setMaterial(Material material)
+void	Triangle::setMaterial(std::shared_ptr<Material> material)
 {
 	this->_material = material;
 }
@@ -97,7 +97,7 @@ bool	Triangle::hit(Ray& ray, double t_max) const
 		n = n * -1.0;
 	}
 	ray.hitRecord.normal = n;
-	ray.hitRecord.material = std::make_unique<Material>(this->_material);
+	ray.hitRecord.material = this->_material;
 	ray.hitRecord.position = ray.pointAtRay(ray.hitRecord.t0);
 
 	return (true);

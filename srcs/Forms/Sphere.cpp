@@ -13,12 +13,12 @@
 Sphere::Sphere(void)
 {
 	this->_position = Vector3();
-	this->_material = Lambertian(Color(0.6, 0.6, 0.6));
+	this->_material = std::make_shared<Lambertian>(Color(0.6, 0.6, 0.6));
 	this->_radius = 1.0;
 }
 
 // Constructs the Sphere with custom values
-Sphere::Sphere(Vector3 position, double radius, Material material)
+Sphere::Sphere(Vector3 position, double radius, std::shared_ptr<Material> material)
 {
 	this->_position = position;
 	this->_radius = radius;
@@ -50,13 +50,13 @@ void	Sphere::setRadius(double radius)
 }
 
 // Returns the Sphere's material
-Material	Sphere::getMaterial(void) const
+std::shared_ptr<Material>	Sphere::getMaterial(void) const
 {
 	return (this->_material);
 }
 
 // Sets the Sphere's material
-void	Sphere::setMaterial(Material material)
+void	Sphere::setMaterial(std::shared_ptr<Material> material)
 {
 	this->_material = material;
 }
@@ -89,7 +89,7 @@ bool	Sphere::hit(Ray& ray, double t_max) const
 	ray.hitRecord.t0 = root;
 	ray.hitRecord.position = ray.pointAtRay(root);
 	ray.hitRecord.normal = Utilities::normalize((ray.hitRecord.position - this->_position) / this->_radius);
-	ray.hitRecord.material = std::make_unique<Material>(this->_material);
+	ray.hitRecord.material = this->_material;
 
 	return (true);
 }

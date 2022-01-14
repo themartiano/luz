@@ -29,3 +29,8 @@ double	Lambertian::scatteringPDF(Ray& ray)
 
 	return (cosine < 0.0 ? 0.0 : cosine / D_PI);
 }
+
+MaterialType	Lambertian::getType(void) const
+{
+	return (LAMBERTIAN);
+}

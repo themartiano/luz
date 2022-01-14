@@ -12,7 +12,7 @@
 Rectangle::Rectangle(void)
 {
 	this->_transform = Transform(Vector3(0.0, 0.0, 0.0), Vector3(0.0, 0.0, 1.0), Vector3(1.0, 1.0, 1.0));
-	this->_material = Lambertian(Color(0.6, 0.6, 0.6));
+	this->_material = std::make_shared<Lambertian>(Color(0.6, 0.6, 0.6));
 	this->_width = 1.0;
 	this->_height = 1.0;
 }
@@ -26,7 +26,7 @@ Rectangle::Rectangle(const Rectangle& toCopy)
 }
 
 // Constructs the Rectangle with custom values
-Rectangle::Rectangle(Transform transform, double width, double height, Material material)
+Rectangle::Rectangle(Transform transform, double width, double height, std::shared_ptr<Material> material)
 {
 	this->_transform = transform;
 	this->_width = width;
@@ -41,13 +41,13 @@ void	Rectangle::setTransform(Transform transform)
 }
 
 // Returns the Rectangle's material
-Material	Rectangle::getMaterial(void) const
+std::shared_ptr<Material>	Rectangle::getMaterial(void) const
 {
 	return (this->_material);
 }
 
 // Sets the Rectangle's Material
-void	Rectangle::setMaterial(Material material)
+void	Rectangle::setMaterial(std::shared_ptr<Material> material)
 {
 	this->_material = material;
 }
@@ -105,13 +105,13 @@ bool	Rectangle::hit(Ray& ray, double t_max) const
 
 	ray.hitRecord.t0 = t;
 	ray.hitRecord.normal = this->_transform.getOrientation();
-	ray.hitRecord.material = std::make_unique<Material>(this->_material);
+	ray.hitRecord.material = this->_material;
 	ray.hitRecord.position = ray.pointAtRay(t);
 
 	return (true);
 }
 
-// Creates an AABB / bounding box for this Rectangle
+// Creates an AABB / bounding box for this Rectanglstd::shared_ptr<Material>e
 bool	Rectangle::createBoundingBox(AABB& outputBoundingBox) const
 {
 	// outputBoundingBox = AABB(

@@ -7,10 +7,9 @@ class	Emissive : public Material
 		Emissive(Color color);
 		Emissive(double intensity);
 		Emissive(Color color, double intensity);
-		Color	emitted(Ray& ray);
+		Color	emitted(void);
 		void	setIntensity(double newIntensity);
-
-		MaterialType	type = EMISSIVE;
+		MaterialType	getType(void) const;
 
 	private:
 		double	_intensity;

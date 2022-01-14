@@ -22,10 +22,10 @@ SRCS :=	./srcs/Camera.cpp ./srcs/ExitError.cpp ./srcs/main.cpp ./srcs/Scene.cpp 
 		./srcs/Forms/Plane.cpp ./srcs/Atmosphere.cpp ./srcs/Forms/Triangle.cpp ./srcs/OBJReader.cpp \
 		./srcs/Forms/Cube.cpp ./srcs/SceneFile.cpp ./srcs/ONB.cpp ./srcs/PDFs/CosinePDF.cpp \
 		./srcs/PDFs/HittablePDF.cpp ./srcs/Hittable.cpp ./srcs/PDFs/MixturePDF.cpp ./srcs/Renderer/HitHelper.cpp \
-		./srcs/Renderer/Atmospherics.cpp ./srcs/Renderer/Bouncer.cpp ./srcs/Renderer/Threads.cpp \
-		./srcs/Renderer/ColorHelper.cpp ./srcs/ImageFiles/BMP.cpp ./srcs/ImageFiles/TIFF.cpp \
-		./srcs/Materials/Material.cpp ./srcs/Materials/Metal.cpp ./srcs/Materials/Dielectric.cpp \
-		./srcs/Materials/Emissive.cpp ./srcs/Materials/Lambertian.cpp
+		./srcs/Renderer/Atmospherics.cpp ./srcs/Renderer/Threads.cpp ./srcs/Renderer/ColorHelper.cpp \
+		./srcs/ImageFiles/BMP.cpp ./srcs/ImageFiles/TIFF.cpp ./srcs/Materials/Material.cpp \
+		./srcs/Materials/Metal.cpp ./srcs/Materials/Dielectric.cpp ./srcs/Materials/Lambertian.cpp \
+		./srcs/Materials/Emissive.cpp
 OBJS := $(patsubst $(SRCS_DIR)/%.cpp, $(OBJS_DIR)/%.o, $(SRCS))
 DPND := $(OBJS:.o=.d)
 INCLUDES := -Iincludes
