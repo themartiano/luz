@@ -4,6 +4,7 @@
 #include "Hittable.hpp"
 #include "Atmosphere.hpp"
 #include "SkyTypes.hpp"
+#include "ImageFiles/ImageFileTypes.hpp"
 #include <vector>
 #include <memory>
 
@@ -39,10 +40,12 @@ class	Scene
 		Camera	getActiveCamera(void) const;
 		bool	hasCamera(void) const;
 		std::vector<std::shared_ptr<Hittable>>	getHittables(void) const;
-		std::string	getOutputFileName(void) const;
-		void		setOutputFileName(std::string outputFileName);
+		std::string	getDefaultRenderOutputFileName(void) const;
+		void		setDefaultRenderOutputFileName(std::string defaultRenderOutputFileName);
 		void		updateLights(void);
 		std::vector<std::shared_ptr<Hittable>> getLights(void) const;
+		void		saveRenderToFile(ImageFileTypes imageFileType);
+		void		saveRenderToFile(std::string fileName, ImageFileTypes imageFileType);
 
 	private:
 		int						_xResolution;
@@ -51,7 +54,7 @@ class	Scene
 		int						_sampleCount;
 		int						_maxLightBounces;
 		bool					_gammaCorrected;
-		std::string				_outputFileName;
+		std::string				_defaultRenderOutputFileName;
 		double*					_pixelArray;
 		double					_skyline;
 		SkyTypes				_renderSky;

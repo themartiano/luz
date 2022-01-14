@@ -118,7 +118,7 @@ static void	readSettingsSection(Scene& scene, std::ifstream& stream)
 					strOutputFileName += ".bmp";
 				}
 
-				scene.setOutputFileName(strOutputFileName);
+				scene.setDefaultRenderOutputFileName(strOutputFileName);
 			}
 
 		}

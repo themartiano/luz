@@ -1,11 +1,23 @@
-#include "BMP.hpp"
+#include "ImageFiles/BMP.hpp"
 #include "ANSIColors.hpp"
+#include "Defaults.hpp"
+#include "Utilities.hpp"
 #include <iostream>
 #include <filesystem>
 
 // Static function prototypes
 static unsigned char*	createBitmapFileHeader(int height, int stride);
 static unsigned char*	createBitmapInfoHeader(int height, int width);
+
+BMP::BMP(void)
+{
+	this->_fileName = D_RENDER_FILE_NAME + ".bmp";
+}
+
+BMP::BMP(std::string fileName)
+{
+	this->_fileName = fileName;
+}
 
 // Writes a .bmp image file using the information present on 'scene'
 void	BMP::writeFile(Scene& scene, bool insideDir, std::string dirName)
@@ -16,14 +28,20 @@ void	BMP::writeFile(Scene& scene, bool insideDir, std::string dirName)
 	unsigned char*	fileHeader = createBitmapFileHeader(scene.getYResolution(), stride);
 	unsigned char*	infoHeader = createBitmapInfoHeader(scene.getYResolution(), scene.getXResolution());
 
-	std::cout << CLR_YELLOW << "Writing render to " << CLR_BLUE_BRIGHT << scene.getOutputFileName() << CLR_YELLOW << "...\n" << CLR_RESET;
-
-	std::string filePath = scene.getOutputFileName();
+	std::string filePath = "";
 	if (insideDir == true)
 	{
 		std::filesystem::create_directory(dirName);
-		filePath = dirName + "/" + scene.getOutputFileName();
+		filePath = dirName + "/";
 	}
+	filePath += this->_fileName;
+
+	if (!Utilities::stringEndsWith(filePath, ".bmp"))
+	{
+		filePath += ".bmp";
+	}
+
+	std::cout << CLR_YELLOW << "Writing render to " << CLR_BLUE_BRIGHT << filePath << CLR_YELLOW << "...\n" << CLR_RESET;
 
 	FILE* imageFile = fopen(filePath.c_str(), "wb");
 

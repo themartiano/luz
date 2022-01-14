@@ -6,9 +6,10 @@
 class	TIFF
 {
 	public:
-		TIFF(void) = default;
-		static void	writeFile(Scene& scene, bool insideDir, std::string dirName);
-		static void	writeFile(Scene& scene);
+		TIFF(void);
+		TIFF(std::string fileName);
+		void	writeFile(Scene& scene, bool insideDir, std::string dirName);
+		void	writeFile(Scene& scene);
 
 		#pragma pack(push, 1)
 		typedef struct	Header

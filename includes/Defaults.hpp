@@ -2,6 +2,7 @@
 
 #include <limits>
 #include <thread>
+#include <string>
 
 const int	D_WIDTH = 1920; // Default screen width in pixels
 const int	D_HEIGHT = 1080; // Default screen height in pixels
@@ -23,3 +24,5 @@ const unsigned int THREAD_MULTIPLIER = 6; // Render threads multiplier. The thre
 const bool RENDER_AABB = false; // Used to determine if AABBs should be rendered (for debugging purposes).
 
 const double D_PI = 3.14159265358979323846; // Default PI value (same as the one from <cmath>, ATM)
+
+const std::string D_RENDER_FILE_NAME = "render";

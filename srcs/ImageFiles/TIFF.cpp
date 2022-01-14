@@ -1,5 +1,7 @@
-#include "TIFF.hpp"
+#include "ImageFiles/TIFF.hpp"
 #include "ANSIColors.hpp"
+#include "Defaults.hpp"
+#include "Utilities.hpp"
 #include <iostream>
 #include <filesystem>
 
@@ -8,17 +10,33 @@
 #define TILE_SIZE 16 // multiple of 16
 #define TILE_COUNT ((RESOLUTION / TILE_SIZE) * (RESOLUTION / TILE_SIZE))
 
+TIFF::TIFF(void)
+{
+	this->_fileName = D_RENDER_FILE_NAME + ".tiff";
+}
+
+TIFF::TIFF(std::string fileName)
+{
+	this->_fileName = fileName;
+}
+
 // Writes a .tiff image file using the information present on 'scene'
 void	TIFF::writeFile(Scene& scene, bool insideDir, std::string dirName)
 {
-	std::cout << CLR_YELLOW << "Writing render to " << CLR_BLUE_BRIGHT << scene.getOutputFileName() << CLR_YELLOW << "...\n" << CLR_RESET;
-
-	std::string filePath = scene.getOutputFileName();
+	std::string filePath = "";
 	if (insideDir == true)
 	{
 		std::filesystem::create_directory(dirName);
-		filePath = dirName + "/" + scene.getOutputFileName();
+		filePath = dirName + "/";
 	}
+	filePath += this->_fileName;
+
+	if (!Utilities::stringEndsWith(filePath, ".tiff"))
+	{
+		filePath += ".tiff";
+	}
+
+	std::cout << CLR_YELLOW << "Writing render to " << CLR_BLUE_BRIGHT << filePath << CLR_YELLOW << "...\n" << CLR_RESET;
 
 	FILE* imageFile = fopen(filePath.c_str(), "wb");
 	tiffIFD ifd = _generateIFD();

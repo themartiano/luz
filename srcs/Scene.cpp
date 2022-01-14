@@ -2,6 +2,9 @@
 #include "Defaults.hpp"
 #include "Color.hpp"
 #include "Utilities.hpp"
+#include "ANSIColors.hpp"
+#include "ImageFiles/BMP.hpp"
+#include "ImageFiles/TIFF.hpp"
 #include <limits>
 
 /*
@@ -24,7 +27,7 @@ Scene::Scene(void)
 	this->_atmosphere = Atmosphere();
 	this->_backgroundColor = Color(0.0, 0.0, 0.0);
 
-	this->_outputFileName = "render.tiff";
+	this->_defaultRenderOutputFileName = D_RENDER_FILE_NAME;
 
 	this->_activeCamera = 0;
 
@@ -240,15 +243,15 @@ bool	Scene::hasCamera(void) const
 }
 
 // Returns the Output File Name
-std::string	Scene::getOutputFileName(void) const
+std::string	Scene::getDefaultRenderOutputFileName(void) const
 {
-	return (this->_outputFileName);
+	return (this->_defaultRenderOutputFileName);
 }
 
 // Sets the Output File Name
-void	Scene::setOutputFileName(std::string outputFileName)
+void	Scene::setDefaultRenderOutputFileName(std::string defaultRenderOutputFileName)
 {
-	this->_outputFileName = outputFileName;
+	this->_defaultRenderOutputFileName = defaultRenderOutputFileName;
 }
 
 void	Scene::updateLights(void)
@@ -269,4 +272,33 @@ void	Scene::updateLights(void)
 std::vector<std::shared_ptr<Hittable>>	Scene::getLights(void) const
 {
 	return (this->_lights);
+}
+
+void	Scene::saveRenderToFile(ImageFileTypes imageFileType)
+{
+	saveRenderToFile(this->_defaultRenderOutputFileName, imageFileType);
+}
+
+void	Scene::saveRenderToFile(std::string fileName, ImageFileTypes imageFileType)
+{
+	switch (imageFileType)
+	{
+		case (BMP_FILE):
+		{
+			BMP	bmp(fileName);
+			bmp.writeFile(*this);
+			break;
+		}
+		case (TIFF_FILE):
+		{
+			TIFF tiff(fileName);
+			tiff.writeFile(*this);
+			break;
+		}
+		default:
+		{
+			std::cerr << CLR_RED << "Invalid image file type." << CLR_RESET << std::endl;
+			break;
+		}
+	}
 }

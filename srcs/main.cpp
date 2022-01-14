@@ -2,7 +2,7 @@
 #include "Renderer/Renderer.hpp"
 #include "ANSIColors.hpp"
 #include "SceneFile.hpp"
-#include "TIFF.hpp"
+#include "ImageFiles/TIFF.hpp"
 #include "OBJReader.hpp"
 #include "Material.hpp"
 #include "Forms/Triangle.hpp"
@@ -11,6 +11,7 @@
 #include "Forms/Mesh.hpp"
 #include "Utilities.hpp"
 #include "Defaults.hpp"
+#include "ImageFiles/ImageFileTypes.hpp"
 
 // Main function
 int	main(int argc, char *argv[])
@@ -73,8 +74,8 @@ int	main(int argc, char *argv[])
 
 	if (Renderer::render(scene))
 	{
-		// Writes TIFF image file
-		TIFF::writeFile(scene);
+		// Writes render image file
+		scene.saveRenderToFile("render", TIFF_FILE);
 	}
 
 	return (0);
