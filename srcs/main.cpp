@@ -2,7 +2,6 @@
 #include "Renderer/Renderer.hpp"
 #include "ANSIColors.hpp"
 #include "SceneFile.hpp"
-#include "ImageFiles/TIFF.hpp"
 #include "OBJReader.hpp"
 #include "Material.hpp"
 #include "Forms/Triangle.hpp"
@@ -11,7 +10,7 @@
 #include "Forms/Mesh.hpp"
 #include "Utilities.hpp"
 #include "Defaults.hpp"
-#include "ImageFiles/ImageFileTypes.hpp"
+#include "ImageFiles/Types.hpp"
 
 // Main function
 int	main(int argc, char *argv[])

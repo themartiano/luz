@@ -4,7 +4,7 @@
 #include "Hittable.hpp"
 #include "Atmosphere.hpp"
 #include "SkyTypes.hpp"
-#include "ImageFiles/ImageFileTypes.hpp"
+#include "ImageFiles/Types.hpp"
 #include <vector>
 #include <memory>
 
