@@ -53,7 +53,7 @@ Color	Renderer::internal::_calculateLightRaysColor(Ray& ray, Scene& scene, int b
 	static auto		skyType = scene.getRenderSky();
 	static Color	staticBackgroundColor = scene.getBackgroundColor();
 	static auto		lights = scene.getLights();
-	//static auto		lightCount = scene.getLights().size();
+	static auto		lightCount = scene.getLights().size();
 	//static bool		distanceBlueness = scene.getDistanceBlueness();
 
 	if (bounces > maxLightBounces)
@@ -88,10 +88,21 @@ Color	Renderer::internal::_calculateLightRaysColor(Ray& ray, Scene& scene, int b
 		return (scatterRecord.attenuation * _calculateLightRaysColor(scatterRecord.specularRay, scene, bounces + 1));
 	}
 
-	std::shared_ptr<HittablePDF> lightPDF = std::make_shared<HittablePDF>(lights, hitRecord.position);
-	MixturePDF mixturePDF(lightPDF, scatterRecord.pdfPtr);
-	Ray	scattered = Ray(hitRecord.position, mixturePDF.generate());
-	double	pdfValue = mixturePDF.value(scattered.getDirection());
+	double	pdfValue;
+	Ray scattered;
+	if (lightCount > 0)
+	{
+		std::shared_ptr<HittablePDF> lightPDF = std::make_shared<HittablePDF>(lights, hitRecord.position);
+		MixturePDF mixturePDF(lightPDF, scatterRecord.pdfPtr);
+		scattered = Ray(hitRecord.position, mixturePDF.generate());
+		pdfValue = mixturePDF.value(scattered.getDirection());
+	}
+	else
+	{
+		std::shared_ptr<PDF> pdf = scatterRecord.pdfPtr;
+		scattered = Ray(hitRecord.position, pdf->generate());
+		pdfValue = pdf->value(scattered.getDirection());
+	}
 
 	return (emitted + scatterRecord.attenuation * hitRecord.material->scatteringPDF(scattered, hitRecord) * _calculateLightRaysColor(scattered, scene, bounces + 1) / pdfValue);
 

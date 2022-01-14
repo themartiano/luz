@@ -12,9 +12,9 @@ struct	HitRecord;
 struct	ScatterRecord
 {
 	Ray	specularRay;
-	bool	isSpecular;
+	bool	isSpecular = false;
 	Color	attenuation;
-	std::shared_ptr<PDF>	pdfPtr;
+	std::shared_ptr<PDF>	pdfPtr = nullptr;
 };
 
 class	Material

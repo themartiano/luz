@@ -14,6 +14,7 @@
 #include "Materials/Lambertian.hpp"
 #include "Materials/Emissive.hpp"
 #include "Materials/Dielectric.hpp"
+#include "Materials/Metal.hpp"
 
 // Main function
 int	main(int argc, char *argv[])
@@ -31,7 +32,7 @@ int	main(int argc, char *argv[])
 	{
 		scene.setXResolution(500);
 		scene.setYResolution(500);
-		scene.setSampleCount(1);
+		scene.setSampleCount(10);
 		scene.setMaxLightBounces(24);
 		scene.setGammaCorrected(true);
 		scene.setRenderSky(SKY_NONE);
@@ -41,8 +42,8 @@ int	main(int argc, char *argv[])
 
 		// Coordinate system ~~ Right Hand ~~ Forward: -Z | Up: +Y | Right: +X
 
-		//scene.addCamera(Camera(Vector3(0.0, 5.0, 0.0), Vector3(0.0, -1.0, -T_MIN), 65, 0.0, 1.0));
-		scene.addCamera(Camera(Vector3(0.0, 1.0, 5.0), Vector3(0.0, 0.0, -1.0), 65, 0.0, 1.0));
+		scene.addCamera(Camera(Vector3(0.0, 5.0, 0.0), Vector3(0.0, -1.0, -T_MIN), 65, 0.0, 1.0));
+		//scene.addCamera(Camera(Vector3(0.0, 1.0, 5.0), Vector3(0.0, 0.0, -1.0), 65, 0.0, 1.0));
 
 		scene.addHittable(std::make_shared<Plane>(
 			0.0,
@@ -53,14 +54,14 @@ int	main(int argc, char *argv[])
 		scene.addHittable(std::make_shared<Sphere>(
 			Vector3(0.0, 1.0, 0.0),
 			1.0,
-			std::make_shared<Dielectric>(Color(1.0, 1.0, 1.0))
+			std::make_shared<Dielectric>(Color(0.0, 0.8, 0.2))
 		));
 
 		scene.addHittable(std::make_shared<Rectangle>(
 			Transform(Vector3(0.0, 1.0, -8.0), Vector3(0.0, 0.0, 1.0), Vector3(1.0, 1.0, 1.0)),
 			10.0,
 			10.0,
-			std::make_shared<Emissive>(Color(1.0, 1.0, 1.0), 20)
+			std::make_shared<Emissive>(Color(1.0, 1.0, 1.0), 3.0)
 		));
 	}
 

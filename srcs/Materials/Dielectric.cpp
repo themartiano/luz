@@ -17,15 +17,16 @@ bool	Dielectric::scatter(Ray& ray, HitRecord& hitRecord, ScatterRecord& scatterR
 {
 	scatterRecord.isSpecular = true;
 	scatterRecord.pdfPtr = nullptr;
-	scatterRecord.attenuation = Color(1.0, 1.0, 1.0);
+	scatterRecord.attenuation = this->_color;
 
 	double	refractionRatio = RI_GLASS;
-	if (Utilities::dot(ray.getDirection(), hitRecord.normal) <= 0.0)
+	Vector3	normalizedDirection = Utilities::normalize(ray.getDirection());
+	if (Utilities::dot(normalizedDirection, hitRecord.normal) <= 0.0)
 	{
 		refractionRatio = 1.0 / refractionRatio;
 	}
 
-	double	cosTheta = fmin(Utilities::dot(ray.getDirection() * -1.0, hitRecord.normal), 1.0);
+	double	cosTheta = fmin(Utilities::dot(normalizedDirection * -1.0, hitRecord.normal), 1.0);
 	double	sinTheta = sqrt(1.0 - cosTheta * cosTheta);
 
 	bool	cannotRefract = refractionRatio * sinTheta > 1.0;
@@ -33,11 +34,11 @@ bool	Dielectric::scatter(Ray& ray, HitRecord& hitRecord, ScatterRecord& scatterR
 	Vector3	direction;
 	if (cannotRefract || Utilities::schlick(cosTheta, refractionRatio) > Utilities::randomDouble())
 	{
-		direction = Utilities::reflect(ray.getDirection(), hitRecord.normal);
+		direction = Utilities::reflect(normalizedDirection, hitRecord.normal);
 	}
 	else
 	{
-		direction = Utilities::refract(ray.getDirection(), hitRecord.normal, refractionRatio);
+		direction = Utilities::refract(normalizedDirection, hitRecord.normal, refractionRatio);
 	}
 
 	scatterRecord.specularRay = Ray(hitRecord.position, direction);
