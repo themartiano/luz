@@ -4,7 +4,7 @@
 #include "SkyTypes.hpp"
 #include "Defaults.hpp"
 #include "Atmosphere.hpp"
-#include "ImageFiles/ImageFileTypes.hpp"
+#include "ImageFiles/Types.hpp"
 
 // Renders a sequence of frames
 void	Renderer::renderSequence(Scene& scene, Atmosphere baseAtmosphere, int fps, double duration, ImageFileTypes imageFileType)
