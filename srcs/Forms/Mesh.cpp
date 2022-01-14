@@ -1,5 +1,6 @@
 #include "Forms/Mesh.hpp"
 #include "Utilities.hpp"
+#include "Materials/Lambertian.hpp"
 
 /*
 	Constructors
@@ -9,7 +10,7 @@
 Mesh::Mesh(void)
 {
 	this->_position = Vector3();
-	this->_material = Material(Color(0.49, 0.49, 0.49), 1.0, 0.0, 0.5, 0.0, false, false, 0.0);
+	this->_material = Lambertian(Color(0.6, 0.6, 0.6));
 	this->_bvh = BVHNode();
 }
 

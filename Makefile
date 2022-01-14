@@ -16,7 +16,7 @@ NAME := Luz
 SRCS_DIR := ./srcs
 OBJS_DIR := ./objs
 SRCS :=	./srcs/Camera.cpp ./srcs/ExitError.cpp ./srcs/main.cpp ./srcs/Scene.cpp ./srcs/Vector3.cpp \
-		./srcs/Renderer/Renderer.cpp ./srcs/Ray.cpp ./srcs/Utilities.cpp ./srcs/AABB.cpp ./srcs/Forms/Mesh.cpp \
+		./srcs/Renderer/Renderer.cpp ./srcs/Ray/Ray.cpp ./srcs/Utilities.cpp ./srcs/AABB.cpp ./srcs/Forms/Mesh.cpp \
 		./srcs/Color.cpp ./srcs/Transform.cpp ./srcs/Renderer/SequenceRenderer.cpp \
 		./srcs/Forms/Sphere.cpp ./srcs/Clock.cpp ./srcs/BVHNode.cpp ./srcs/Forms/Rectangle.cpp \
 		./srcs/Forms/Plane.cpp ./srcs/Atmosphere.cpp ./srcs/Forms/Triangle.cpp ./srcs/OBJReader.cpp \

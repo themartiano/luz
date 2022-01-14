@@ -3,7 +3,6 @@
 #include "ANSIColors.hpp"
 #include "SceneFile.hpp"
 #include "OBJReader.hpp"
-#include "Materials/Material.hpp"
 #include "Forms/Triangle.hpp"
 #include "Forms/Plane.hpp"
 #include "Forms/Sphere.hpp"
@@ -12,6 +11,8 @@
 #include "Utilities.hpp"
 #include "Defaults.hpp"
 #include "ImageFiles/Types.hpp"
+#include "Materials/Lambertian.hpp"
+#include "Materials/Emissive.hpp"
 
 // Main function
 int	main(int argc, char *argv[])
@@ -45,20 +46,20 @@ int	main(int argc, char *argv[])
 		scene.addHittable(std::make_shared<Plane>(
 			0.0,
 			Vector3(0.0, 1.0, 0.0),
-			Material(Color(0.6, 0.6, 0.6), 1.0, 0.0, 0.5, 0.0, false, false, 0.0)
+			Lambertian(Color(0.6, 0.6, 0.6))
 		));
 
 		scene.addHittable(std::make_shared<Sphere>(
 			Vector3(0.0, 1.0, 0.0),
 			1.0,
-			Material(Color(1.0, 1.0, 1.0), 1.0, 0.0, 0.5, 0.0, true, false, 0.0)
+			Lambertian(Color(1.0, 1.0, 1.0))
 		));
 
 		scene.addHittable(std::make_shared<Rectangle>(
 			Transform(Vector3(0.0, 1.0, -8.0), Vector3(0.0, 0.0, 1.0), Vector3(1.0, 1.0, 1.0)),
 			10.0,
 			10.0,
-			Material(Color(1.0, 1.0, 1.0), 1.0, 0.0, 0.5, 0.0, false, true, 20.0)
+			Emissive(Color(1.0, 1.0, 1.0), 20)
 		));
 	}
 

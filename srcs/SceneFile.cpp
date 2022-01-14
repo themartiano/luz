@@ -251,7 +251,7 @@ static void	readObjectsSubSection(Scene& scene, std::ifstream& stream)
 
 				sphere.setPosition(Vector3(pX, pY, pZ));
 				sphere.setRadius(radius);
-				sphere.setMaterial(Material(Color(mR, mG, mB), mOpacity, mMetallic, mAlbedo, mReflectionFuzziness, mIsDieletric, mIsEmissive, mLightIntensity));
+				//sphere.setMaterial(Material(Color(mR, mG, mB), mOpacity, mMetallic, mAlbedo, mReflectionFuzziness, mIsDieletric, mIsEmissive, mLightIntensity));
 
 				scene.addHittable(std::make_shared<Sphere>(sphere));
 			}
@@ -270,7 +270,7 @@ static void	readObjectsSubSection(Scene& scene, std::ifstream& stream)
 				cube.setWidth(width);
 				cube.setHeight(height);
 				cube.setDepth(depth);
-				cube.setMaterial(Material(Color(mR, mG, mB), mOpacity, mMetallic, mAlbedo, mReflectionFuzziness, mIsDieletric, mIsEmissive, mLightIntensity));
+				//cube.setMaterial(Material(Color(mR, mG, mB), mOpacity, mMetallic, mAlbedo, mReflectionFuzziness, mIsDieletric, mIsEmissive, mLightIntensity));
 
 				scene.addHittable(std::make_shared<Cube>(cube));
 			}
@@ -287,7 +287,7 @@ static void	readObjectsSubSection(Scene& scene, std::ifstream& stream)
 
 				plane.setY(y);
 				plane.setOrientation(Vector3(oX, oY, oZ));
-				plane.setMaterial(Material(Color(mR, mG, mB), mOpacity, mMetallic, mAlbedo, mReflectionFuzziness, mIsDieletric, mIsEmissive, mLightIntensity));
+				//plane.setMaterial(Material(Color(mR, mG, mB), mOpacity, mMetallic, mAlbedo, mReflectionFuzziness, mIsDieletric, mIsEmissive, mLightIntensity));
 
 				scene.addHittable(std::make_shared<Plane>(plane));
 			}
@@ -305,7 +305,7 @@ static void	readObjectsSubSection(Scene& scene, std::ifstream& stream)
 				rectangle.setTransform(Transform(Vector3(pX, pY, pZ), Vector3(oX, oY, oZ), Vector3(1.0, 1.0, 1.0)));
 				rectangle.setWidth(width);
 				rectangle.setHeight(height);
-				rectangle.setMaterial(Material(Color(mR, mG, mB), mOpacity, mMetallic, mAlbedo, mReflectionFuzziness, mIsDieletric, mIsEmissive, mLightIntensity));
+				//rectangle.setMaterial(Material(Color(mR, mG, mB), mOpacity, mMetallic, mAlbedo, mReflectionFuzziness, mIsDieletric, mIsEmissive, mLightIntensity));
 
 				scene.addHittable(std::make_shared<Rectangle>(rectangle));
 			}
@@ -323,7 +323,7 @@ static void	readObjectsSubSection(Scene& scene, std::ifstream& stream)
 				triangle.setVertex0(Vector3(v0X, v0Y, v0Z));
 				triangle.setVertex1(Vector3(v1X, v1Y, v1Z));
 				triangle.setVertex2(Vector3(v2X, v2Y, v2Z));
-				triangle.setMaterial(Material(Color(mR, mG, mB), mOpacity, mMetallic, mAlbedo, mReflectionFuzziness, mIsDieletric, mIsEmissive, mLightIntensity));
+				//triangle.setMaterial(Material(Color(mR, mG, mB), mOpacity, mMetallic, mAlbedo, mReflectionFuzziness, mIsDieletric, mIsEmissive, mLightIntensity));
 
 				scene.addHittable(std::make_shared<Triangle>(triangle));
 			}

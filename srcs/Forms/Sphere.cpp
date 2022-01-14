@@ -2,6 +2,7 @@
 #include "Utilities.hpp"
 #include "Defaults.hpp"
 #include "ONB.hpp"
+#include "Materials/Lambertian.hpp"
 #include <cmath>
 
 /*
@@ -12,7 +13,7 @@
 Sphere::Sphere(void)
 {
 	this->_position = Vector3();
-	this->_material = Material(Color(0.49, 0.49, 0.49), 1.0, 0.0, 0.5, 0.0, false, false, 0.0);
+	this->_material = Lambertian(Color(0.6, 0.6, 0.6));
 	this->_radius = 1.0;
 }
 
@@ -88,7 +89,7 @@ bool	Sphere::hit(Ray& ray, double t_max) const
 	ray.hitRecord.t0 = root;
 	ray.hitRecord.position = ray.pointAtRay(root);
 	ray.hitRecord.normal = Utilities::normalize((ray.hitRecord.position - this->_position) / this->_radius);
-	ray.hitRecord.material = this->_material;
+	ray.hitRecord.material = std::make_unique<Material>(this->_material);
 
 	return (true);
 }

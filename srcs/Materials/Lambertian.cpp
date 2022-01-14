@@ -4,6 +4,16 @@
 #include "Defaults.hpp"
 #include <memory>
 
+Lambertian::Lambertian(void)
+{
+	this->_color = Color(0.6, 0.6, 0.6);
+}
+
+Lambertian::Lambertian(Color color)
+{
+	this->_color = color;
+}
+
 bool	Lambertian::scatter(Ray& ray)
 {
 	ray.scatterRecord.isSpecular = false;
