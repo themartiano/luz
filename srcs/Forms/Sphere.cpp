@@ -1,6 +1,7 @@
 #include "Forms/Sphere.hpp"
 #include "Utilities.hpp"
 #include "Defaults.hpp"
+#include "ONB.hpp"
 #include <cmath>
 
 /*
@@ -101,4 +102,41 @@ bool	Sphere::createBoundingBox(AABB& outputBoundingBox) const
 	);
 
 	return (true);
+}
+
+double  Sphere::pdfValue(const Vector3& origin, const Vector3& vec) const
+{
+	Ray ray(origin, vec);
+	if (!this->hit(ray, T_MAX))
+	{
+		return (0.0);
+	}
+
+	double cosThetaMax = sqrt(1.0 - this->_radius * this->_radius / Utilities::vectorLengthSquared(this->_position - origin));
+	double solidAngle = 2.0 * D_PI * (1.0 - cosThetaMax);
+
+	return (1.0 / solidAngle);
+}
+
+Vector3	Sphere::random(const Vector3& origin) const
+{
+	Vector3	direction = this->_position - origin;
+	double distanceSquared = Utilities::vectorLengthSquared(direction);
+
+	ONB uvw(direction);
+
+	return (uvw.local(randomToSphere(distanceSquared)));
+}
+
+Vector3 Sphere::randomToSphere(double distanceSquared) const
+{
+	double rand1 = Utilities::randomDouble();
+	double rand2 = Utilities::randomDouble();
+	double z = 1.0 + rand2 * (sqrt(1.0 - this->_radius * this->_radius / distanceSquared) - 1.0);
+
+	double phi = 2.0 * D_PI * rand1;
+	double x = cos(phi) * sqrt(1.0 - z * z);
+	double y = sin(phi) * sqrt(1.0 - z * z);
+
+	return (Vector3(x, y, z));
 }
