@@ -11,6 +11,7 @@ Luz.exe
 .DS_Store
 .vscode
 render.bmp
+render.tiff
 sequence/**
 objs
 Makefile.tmp
