@@ -92,7 +92,7 @@ bool	Triangle::hit(Ray& ray, HitRecord& hitRecord, double t_max) const
 
 	hitRecord.t0 = t;
 	Vector3 n = Utilities::cross(v1, v2);
-	if (Utilities::dot(n, ray.getDirection()) > 0)
+	if (Utilities::dot(n, ray.getDirection()) > 0.0)
 	{
 		n = n * -1.0;
 	}

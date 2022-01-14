@@ -10,11 +10,11 @@ class	Material;
 
 struct	HitRecord
 {
-	double		t0;
-	double		t1;
+	double		t0 = 0.0;
+	double		t1 = 0.0;
 	Vector3		position;
 	Vector3		normal;
-	std::shared_ptr<Material>	material;
+	std::shared_ptr<Material>	material = nullptr;
 };
 
 class   Hittable

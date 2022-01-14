@@ -88,7 +88,12 @@ bool	Sphere::hit(Ray& ray, HitRecord& hitRecord, double t_max) const
 
 	hitRecord.t0 = root;
 	hitRecord.position = ray.pointAtRay(root);
-	hitRecord.normal = Utilities::normalize((hitRecord.position - this->_position) / this->_radius);
+	Vector3 n = Utilities::normalize((hitRecord.position - this->_position) / this->_radius);
+	if (Utilities::dot(n, ray.getDirection()) > 0.0)
+	{
+		n = n * -1.0;
+	}
+	hitRecord.normal = n;
 	hitRecord.material = this->_material;
 
 	return (true);
