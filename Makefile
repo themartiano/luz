@@ -15,19 +15,51 @@
 NAME := Luz
 SRCS_DIR := ./srcs
 OBJS_DIR := ./objs
-SRCS :=	./srcs/Camera.cpp ./srcs/ExitError.cpp ./srcs/main.cpp ./srcs/Scene.cpp ./srcs/Vector3.cpp \
-		./srcs/Renderer/Renderer.cpp ./srcs/Ray/Ray.cpp ./srcs/Utilities.cpp ./srcs/AABB.cpp ./srcs/Hittables/Mesh.cpp \
-		./srcs/Color.cpp ./srcs/Transform.cpp ./srcs/Renderer/SequenceRenderer.cpp \
-		./srcs/Hittables/Sphere.cpp ./srcs/Clock.cpp ./srcs/Hittables/BVHNode.cpp ./srcs/Hittables/Rectangle.cpp \
-		./srcs/Hittables/Plane.cpp ./srcs/Atmosphere.cpp ./srcs/Hittables/Triangle.cpp ./srcs/OBJReader.cpp \
-		./srcs/Hittables/Cube.cpp ./srcs/ONB.cpp ./srcs/PDFs/CosinePDF.cpp \
-		./srcs/PDFs/HittablePDF.cpp ./srcs/Hittables/Hittable.cpp ./srcs/PDFs/MixturePDF.cpp ./srcs/Renderer/HitHelper.cpp \
-		./srcs/Renderer/Atmospherics.cpp ./srcs/Renderer/Threads.cpp ./srcs/Renderer/ColorHelper.cpp \
-		./srcs/ImageFiles/BMP.cpp ./srcs/ImageFiles/TIFF.cpp ./srcs/Materials/Material.cpp \
-		./srcs/Materials/Metal.cpp ./srcs/Materials/Dielectric.cpp ./srcs/Materials/Lambertian.cpp \
-		./srcs/Materials/Emissive.cpp ./srcs/Hittables/ConstantVolume.cpp ./srcs/Materials/Isotropic.cpp \
-		./srcs/PDFs/SpherePDF.cpp ./srcs/SceneFile/SceneFile.cpp ./srcs/SceneFile/Scene.cpp ./srcs/SceneFile/Objects.cpp \
-		./srcs/SceneFile/Settings.cpp
+SRCS :=	./srcs/AABB.cpp \
+		./srcs/Atmosphere.cpp \
+		./srcs/Camera.cpp \
+		./srcs/Clock.cpp \
+		./srcs/Color.cpp \
+		./srcs/ExitError.cpp \
+		./srcs/Hittables/BVHNode.cpp \
+		./srcs/Hittables/ConstantVolume.cpp \
+		./srcs/Hittables/Cube.cpp \
+		./srcs/Hittables/Hittable.cpp \
+		./srcs/Hittables/Mesh.cpp \
+		./srcs/Hittables/Plane.cpp \
+		./srcs/Hittables/Rectangle.cpp \
+		./srcs/Hittables/Sphere.cpp \
+		./srcs/Hittables/Triangle.cpp \
+		./srcs/ImageFiles/BMP.cpp \
+		./srcs/ImageFiles/TIFF.cpp \
+		./srcs/Materials/Dielectric.cpp \
+		./srcs/Materials/Emissive.cpp \
+		./srcs/Materials/Isotropic.cpp \
+		./srcs/Materials/Lambertian.cpp \
+		./srcs/Materials/Material.cpp \
+		./srcs/Materials/Metal.cpp \
+		./srcs/OBJReader.cpp \
+		./srcs/ONB.cpp \
+		./srcs/PDFs/CosinePDF.cpp \
+		./srcs/PDFs/HittablePDF.cpp \
+		./srcs/PDFs/MixturePDF.cpp \
+		./srcs/PDFs/SpherePDF.cpp \
+		./srcs/Ray/Ray.cpp \
+		./srcs/Renderer/Atmospherics.cpp \
+		./srcs/Renderer/ColorHelper.cpp \
+		./srcs/Renderer/HitHelper.cpp \
+		./srcs/Renderer/Renderer.cpp \
+		./srcs/Renderer/SequenceRenderer.cpp \
+		./srcs/Renderer/Threads.cpp \
+		./srcs/Scene.cpp \
+		./srcs/SceneFile/Objects.cpp \
+		./srcs/SceneFile/Scene.cpp \
+		./srcs/SceneFile/SceneFile.cpp \
+		./srcs/SceneFile/Settings.cpp \
+		./srcs/Transform.cpp \
+		./srcs/Utilities.cpp \
+		./srcs/Vector3.cpp \
+		./srcs/main.cpp
 OBJS := $(patsubst $(SRCS_DIR)/%.cpp, $(OBJS_DIR)/%.o, $(SRCS))
 DPND := $(OBJS:.o=.d)
 INCLUDES := -Iincludes
