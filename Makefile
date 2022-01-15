@@ -25,7 +25,8 @@ SRCS :=	./srcs/Camera.cpp ./srcs/ExitError.cpp ./srcs/main.cpp ./srcs/Scene.cpp 
 		./srcs/Renderer/Atmospherics.cpp ./srcs/Renderer/Threads.cpp ./srcs/Renderer/ColorHelper.cpp \
 		./srcs/ImageFiles/BMP.cpp ./srcs/ImageFiles/TIFF.cpp ./srcs/Materials/Material.cpp \
 		./srcs/Materials/Metal.cpp ./srcs/Materials/Dielectric.cpp ./srcs/Materials/Lambertian.cpp \
-		./srcs/Materials/Emissive.cpp
+		./srcs/Materials/Emissive.cpp ./srcs/Forms/ConstantVolume.cpp ./srcs/Materials/Isotropic.cpp \
+		./srcs/PDFs/SpherePDF.cpp
 OBJS := $(patsubst $(SRCS_DIR)/%.cpp, $(OBJS_DIR)/%.o, $(SRCS))
 DPND := $(OBJS:.o=.d)
 INCLUDES := -Iincludes

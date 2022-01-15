@@ -37,9 +37,9 @@ std::shared_ptr<Material>	Mesh::getMaterial(void) const
 }
 
 // Calculates if the Mesh's BVH is hit by 'ray', is closer than 't_max' and farther than T_MIN
-bool	Mesh::hit(Ray& ray, HitRecord& hitRecord, double t_max) const
+bool	Mesh::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) const
 {
-	return (this->_bvh.hit(ray, hitRecord, t_max));
+	return (this->_bvh.hit(ray, hitRecord, t_min, t_max));
 }
 
 // Returns the AABB / bounding box for this Mesh's BVH

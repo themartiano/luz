@@ -11,7 +11,7 @@ class	Mesh : public Hittable
 		Mesh(Vector3 position, std::shared_ptr<Material> material, BVHNode bvh);
 		Mesh(Vector3 position, std::shared_ptr<Material> material, std::vector<std::shared_ptr<Hittable>> triangles);
 		virtual std::shared_ptr<Material>	getMaterial(void) const override;
-		virtual bool		hit(Ray& ray, HitRecord& hitRecord, double t_max) const override;
+		virtual bool		hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) const override;
 		virtual bool		createBoundingBox(AABB& outputBoundingBox) const override;
 
 	private:

@@ -10,7 +10,7 @@ bool	Renderer::internal::_checkHits(Scene& scene, Ray& ray, HitRecord& hitRecord
 
 	for (std::shared_ptr<Hittable> hittable : hittables)
 	{
-		if (hittable->hit(ray, hitRecord, currentClosestObject))
+		if (hittable->hit(ray, hitRecord, T_MIN, currentClosestObject))
 		{
 			// if (hitRecord.t0 > T_MIN)
 			// {

@@ -57,7 +57,7 @@ void	Triangle::setMaterial(std::shared_ptr<Material> material)
 }
 
 // Calculates if the Triangle is hit by 'ray', is closer than 't_max' and farther than T_MIN
-bool	Triangle::hit(Ray& ray, HitRecord& hitRecord, double t_max) const
+bool	Triangle::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) const
 {
 	Vector3 v1 = this->_vertex1 - this->_vertex0;
 	Vector3 v2 = this->_vertex2 - this->_vertex0;
@@ -65,7 +65,7 @@ bool	Triangle::hit(Ray& ray, HitRecord& hitRecord, double t_max) const
 	double  det = Utilities::dot(v1, p);
 
 	// If det is near 0, they're parallel. If it's negative, the triangle is backfacing the camera.
-	if (fabs(det) < T_MIN)
+	if (fabs(det) < t_min)
 	{
 		return (false);
 	}
@@ -85,7 +85,7 @@ bool	Triangle::hit(Ray& ray, HitRecord& hitRecord, double t_max) const
 	}
 
 	double t = Utilities::dot(v2, q) / det;
-	if (t > t_max || t < T_MIN)
+	if (t > t_max || t < t_min)
 	{
 		return (false);
 	}

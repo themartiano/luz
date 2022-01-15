@@ -93,11 +93,11 @@ void	Cube::_generateFaces(void)
 }
 
 // Calculates if the Rectangle is hit by 'ray', is closer than 't_max' and farther than T_MIN
-bool	Cube::hit(Ray& ray, HitRecord& hitRecord, double t_max) const
+bool	Cube::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) const
 {
 	for (Rectangle rectangle : this->_faces)
 	{
-		if (rectangle.hit(ray, hitRecord, t_max))
+		if (rectangle.hit(ray, hitRecord, t_min, t_max))
 		{
 			return (true);
 		}

@@ -26,3 +26,5 @@ const bool RENDER_AABB = false; // Used to determine if AABBs should be rendered
 const double D_PI = 3.14159265358979323846; // Default PI value (same as the one from <cmath>, ATM)
 
 const std::string D_RENDER_FILE_NAME = "render";
+
+const double D_VOLUME_DENSITY = 1.42;

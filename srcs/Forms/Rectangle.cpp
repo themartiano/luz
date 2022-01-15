@@ -65,7 +65,7 @@ void	Rectangle::setHeight(double height)
 }
 
 // Calculates if the Rectangle is hit by 'ray', is closer than 't_max' and farther than T_MIN
-bool	Rectangle::hit(Ray& ray, HitRecord& hitRecord, double t_max) const
+bool	Rectangle::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) const
 {
 	double a = Utilities::dot(ray.getOrigin() - this->_transform.getPosition(), this->_transform.getOrientation());
 	double b = Utilities::dot(ray.getDirection(), this->_transform.getOrientation());
@@ -75,7 +75,7 @@ bool	Rectangle::hit(Ray& ray, HitRecord& hitRecord, double t_max) const
 	}
 
 	double t = -a / b;
-	if (t > t_max || t < T_MIN)
+	if (t > t_max || t < t_min)
 	{
 		return (false);
 	}
@@ -126,7 +126,7 @@ double  Rectangle::pdfValue(const Vector3& origin, const Vector3& vec) const
 {
 	Ray ray(origin, vec);
 	HitRecord	hitRecord;
-	if (!this->hit(ray, hitRecord, T_MAX))
+	if (!this->hit(ray, hitRecord, T_MIN, T_MAX))
 	{
 		return (0.0);
 	}

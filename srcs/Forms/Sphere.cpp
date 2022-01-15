@@ -62,7 +62,7 @@ void	Sphere::setMaterial(std::shared_ptr<Material> material)
 }
 
 // Calculates if the Sphere is hit by 'ray', is closer than 't_max' and farther than T_MIN
-bool	Sphere::hit(Ray& ray, HitRecord& hitRecord, double t_max) const
+bool	Sphere::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) const
 {
 	Vector3 oc = ray.getOrigin() - this->_position;
 	double a = Utilities::dot(ray.getDirection(), ray.getDirection());
@@ -77,10 +77,10 @@ bool	Sphere::hit(Ray& ray, HitRecord& hitRecord, double t_max) const
 
 	double sqrtd = sqrt(discriminant);
 	double root = (-b - sqrtd) / a;
-	if (root < T_MIN || root > t_max)
+	if (root < t_min || root > t_max)
 	{
 		root = (-b + sqrtd) / a;
-		if (root < T_MIN || root > t_max)
+		if (root < t_min || root > t_max)
 		{
 			return (false);
 		}
@@ -114,7 +114,7 @@ double  Sphere::pdfValue(const Vector3& origin, const Vector3& vec) const
 {
 	Ray ray(origin, vec);
 	HitRecord	hitRecord;
-	if (!this->hit(ray, hitRecord, T_MAX))
+	if (!this->hit(ray, hitRecord, T_MIN, T_MAX))
 	{
 		return (0.0);
 	}

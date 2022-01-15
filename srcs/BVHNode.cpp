@@ -98,7 +98,7 @@ static bool	boxCompare(std::shared_ptr<Hittable> hittable1, std::shared_ptr<Hitt
 }
 
 // Checks if the BVH Node is hit, then checks if the left or right nodes are hit
-bool	BVHNode::hit(Ray& ray, HitRecord& hitRecord, double t_max) const
+bool	BVHNode::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) const
 {
 	if (!this->_boundingBox.hit(ray, hitRecord, t_max))
 	{
@@ -113,8 +113,8 @@ bool	BVHNode::hit(Ray& ray, HitRecord& hitRecord, double t_max) const
 	}
 	else
 	{
-		bool hitLeft = this->_left->hit(ray, hitRecord, t_max);
-		bool hitRight = this->_right->hit(ray, hitRecord, hitLeft ? hitRecord.t0 : t_max);
+		bool hitLeft = this->_left->hit(ray, hitRecord, t_min, t_max);
+		bool hitRight = this->_right->hit(ray, hitRecord, t_min, hitLeft ? hitRecord.t0 : t_max);
 
 		return (hitLeft || hitRight);
 	}
