@@ -1,4 +1,4 @@
-#include "Forms/Triangle.hpp"
+#include "Hittables/Triangle.hpp"
 #include "Utilities.hpp"
 #include "Defaults.hpp"
 #include "Materials/Lambertian.hpp"

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Hittable.hpp"
-#include "BVHNode.hpp"
-#include "Forms/Triangle.hpp"
+#include "Hittables/Hittable.hpp"
+#include "Hittables/BVHNode.hpp"
+#include "Hittables/Triangle.hpp"
 
 class	Mesh : public Hittable
 {

@@ -3,7 +3,7 @@
 #include "Vector3.hpp"
 #include "Ray/Ray.hpp"
 #include "Color.hpp"
-#include "Hittable.hpp"
+#include "Hittables/Hittable.hpp"
 
 class   Atmosphere
 {

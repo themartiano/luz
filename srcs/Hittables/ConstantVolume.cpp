@@ -1,5 +1,5 @@
-#include "Forms/ConstantVolume.hpp"
-#include "Forms/Sphere.hpp"
+#include "Hittables/ConstantVolume.hpp"
+#include "Hittables/Sphere.hpp"
 #include "Materials/Isotropic.hpp"
 #include "Defaults.hpp"
 #include "Utilities.hpp"

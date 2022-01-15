@@ -4,7 +4,7 @@
 #include "Ray/Ray.hpp"
 #include "MaterialTypes.hpp"
 #include "PDFs/PDF.hpp"
-#include "Hittable.hpp"
+#include "Hittables/Hittable.hpp"
 #include <memory>
 
 struct	HitRecord;

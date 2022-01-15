@@ -1,4 +1,4 @@
-#include "BVHNode.hpp"
+#include "Hittables/BVHNode.hpp"
 #include "Utilities.hpp"
 #include "Defaults.hpp"
 #include "Materials/Lambertian.hpp"

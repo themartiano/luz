@@ -2,7 +2,7 @@
 
 #include "Materials/Material.hpp"
 #include "AABB.hpp"
-#include "Hittable.hpp"
+#include "Hittables/Hittable.hpp"
 #include "Vector3.hpp"
 
 class	Sphere : public Hittable

@@ -1,4 +1,4 @@
-#include "Forms/Rectangle.hpp"
+#include "Hittables/Rectangle.hpp"
 #include "Defaults.hpp"
 #include "Utilities.hpp"
 #include "Materials/Lambertian.hpp"
