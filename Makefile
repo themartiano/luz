@@ -15,59 +15,63 @@
 NAME := Luz
 SRCS_DIR := ./srcs
 OBJS_DIR := ./objs
-SRCS :=	./srcs/AABB.cpp \
-		./srcs/Atmosphere.cpp \
-		./srcs/Camera.cpp \
-		./srcs/Clock.cpp \
-		./srcs/Color.cpp \
-		./srcs/ExitError.cpp \
-		./srcs/Hittables/BVHNode.cpp \
-		./srcs/Hittables/ConstantVolume.cpp \
-		./srcs/Hittables/Cube.cpp \
-		./srcs/Hittables/Hittable.cpp \
-		./srcs/Hittables/Mesh.cpp \
-		./srcs/Hittables/Plane.cpp \
-		./srcs/Hittables/Rectangle.cpp \
-		./srcs/Hittables/Sphere.cpp \
-		./srcs/Hittables/Triangle.cpp \
-		./srcs/ImageFiles/BMP.cpp \
-		./srcs/ImageFiles/TIFF.cpp \
-		./srcs/Materials/Dielectric.cpp \
-		./srcs/Materials/Emissive.cpp \
-		./srcs/Materials/Isotropic.cpp \
-		./srcs/Materials/Lambertian.cpp \
-		./srcs/Materials/Material.cpp \
-		./srcs/Materials/Metal.cpp \
-		./srcs/OBJReader.cpp \
-		./srcs/ONB.cpp \
-		./srcs/PDFs/CosinePDF.cpp \
-		./srcs/PDFs/HittablePDF.cpp \
-		./srcs/PDFs/MixturePDF.cpp \
-		./srcs/PDFs/SpherePDF.cpp \
-		./srcs/Ray/Ray.cpp \
-		./srcs/Renderer/Atmospherics.cpp \
-		./srcs/Renderer/ColorHelper.cpp \
-		./srcs/Renderer/HitHelper.cpp \
-		./srcs/Renderer/Renderer.cpp \
-		./srcs/Renderer/SequenceRenderer.cpp \
-		./srcs/Renderer/Threads.cpp \
-		./srcs/Scene.cpp \
-		./srcs/SceneFile/Objects.cpp \
-		./srcs/SceneFile/Scene.cpp \
-		./srcs/SceneFile/SceneFile.cpp \
-		./srcs/SceneFile/Settings.cpp \
-		./srcs/Transform.cpp \
-		./srcs/Utilities.cpp \
-		./srcs/Vector3.cpp \
-		./srcs/main.cpp
-OBJS := $(patsubst $(SRCS_DIR)/%.cpp, $(OBJS_DIR)/%.o, $(SRCS))
+SRCS :=	AABB.cpp \
+		Atmosphere.cpp \
+		Camera.cpp \
+		Clock.cpp \
+		Color.cpp \
+		ExitError.cpp \
+		Hittables/BVHNode.cpp \
+		Hittables/ConstantVolume.cpp \
+		Hittables/Cube.cpp \
+		Hittables/Hittable.cpp \
+		Hittables/Mesh.cpp \
+		Hittables/Plane.cpp \
+		Hittables/Rectangle.cpp \
+		Hittables/Sphere.cpp \
+		Hittables/Triangle.cpp \
+		ImageFiles/BMP.cpp \
+		ImageFiles/TIFF.cpp \
+		Materials/Dielectric.cpp \
+		Materials/Emissive.cpp \
+		Materials/Isotropic.cpp \
+		Materials/Lambertian.cpp \
+		Materials/Material.cpp \
+		Materials/Metal.cpp \
+		OBJReader.cpp \
+		ONB.cpp \
+		PDFs/CosinePDF.cpp \
+		PDFs/HittablePDF.cpp \
+		PDFs/MixturePDF.cpp \
+		PDFs/SpherePDF.cpp \
+		Ray/Ray.cpp \
+		Renderer/Atmospherics.cpp \
+		Renderer/ColorHelper.cpp \
+		Renderer/HitHelper.cpp \
+		Renderer/Renderer.cpp \
+		Renderer/SequenceRenderer.cpp \
+		Renderer/Threads.cpp \
+		Scene.cpp \
+		SceneFile/Objects.cpp \
+		SceneFile/Scene.cpp \
+		SceneFile/SceneFile.cpp \
+		SceneFile/Settings.cpp \
+		Transform.cpp \
+		Utilities.cpp \
+		Vector3.cpp \
+		main.cpp
+OBJS := $(patsubst %.cpp, $(OBJS_DIR)/%.o, $(SRCS))
 DPND := $(OBJS:.o=.d)
+
 INCLUDES := -Iincludes
 GENERAL_FLAGS := -std=c++17 -pthread
 WWW_FLAGS := -Wall -Wextra -Werror
 OPT_FLAGS := -O3
 INC_FLAGS := -MD
+
 TMP_FILE := Makefile.tmp
+SHELL := /bin/bash
+
 
 ####################################################
 
@@ -155,6 +159,7 @@ else ifeq ($(shell uname -s),Darwin)
 	DEBUGGER = lldb
 endif
 
+
 ###############################################
 
 
@@ -180,7 +185,7 @@ clean:
 	@printf "[\e[1;33mCleaning\e[0m]\n\n"
 	rm -f $(OBJS)
 	rm -f $(DPND)
-	@$(shell if [[ "$(shell test -d $(OBJS_DIR) && find $(OBJS_DIR) -type f | wc -l)" -eq 0 ]]; then rm -rf $(OBJS_DIR); fi;)
+	@$(shell if [[ "$(shell find $(OBJS_DIR) -type f | wc -l)" -eq "0" ]]; then rm -rf $(OBJS_DIR); fi;)
 
 .PHONY: fclean
 fclean: clean
@@ -200,5 +205,6 @@ debug:
 	$(DEBUGGER) ./$(NAME)
 
 -include $(DPND)
+
 
 ######################################################
