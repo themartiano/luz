@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Hittable.hpp"
+#include "Hittables/Hittable.hpp"
 
 class	ConstantVolume : public Hittable
 {

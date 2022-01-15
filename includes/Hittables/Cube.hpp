@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Hittable.hpp"
-#include "Rectangle.hpp"
+#include "Hittables/Hittable.hpp"
+#include "Hittables/Rectangle.hpp"
 #include "Transform.hpp"
 #include "Materials/Material.hpp"
 #include <vector>

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Camera.hpp"
-#include "Hittable.hpp"
+#include "Hittables/Hittable.hpp"
 #include "Atmosphere.hpp"
 #include "SkyTypes.hpp"
 #include "ImageFiles/Types.hpp"

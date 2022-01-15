@@ -1,4 +1,4 @@
-#include "Forms/Mesh.hpp"
+#include "Hittables/Mesh.hpp"
 #include "Utilities.hpp"
 #include "Materials/Lambertian.hpp"
 

@@ -1,4 +1,4 @@
-#include "Forms/Cube.hpp"
+#include "Hittables/Cube.hpp"
 #include "Vector3.hpp"
 #include "Materials/Lambertian.hpp"
 

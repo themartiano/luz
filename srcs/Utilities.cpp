@@ -1,5 +1,5 @@
 #include "Utilities.hpp"
-#include "Forms/Sphere.hpp"
+#include "Hittables/Sphere.hpp"
 #include "Defaults.hpp"
 #include <cmath>
 #include <algorithm>

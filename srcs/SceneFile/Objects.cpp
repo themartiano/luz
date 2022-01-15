@@ -1,11 +1,11 @@
 #include "SceneFile/SceneFile.hpp"
 #include "Utilities.hpp"
-#include "Forms/Sphere.hpp"
-#include "Forms/Cube.hpp"
-#include "Forms/Plane.hpp"
-#include "Forms/Rectangle.hpp"
-#include "Forms/Triangle.hpp"
-#include "Forms/Mesh.hpp"
+#include "Hittables/Sphere.hpp"
+#include "Hittables/Cube.hpp"
+#include "Hittables/Plane.hpp"
+#include "Hittables/Rectangle.hpp"
+#include "Hittables/Triangle.hpp"
+#include "Hittables/Mesh.hpp"
 #include "OBJReader.hpp"
 #include <fstream>
 

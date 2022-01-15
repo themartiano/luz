@@ -1,4 +1,4 @@
-#include "Forms/Plane.hpp"
+#include "Hittables/Plane.hpp"
 #include "Utilities.hpp"
 #include "Defaults.hpp"
 #include "Materials/Lambertian.hpp"

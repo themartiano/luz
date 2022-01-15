@@ -2,7 +2,7 @@
 
 #include "PDFs/PDF.hpp"
 #include "Vector3.hpp"
-#include "Hittable.hpp"
+#include "Hittables/Hittable.hpp"
 #include <memory>
 #include <vector>
 

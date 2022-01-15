@@ -1,4 +1,4 @@
-#include "Hittable.hpp"
+#include "Hittables/Hittable.hpp"
 #include "Defaults.hpp"
 
 double Hittable::pdfValue(const Vector3& origin, const Vector3& vec) const

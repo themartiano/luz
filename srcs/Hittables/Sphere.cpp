@@ -1,4 +1,4 @@
-#include "Forms/Sphere.hpp"
+#include "Hittables/Sphere.hpp"
 #include "Utilities.hpp"
 #include "Defaults.hpp"
 #include "ONB.hpp"

@@ -2,7 +2,7 @@
 
 #include "Vector3.hpp"
 #include "Scene.hpp"
-#include "Hittable.hpp"
+#include "Hittables/Hittable.hpp"
 #include <string>
 
 namespace Utilities
