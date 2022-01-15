@@ -20,18 +20,19 @@ SRCS :=	./srcs/Camera.cpp ./srcs/ExitError.cpp ./srcs/main.cpp ./srcs/Scene.cpp 
 		./srcs/Color.cpp ./srcs/Transform.cpp ./srcs/Renderer/SequenceRenderer.cpp \
 		./srcs/Forms/Sphere.cpp ./srcs/Clock.cpp ./srcs/BVHNode.cpp ./srcs/Forms/Rectangle.cpp \
 		./srcs/Forms/Plane.cpp ./srcs/Atmosphere.cpp ./srcs/Forms/Triangle.cpp ./srcs/OBJReader.cpp \
-		./srcs/Forms/Cube.cpp ./srcs/SceneFile.cpp ./srcs/ONB.cpp ./srcs/PDFs/CosinePDF.cpp \
+		./srcs/Forms/Cube.cpp ./srcs/ONB.cpp ./srcs/PDFs/CosinePDF.cpp \
 		./srcs/PDFs/HittablePDF.cpp ./srcs/Hittable.cpp ./srcs/PDFs/MixturePDF.cpp ./srcs/Renderer/HitHelper.cpp \
 		./srcs/Renderer/Atmospherics.cpp ./srcs/Renderer/Threads.cpp ./srcs/Renderer/ColorHelper.cpp \
 		./srcs/ImageFiles/BMP.cpp ./srcs/ImageFiles/TIFF.cpp ./srcs/Materials/Material.cpp \
 		./srcs/Materials/Metal.cpp ./srcs/Materials/Dielectric.cpp ./srcs/Materials/Lambertian.cpp \
 		./srcs/Materials/Emissive.cpp ./srcs/Forms/ConstantVolume.cpp ./srcs/Materials/Isotropic.cpp \
-		./srcs/PDFs/SpherePDF.cpp
+		./srcs/PDFs/SpherePDF.cpp ./srcs/SceneFile/SceneFile.cpp ./srcs/SceneFile/Scene.cpp ./srcs/SceneFile/Objects.cpp \
+		./srcs/SceneFile/Settings.cpp
 OBJS := $(patsubst $(SRCS_DIR)/%.cpp, $(OBJS_DIR)/%.o, $(SRCS))
 DPND := $(OBJS:.o=.d)
 INCLUDES := -Iincludes
 GENERAL_FLAGS := -std=c++17 -pthread
-WWW_FLAGS := -Wall -Wextra -Werror -pedantic-errors
+WWW_FLAGS := -Wall -Wextra -Werror
 OPT_FLAGS := -O3
 INC_FLAGS := -MD
 TMP_FILE := Makefile.tmp
