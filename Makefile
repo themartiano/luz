@@ -126,16 +126,27 @@ else
 	PRE_EXECUTE = clean
 endif
 
+# Reads FAST_COMPILATION option from TMP_FILE if user hasn't provided it
+ifndef FAST_COMPILATION
+	ifeq ($(shell awk 'NR==5 {print $$3}' $(TMP_FILE)),1)
+		FAST_COMPILATION = 1
+	else
+		FAST_COMPILATION = 0
+	endif
+else
+	PRE_EXECUTE = clean
+endif
+
 # Configure DEBUG
 ifeq ($(DEBUG),1)
 	DEBUG_FLAGS = -g
-	OPT_FLAGS =
+	OPT_FLAGS = -Og
 endif
 
 # Configure SANITIZER
 ifeq ($(SANITIZER),1)
 	DEBUG_FLAGS = -g -fsanitize=address
-	OPT_FLAGS =
+	OPT_FLAGS = -Og
 endif
 
 # Configure NO_FLAGS
@@ -151,7 +162,12 @@ else
 	_COMPILER = clang++
 endif
 
-$(shell echo "DEBUG = $(DEBUG)\nSANITIZER = $(SANITIZER)\nNO_FLAGS = $(NO_FLAGS)\nCOMPILER = $(COMPILER)" > $(TMP_FILE))
+# Configure FAST_COMPILATION
+ifeq ($(FAST_COMPILATION),1)
+	OPT_FLAGS =
+endif
+
+$(shell echo -e -n "DEBUG = $(DEBUG)\nSANITIZER = $(SANITIZER)\nNO_FLAGS = $(NO_FLAGS)\nCOMPILER = $(COMPILER)\nFAST_COMPILATION = $(FAST_COMPILATION)" > $(TMP_FILE))
 
 ifeq ($(shell uname -s),Linux)
 	DEBUGGER = gdb
@@ -198,11 +214,31 @@ re:
 	@printf "\n"
 	@$(MAKE) all --no-print-directory
 
+.PHONY: no_flags
+no_flags:
+	@$(MAKE) all NO_FLAGS=1 --no-print-directory
+
 .PHONY: debug
 debug:
 	@$(MAKE) all DEBUG=1 --no-print-directory
 	@printf "\n[\e[1;34mStarting $(DEBUGGER)\e[0m]\n\n"
 	$(DEBUGGER) ./$(NAME)
+
+.PHONY: sanitizer
+sanitizer:
+	@$(MAKE) all SANITIZER=1 --no-print-directory
+
+.PHONY: windows
+windows:
+	@$(MAKE) all COMPILER=1 --no-print-directory
+
+.PHONY: unix
+unix:
+	@$(MAKE) all COMPILER=0 --no-print-directory
+
+.PHONY: fast
+fast:
+	@$(MAKE) all FAST_COMPILATION=1 --no-print-directory
 
 -include $(DPND)
 
