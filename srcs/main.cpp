@@ -33,68 +33,73 @@ int	main(int argc, char *argv[])
 	}
 	else
 	{
-		scene.setYResolution(500);
-		scene.setXResolution(500);
-		scene.setSampleCount(1000);
-		scene.setMaxLightBounces(50);
+		scene.setYResolution(512);
+		scene.setXResolution(512);
+		scene.setSampleCount(100);
+		scene.setMaxLightBounces(32);
 		scene.setGammaCorrected(true);
-		scene.setRenderSky(SKY_NONE);
+		scene.setRenderSky(SKY_ATMOSPHERE);
 		scene.setDistanceBlueness(false);
-		//scene.setAtmosphere(Atmosphere(0.28, D_EARTH_RADIUS, D_ATMOSPHERE_RADIUS, D_HR, D_HM, 64, 24, 0.468)); // Only needed if Scene.Sky == SKY_ATMOSPHERE
-		scene.setBackgroundColor(Color(0.1, 0.1, 0.1)); // Only needed if Scene.Sky == SKY_NONE
+		scene.setAtmosphere(Atmosphere(0.28, D_EARTH_RADIUS, D_ATMOSPHERE_RADIUS, D_HR, D_HM, 48, 24, 0.468)); // Only needed if Scene.Sky == SKY_ATMOSPHERE
+		//scene.setBackgroundColor(Color(0.1, 0.1, 0.1)); // Only needed if Scene.Sky == SKY_NONE
 
 		// Coordinate system ~~ Right Hand ~~ Forward: -Z | Up: +Y | Right: +X
 
-		//scene.addCamera(Camera(Vector3(0.0, 5.0, 0.0), Vector3(0.0, -1.0, -T_MIN), 65, 0.0, 3.999));
-		scene.addCamera(Camera(Vector3(0.0, 0.0, 8.0), Vector3(0.0, 0.0, -1.0), 65, 0.0, 1.0));
+		scene.addCamera(Camera(Vector3(0.0, D_EARTH_RADIUS + 5.0, 0.0), Vector3(0.0, 0.0, -1.0), 65, 0.0, 1.0));
+
+		scene.addHittable(std::make_shared<Plane>(
+			D_EARTH_RADIUS,
+			Vector3(0.0, 1.0, 0.0),
+			std::make_shared<Lambertian>(Color(0.6, 0.6, 0.6))
+		));
+
+		scene.addHittable(std::make_shared<Rectangle>(
+			Transform(Vector3(0.0, D_EARTH_RADIUS + 1.0, -15.0), Vector3(0.0, 1.0, 1.0), Vector3(1.0, 1.0, 1.0)),
+			5.0,
+			5.0,
+			std::make_shared<Metal>(Color(1.0, 1.0, 1.0), 0.0)
+		));
+
+		scene.addHittable(std::make_shared<Sphere>(
+			Vector3(-3.0, D_EARTH_RADIUS + 5.0, -8.0),
+			1.0,
+			std::make_shared<Dielectric>(Color(1.0, 1.0, 1.0))
+		));
+
+		scene.addHittable(std::make_shared<Sphere>(
+			Vector3(3.0, D_EARTH_RADIUS + 5.0, -8.0),
+			1.0,
+			std::make_shared<Lambertian>(Color(0.2, 0.8, 0.2))
+		));
+
+		scene.addHittable(std::make_shared<Sphere>(
+			Vector3(0.0, D_EARTH_RADIUS + 1.0, -17.0),
+			1.0,
+			std::make_shared<Emissive>(Color(1.0, 1.0, 1.0), 10.0)
+		));
+
+		scene.addHittable(std::make_shared<Mesh>(readObj(
+				"objects/blender_lamp.obj",
+				Vector3(0.0, D_EARTH_RADIUS + 3.0, -20.0),
+				std::make_shared<Lambertian>(Color(1.0, 1.0, 1.0)
+			))
+		));
 
 		scene.addHittable(std::make_shared<ConstantVolume>(
 			std::make_shared<Sphere>(
-				Vector3(0.0, 0.0, 0.0),
-				6.0,
+				Vector3(0.0, D_EARTH_RADIUS + 10.0, -20.0),
+				3.4,
 				nullptr
 			),
-			std::make_shared<Isotropic>(Color(0.6, 0.6, 0.6)),
-			0.18
-		));
-
-		scene.addHittable(std::make_shared<Rectangle>(
-			Transform(Vector3(-3.0, 6.0, 0.0), Vector3(1.0, 0.0, 0.0), Vector3(1.0, 1.0, 1.0)),
-			10.0,
-			10.0,
-			std::make_shared<Lambertian>(Color(0.3, 0.3, 0.3))
-		));
-		scene.addHittable(std::make_shared<Rectangle>(
-			Transform(Vector3(-3.0, -6.0, 0.0), Vector3(1.0, 0.0, 0.0), Vector3(1.0, 1.0, 1.0)),
-			10.0,
-			10.0,
-			std::make_shared<Lambertian>(Color(0.3, 0.3, 0.3))
-		));
-		scene.addHittable(std::make_shared<Rectangle>(
-			Transform(Vector3(-3.0, 0.0, -3.0), Vector3(1.0, 0.0, 0.0), Vector3(1.0, 1.0, 1.0)),
-			4.0,
-			2.0,
-			std::make_shared<Lambertian>(Color(0.3, 0.3, 0.3))
-		));
-		scene.addHittable(std::make_shared<Rectangle>(
-			Transform(Vector3(-3.0, 0.0, 3.0), Vector3(1.0, 0.0, 0.0), Vector3(1.0, 1.0, 1.0)),
-			4.0,
-			2.0,
-			std::make_shared<Lambertian>(Color(0.3, 0.3, 0.3))
-		));
-
-		scene.addHittable(std::make_shared<Rectangle>(
-			Transform(Vector3(-6.0, 2.0, 0.0), Vector3(1.0, 0.0, 0.0), Vector3(1.0, 1.0, 1.0)),
-			2.0,
-			2.0,
-			std::make_shared<Emissive>(Color(1.0, 1.0, 1.0), 50.0)
+			std::make_shared<Isotropic>(Color(1.0, 1.0, 1.0)),
+			0.42
 		));
 	}
 
 	if (Renderer::render(scene))
 	{
 		// Writes render image file
-		scene.saveRenderToFile(BMP_FILE);
+		scene.saveRenderToFile("cpu", BMP_FILE);
 	}
 
 	return (0);

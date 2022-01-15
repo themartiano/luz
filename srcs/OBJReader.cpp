@@ -15,16 +15,16 @@
 #include <string>
 #include <unistd.h>
 
-static void	parseObjFile(Mesh& mesh, std::ifstream& stream, Vector3 positionOffset);
+static void	parseObjFile(Mesh& mesh, std::ifstream& stream, Vector3 positionOffset, std::shared_ptr<Material> material);
 
 // Calls the actual 'readObj' function with a zeroed offset position
 Mesh	readObj(std::string fileName)
 {
-	return (readObj(fileName, Vector3(0.0, 0.0, 0.0)));
+	return (readObj(fileName, Vector3(0.0, 0.0, 0.0), std::make_shared<Lambertian>(Color(0.6, 0.6, 0.6))));
 }
 
 // Search and read / parse the obj file named 'fileName' (current directory)
-Mesh	readObj(std::string fileName, Vector3 positionOffset)
+Mesh	readObj(std::string fileName, Vector3 positionOffset, std::shared_ptr<Material> material)
 {
 	std::ifstream stream;
 	stream.open(fileName);
@@ -39,7 +39,7 @@ Mesh	readObj(std::string fileName, Vector3 positionOffset)
 	Clock	clock;
 
 	Mesh	mesh;
-	parseObjFile(mesh, stream, positionOffset);
+	parseObjFile(mesh, stream, positionOffset, material);
 
 	double elapsedS = clock.stop();
 	std::cout << CLR_BLUE << fileName << CLR_GREEN_BRIGHT << " parsing done! " << CLR_BLUE_BRIGHT << "(Duration: " << CLR_WHITE << elapsedS << "s" << CLR_BLUE_BRIGHT << ")\n\n" << CLR_RESET;
@@ -47,7 +47,7 @@ Mesh	readObj(std::string fileName, Vector3 positionOffset)
 	return (mesh);
 }
 
-static void	parseObjFile(Mesh& mesh, std::ifstream& stream, Vector3 positionOffset)
+static void	parseObjFile(Mesh& mesh, std::ifstream& stream, Vector3 positionOffset, std::shared_ptr<Material> material)
 {
 	std::string line;
 	std::vector<Vector3> vertices;
@@ -104,10 +104,10 @@ static void	parseObjFile(Mesh& mesh, std::ifstream& stream, Vector3 positionOffs
 				vertices[positions[2] - 1] + positionOffset,
 				//Material(Color(Utilities::randomDouble(), Utilities::randomDouble(), Utilities::randomDouble()), 1.0, 0.0, 0.5, 0.0, false, false, 0.0)
 				//std::make_shared<Dielectric>(Color(0.8, 0.8, 0.8))
-				std::make_shared<Lambertian>(Color(0.3, 0.3, 0.3))
+				material
 			));
 		}
 	} while (!stream.eof());
 
-	mesh = Mesh(Vector3(), std::make_shared<Lambertian>(Color(0.3, 0.3, 0.3)), BVHNode(triangles));
+	mesh = Mesh(Vector3(), material, BVHNode(triangles));
 }
