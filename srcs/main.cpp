@@ -1,7 +1,7 @@
 #include "Scene.hpp"
 #include "Renderer/Renderer.hpp"
 #include "ANSIColors.hpp"
-#include "SceneFile.hpp"
+#include "SceneFile/SceneFile.hpp"
 #include "OBJReader.hpp"
 #include "Forms/Triangle.hpp"
 #include "Forms/Plane.hpp"
@@ -29,7 +29,7 @@ int	main(int argc, char *argv[])
 	Scene scene;
 	if (argc == 2)
 	{
-		readSceneFile(scene, argv[1]);
+		SceneFile::read(scene, argv[1]);
 	}
 	else
 	{
