@@ -24,7 +24,7 @@ int	main(int argc, char *argv[])
 {
 	std::cout << CLR_BLUE << "Preparing..." << CLR_RESET << std::endl << std::endl;
 
-	srand(time(0));
+	//srand(time(0));
 
 	Scene scene;
 	if (argc == 2)
@@ -38,79 +38,117 @@ int	main(int argc, char *argv[])
 		scene.setSampleCount(1000);
 		scene.setMaxLightBounces(32);
 		scene.setGammaCorrected(true);
-		scene.setRenderSky(SKY_NONE);
+		scene.setRenderSky(SKY_ATMOSPHERE);
 		scene.setDistanceBlueness(false);
-		// scene.setAtmosphere(Atmosphere(0.28, D_EARTH_RADIUS, D_ATMOSPHERE_RADIUS, D_HR, D_HM, 48, 24, 0.468)); // Only needed if Scene.Sky == SKY_ATMOSPHERE
-		scene.setBackgroundColor(Color(1.0, 1.0, 1.0)); // Only needed if Scene.Sky == SKY_NONE
+		scene.setAtmosphere(Atmosphere(0.28, D_EARTH_RADIUS, D_ATMOSPHERE_RADIUS, D_HR, D_HM, 64, 32, 0.468)); // Only needed if Scene.Sky == SKY_ATMOSPHERE
+		// scene.setBackgroundColor(Color(1.0, 1.0, 1.0)); // Only needed if Scene.Sky == SKY_NONE
 
-		scene.addCamera(Camera(Vector3(0.0, 0.0, 6.5), Vector3(0.0, 0.0, -1.0), 65, 0.0, 1.0));
+		// Coordinate system ~~ Right Hand ~~ Forward: -Z | Up: +Y | Right: +X
 
-		scene.addHittable(std::make_shared<Mesh>(readObj("objects/blender_mandalorian.obj", Vector3(0.0, 0.0, 0.0), std::make_shared<Metal>(Color(0.5, 0.5, 0.5), 0.42))));
+		srand(845);
+		scene.addCamera(Camera(Vector3(0.0, D_EARTH_RADIUS + 5.0, 0.0), Vector3(0.0, 0.0, -1.0), 65, 0.5, 20.0));
 
-		scene.addHittable(std::make_shared<Rectangle>(
-			Transform(Vector3(15.0, 0.0, -7.5), Vector3(-1.0, 0.0, 0.0), Vector3(1.0, 1.0, 1.0)),
-			15.0,
-			50.0,
-			std::make_shared<Emissive>(Color(1.0, 1.0, 1.0), 5.0)
+		scene.addHittable(std::make_shared<Plane>(
+			D_EARTH_RADIUS,
+			Vector3(0.0, 1.0, 0.0),
+			std::make_shared<Lambertian>(Color(0.6, 0.6, 0.6))
 		));
 
-		// // Coordinate system ~~ Right Hand ~~ Forward: -Z | Up: +Y | Right: +X
-
-		// scene.addCamera(Camera(Vector3(0.0, D_EARTH_RADIUS + 5.0, 0.0), Vector3(0.0, 0.0, -1.0), 65, 0.0, 1.0));
-
-		// scene.addHittable(std::make_shared<Plane>(
-		// 	D_EARTH_RADIUS,
-		// 	Vector3(0.0, 1.0, 0.0),
-		// 	std::make_shared<Lambertian>(Color(0.6, 0.6, 0.6))
-		// ));
-
 		// scene.addHittable(std::make_shared<Rectangle>(
-		// 	Transform(Vector3(0.0, D_EARTH_RADIUS + 1.0, -15.0), Vector3(0.0, 1.0, 1.0), Vector3(1.0, 1.0, 1.0)),
+		// 	Transform(Vector3(0.0, D_EARTH_RADIUS, -15.0), Vector3(0.0, 1.0, 0.0), Vector3(1.0, 1.0, 1.0)),
 		// 	5.0,
 		// 	5.0,
 		// 	std::make_shared<Metal>(Color(1.0, 1.0, 1.0), 0.0)
 		// ));
 
-		// scene.addHittable(std::make_shared<Sphere>(
-		// 	Vector3(-3.0, D_EARTH_RADIUS + 5.0, -8.0),
-		// 	1.0,
-		// 	std::make_shared<Dielectric>(Color(1.0, 1.0, 1.0))
-		// ));
+		scene.addHittable(std::make_shared<Mesh>(readObj(
+				"objects/blender_glass.obj",
+				Vector3(0.0, D_EARTH_RADIUS + 5.0, -20.0),
+				std::make_shared<Dielectric>(Color(0.76, 0.76, 0.76))
+			)
+		));
 
-		// scene.addHittable(std::make_shared<Sphere>(
-		// 	Vector3(3.0, D_EARTH_RADIUS + 5.0, -8.0),
-		// 	1.0,
-		// 	std::make_shared<Lambertian>(Color(0.2, 0.8, 0.2))
-		// ));
+		scene.addHittable(std::make_shared<Sphere>(
+			Vector3(7.0, D_EARTH_RADIUS + 5.0, -20.0),
+			2.5,
+			std::make_shared<Metal>(Color(1.0, 1.0, 1.0), 0.0)
+		));
 
-		// scene.addHittable(std::make_shared<Sphere>(
-		// 	Vector3(0.0, D_EARTH_RADIUS + 1.0, -17.0),
-		// 	1.0,
-		// 	std::make_shared<Emissive>(Color(1.0, 1.0, 1.0), 10.0)
-		// ));
+			scene.addHittable(std::make_shared<Sphere>(
+			Vector3(-7.0, D_EARTH_RADIUS + 5.0, -20.0),
+			2.5,
+			std::make_shared<Metal>(Color(1.0, 1.0, 1.0), 0.68)
+		));
 
-		// scene.addHittable(std::make_shared<Mesh>(readObj(
-		// 		"objects/blender_lamp.obj",
-		// 		Vector3(0.0, D_EARTH_RADIUS + 3.0, -20.0),
-		// 		std::make_shared<Lambertian>(Color(1.0, 1.0, 1.0)
-		// 	))
-		// ));
+		std::vector<std::shared_ptr<Hittable>> floorSpheres;
+		for (int x = 100; x > -100; x--)
+		{
+			for (int z = 500; z > -500; z--)
+			{
+				if (rand() % 12 == 0)
+				{
+					Vector3 position = Vector3(x, D_EARTH_RADIUS + 0.5, z);
 
-		// scene.addHittable(std::make_shared<ConstantVolume>(
-		// 	std::make_shared<Sphere>(
-		// 		Vector3(0.0, D_EARTH_RADIUS + 10.0, -20.0),
-		// 		3.4,
-		// 		nullptr
-		// 	),
-		// 	std::make_shared<Isotropic>(Color(1.0, 1.0, 1.0)),
-		// 	0.42
-		// ));
+					int random = rand() % 10;
+
+					if (random <= 3) // Lambertian
+					{
+						floorSpheres.push_back(std::make_shared<Sphere>(
+							position,
+							0.5,
+							std::make_shared<Lambertian>(Color(Utilities::randomDouble(), Utilities::randomDouble(), Utilities::randomDouble()))
+						));
+					}
+					else if (random == 4 || random == 5) // Metal
+					{
+
+						floorSpheres.push_back(std::make_shared<Sphere>(
+							position,
+							0.5,
+							std::make_shared<Metal>(Color(Utilities::randomDouble(), Utilities::randomDouble(), Utilities::randomDouble()), Utilities::randomDouble())
+						));
+					}
+					else if (random == 6 || random == 7) // Dielectric
+					{
+
+						floorSpheres.push_back(std::make_shared<Sphere>(
+							position,
+							0.5,
+							std::make_shared<Dielectric>(Color(Utilities::randomDouble(), Utilities::randomDouble(), Utilities::randomDouble()))
+						));
+					}
+					else if (random == 8) // Volume
+					{
+						floorSpheres.push_back(std::make_shared<ConstantVolume>(
+							std::make_shared<Sphere>(
+								position,
+								0.5,
+								nullptr
+							),
+							std::make_shared<Isotropic>(Color(Utilities::randomDouble(), Utilities::randomDouble(), Utilities::randomDouble())),
+							Utilities::randomDouble(0.1, 10.0)
+						));
+					}
+					else if (random == 9) // Emissive
+					{
+
+						floorSpheres.push_back(std::make_shared<Sphere>(
+							position,
+							0.5,
+							std::make_shared<Emissive>(Color(Utilities::randomDouble(), Utilities::randomDouble(), Utilities::randomDouble()), Utilities::randomDouble(5.0, 12.6))
+						));
+					}
+				}
+			}
+		}
+
+		scene.addHittable(std::make_shared<BVHNode>(floorSpheres));
 	}
 
 	if (Renderer::render(scene))
 	{
 		// Writes render image file
-		scene.saveRenderToFile("mandalorian", BMP_FILE);
+		scene.saveRenderToFile("render", BMP_FILE);
 	}
 
 	return (0);
