@@ -2,6 +2,7 @@
 
 #include "Scene.hpp"
 #include <string>
+#include <memory>
 
 namespace	SceneFile
 {
@@ -12,5 +13,6 @@ namespace	SceneFile
 		void	_readSettingsSection(Scene& scene, std::ifstream& stream);
 		void	_readSceneSection(Scene& scene, std::ifstream& stream);
 		void	_readObjectsSubSection(Scene& scene, std::ifstream& stream);
+		std::shared_ptr<Material>	_readMaterialSubSection(std::ifstream& stream);
 	}
 }
