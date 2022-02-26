@@ -1,6 +1,7 @@
 #include "Renderer/Renderer.hpp"
 #include "ANSIColors.hpp"
 #include "Clock.hpp"
+#include "Defaults.hpp"
 
 // Renders the image using all the information present on 'scene'. (Objects, cameras, lights, settings, etc)
 bool	Renderer::render(Scene& scene)
@@ -14,6 +15,7 @@ bool	Renderer::render(Scene& scene)
 	scene.updateLights();
 
 	std::cout << CLR_YELLOW << "Rendering..." << CLR_RESET << std::endl;
+	std::cout << CLR_GREEN << CORE_COUNT * THREAD_MULTIPLIER << CLR_BLUE << " threads in use." << CLR_RESET << std::endl;
 
 	Clock	clock;
 
