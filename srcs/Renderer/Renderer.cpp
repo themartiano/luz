@@ -14,15 +14,17 @@ bool	Renderer::render(Scene& scene)
 
 	scene.updateLights();
 
-	std::cout << CLR_YELLOW << "Rendering..." << CLR_RESET << std::endl;
-	std::cout << CLR_GREEN << CORE_COUNT * THREAD_MULTIPLIER << CLR_BLUE << " threads in use." << CLR_RESET << std::endl;
+	std::cout << CLR_YELLOW << "Rendering with:" << CLR_RESET << std::endl;
+	std::cout << CLR_GREEN << CORE_COUNT * THREAD_MULTIPLIER << CLR_BLUE << " threads;" << CLR_RESET << std::endl;
+	std::cout << CLR_GREEN << scene.getSampleCount() << CLR_BLUE << " samples per pixel;" << CLR_RESET << std::endl;
+	std::cout << CLR_GREEN << scene.getXResolution() << CLR_BLUE << " x " << CLR_GREEN << scene.getYResolution() << CLR_RESET << std::endl;
 
 	Clock	clock;
 
 	internal::_manageThreads(scene);
 
 	double elapsedS = clock.stop();
-	std::cout << CLR_WHITE << "\r[ 100% ]";
+	std::cout << "\r" << CLR_CYAN << "Progress: " << CLR_WHITE << "[ 100% ]";
 	std::cout << CLR_GREEN_BRIGHT << "\nRender done! " << CLR_BLUE_BRIGHT << "(Duration: " << CLR_WHITE << elapsedS << "s" << CLR_BLUE_BRIGHT << ")\n\n" << CLR_RESET;
 
 	return (true);
