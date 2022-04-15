@@ -20,6 +20,7 @@ class	Landscape : public Hittable
 		double			_noiseScale; // The scale of the Perlin noise
 		unsigned int	_seed;
 		unsigned int	_samplesPerRay;
+		double			_size;
 
 		Perlin			_perlin;
 };

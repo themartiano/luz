@@ -47,19 +47,25 @@ int	main(int argc, char *argv[])
 
 		// Coordinate system ~~ Right Hand ~~ Forward: -Z | Up: +Y | Right: +X
 
-		scene.addCamera(Camera(Vector3(0.0, 21.0, 11.0), Vector3(0.0, -0.35, -1.0), 65, 0.0, 20.0));
+		scene.addCamera(Camera(Vector3(0.0, 15.0, 45.0), Vector3(0.0, -0.3, -1.0), 65, 0.0, 20.0));
 
 		scene.addHittable(std::make_shared<Landscape>(
 			std::make_shared<Lambertian>(Color(0.3, 0.29, 0.11)),
-			21.0,
+			16.0,
 			42,
-			1000
+			100
+		));
+		scene.addHittable(std::make_shared<Rectangle>(
+			Transform(Vector3(0.0, -1.0, 0.0), Vector3(0.0, 1.0, 0.0), Vector3(1.0, 1.0, 1.0)),
+			20.0,
+			20.0,
+			std::make_shared<Lambertian>(Color(0.6, 0.6, 0.6))
 		));
 
 		// scene.addHittable(std::make_shared<Sphere>(
-		// 	Vector3(0.0, 10.0, 90.0),
-		// 	1.0,
-		// 	std::make_shared<Lambertian>(Color(0.6, 0.6, 0.6))
+		// 	Vector3(0.0, 35.0, 0.0),
+		// 	5.0,
+		// 	std::make_shared<Emissive>(Color(1.0, 1.0, 1.0), 100.0)
 		// ));
 	}
 
