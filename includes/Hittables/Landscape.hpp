@@ -14,6 +14,7 @@ class	Landscape : public Hittable
 
 	private:
 		double	_getHeightAtPoint(double x, double z) const;
+		Vector3	_getNormalAtPosition(Vector3 position, double t_min) const;
 
 		std::shared_ptr<Material>	_material;
 		double			_noiseScale; // The scale of the Perlin noise

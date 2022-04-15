@@ -37,8 +37,8 @@ int	main(int argc, char *argv[])
 	{
 		scene.setYResolution(500);
 		scene.setXResolution(500);
-		scene.setSampleCount(4);
-		scene.setMaxLightBounces(6);
+		scene.setSampleCount(5);
+		scene.setMaxLightBounces(8);
 		scene.setGammaCorrected(true);
 		scene.setRenderSky(SKY_NONE);
 		scene.setDistanceBlueness(false);
@@ -47,13 +47,20 @@ int	main(int argc, char *argv[])
 
 		// Coordinate system ~~ Right Hand ~~ Forward: -Z | Up: +Y | Right: +X
 
-		scene.addCamera(Camera(Vector3(0.0, 10.0, 100.0), Vector3(0.0, 0.0, -1.0), 65, 0.0, 20.0));
+		scene.addCamera(Camera(Vector3(0.0, 21.0, 11.0), Vector3(0.0, -0.35, -1.0), 65, 0.0, 20.0));
+
 		scene.addHittable(std::make_shared<Landscape>(
 			std::make_shared<Lambertian>(Color(0.3, 0.29, 0.11)),
-			5.0,
+			21.0,
 			42,
-			100
+			1000
 		));
+
+		// scene.addHittable(std::make_shared<Sphere>(
+		// 	Vector3(0.0, 10.0, 90.0),
+		// 	1.0,
+		// 	std::make_shared<Lambertian>(Color(0.6, 0.6, 0.6))
+		// ));
 	}
 
 	if (Renderer::render(scene))
