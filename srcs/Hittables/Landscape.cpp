@@ -11,7 +11,7 @@
 // Constructs the Landscape with default values
 Landscape::Landscape(void)
 {
-	this->_material = std::make_shared<Lambertian>(Color(0.6, 0.6, 0.6));
+	this->_material = std::make_shared<Lambertian>(Color(0.3, 0.29, 0.11));
 	this->_noiseScale = 1.0;
 	this->_seed = 42;
 	this->_samplesPerRay = 10;
@@ -41,7 +41,53 @@ std::shared_ptr<Material>	Landscape::getMaterial(void) const
 // Calculates if the Landscape's BVH is hit by 'ray', is closer than 't_max' and farther than T_MIN
 bool	Landscape::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) const
 {
+	Vector3 position(0.0, 0.0, 0.0); // customizable
 
+	// get the distance between the origin and the landscape closest border
+	double closestBorder = Utilities::vectorLength(ray.getOrigin() - (position - (ray.getDirection() * (this->_size / 2.0))));
+	double farthestBorder = Utilities::vectorLength(ray.getOrigin() - (position + (ray.getDirection() * (this->_size / 2.0))));
+
+	double stepSize = (farthestBorder - closestBorder) / this->_samplesPerRay;
+
+	// start subsampling in the closest border until the farthest border
+	// hits
+	for (unsigned int i = 0; i < this->_samplesPerRay; i++)
+	{
+		double t = closestBorder + (i * stepSize);
+
+		if (t > t_max || t < t_min)
+		{
+			continue;
+		}
+
+		Vector3 samplePosition = ray.pointAtRay(t);
+
+		if (samplePosition.getY() < position.getY())
+		{
+			continue;
+		}
+
+		if (samplePosition.getX() > this->_size / 2.0 || samplePosition.getX() < -this->_size / 2.0 ||
+			samplePosition.getZ() > this->_size / 2.0 || samplePosition.getZ() < -this->_size / 2.0)
+		{
+			continue;
+		}
+
+		// get the height at the sample position
+		double height = this->_getHeightAtPoint(samplePosition.getX(), samplePosition.getZ());
+
+		if (height >= samplePosition.getY())
+		{
+			hitRecord.t0 = t;
+			hitRecord.position = samplePosition;
+			hitRecord.normal = this->_getNormalAtPosition(samplePosition, hitRecord.t0);
+			hitRecord.material = this->_material;
+
+			return (true);
+		}
+	}
+
+	return (false);
 }
 
 // bool	Landscape::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) const
