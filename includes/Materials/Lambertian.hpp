@@ -8,4 +8,6 @@ class	Lambertian : public Material
 		bool	scatter(Ray& ray, HitRecord& hitRecord, ScatterRecord& scatterRecord);
 		double	scatteringPDF(Ray& ray, HitRecord& hitRecord);
 		MaterialType	getType(void) const;
+		Color	getColor(void) const;
+		void	setColor(Color color);
 };

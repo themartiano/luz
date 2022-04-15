@@ -35,3 +35,13 @@ MaterialType	Lambertian::getType(void) const
 {
 	return (LAMBERTIAN);
 }
+
+Color	Lambertian::getColor(void) const
+{
+	return (this->_color);
+}
+
+void	Lambertian::setColor(Color color)
+{
+	this->_color = color;
+}
