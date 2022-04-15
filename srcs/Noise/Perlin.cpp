@@ -20,17 +20,17 @@ Perlin::Perlin(unsigned int seed)
 	this->_initPermutationVector();
 }
 
-double	Perlin::_fade(double t)
+double	Perlin::_fade(double t) const
 {
 	return (t * t * t * (t * (t * 6.0 - 15.0) + 10.0));
 }
 
-double	Perlin::_lerp(double t, double a, double b)
+double	Perlin::_lerp(double t, double a, double b) const
 {
 	return (a + t * (b - a));
 }
 
-double	Perlin::_grad(int hash, double x, double y, double z)
+double	Perlin::_grad(int hash, double x, double y, double z) const
 {
 	int h = hash & 15;
 
@@ -53,7 +53,7 @@ void Perlin::_initPermutationVector(void)
 	//duplicate?
 }
 
-double Perlin::noise(double x, double y, double z)
+double Perlin::noise(double x, double y, double z) const
 {
 	int X = (int)std::floor(x) & 255;
 	int Y = (int)std::floor(y) & 255;
@@ -108,12 +108,12 @@ double Perlin::noise(double x, double y, double z)
 }
 
 // 2D noise can have any Z value
-double Perlin::noise2D(double x, double y)
+double Perlin::noise2D(double x, double y) const
 {
 	return (this->noise(x, y, 0.0));
 }
 
-void	Perlin::saveToFile(std::string fileName, ImageFileTypes imageFileType, double xRes, double yRes, double noiseScale)
+void	Perlin::saveToFile(std::string fileName, ImageFileTypes imageFileType, double xRes, double yRes, double noiseScale) const
 {
 	Scene	scene;
 
@@ -136,7 +136,7 @@ void	Perlin::saveToFile(std::string fileName, ImageFileTypes imageFileType, doub
 	scene.saveRenderToFile(fileName, imageFileType);
 }
 
-void	Perlin::saveToFile(ImageFileTypes imageFileType, double xRes, double yRes, double noiseScale)
+void	Perlin::saveToFile(ImageFileTypes imageFileType, double xRes, double yRes, double noiseScale) const
 {
 	this->saveToFile(this->_defaultOutputFileName, imageFileType, xRes, yRes, noiseScale);
 }
