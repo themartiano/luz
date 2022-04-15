@@ -57,9 +57,13 @@ bool	Landscape::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) 
 		if (landscapeHeight >= samplePosition.getY())
 		{
 			hitRecord.t0 = Utilities::vectorLength(ray.getOrigin() - samplePosition); // check this
-			hitRecord.normal = orientation;
+
+			hitRecord.normal = this->_getNormalAtPosition(samplePosition, t_min);
+
 			hitRecord.position = samplePosition;
 			hitRecord.material = this->_material;
+
+			// calculate normal at samplePosition
 
 			// Perlin p(this->_seed);
 			// double n = p.noise(fabs(hitRecord.position.getX()) / this->_noiseScale, fabs(hitRecord.position.getY()) / this->_noiseScale, fabs(hitRecord.position.getZ()) / this->_noiseScale);
@@ -114,4 +118,15 @@ double	Landscape::_getHeightAtPoint(double x, double z) const
 	double n = this->_perlin.noise(fabs(x) / this->_noiseScale, 0.0, fabs(z) / this->_noiseScale);
 
 	return (n * 10);
+}
+
+Vector3	Landscape::_getNormalAtPosition(Vector3 position, double t_min) const
+{
+	return (
+		Utilities::normalize(Vector3(
+			this->_getHeightAtPoint(position.getX() - t_min, position.getZ()) - this->_getHeightAtPoint(position.getX() + t_min, position.getZ()),
+			2.0 * t_min,
+			this->_getHeightAtPoint(position.getX(), position.getZ() - t_min) - this->_getHeightAtPoint(position.getX(), position.getZ() + t_min)
+		))
+	);
 }
