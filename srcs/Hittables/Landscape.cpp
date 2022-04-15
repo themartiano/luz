@@ -11,23 +11,25 @@
 // Constructs the Landscape with default values
 Landscape::Landscape(void)
 {
+	this->_position = Vector3(0.0, 0.0, 0.0);
+	this->_size = 20.0;
 	this->_material = std::make_shared<Lambertian>(Color(0.3, 0.29, 0.11));
+	this->_subSamples = 10;
 	this->_noiseScale = 1.0;
 	this->_seed = 42;
-	this->_samplesPerRay = 10;
-	this->_size = 20.0;
 
 	this->_perlin = Perlin(this->_seed);
 }
 
 // Constructs the Landscape with custom values
-Landscape::Landscape(std::shared_ptr<Material> material, double noiseScale, unsigned int seed, unsigned int samplesPerRay)
+Landscape::Landscape(Vector3 position, double size, std::shared_ptr<Material> material, unsigned int subSamples, double noiseScale, unsigned int seed)
 {
+	this->_position = position;
+	this->_size = size;
 	this->_material = material;
+	this->_subSamples = subSamples;
 	this->_noiseScale = noiseScale;
 	this->_seed = seed;
-	this->_samplesPerRay = samplesPerRay;
-	this->_size = 20.0;
 
 	this->_perlin = Perlin(this->_seed);
 }
@@ -41,17 +43,15 @@ std::shared_ptr<Material>	Landscape::getMaterial(void) const
 // Calculates if the Landscape's BVH is hit by 'ray', is closer than 't_max' and farther than T_MIN
 bool	Landscape::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) const
 {
-	Vector3 position(0.0, 0.0, 0.0); // customizable
-
 	// get the distance between the origin and the landscape closest border
-	double closestBorder = Utilities::vectorLength(ray.getOrigin() - (position - (ray.getDirection() * (this->_size / 2.0))));
-	double farthestBorder = Utilities::vectorLength(ray.getOrigin() - (position + (ray.getDirection() * (this->_size / 2.0))));
+	double closestBorder = Utilities::vectorLength(ray.getOrigin() - (this->_position - (ray.getDirection() * (this->_size / 2.0))));
+	double farthestBorder = Utilities::vectorLength(ray.getOrigin() - (this->_position + (ray.getDirection() * (this->_size / 2.0))));
 
-	double stepSize = (farthestBorder - closestBorder) / this->_samplesPerRay;
+	double stepSize = (farthestBorder - closestBorder) / this->_subSamples;
 
 	// start subsampling in the closest border until the farthest border
 	// hits
-	for (unsigned int i = 0; i < this->_samplesPerRay; i++)
+	for (unsigned int i = 0; i < this->_subSamples; i++)
 	{
 		double t = closestBorder + (i * stepSize);
 
@@ -62,13 +62,13 @@ bool	Landscape::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) 
 
 		Vector3 samplePosition = ray.pointAtRay(t);
 
-		if (samplePosition.getY() < position.getY())
+		if (samplePosition.getY() < this->_position.getY())
 		{
-			continue;
+			continue; // This avoids anything below the landscape (position.y)
 		}
 
-		if (samplePosition.getX() > this->_size / 2.0 || samplePosition.getX() < -this->_size / 2.0 ||
-			samplePosition.getZ() > this->_size / 2.0 || samplePosition.getZ() < -this->_size / 2.0)
+		if (samplePosition.getX() > this->_position.getX() + (this->_size / 2.0) || samplePosition.getX() < this->_position.getX() - (this->_size / 2.0) ||
+			samplePosition.getZ() > this->_position.getZ() + (this->_size / 2.0) || samplePosition.getZ() < this->_position.getZ() - (this->_size / 2.0))
 		{
 			continue;
 		}
@@ -76,11 +76,11 @@ bool	Landscape::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) 
 		// get the height at the sample position
 		double height = this->_getHeightAtPoint(samplePosition.getX(), samplePosition.getZ());
 
-		if (height >= samplePosition.getY())
+		if (height + this->_position.getY() >= samplePosition.getY())
 		{
 			hitRecord.t0 = t;
 			hitRecord.position = samplePosition;
-			hitRecord.normal = this->_getNormalAtPosition(samplePosition, hitRecord.t0);
+			hitRecord.normal = this->_getNormalAtPosition(samplePosition, t_min);
 			hitRecord.material = this->_material;
 
 			return (true);
@@ -106,9 +106,9 @@ bool	Landscape::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) 
 // 	double t = -a / b;
 
 
-// 	double segmentLength = (t + (size / 2.0)) / this->_samplesPerRay;
+// 	double segmentLength = (t + (size / 2.0)) / this->_subSamples;
 
-// 	for (unsigned int i = 0; i < this->_samplesPerRay; i++)
+// 	for (unsigned int i = 0; i < this->_subSamples; i++)
 // 	{
 // 		Vector3 samplePosition = ray.getOrigin() + ((tCurrent + segmentLength * 0.5) * ray.getDirection());
 
@@ -165,7 +165,7 @@ bool	Landscape::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) 
 // 	// 	return (false);
 // 	// }
 
-// 	double segmentLength = 1.0;//(t + (size / 2.0)) / this->_samplesPerRay;
+// 	double segmentLength = 1.0;//(t + (size / 2.0)) / this->_subSamples;
 
 // 	if (segmentLength <= 0.0)
 // 	{
