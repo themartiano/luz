@@ -25,6 +25,7 @@ SRCS :=	AABB.cpp \
 		Hittables/ConstantVolume.cpp \
 		Hittables/Cube.cpp \
 		Hittables/Hittable.cpp \
+		Hittables/Landscape.cpp \
 		Hittables/Mesh.cpp \
 		Hittables/Plane.cpp \
 		Hittables/Rectangle.cpp \
