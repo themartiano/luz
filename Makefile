@@ -38,6 +38,7 @@ SRCS :=	AABB.cpp \
 		Materials/Lambertian.cpp \
 		Materials/Material.cpp \
 		Materials/Metal.cpp \
+		Noise/Perlin.cpp \
 		OBJReader.cpp \
 		ONB.cpp \
 		PDFs/CosinePDF.cpp \

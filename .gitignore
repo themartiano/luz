@@ -15,3 +15,5 @@ render.tiff
 sequence/**
 objs
 Makefile.tmp
+perlinNoise.bmp
+perlinNoise.tiff
