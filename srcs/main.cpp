@@ -10,6 +10,7 @@
 #include "Hittables/Rectangle.hpp"
 #include "Hittables/Cube.hpp"
 #include "Hittables/ConstantVolume.hpp"
+#include "Hittables/Landscape.hpp"
 #include "Utilities.hpp"
 #include "Defaults.hpp"
 #include "ImageFiles/Types.hpp"
@@ -24,10 +25,6 @@
 int	main(int argc, char *argv[])
 {
 	std::cout << CLR_BLUE << "Preparing..." << CLR_RESET << std::endl << std::endl;
-
-	Perlin p(time(0));
-	p.saveToFile("perlinNoise", BMP_FILE, 1000, 1000, 19);
-	return 0;
 
 	srand(time(0));
 
@@ -50,7 +47,13 @@ int	main(int argc, char *argv[])
 
 		// Coordinate system ~~ Right Hand ~~ Forward: -Z | Up: +Y | Right: +X
 
-		scene.addCamera(Camera(Vector3(0.0, 0.0, 20.0), Vector3(0.0, 0.0, -1.0), 65, 0.0, 20.0));
+		scene.addCamera(Camera(Vector3(0.0, 10.0, 0.0), Vector3(0.0, 0.0, -1.0), 65, 0.0, 20.0));
+
+		scene.addHittable(std::make_shared<Landscape>(
+			Transform(Vector3(0.0, 0.0, 0.0), Vector3(0.0, 1.0, 0.0), Vector3(1.0, 1.0, 1.0)),
+			std::make_shared<Lambertian>(Color(0.3, 0.29, 0.11)),
+			42
+		));
 
 		// scene.addHittable(std::make_shared<Plane>(
 		// 	D_EARTH_RADIUS,
