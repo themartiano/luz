@@ -11,6 +11,7 @@
 #include "Hittables/Cube.hpp"
 #include "Hittables/ConstantVolume.hpp"
 #include "Hittables/Landscape.hpp"
+#include "Hittables/WaterBody.hpp"
 #include "Utilities.hpp"
 #include "Defaults.hpp"
 #include "ImageFiles/Types.hpp"
@@ -48,11 +49,11 @@ int	main(int argc, char *argv[])
 
 		scene.addCamera(Camera(Vector3(0.0, 50.0, 100.0), Vector3(0.0, -0.35, -1.0), 65, 0.0, 20.0));
 
-		scene.addHittable(std::make_shared<Landscape>(
+		scene.addHittable(std::make_shared<WaterBody>(
 			Vector3(0.0, 0.0, 0.0),
 			200.0,
-			std::make_shared<Lambertian>(Color(0.3, 0.29, 0.11)),
-			1000,
+			Color(0.027, 0.1254, 0.2),
+			100,
 			10.0,
 			8.0,
 			42
