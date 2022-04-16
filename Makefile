@@ -31,6 +31,7 @@ SRCS :=	AABB.cpp \
 		Hittables/Rectangle.cpp \
 		Hittables/Sphere.cpp \
 		Hittables/Triangle.cpp \
+		Hittables/WaterBody.cpp \
 		ImageFiles/BMP.cpp \
 		ImageFiles/TIFF.cpp \
 		Materials/Dielectric.cpp \

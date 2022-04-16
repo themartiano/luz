@@ -11,6 +11,13 @@ Dielectric::Dielectric(void)
 Dielectric::Dielectric(Color color)
 {
 	this->_color = color;
+	this->_refractiveIndex = RI_GLASS;
+}
+
+Dielectric::Dielectric(Color color, double refractiveIndex)
+{
+	this->_color = color;
+	this->_refractiveIndex = refractiveIndex;
 }
 
 bool	Dielectric::scatter(Ray& ray, HitRecord& hitRecord, ScatterRecord& scatterRecord)
@@ -19,7 +26,7 @@ bool	Dielectric::scatter(Ray& ray, HitRecord& hitRecord, ScatterRecord& scatterR
 	scatterRecord.pdfPtr = nullptr;
 	scatterRecord.attenuation = this->_color;
 
-	double	refractionRatio = RI_GLASS;
+	double	refractionRatio = this->_refractiveIndex;
 	Vector3	normalizedDirection = Utilities::normalize(ray.getDirection());
 	if (Utilities::dot(normalizedDirection, hitRecord.normal) <= 0.0)
 	{
