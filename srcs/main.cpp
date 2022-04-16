@@ -37,35 +37,36 @@ int	main(int argc, char *argv[])
 	{
 		scene.setYResolution(500);
 		scene.setXResolution(500);
-		scene.setSampleCount(120);
+		scene.setSampleCount(5);
 		scene.setGammaCorrected(true);
-		scene.setRenderSky(SKY_ATMOSPHERE);
+		scene.setRenderSky(SKY_NONE);
 		scene.setDistanceBlueness(false);
-		scene.setAtmosphere(Atmosphere(0.28, D_EARTH_RADIUS, D_ATMOSPHERE_RADIUS, D_HR, D_HM, 16, 8, 0.468)); // Only needed if Scene.Sky == SKY_ATMOSPHERE
-		// scene.setBackgroundColor(Color(1.0, 1.0, 1.0)); // Only needed if Scene.Sky == SKY_NONE
+		// scene.setAtmosphere(Atmosphere(0.28, D_EARTH_RADIUS, D_ATMOSPHERE_RADIUS, D_HR, D_HM, 16, 8, 0.468)); // Only needed if Scene.Sky == SKY_ATMOSPHERE
+		scene.setBackgroundColor(Color(1.0, 1.0, 1.0)); // Only needed if Scene.Sky == SKY_NONE
 
 		// Coordinate system ~~ Right Hand ~~ Forward: -Z | Up: +Y | Right: +X
 
-		scene.addCamera(Camera(Vector3(0.0, D_EARTH_RADIUS + 30.0, 0.0), Vector3(0.0, 0.0, -1.0), 65, 0.0, 20.0));
+		scene.addCamera(Camera(Vector3(0.0, 50.0, 100.0), Vector3(0.0, -0.35, -1.0), 65, 0.0, 20.0));
 
 		scene.addHittable(std::make_shared<Landscape>(
-			Vector3(0.0, D_EARTH_RADIUS, -100.0),
+			Vector3(0.0, 0.0, 0.0),
 			200.0,
 			std::make_shared<Lambertian>(Color(0.3, 0.29, 0.11)),
-			100,
+			1000,
 			10.0,
+			8.0,
 			42
 		));
 
-		scene.addHittable(std::make_shared<ConstantVolume>(
-			std::make_shared<Sphere>(
-				Vector3(0.0, D_EARTH_RADIUS - 970.0, -100.0),
-				1000.0,
-				nullptr
-			),
-			std::make_shared<Isotropic>(Color(0.7, 0.7, 0.7)),
-			10.0
-		));
+		// scene.addHittable(std::make_shared<ConstantVolume>(
+		// 	std::make_shared<Sphere>(
+		// 		Vector3(0.0, D_EARTH_RADIUS - 970.0, -100.0),
+		// 		1000.0,
+		// 		nullptr
+		// 	),
+		// 	std::make_shared<Isotropic>(Color(0.7, 0.7, 0.7)),
+		// 	10.0
+		// ));
 
 		// scene.addHittable(std::make_shared<Sphere>(
 		// 	Vector3(0.0, D_EARTH_RADIUS - 980.0, -100.0),
@@ -74,9 +75,9 @@ int	main(int argc, char *argv[])
 		// ));
 
 		scene.addHittable(std::make_shared<Sphere>(
-			Vector3(0.0, D_EARTH_RADIUS + 90.0, -100.0),
+			Vector3(0.0, 50.0, 0.0),
 			10.0,
-			std::make_shared<Emissive>(Color(1.0, 1.0, 1.0), 80.0)
+			std::make_shared<Emissive>(Color(1.0, 1.0, 1.0), 50.0)
 		));
 	}
 
