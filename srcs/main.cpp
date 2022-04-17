@@ -42,21 +42,21 @@ int	main(int argc, char *argv[])
 		scene.setGammaCorrected(true);
 		scene.setRenderSky(SKY_NONE);
 		scene.setDistanceBlueness(false);
-		// scene.setAtmosphere(Atmosphere(0.28, D_EARTH_RADIUS, D_ATMOSPHERE_RADIUS, D_HR, D_HM, 16, 8, 0.468)); // Only needed if Scene.Sky == SKY_ATMOSPHERE
+		// scene.setAtmosphere(Atmosphere(0.36, D_EARTH_RADIUS, D_ATMOSPHERE_RADIUS, D_HR, D_HM, 16, 8, 0.468)); // Only needed if Scene.Sky == SKY_ATMOSPHERE
 		scene.setBackgroundColor(Color(1.0, 1.0, 1.0)); // Only needed if Scene.Sky == SKY_NONE
 
 		// Coordinate system ~~ Right Hand ~~ Forward: -Z | Up: +Y | Right: +X
 
-		scene.addCamera(Camera(Vector3(10.0, D_EARTH_RADIUS + 50.0, 110.0), Vector3(0.0, -0.35, -1.0), 65, 0.0, 20.0));
+		scene.addCamera(Camera(Vector3(0.0, 40.0, 0.0), Vector3(0.0, -0.35, -1.0), 65, 0.0, 20.0));
 
-		scene.addHittable(std::make_shared<WaterBody>(
-			Vector3(10.0, D_EARTH_RADIUS, 10.0),
-			200.0,
-			Color(0.027, 0.1254, 0.2),
-			100,
+		scene.addHittable(std::make_shared<Landscape>(
+			Vector3(0.0, 0.0, 0.0),
+			500.0,
+			Color(0.3, 0.29, 0.11),
+			1.0,
 			20,
 			8.0,
-			10000.0,
+			0.0,
 			42
 		));
 

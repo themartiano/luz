@@ -18,15 +18,36 @@ std::shared_ptr<Material>	Procedural::getMaterial(void) const
 // Calculates if the Procedural's BVH is hit by 'ray', is closer than 't_max' and farther than T_MIN
 bool	Procedural::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) const
 {
-	// get the distance between the origin and the Procedural closest border
-	double closestBorder = Utilities::vectorLength(ray.getOrigin() - (this->_position - (ray.getDirection() * (this->_size / 2.0))));
-	double farthestBorder = Utilities::vectorLength(ray.getOrigin() - (this->_position + (ray.getDirection() * (this->_size / 2.0))));
+	Vector3 origin = ray.getOrigin();
+	origin.setY(this->_position.getY());
+	Vector3 direction = ray.getDirection();
+	direction.setY(this->_position.getY());
 
-	double stepSize = (farthestBorder - closestBorder) / this->_subSamples;
+	// double closestBorder = (origin * 1).getZ() - (this->_position * 1).getZ() + (this->_size / 2.0);
+	// double farthestBorder = (origin * 1).getZ() - (this->_position * 1).getZ() - (this->_size / 2.0);
+
+	// get the distance between the origin and the Procedural closest border
+	double closestBorder = Utilities::vectorLength((origin * direction) - (this->_position + (direction * (this->_size / 2.0)))) * -1;
+	double farthestBorder = Utilities::vectorLength((origin * direction) - (this->_position - (direction * (this->_size / 2.0))));
+
+	// std::cout << "closestBorder:" << closestBorder << std::endl;
+	// std::cout << "farthestBorder:" << farthestBorder << std::endl;
+
+	if (closestBorder < 0.0)
+	{
+		closestBorder = 0.0;
+	}
+	if (farthestBorder < 0.0)
+	{
+		farthestBorder = 0.0;
+	}
+
+	unsigned int totalSamples = this->_samplesPerSizeUnit * this->_size;
+	double stepSize = this->_size / totalSamples;
 
 	// start subsampling in the closest border until the farthest border
 	// hits
-	for (unsigned int i = 0; i < this->_subSamples; i++)
+	for (unsigned int i = 0; i < totalSamples; i++)
 	{
 		double t = closestBorder + (i * stepSize);
 

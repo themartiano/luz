@@ -17,7 +17,7 @@ class	Procedural : public Hittable
 		Vector3			_position;
 		double			_size;
 		std::shared_ptr<Material>	_material;
-		unsigned int	_subSamples;
+		unsigned int	_samplesPerSizeUnit;
 		double			_noiseScale; // The scale of the Perlin noise
 		double			_magnitude; // Noise height multiplier
 		double			_depth; // How much to render below the Y position (local 0.0)
