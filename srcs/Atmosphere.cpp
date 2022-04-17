@@ -241,6 +241,6 @@ Color   Atmosphere::computeIncidentLight(Ray& ray, HitRecord& hitRecord, double 
 	// 	 phaseM = 0.0;
 	// }
 
-	Vector3 result = (sumR * betaR * phaseR + sumM * betaM * phaseM) * 10.0;
+	Vector3 result = (sumR * betaR * phaseR + sumM * betaM * phaseM) * 20.0;
 	return (Color(result.getX(), result.getY(), result.getZ()));
 }

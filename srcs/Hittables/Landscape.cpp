@@ -12,7 +12,7 @@ Landscape::Landscape(void)
 	this->_position = Vector3(0.0, 0.0, 0.0);
 	this->_size = 20.0;
 	this->_material = std::make_shared<Lambertian>(Color(0.3, 0.29, 0.11));
-	this->_samplesPerSizeUnit = 10;
+	this->_samplesPerSizeUnit = 1.0;
 	this->_noiseScale = 1.0;
 	this->_magnitude = 10.0;
 	this->_depth = 0.0;

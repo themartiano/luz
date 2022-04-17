@@ -12,7 +12,7 @@ WaterBody::WaterBody(void)
 	this->_position = Vector3(0.0, 0.0, 0.0);
 	this->_size = 20.0;
 	this->_material = std::make_shared<Dielectric>(Color(0.027, 0.1254, 0.2), RI_WATER);
-	this->_samplesPerSizeUnit = 10;
+	this->_samplesPerSizeUnit = 1.0;
 	this->_noiseScale = 1.0;
 	this->_magnitude = 10.0;
 	this->_depth = 42.0;
