@@ -56,6 +56,7 @@ int	main(int argc, char *argv[])
 			100,
 			20,
 			8.0,
+			10000.0,
 			42
 		));
 
