@@ -65,11 +65,6 @@ bool	WaterBody::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) 
 
 		Vector3 samplePosition = ray.pointAtRay(t);
 
-		if (samplePosition.getY() < this->_position.getY())
-		{
-			continue; // This avoids anything below the WaterBody (position.y)
-		}
-
 		if (samplePosition.getX() > this->_position.getX() + (this->_size / 2.0) || samplePosition.getX() < this->_position.getX() - (this->_size / 2.0) ||
 			samplePosition.getZ() > this->_position.getZ() + (this->_size / 2.0) || samplePosition.getZ() < this->_position.getZ() - (this->_size / 2.0))
 		{
@@ -77,7 +72,7 @@ bool	WaterBody::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) 
 		}
 
 		// get the height at the sample position
-		double height = this->_getHeightAtPoint(samplePosition.getX(), samplePosition.getZ());
+		double height = this->_getHeightAtPoint(samplePosition.getX() - this->_position.getX(), samplePosition.getZ() - this->_position.getZ());
 
 		if (height + this->_position.getY() >= samplePosition.getY())
 		{
@@ -104,9 +99,12 @@ bool	WaterBody::createBoundingBox(AABB& outputBoundingBox) const
 	return (true);
 }
 
-double	WaterBody::_getHeightAtPoint(double x, double z) const
+double	WaterBody::_getHeightAtPoint(double localX, double localZ) const
 {
-	double n = this->_perlin.noise((x + (this->_size / 2.0)) / this->_noiseScale, 0.0, (z + (this->_size / 2.0)) / this->_noiseScale);
+	double x = fabs(localX - (this->_size / 2.0));
+	double z = fabs(localZ - (this->_size / 2.0));
+
+	double n = this->_perlin.noise(x / this->_noiseScale, 0.0, z / this->_noiseScale);
 
 	return (n * this->_magnitude);
 }

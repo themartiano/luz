@@ -47,14 +47,14 @@ int	main(int argc, char *argv[])
 
 		// Coordinate system ~~ Right Hand ~~ Forward: -Z | Up: +Y | Right: +X
 
-		scene.addCamera(Camera(Vector3(0.0, 50.0, 100.0), Vector3(0.0, -0.35, -1.0), 65, 0.0, 20.0));
+		scene.addCamera(Camera(Vector3(10.0, D_EARTH_RADIUS + 50.0, 110.0), Vector3(0.0, -0.35, -1.0), 65, 0.0, 20.0));
 
 		scene.addHittable(std::make_shared<WaterBody>(
-			Vector3(0.0, 0.0, 0.0),
+			Vector3(10.0, D_EARTH_RADIUS, 10.0),
 			200.0,
 			Color(0.027, 0.1254, 0.2),
 			100,
-			10.0,
+			20,
 			8.0,
 			42
 		));
