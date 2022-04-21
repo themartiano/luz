@@ -1,11 +1,13 @@
 #~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#
 #                                                                           #
 #   Makefile                                                                #
+#    by Brhaka                                                              #
 #                                                                           #
-#    Options: (make FLAG=1/0)                                               #
-#     DEBUG -> Compiles with "-g" flag                                      #
-#     SANITIZER -> Compiles with "-g" and "-fsanitize=address" flags        #
-#     NO_FLAGS -> Compiles without "-Wall", "-Wextra" and "-Werror" flags   #
+#    Options: (make OPTION)                                                 #
+#     debug -> Compiles with "-g" flag                                      #
+#     debugger -> Compiles with "-g" flag and opens LLDB / GDB              #
+#     sanitizer -> Compiles with "-g" and "-fsanitize=address" flags        #
+#     noflags -> Compiles without "-Wall", "-Wextra" and "-Werror" flags    #
 #                                                                           #
 #~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#
 
@@ -219,15 +221,19 @@ re:
 	@printf "\n"
 	@$(MAKE) all --no-print-directory
 
-.PHONY: no_flags
-no_flags:
+.PHONY: noflags
+noflags:
 	@$(MAKE) all NO_FLAGS=1 --no-print-directory
+
+.PHONY: debugger
+debugger:
+	@$(MAKE) all DEBUG=1 --no-print-directory
+	@printf "\n[\e[1;34mStarting $(DEBUGGER)\e[0m]\n\n"
+	$(DEBUGGER) ./$(NAME)
 
 .PHONY: debug
 debug:
 	@$(MAKE) all DEBUG=1 --no-print-directory
-	@printf "\n[\e[1;34mStarting $(DEBUGGER)\e[0m]\n\n"
-	$(DEBUGGER) ./$(NAME)
 
 .PHONY: sanitizer
 sanitizer:
