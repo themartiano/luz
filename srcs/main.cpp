@@ -41,10 +41,10 @@ int	main(int argc, char *argv[])
 		scene.setXResolution(500);
 		scene.setSampleCount(10);
 		scene.setGammaCorrected(true);
-		scene.setRenderSky(SKY_NONE);
+		scene.setRenderSky(SKY_ATMOSPHERE);
 		scene.setDistanceBlueness(false);
-		// scene.setAtmosphere(Atmosphere(0.28, D_EARTH_RADIUS, D_ATMOSPHERE_RADIUS, D_HR, D_HM, 16, 8, 0.468)); // Only needed if Scene.Sky == SKY_ATMOSPHERE
-		scene.setBackgroundColor(Color(0.0, 0.0, 0.0)); // Only needed if Scene.Sky == SKY_NONE
+		scene.setAtmosphere(Atmosphere(0.28, D_EARTH_RADIUS, D_ATMOSPHERE_RADIUS, D_HR, D_HM, 16, 8, 0.468)); // Only needed if Scene.Sky == SKY_ATMOSPHERE
+		// scene.setBackgroundColor(Color(0.0, 0.0, 0.0)); // Only needed if Scene.Sky == SKY_NONE
 
 		// Coordinate system ~~ Right Hand ~~ Forward: -Z | Up: +Y | Right: +X
 
