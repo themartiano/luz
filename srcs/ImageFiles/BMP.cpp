@@ -72,18 +72,26 @@ static unsigned char*	generateNewPixelArray(Scene& scene)
 {
 	unsigned char* newPixelArray = new unsigned char[scene.getXResolution() * scene.getYResolution() * 3];
 
-	for (int i = 0; i < scene.getXResolution() * scene.getYResolution(); i++)
+	for (int y = 0; y < scene.getYResolution(); y++)
 	{
-		double r = scene.getPixelArray()[(i * 3) + 0];
-		Utilities::setDoubleRange(r, 0.0, 1.0);
-		double g = scene.getPixelArray()[(i * 3) + 1];
-		Utilities::setDoubleRange(g, 0.0, 1.0);
-		double b = scene.getPixelArray()[(i * 3) + 2];
-		Utilities::setDoubleRange(b, 0.0, 1.0);
+		for (int x = 0; x < scene.getXResolution(); x++)
+		{
+			Color pixel = scene.getPixel(x, y);
 
-		newPixelArray[(i * 3) + 2] = (unsigned char)(r * 255.0);
-		newPixelArray[(i * 3) + 1] = (unsigned char)(g * 255.0);
-		newPixelArray[(i * 3) + 0] = (unsigned char)(b * 255.0);
+			double r = pixel.getRed();
+			double g = pixel.getGreen();
+			double b = pixel.getBlue();
+
+			Utilities::setDoubleRange(r, 0.0, 1.0);
+			Utilities::setDoubleRange(g, 0.0, 1.0);
+			Utilities::setDoubleRange(b, 0.0, 1.0);
+
+			int index = (y * scene.getYResolution()) + x;
+
+			newPixelArray[(index * 3) + 2] = (unsigned char)(r * 255.0);
+			newPixelArray[(index * 3) + 1] = (unsigned char)(g * 255.0);
+			newPixelArray[(index * 3) + 0] = (unsigned char)(b * 255.0);
+		}
 	}
 
 	return (newPixelArray);

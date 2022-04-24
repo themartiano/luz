@@ -35,8 +35,9 @@ class	Scene
 		Atmosphere	getAtmosphere(void) const;
 		Color	getBackgroundColor(void) const;
 		void	setBackgroundColor(Color backgroundColor);
-		void	setPixelArray(int index, Color pixelColor);
-		double*	getPixelArray() const;
+		void	setPixel(int x, int y, Color pixelColor);
+		std::vector<double>	getPixels() const;
+		Color	getPixel(int x, int y) const;
 		Camera	getActiveCamera(void) const;
 		bool	hasCamera(void) const;
 		std::vector<std::shared_ptr<Hittable>>	getHittables(void) const;
@@ -55,7 +56,7 @@ class	Scene
 		int						_maxLightBounces;
 		bool					_gammaCorrected;
 		std::string				_defaultRenderOutputFileName;
-		double*					_pixelArray;
+		std::vector<double>		_pixels;
 		double					_skyline;
 		SkyTypes				_renderSky;
 		bool					_distanceBlueness;
