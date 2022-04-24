@@ -59,7 +59,6 @@ void	Renderer::internal::_manageThreads(Scene& scene)
 // Renders the pixel color at X, Y
 void	Renderer::internal::_threadRender(Scene& scene, int x, int y)
 {
-	static int	width = scene.getXResolution();
 	static int	sampleCount = scene.getSampleCount();
 	static bool	gammaCorrected = scene.getGammaCorrected();
 
@@ -89,5 +88,5 @@ void	Renderer::internal::_threadRender(Scene& scene, int x, int y)
 		pixelColor.setBlue(0.0);
 	}
 
-	scene.setPixelArray((y * width) + x, pixelColor);
+	scene.setPixel(x, y, pixelColor);
 }

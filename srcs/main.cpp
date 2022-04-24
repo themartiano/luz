@@ -39,7 +39,7 @@ int	main(int argc, char *argv[])
 	{
 		scene.setYResolution(500);
 		scene.setXResolution(500);
-		scene.setSampleCount(10);
+		scene.setSampleCount(100);
 		scene.setGammaCorrected(true);
 		scene.setRenderSky(SKY_ATMOSPHERE);
 		scene.setDistanceBlueness(false);

@@ -84,7 +84,7 @@ void	TIFF::writeFile(Scene& scene, bool insideDir, std::string dirName)
 			for (int y = 0; y < TILE_SIZE; y++)
 			{
 				int tilePos = (y * scene.getXResolution() * 3);
-				fwrite(scene.getPixelArray() + rowPos + columnPos + tilePos, PIXEL_BYTES, TILE_SIZE, imageFile);
+				fwrite(scene.getPixels().data() + rowPos + columnPos + tilePos, PIXEL_BYTES, TILE_SIZE, imageFile);
 			}
 		}
 	}

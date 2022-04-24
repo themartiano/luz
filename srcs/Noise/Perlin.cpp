@@ -134,7 +134,7 @@ void	Perlin::saveToFile(std::string fileName, ImageFileTypes imageFileType, doub
 
 			double n = this->noise2D(noiseScale * x, noiseScale * y);
 
-			scene.setPixelArray((i * xRes) + j, Color(n, n, n));
+			scene.setPixel(j, i, Color(n, n, n));
 		}
 	}
 
