@@ -84,11 +84,11 @@ bool	Cloud::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) cons
 		}
 
 		// get the height at the sample position
-		double height = this->_getHeightAtPoint(samplePosition.getX() - this->_position.getX(), samplePosition.getZ() - this->_position.getZ());
+		double height = this->_getHeightAtPoint2(this->_position - samplePosition);
 
 		// if (samplePosition.getY() < this->_position.getY() - this->_depth)
 		// {
-		// 	height = height;
+		// 	continue;
 		// }
 
 		if (height >= fabs(samplePosition.getY() - this->_position.getY()))
@@ -103,4 +103,29 @@ bool	Cloud::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) cons
 	}
 
 	return (false);
+}
+
+double Cloud::sla(double x, double y, double z) const
+{
+	double noiseSum = 0.0, frequency = 1.0, amplitude = 1.0;
+
+	for (int i = 0; i < 4; i++)
+	{
+		noiseSum += this->_perlin.noise(x * frequency, y * frequency, z * frequency) * amplitude;
+		amplitude /= 2.0;
+		frequency *= 2.0;
+	}
+
+	return (noiseSum);
+}
+
+double	Cloud::_getHeightAtPoint2(Vector3 point) const
+{
+	double x = point.getX() - (this->_size / 2.0);
+	double y = point.getY() - (10.0 / 2.0); // 10.0 == height
+	double z = point.getZ() - (this->_size / 2.0);
+
+	double n = 0.7 * sla(x, y, z);
+	// std::cout << "height: " << n << std::endl;
+	return (n);
 }

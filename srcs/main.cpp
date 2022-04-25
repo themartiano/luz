@@ -42,23 +42,43 @@ int	main(int argc, char *argv[])
 		scene.setXResolution(500);
 		scene.setSampleCount(10);
 		scene.setGammaCorrected(true);
-		scene.setRenderSky(SKY_NONE);
+		scene.setRenderSky(SKY_ATMOSPHERE);
 		scene.setDistanceBlueness(false);
-		// scene.setAtmosphere(Atmosphere(0.28, D_EARTH_RADIUS, D_ATMOSPHERE_RADIUS, D_HR, D_HM, 16, 8, 0.468)); // Only needed if Scene.Sky == SKY_ATMOSPHERE
-		scene.setBackgroundColor(Color(1.0, 1.0, 1.0)); // Only needed if Scene.Sky == SKY_NONE
+		scene.setAtmosphere(Atmosphere(0.28, D_EARTH_RADIUS, D_ATMOSPHERE_RADIUS, D_HR, D_HM, 16, 8, 0.468)); // Only needed if Scene.Sky == SKY_ATMOSPHERE
+		// scene.setBackgroundColor(Color(1.0, 1.0, 1.0)); // Only needed if Scene.Sky == SKY_NONE
 
 		// Coordinate system ~~ Right Hand ~~ Forward: -Z | Up: +Y | Right: +X
 
-		scene.addCamera(Camera(Vector3(0.0, -10.0, 70.0), Vector3(0.0, 0.0, -1.0), 65, 0.0, 20.0));
+		scene.addCamera(Camera(Vector3(0.0, D_EARTH_RADIUS + 20.0, 0.0), Vector3(0.0, 0.0, -1.0), 65, 0.0, 20.0));
 
-		scene.addHittable(std::make_shared<Cloud>(
-			Vector3(0.0, 0.0, 0.0),
-			50.0,
-			1.0,
-			10.0,
-			10.0,
-			0.0,
-			42
+		// scene.addHittable(std::make_shared<Cloud>(
+		// 	Vector3(0.0, D_EARTH_RADIUS + 0.0, -70.0),
+		// 	50.0,
+		// 	1.0,
+		// 	10.0,
+		// 	10.0,
+		// 	0.0,
+		// 	42
+		// ));
+
+		scene.addHittable(std::make_shared<ConstantVolume>(
+			std::make_shared<Cloud>(
+				Vector3(0.0, D_EARTH_RADIUS + 0.0, -70.0),
+				50.0,
+				1.0,
+				10.0,
+				10.0,
+				0.0,
+				42
+			),
+			std::make_shared<Isotropic>(Color(1.0, 1.0, 1.0)),
+			3.0
+		));
+
+		scene.addHittable(std::make_shared<Plane>(
+			D_EARTH_RADIUS + 0.0,
+			Vector3(0.0, 1.0, 0.0),
+			std::make_shared<Lambertian>(Color(1.0, 1.0, 1.0))
 		));
 	}
 

@@ -12,5 +12,9 @@ class	Cloud : public Procedural
 		virtual bool		hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) const override;
 
 	private:
+		double	_getHeightAtPoint2(Vector3 point) const;
+		double			sla(double x, double y, double z) const;
+
+
 		unsigned int	_seed;
 };
