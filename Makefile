@@ -24,6 +24,7 @@ SRCS :=	AABB.cpp \
 		Color.cpp \
 		ExitError.cpp \
 		Hittables/BVHNode.cpp \
+		Hittables/Cloud.cpp \
 		Hittables/ConstantVolume.cpp \
 		Hittables/Cube.cpp \
 		Hittables/Hittable.cpp \
