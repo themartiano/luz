@@ -11,7 +11,7 @@ class	Procedural : public Hittable
 		virtual bool		createBoundingBox(AABB& outputBoundingBox) const override;
 
 	protected:
-		double	_getHeightAtPoint(double x, double z) const;
+		virtual double	_getHeightAtPoint(double x, double z) const;
 		Vector3	_getNormalAtPosition(Vector3 position, double t_min) const;
 
 		Vector3			_position;
