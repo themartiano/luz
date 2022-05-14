@@ -18,30 +18,21 @@ static bool	boxCompare(std::shared_ptr<Hittable> hittable1, std::shared_ptr<Hitt
 BVHNode::BVHNode(std::vector<std::shared_ptr<Hittable>> hittables) : BVHNode(hittables, 0, hittables.size())
 {}
 
-
 // Constructs the BVHNode
 BVHNode::BVHNode(std::vector<std::shared_ptr<Hittable>> hittables, size_t start, size_t end)
 {
 	int axis = Utilities::randomInt(0, 2);
 	auto comparator = (axis == 0) ? boxXCompare : (axis == 1) ? boxYCompare : boxZCompare;
 
-	int hittableCount = end - start;
+	size_t	hittableCount = end - start;
+	this->_childs.reserve(hittableCount);
 
-	if (hittableCount == 1)
+	size_t	amount = 1000;
+	if (hittableCount <= amount)
 	{
-		this->_left = this->_right = hittables[start];
-	}
-	else if (hittableCount == 2)
-	{
-		if (comparator(hittables[start], hittables[start + 1]))
+		for (size_t i = start; i < end; i++)
 		{
-			this->_left = hittables[start];
-			this->_right = hittables[start + 1];
-		}
-		else
-		{
-			this->_left = hittables[start + 1];
-			this->_right = hittables[start];
+			this->_childs.push_back(hittables[i]);
 		}
 	}
 	else
@@ -49,19 +40,24 @@ BVHNode::BVHNode(std::vector<std::shared_ptr<Hittable>> hittables, size_t start,
 		std::sort(hittables.begin() + start, hittables.begin() + end, comparator);
 
 		auto mid = start + hittableCount / 2;
-		this->_left = std::make_shared<BVHNode>(hittables, start, mid);
-		this->_right = std::make_shared<BVHNode>(hittables, mid, end);
+		this->_childs.push_back(std::make_shared<BVHNode>(hittables, start, mid));
+		this->_childs.push_back(std::make_shared<BVHNode>(hittables, mid, end));
 	}
 
-	AABB boxLeft;
-	AABB boxRight;
+	std::vector<AABB>	aabbs;
 
-	if (!this->_left->createBoundingBox(boxLeft) || !this->_right->createBoundingBox(boxRight))
+	for (auto& child : this->_childs)
 	{
-		// Error
+		AABB	childBoundingBox;
+		if (!child->createBoundingBox(childBoundingBox))
+		{
+			//std::cerr << "Error: BVHNode::BVHNode() - createBoundingBox() failed" << std::endl;
+			return;
+		}
+		aabbs.push_back(childBoundingBox);
 	}
 
-	this->_boundingBox = Utilities::mergeBoundingBoxes(boxLeft, boxRight);
+	this->_boundingBox = Utilities::mergeBoundingBoxes(aabbs);
 }
 
 // Comparator for the BVH box at the X axis
@@ -113,10 +109,20 @@ bool	BVHNode::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) co
 	}
 	else
 	{
-		bool hitLeft = this->_left->hit(ray, hitRecord, t_min, t_max);
-		bool hitRight = this->_right->hit(ray, hitRecord, t_min, hitLeft ? hitRecord.t0 : t_max);
+		Ray childRay = ray;
+		HitRecord childHitRecord = hitRecord;
 
-		return (hitLeft || hitRight);
+		for (auto& child : this->_childs)
+		{
+			if (child->hit(childRay, childHitRecord, t_min, t_max))
+			{
+				ray = childRay; // check if thats necessary
+				hitRecord = childHitRecord;
+				return (true);
+			}
+		}
+
+		return (false);
 	}
 }
 

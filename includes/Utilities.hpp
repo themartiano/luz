@@ -21,6 +21,7 @@ namespace Utilities
 	void	setDoubleRange(double& flt, double min, double max);
 	bool	createMainBoundingBox(Scene& scene, AABB& newBoundingBox);
 	AABB	mergeBoundingBoxes(AABB boundingBox1, AABB boundingBox2);
+	AABB	mergeBoundingBoxes(std::vector<AABB> boundingBoxes);
 	void	toLower(std::string& str);
 	Vector3 randomCosineDirection(void);
 	bool	stringEndsWith(std::string str, std::string ending);

@@ -18,7 +18,6 @@ class   BVHNode : public Hittable
 		virtual std::shared_ptr<Material> getMaterial(void) const override;
 
 	private:
-		std::shared_ptr<Hittable>   _left;
-		std::shared_ptr<Hittable>   _right;
+		std::vector<std::shared_ptr<Hittable>>	_childs;
 		AABB						_boundingBox;
 };
