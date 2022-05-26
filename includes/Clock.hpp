@@ -8,8 +8,10 @@ class   Clock
 		Clock(void);
 		Clock(bool startNow);
 		void	start(void);
-		double  elapsed(void);
-		double  stop(void);
+		double	elapsed(bool seconds);
+		double	elapsed(void);
+		double	stop(bool seconds);
+		double	stop(void);
 
 	private:
 		std::chrono::steady_clock::time_point   _startTimeMS;
