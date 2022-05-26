@@ -1,11 +1,14 @@
 #include "Renderer/Renderer.hpp"
 #include "Defaults.hpp"
 #include "ANSIColors.hpp"
+#include "Utilities.hpp"
+#include "Clock.hpp"
 #include <thread>
 #include <future>
 #include <vector>
 #include <cmath>
 #include <unistd.h>
+#include <algorithm>
 
 void	Renderer::internal::_manageThreads(Scene& scene)
 {
@@ -17,24 +20,46 @@ void	Renderer::internal::_manageThreads(Scene& scene)
 	volatile std::atomic<int> currentRenderPixel(0);
 	std::vector<std::future<void>> futureVector;
 
+	const int defaultBlockSize = 100;
+
+	volatile std::atomic<double> lastCycleTime(1.0);
+	volatile std::atomic<double> previousCycleTime(1.0);
+	volatile std::atomic<int> blockSize(defaultBlockSize);
+
 	// Creates threads.
 	for (unsigned int i = 0; i < threadCount; i++)
 	{
 		futureVector.push_back(
-			std::async([&scene, &currentRenderPixel]()
+			std::async([&scene, &currentRenderPixel, &lastCycleTime, &previousCycleTime, &blockSize, &defaultBlockSize]()
 			{
+				Clock clock(false);
+
+				int index = 0;
 				while (true)
 				{
-					int index = currentRenderPixel++;
 					if (index >= pixelTotal)
 					{
 						break;
 					}
 
-					int	x = index % width;
-					int	y = index / width;
+					// std::cout << previousCycleTime << std::endl;
+					blockSize = std::min(std::max((int)(std::log1p(previousCycleTime / lastCycleTime) * 10 * blockSize), 1), defaultBlockSize);
+					// std::cout << blockSize << std::endl;
 
-					_threadRender(scene, x, y);
+					int whatever = currentRenderPixel;
+					currentRenderPixel += blockSize;
+
+					clock.start();
+					for (index = whatever; index < whatever + blockSize && index < pixelTotal; index++)
+					{
+						int	x = index % width;
+						int	y = index / width;
+
+						_threadRender(scene, x, y);
+					}
+					previousCycleTime = lastCycleTime;
+					lastCycleTime = clock.stop(false) + 1.0;
+					// std::cout << lastCycleTime << std::endl;
 				}
 			}
 		));

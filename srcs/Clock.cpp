@@ -31,12 +31,37 @@ void	Clock::start(void)
 }
 
 // Returns elapsed seconds since start
-double	 Clock::elapsed(void)
+double	 Clock::elapsed(bool seconds)
 {
 	if (this->_running == true)
 	{
-		double elapsedMS = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - this->_startTimeMS).count();
-		return (elapsedMS / 1000.0);
+		double elapsedMS = std::chrono::duration<double, std::micro>(std::chrono::steady_clock::now() - this->_startTimeMS).count();
+		if (seconds)
+		{
+			return (elapsedMS / 1000.0);
+		}
+		else
+		{
+			return (elapsedMS);
+		}
+	}
+	return (0.0);
+}
+
+// Returns elapsed seconds since start
+double	 Clock::elapsed(void)
+{
+	return (this->elapsed(true));
+}
+
+// Returns elapsed seconds since start and stops the Clock
+double	 Clock::stop(bool seconds)
+{
+	if (this->_running == true)
+	{
+		double elapsedS = this->elapsed(seconds);
+		this->_running = false;
+		return (elapsedS);
 	}
 	return (0.0);
 }
@@ -44,11 +69,6 @@ double	 Clock::elapsed(void)
 // Returns elapsed seconds since start and stops the Clock
 double	 Clock::stop(void)
 {
-	if (this->_running == true)
-	{
-		double elapsedS = this->elapsed();
-		this->_running = false;
-		return (elapsedS);
-	}
-	return (0.0);
+	return (this->stop(true));
 }
+
