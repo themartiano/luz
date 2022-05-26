@@ -156,6 +156,21 @@ AABB	Utilities::mergeBoundingBoxes(AABB boundingBox1, AABB boundingBox2)
 	return (AABB(smallestPoints, biggestPoints));
 }
 
+// Merges all AABBs in 'boundingBoxes' and returns the resulting (and new) AABB / bounding box
+AABB	Utilities::mergeBoundingBoxes(std::vector<AABB> boundingBoxes)
+{
+	AABB	newBoundingBox;
+	bool	firstBB = true;
+
+	for (AABB boundingBox : boundingBoxes)
+	{
+		newBoundingBox = firstBB ? boundingBox : Utilities::mergeBoundingBoxes(newBoundingBox, boundingBox);
+		firstBB = false;
+	}
+
+	return (newBoundingBox);
+}
+
 // Converts all characters on 'str' to lower case
 void	Utilities::toLower(std::string& str)
 {
