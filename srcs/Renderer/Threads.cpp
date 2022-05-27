@@ -33,6 +33,7 @@ void	Renderer::internal::_manageThreads(Scene& scene)
 			std::async([&scene, &currentRenderPixel, &lastCycleTime, &previousCycleTime, &blockSize, &defaultBlockSize]()
 			{
 				Clock clock(false);
+				const bool storePixelRenderTimes = scene.getStorePixelRenderTimes();
 
 				int index = 0;
 				while (true)
@@ -45,6 +46,7 @@ void	Renderer::internal::_manageThreads(Scene& scene)
 					// std::cout << previousCycleTime << std::endl;
 					blockSize = std::min(std::max((int)(std::log1p(previousCycleTime / lastCycleTime) * 10 * blockSize), 1), defaultBlockSize);
 					// std::cout << blockSize << std::endl;
+					blockSize = 1;
 
 					int whatever = currentRenderPixel;
 					currentRenderPixel += blockSize;
@@ -56,6 +58,11 @@ void	Renderer::internal::_manageThreads(Scene& scene)
 						int	y = index / width;
 
 						_threadRender(scene, x, y);
+
+						if (storePixelRenderTimes)
+						{
+							scene.setPixelRenderTime(x, y, clock.elapsed(false));
+						}
 					}
 					previousCycleTime = lastCycleTime;
 					lastCycleTime = clock.stop(false) + 1.0;
