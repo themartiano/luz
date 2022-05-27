@@ -13,10 +13,15 @@
 */
 
 // Constructs the Scene with default values
-Scene::Scene(void)
+Scene::Scene(void) : Scene(D_WIDTH, D_HEIGHT)
 {
-	this->_xResolution = D_WIDTH;
-	this->_yResolution = D_HEIGHT;
+}
+
+// Constructs the Scene with custom values for width and height
+Scene::Scene(int width, int height)
+{
+	this->_xResolution = width;
+	this->_yResolution = height;
 
 	this->_sampleCount = D_SAMPLE_COUNT;
 	this->_maxLightBounces = D_MAX_LIGHT_BOUNCES;
@@ -33,27 +38,8 @@ Scene::Scene(void)
 
 	this->_t_max = std::numeric_limits<double>::max();
 	this->_pixels.reserve(this->_xResolution * this->_yResolution * 3);
-}
 
-// Constructs the Scene with cusotm values for width and height
-Scene::Scene(int width, int height)
-{
-	this->_xResolution = width;
-	this->_yResolution = height;
-
-	this->_sampleCount = D_SAMPLE_COUNT;
-	this->_maxLightBounces = D_MAX_LIGHT_BOUNCES;
-	this->_gammaCorrected = true;
-	this->_skyline = 0.5;
-	this->_renderSky = SKY_ATMOSPHERE;
-	this->_distanceBlueness = true;
-	this->_atmosphere = Atmosphere();
-	this->_backgroundColor = Color(0.0, 0.0, 0.0);
-
-	this->_activeCamera = 0;
-
-	this->_t_max = std::numeric_limits<double>::max();
-	this->_pixels.reserve(this->_xResolution * this->_yResolution * 3);
+	this->_storePixelRenderTimes = false;
 }
 
 // Properly frees all allocated memory (destructor)
@@ -308,5 +294,100 @@ void	Scene::saveRenderToFile(std::string fileName, ImageFileTypes imageFileType)
 			std::cerr << CLR_RED << "Invalid image file type." << CLR_RESET << std::endl;
 			break;
 		}
+	}
+}
+
+void	Scene::savePixelRenderTimesToFile(ImageFileTypes imageFileType)
+{
+	savePixelRenderTimesToFile(this->_defaultRenderOutputFileName, imageFileType); // Change _defaultRenderOutputFileName
+}
+
+void	Scene::savePixelRenderTimesToFile(std::string fileName, ImageFileTypes imageFileType)
+{
+	if (!this->_storePixelRenderTimes)
+	{
+		return;
+	}
+
+	// this->_renderTimePixels.reserve(this->_xResolution * this->_yResolution * 3);
+
+	// Looks like it is not possible to use iterators because we're settings values with [] so the vector doesn't properly recognizes it. size() is 0 btw
+	// const double fastest = *std::min_element(this->_pixelRenderTimes.begin(), this->_pixelRenderTimes.end());
+	// const double slowest = *std::max_element(this->_pixelRenderTimes.begin(), this->_pixelRenderTimes.end());
+
+	double fastest = 0.0;
+	double slowest = 0.0;
+
+	for (int i = 0; i < this->_xResolution * this->_yResolution; i++)
+	{
+		if (this->_pixelRenderTimes[i] < fastest)
+		{
+			fastest = this->_pixelRenderTimes[i];
+		}
+
+		if (this->_pixelRenderTimes[i] > slowest)
+		{
+			slowest = this->_pixelRenderTimes[i];
+		}
+	}
+
+	for (int i = 0; i < this->_xResolution * this->_yResolution; i++)
+	{
+		Color orange(1.0, 0.64, 0.0); // Fastest
+		Color purple(0.29, 0.0, 0.5); // Slowest
+
+		// interpolate between orange (fast) and purple (slow)
+		const double ratio = (this->_pixelRenderTimes[i] - fastest) / (slowest - fastest);
+
+		// interpolate between two colors using 'ratio'
+
+		this->setPixel(i % this->_xResolution, i / this->_xResolution, (purple - orange) * ratio + orange);
+	}
+
+	switch (imageFileType)
+	{
+		case (BMP_FILE):
+		{
+			BMP	bmp(fileName);
+			bmp.writeFile(*this);
+			break;
+		}
+		case (TIFF_FILE):
+		{
+			TIFF tiff(fileName);
+			tiff.writeFile(*this);
+			break;
+		}
+		default:
+		{
+			std::cerr << CLR_RED << "Invalid image file type." << CLR_RESET << std::endl;
+			break;
+		}
+	}
+}
+
+bool	Scene::getStorePixelRenderTimes(void) const
+{
+	return (this->_storePixelRenderTimes);
+}
+
+// Sets storePixelRenderTime
+void	Scene::setStorePixelRenderTimes(bool storePixelRenderTimes)
+{
+	this->_storePixelRenderTimes = storePixelRenderTimes;
+
+	if (this->_storePixelRenderTimes)
+	{
+		this->_pixelRenderTimes.reserve(this->_xResolution * this->_yResolution);
+	}
+}
+
+void	Scene::setPixelRenderTime(int x, int y, double renderTime)
+{
+	if (this->_storePixelRenderTimes)
+	{
+		int index = (y * this->_xResolution) + x;
+
+		this->_pixelRenderTimes[index] = renderTime;
 	}
 }

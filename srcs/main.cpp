@@ -32,6 +32,7 @@ int	main(int argc, char *argv[])
 	srand(time(0));
 
 	Scene scene;
+	scene.setStorePixelRenderTimes(true); // Test so it works for scene files (before it's natively there)
 	if (argc == 2)
 	{
 		SceneFile::read(scene, argv[1]);
@@ -41,6 +42,7 @@ int	main(int argc, char *argv[])
 		scene.setYResolution(500);
 		scene.setXResolution(500);
 		scene.setSampleCount(1);
+		scene.setStorePixelRenderTimes(true);
 		scene.setGammaCorrected(true);
 		scene.setRenderSky(SKY_ATMOSPHERE);
 		scene.setDistanceBlueness(false);
@@ -88,6 +90,7 @@ int	main(int argc, char *argv[])
 	{
 		// Writes render image file
 		scene.saveRenderToFile("render", BMP_FILE);
+		scene.savePixelRenderTimesToFile("renderTimes", BMP_FILE);
 	}
 
 	return (0);

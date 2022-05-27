@@ -17,3 +17,4 @@ objs
 Makefile.tmp
 perlinNoise.bmp
 perlinNoise.tiff
+renderTimes

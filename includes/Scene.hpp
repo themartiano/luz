@@ -40,13 +40,18 @@ class	Scene
 		Color	getPixel(int x, int y) const;
 		Camera	getActiveCamera(void) const;
 		bool	hasCamera(void) const;
-		std::vector<std::shared_ptr<Hittable>>	getHittables(void) const;
+		std::vector<std::shared_ptr<Hittable> >	getHittables(void) const;
 		std::string	getDefaultRenderOutputFileName(void) const;
 		void		setDefaultRenderOutputFileName(std::string defaultRenderOutputFileName);
 		void		updateLights(void);
-		std::vector<std::shared_ptr<Hittable>> getLights(void) const;
-		void		saveRenderToFile(ImageFileTypes imageFileType);
-		void		saveRenderToFile(std::string fileName, ImageFileTypes imageFileType);
+		std::vector<std::shared_ptr<Hittable> > getLights(void) const;
+		void		saveRenderToFile(ImageFileTypes imageFileType); // Add const qualifier
+		void		saveRenderToFile(std::string fileName, ImageFileTypes imageFileType); // Add const qualifier
+		bool		getStorePixelRenderTimes(void) const;
+		void		setStorePixelRenderTimes(bool storePixelRenderTime);
+		void		setPixelRenderTime(int x, int y, double renderTime);
+		void		savePixelRenderTimesToFile(std::string fileName, ImageFileTypes imageFileType);
+		void		savePixelRenderTimesToFile(ImageFileTypes imageFileType);
 
 	private:
 		int						_xResolution;
@@ -56,7 +61,7 @@ class	Scene
 		int						_maxLightBounces;
 		bool					_gammaCorrected;
 		std::string				_defaultRenderOutputFileName;
-		std::vector<double>		_pixels;
+		std::vector<double>		_pixels; // Create 'image' object (also use it on _renderTimePixels)
 		double					_skyline;
 		SkyTypes				_renderSky;
 		bool					_distanceBlueness;
@@ -64,6 +69,9 @@ class	Scene
 		Color					_backgroundColor;
 		std::vector<Camera>		_cameras;
 		size_t					_activeCamera;
-		std::vector<std::shared_ptr<Hittable>>	_hittables;
-		std::vector<std::shared_ptr<Hittable>>	_lights;
+		std::vector<std::shared_ptr<Hittable> >	_hittables;
+		std::vector<std::shared_ptr<Hittable> >	_lights;
+		bool					_storePixelRenderTimes;
+		std::vector<double>		_pixelRenderTimes;
+		std::vector<double>		_renderTimePixels; // Image
 };
