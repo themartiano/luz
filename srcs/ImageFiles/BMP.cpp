@@ -24,10 +24,10 @@ BMP::BMP(std::string fileName)
 void	BMP::writeFile(Scene& scene, bool insideDir, std::string dirName)
 {
 	unsigned char	padding[3] = {0, 0, 0};
-	int				paddingSize = (4 - (scene.getXResolution() * 3) % 4) % 4;
-	int				stride = (scene.getXResolution() * 3) + paddingSize;
-	unsigned char*	fileHeader = createBitmapFileHeader(scene.getYResolution(), stride);
-	unsigned char*	infoHeader = createBitmapInfoHeader(scene.getYResolution(), scene.getXResolution());
+	int				paddingSize = (4 - (scene.getImageWidth() * 3) % 4) % 4;
+	int				stride = (scene.getImageWidth() * 3) + paddingSize;
+	unsigned char*	fileHeader = createBitmapFileHeader(scene.getImageHeight(), stride);
+	unsigned char*	infoHeader = createBitmapInfoHeader(scene.getImageHeight(), scene.getImageWidth());
 
 	std::string filePath = "";
 	if (insideDir == true)
@@ -51,8 +51,8 @@ void	BMP::writeFile(Scene& scene, bool insideDir, std::string dirName)
 
 	unsigned char*	newPixelArray = generateNewPixelArray(scene);
 
-	for (int i = scene.getYResolution() - 1; i >= 0; i--) {
-		fwrite(newPixelArray + (i * scene.getXResolution() * 3), 3, scene.getXResolution(), imageFile);
+	for (int i = scene.getImageHeight() - 1; i >= 0; i--) {
+		fwrite(newPixelArray + (i * scene.getImageWidth() * 3), 3, scene.getImageWidth(), imageFile);
 		fwrite(padding, 1, paddingSize, imageFile);
 	}
 
@@ -70,11 +70,11 @@ void	BMP::writeFile(Scene& scene)
 
 static unsigned char*	generateNewPixelArray(Scene& scene)
 {
-	unsigned char* newPixelArray = new unsigned char[scene.getXResolution() * scene.getYResolution() * 3];
+	unsigned char* newPixelArray = new unsigned char[scene.getImageWidth() * scene.getImageHeight() * 3];
 
-	for (int y = 0; y < scene.getYResolution(); y++)
+	for (unsigned int y = 0; y < scene.getImageHeight(); y++)
 	{
-		for (int x = 0; x < scene.getXResolution(); x++)
+		for (unsigned int x = 0; x < scene.getImageWidth(); x++)
 		{
 			Color pixel = scene.getPixel(x, y);
 
@@ -86,7 +86,7 @@ static unsigned char*	generateNewPixelArray(Scene& scene)
 			Utilities::setDoubleRange(g, 0.0, 1.0);
 			Utilities::setDoubleRange(b, 0.0, 1.0);
 
-			int index = (y * scene.getYResolution()) + x;
+			unsigned int index = (y * scene.getImageHeight()) + x;
 
 			newPixelArray[(index * 3) + 2] = (unsigned char)(r * 255.0);
 			newPixelArray[(index * 3) + 1] = (unsigned char)(g * 255.0);

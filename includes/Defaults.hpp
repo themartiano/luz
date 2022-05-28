@@ -4,8 +4,8 @@
 #include <thread>
 #include <string>
 
-const int	D_WIDTH = 1920; // Default screen width in pixels
-const int	D_HEIGHT = 1080; // Default screen height in pixels
+const unsigned int	D_WIDTH = 1920; // Default screen width in pixels
+const unsigned int	D_HEIGHT = 1080; // Default screen height in pixels
 
 const int	D_SAMPLE_COUNT = 48; // Default sample count (rays per pixel)
 const int	D_MAX_LIGHT_BOUNCES = 12; // Default maximum light bounces per ray

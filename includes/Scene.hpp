@@ -5,6 +5,7 @@
 #include "Atmosphere.hpp"
 #include "SkyTypes.hpp"
 #include "ImageFiles/Types.hpp"
+#include "Image.hpp"
 #include <vector>
 #include <memory>
 
@@ -12,14 +13,13 @@ class	Scene
 {
 	public:
 		Scene(void);
-		Scene(int width, int height);
 		~Scene(void);
 		void	addCamera(Camera camera);
 		void	addHittable(std::shared_ptr<Hittable> hittable);
-		int		getXResolution(void) const;
-		void	setXResolution(int width);
-		int		getYResolution(void) const;
-		void	setYResolution(int height);
+		unsigned int	getImageWidth(void) const;
+		void			setImageWidth(unsigned int width);
+		unsigned int	getImageHeight(void) const;
+		void			setImageHeight(unsigned int height);
 		int		getSampleCount(void) const;
 		void	setSampleCount(const int sampleCount);
 		int		getMaxLightBounces(void) const;
@@ -35,9 +35,9 @@ class	Scene
 		Atmosphere	getAtmosphere(void) const;
 		Color	getBackgroundColor(void) const;
 		void	setBackgroundColor(Color backgroundColor);
-		void	setPixel(int x, int y, Color pixelColor);
+		void	setPixel(unsigned int x, unsigned int y, Color color);
 		std::vector<double>	getPixels() const;
-		Color	getPixel(int x, int y) const;
+		Color	getPixel(unsigned int x, unsigned int y) const;
 		Camera	getActiveCamera(void) const;
 		bool	hasCamera(void) const;
 		std::vector<std::shared_ptr<Hittable> >	getHittables(void) const;
@@ -54,14 +54,12 @@ class	Scene
 		void		savePixelRenderTimesToFile(ImageFileTypes imageFileType);
 
 	private:
-		int						_xResolution;
-		int						_yResolution;
 		double					_t_max;
 		int						_sampleCount;
 		int						_maxLightBounces;
 		bool					_gammaCorrected;
 		std::string				_defaultRenderOutputFileName;
-		std::vector<double>		_pixels; // Create 'image' object (also use it on _renderTimePixels)
+		Image					_image;
 		double					_skyline;
 		SkyTypes				_renderSky;
 		bool					_distanceBlueness;
@@ -73,5 +71,4 @@ class	Scene
 		std::vector<std::shared_ptr<Hittable> >	_lights;
 		bool					_storePixelRenderTimes;
 		std::vector<double>		_pixelRenderTimes;
-		std::vector<double>		_renderTimePixels; // Image
 };

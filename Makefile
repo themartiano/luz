@@ -39,6 +39,7 @@ SRCS :=	AABB.cpp \
 		Hittables/WaterBody.cpp \
 		ImageFiles/BMP.cpp \
 		ImageFiles/TIFF.cpp \
+		Image.cpp \
 		Materials/Dielectric.cpp \
 		Materials/Emissive.cpp \
 		Materials/Isotropic.cpp \

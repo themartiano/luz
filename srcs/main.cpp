@@ -39,8 +39,8 @@ int	main(int argc, char *argv[])
 	}
 	else
 	{
-		scene.setYResolution(500);
-		scene.setXResolution(500);
+		scene.setImageHeight(500);
+		scene.setImageWidth(500);
 		scene.setSampleCount(1);
 		scene.setStorePixelRenderTimes(true);
 		scene.setGammaCorrected(true);

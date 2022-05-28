@@ -122,8 +122,8 @@ void	Perlin::saveToFile(std::string fileName, ImageFileTypes imageFileType, doub
 {
 	Scene	scene;
 
-	scene.setXResolution(xRes);
-	scene.setYResolution(yRes);
+	scene.setImageWidth(xRes);
+	scene.setImageHeight(yRes);
 
 	for (int i = 0; i < yRes; i++)
 	{

@@ -13,15 +13,9 @@
 */
 
 // Constructs the Scene with default values
-Scene::Scene(void) : Scene(D_WIDTH, D_HEIGHT)
+Scene::Scene(void)
 {
-}
-
-// Constructs the Scene with custom values for width and height
-Scene::Scene(int width, int height)
-{
-	this->_xResolution = width;
-	this->_yResolution = height;
+	this->_image = Image(D_WIDTH, D_HEIGHT);
 
 	this->_sampleCount = D_SAMPLE_COUNT;
 	this->_maxLightBounces = D_MAX_LIGHT_BOUNCES;
@@ -37,7 +31,6 @@ Scene::Scene(int width, int height)
 	this->_activeCamera = 0;
 
 	this->_t_max = std::numeric_limits<double>::max();
-	this->_pixels.reserve(this->_xResolution * this->_yResolution * 3);
 
 	this->_storePixelRenderTimes = false;
 }
@@ -59,36 +52,32 @@ void	Scene::addHittable(std::shared_ptr<Hittable> hittable)
 	this->_hittables.push_back(hittable);
 }
 
-// Returns the X resolution (width)
-int		Scene::getXResolution(void) const
+// Returns the image width
+unsigned int	Scene::getImageWidth(void) const
 {
-	return (this->_xResolution);
+	return (this->_image.getWidth());
 }
 
 // Sets the X resolution (width)
-void	Scene::setXResolution(int width)
+void	Scene::setImageWidth(unsigned int width)
 {
-	this->_xResolution = width;
-
-	this->_pixels.reserve(this->_xResolution * this->_yResolution * 3);
+	this->_image.setWidth(width);
 }
 
 // Returns the Y resolution (height)
-int		Scene::getYResolution(void) const
+unsigned int	Scene::getImageHeight(void) const
 {
-	return (this->_yResolution);
+	return (this->_image.getHeight());
 }
 
 // Sets the Y resolution (height)
-void	Scene::setYResolution(int height)
+void	Scene::setImageHeight(unsigned int height)
 {
-	this->_yResolution = height;
-
-	this->_pixels.reserve(this->_xResolution * this->_yResolution * 3);
+	this->_image.setHeight(height);
 }
 
 // Returns the current Sample Count (rays per pixel)
-int		Scene::getSampleCount(void) const
+int	Scene::getSampleCount(void) const
 {
 	return (this->_sampleCount);
 }
@@ -175,18 +164,9 @@ void	Scene::setBackgroundColor(Color backgroundColor)
 }
 
 // Sets the color for the pixel at 'index', which is a simple X/Y index.
-void	Scene::setPixel(int x, int y, Color pixelColor)
+void	Scene::setPixel(unsigned int x, unsigned int y, Color color)
 {
-	if (x > this->_xResolution - 1 || y > this->_yResolution - 1)
-	{
-		return;
-	}
-
-	int index = (y * this->_xResolution) + x;
-
-	this->_pixels[((index * 3) + 0)] = pixelColor.getRed();
-	this->_pixels[((index * 3) + 1)] = pixelColor.getGreen();
-	this->_pixels[((index * 3) + 2)] = pixelColor.getBlue();
+	this->_image.setPixel(x, y, color);
 }
 
 // Returns the pixel array
@@ -196,21 +176,9 @@ std::vector<double>	Scene::getPixels(void) const
 }
 
 // Returns the pixel at 'x', 'y'. Its RGB values are returned inside a Color object
-Color	Scene::getPixel(int x, int y) const
+Color	Scene::getPixel(unsigned int x, unsigned int y) const
 {
-	if (x > this->_xResolution - 1 || y > this->_yResolution - 1)
-	{
-		return Color(0.0, 0.0, 0.0);
-	}
-
-	Color pixel;
-	int index = (y * this->_xResolution) + x;
-
-	pixel.setRed(this->_pixels[((index * 3) + 0)]);
-	pixel.setGreen(this->_pixels[((index * 3) + 1)]);
-	pixel.setBlue(this->_pixels[((index * 3) + 2)]);
-
-	return (pixel);
+	return (this->_image.getPixel(x, y));
 }
 
 // Returns the vector (list) of Hittables

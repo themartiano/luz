@@ -10,8 +10,8 @@
 // Calculates the color for the pixel at 'x' and 'y'. Creates rays, checks for intersections with objects on 'scene' and bounce light rays
 Color	Renderer::internal::_calculatePixelColor(Scene& scene, int x, int y)
 {
-	static double width = double(scene.getXResolution());
-	static double height = double(scene.getYResolution());
+	static double width = double(scene.getImageWidth());
+	static double height = double(scene.getImageHeight());
 
 	double xU = double(x + Utilities::randomDouble()) / (width - 1);
 	double yV = double(y + Utilities::randomDouble()) / (height - 1);
