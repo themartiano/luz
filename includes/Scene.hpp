@@ -35,9 +35,6 @@ class	Scene
 		Atmosphere	getAtmosphere(void) const;
 		Color	getBackgroundColor(void) const;
 		void	setBackgroundColor(Color backgroundColor);
-		void	setPixel(unsigned int x, unsigned int y, Color color);
-		std::vector<double>	getPixels() const;
-		Color	getPixel(unsigned int x, unsigned int y) const;
 		Camera	getActiveCamera(void) const;
 		bool	hasCamera(void) const;
 		std::vector<std::shared_ptr<Hittable> >	getHittables(void) const;
@@ -52,6 +49,7 @@ class	Scene
 		void		setPixelRenderTime(int x, int y, double renderTime);
 		void		savePixelRenderTimesToFile(std::string fileName, ImageFileTypes imageFileType);
 		void		savePixelRenderTimesToFile(ImageFileTypes imageFileType);
+		Image&		getImage(void);
 
 	private:
 		double					_t_max;
