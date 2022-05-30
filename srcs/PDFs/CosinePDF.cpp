@@ -1,6 +1,7 @@
 #include "PDFs/CosinePDF.hpp"
 #include "Utilities.hpp"
 #include "Defaults.hpp"
+#include "Random.hpp"
 #include <cmath>
 
 CosinePDF::CosinePDF(const Vector3& w)
@@ -17,5 +18,5 @@ double CosinePDF::value(const Vector3& direction) const
 
 Vector3 CosinePDF::generate(void) const
 {
-	return (this->_uvw.local(Utilities::randomCosineDirection()));
+	return (this->_uvw.local(Random::cosineDirection()));
 }

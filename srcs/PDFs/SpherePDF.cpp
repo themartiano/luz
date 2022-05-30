@@ -1,6 +1,6 @@
 #include "PDFs/SpherePDF.hpp"
 #include "Defaults.hpp"
-#include "Utilities.hpp"
+#include "Random.hpp"
 
 double SpherePDF::value(const Vector3& direction) const
 {
@@ -10,5 +10,5 @@ double SpherePDF::value(const Vector3& direction) const
 
 Vector3 SpherePDF::generate(void) const
 {
-	return (Utilities::randomPointInsideUnitSphere());
+	return (Random::pointInsideUnitSphere());
 }

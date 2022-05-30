@@ -1,6 +1,7 @@
 #include "Materials/Dielectric.hpp"
 #include "Utilities.hpp"
 #include "RefractiveIndexes.hpp"
+#include "Random.hpp"
 #include <cmath>
 
 Dielectric::Dielectric(void)
@@ -39,7 +40,7 @@ bool	Dielectric::scatter(Ray& ray, HitRecord& hitRecord, ScatterRecord& scatterR
 	bool	cannotRefract = refractionRatio * sinTheta > 1.0;
 
 	Vector3	direction;
-	if (cannotRefract || Utilities::schlick(cosTheta, refractionRatio) > Utilities::randomDouble())
+	if (cannotRefract || Utilities::schlick(cosTheta, refractionRatio) > Random::doubleFloat())
 	{
 		direction = Utilities::reflect(normalizedDirection, hitRecord.normal);
 	}

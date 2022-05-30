@@ -39,32 +39,6 @@ Vector3	Utilities::normalize(Vector3 vector)
 	return (vector);
 }
 
-// Returns a 3D point (Vector3) that's random and inside a unit sphere (normalized)
-Vector3 Utilities::randomPointInsideUnitSphere(void)
-{
-	Vector3	position;
-
-	do
-	{
-		position = (Vector3(Utilities::randomDouble(), Utilities::randomDouble(), Utilities::randomDouble()) * 2.0) - Vector3(1.0, 1.0, 1.0);
-	} while (Utilities::vectorLengthSquared(position) >= 1.0);
-
-	return (position);
-}
-
-// Returns a 3D point (Vector3) that's random and inside a unit disk (normalized)
-Vector3 Utilities::randomPointInsideUnitDisk(void)
-{
-	Vector3	position;
-
-	do
-	{
-		position = (Vector3(Utilities::randomDouble(), Utilities::randomDouble(), 0) * 2.0) - Vector3(1.0, 1.0, 0);
-	} while (Utilities::dot(position, position) >= 1.0);
-
-	return (position);
-}
-
 // Returns the reflected Vector3 of 'vector' using 'normal' in the calculation
 Vector3	Utilities::reflect(Vector3 vector, Vector3 normal)
 {
@@ -180,20 +154,6 @@ void	Utilities::toLower(std::string& str)
 	});
 }
 
-// Generates uniform random directions
-Vector3	Utilities::randomCosineDirection(void)
-{
-	double rand1 = Utilities::randomDouble();
-	double rand2 = Utilities::randomDouble();
-	double z = sqrt(1.0 - rand2);
-
-	double phi = 2.0 * D_PI * rand1;
-	double x = cos(phi) * sqrt(rand2);
-	double y = sin(phi) * sqrt(rand2);
-
-	return (Vector3(x, y, z));
-}
-
 // Returns true if 'str' ends with 'ending'. Otherwise, returns false
 bool	Utilities::stringEndsWith(std::string str, std::string ending)
 {
@@ -206,22 +166,4 @@ bool	Utilities::stringEndsWith(std::string str, std::string ending)
 	}
 
 	return (false);
-}
-
-// Generates a random double between 0 and 1
-double	Utilities::randomDouble(void)
-{
-	return (rand() / (RAND_MAX + 1.0));
-}
-
-// Generates a random double between 'min' and 'max'
-double	Utilities::randomDouble(double min, double max)
-{
-	return (min + (max - min) * Utilities::randomDouble());
-}
-
-// Generates a random int between 'min' and 'max'
-int	Utilities::randomInt(int min, int max)
-{
-	return (static_cast<int>(Utilities::randomDouble(min, max + 1)));
 }

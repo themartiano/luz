@@ -2,6 +2,7 @@
 #include "Utilities.hpp"
 #include "Defaults.hpp"
 #include "Materials/Lambertian.hpp"
+#include "Random.hpp"
 #include <algorithm>
 
 // Static function prototypes
@@ -21,7 +22,7 @@ BVHNode::BVHNode(std::vector<std::shared_ptr<Hittable>> hittables) : BVHNode(hit
 // Constructs the BVHNode
 BVHNode::BVHNode(std::vector<std::shared_ptr<Hittable>> hittables, size_t start, size_t end)
 {
-	int axis = Utilities::randomInt(0, 2);
+	int axis = Random::integer(0, 2);
 	auto comparator = (axis == 0) ? boxXCompare : (axis == 1) ? boxYCompare : boxZCompare;
 
 	size_t	hittableCount = end - start;
