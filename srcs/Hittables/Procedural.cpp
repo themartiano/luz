@@ -1,7 +1,6 @@
 #include "Hittables/Procedural.hpp"
 #include "Utilities.hpp"
 #include "Materials/Dielectric.hpp"
-#include "ImageFiles/Types.hpp"
 #include "RefractiveIndexes.hpp"
 #include <cmath>
 

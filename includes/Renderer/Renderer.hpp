@@ -8,7 +8,7 @@
 namespace	Renderer
 {
 	bool	render(Scene& scene);
-	void	renderSequence(Scene& scene, Atmosphere baseAtmosphere, int fps, double duration, ImageFileTypes imageFileType);
+	void	renderSequence(Scene& scene, Atmosphere baseAtmosphere, int fps, double duration);
 
 	namespace internal
 	{

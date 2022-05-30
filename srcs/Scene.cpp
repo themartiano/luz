@@ -218,103 +218,6 @@ std::vector<std::shared_ptr<Hittable>>	Scene::getLights(void) const
 	return (this->_lights);
 }
 
-void	Scene::saveRenderToFile(ImageFileTypes imageFileType)
-{
-	saveRenderToFile(this->_defaultRenderOutputFileName, imageFileType);
-}
-
-void	Scene::saveRenderToFile(std::string fileName, ImageFileTypes imageFileType)
-{
-	switch (imageFileType)
-	{
-		case (BMP_FILE):
-		{
-			BMP	bmp(fileName);
-			bmp.writeFile(this->_image);
-			break;
-		}
-		case (TIFF_FILE):
-		{
-			TIFF tiff(fileName);
-			tiff.writeFile(*this);
-			break;
-		}
-		default:
-		{
-			std::cerr << CLR_RED << "Invalid image file type." << CLR_RESET << std::endl;
-			break;
-		}
-	}
-}
-
-void	Scene::savePixelRenderTimesToFile(ImageFileTypes imageFileType)
-{
-	savePixelRenderTimesToFile(this->_defaultRenderOutputFileName, imageFileType); // Change _defaultRenderOutputFileName
-}
-
-void	Scene::savePixelRenderTimesToFile(std::string fileName, ImageFileTypes imageFileType)
-{
-	if (!this->_storePixelRenderTimes)
-	{
-		return;
-	}
-
-	// Looks like it is not possible to use iterators because we're settings values with [] so the vector doesn't properly recognizes it. size() is 0 btw
-	// const double fastest = *std::min_element(this->_pixelRenderTimes.begin(), this->_pixelRenderTimes.end());
-	// const double slowest = *std::max_element(this->_pixelRenderTimes.begin(), this->_pixelRenderTimes.end());
-
-	double fastest = 0.0;
-	double slowest = 0.0;
-
-	for (unsigned int i = 0; i < this->_image.getWidth() * this->_image.getHeight(); i++)
-	{
-		if (this->_pixelRenderTimes[i] < fastest)
-		{
-			fastest = this->_pixelRenderTimes[i];
-		}
-
-		if (this->_pixelRenderTimes[i] > slowest)
-		{
-			slowest = this->_pixelRenderTimes[i];
-		}
-	}
-
-	Image renderTimeImage(this->_image.getWidth(), this->_image.getHeight());
-	for (unsigned int i = 0; i < this->_image.getWidth() * this->_image.getHeight(); i++)
-	{
-		Color orange(1.0, 0.94, 0.84); // Fastest
-		Color purple(0.1, 0.0, 0.18); // Slowest
-
-		// interpolate between orange (fast) and purple (slow)
-		const double ratio = (this->_pixelRenderTimes[i] - fastest) / (slowest - fastest);
-
-		// interpolate between two colors using 'ratio'
-
-		renderTimeImage.setPixel(i % this->_image.getWidth(), i / this->_image.getWidth(), (purple - orange) * ratio + orange);
-	}
-
-	switch (imageFileType)
-	{
-		case (BMP_FILE):
-		{
-			BMP	bmp(fileName);
-			bmp.writeFile(renderTimeImage);
-			break;
-		}
-		case (TIFF_FILE):
-		{
-			TIFF tiff(fileName);
-			tiff.writeFile(*this); // renderTimeImage
-			break;
-		}
-		default:
-		{
-			std::cerr << CLR_RED << "Invalid image file type." << CLR_RESET << std::endl;
-			break;
-		}
-	}
-}
-
 bool	Scene::getStorePixelRenderTimes(void) const
 {
 	return (this->_storePixelRenderTimes);
@@ -344,4 +247,49 @@ void	Scene::setPixelRenderTime(int x, int y, double renderTime)
 Image&	Scene::getImage(void)
 {
 	return (this->_image);
+}
+
+Image	Scene::generateRenderTimeImage(void) const
+{
+	if (!this->_storePixelRenderTimes)
+	{
+		return (Image(0, 0));
+	}
+
+	Image image(this->_image.getWidth(), this->_image.getHeight());
+
+	// Looks like it is not possible to use iterators because we're settings values with [] so the vector doesn't properly recognizes it. size() is 0 btw
+	// const double fastest = *std::min_element(this->_pixelRenderTimes.begin(), this->_pixelRenderTimes.end());
+	// const double slowest = *std::max_element(this->_pixelRenderTimes.begin(), this->_pixelRenderTimes.end());
+
+	double fastest = 0.0;
+	double slowest = 0.0;
+
+	for (unsigned int i = 0; i < this->_image.getWidth() * this->_image.getHeight(); i++)
+	{
+		if (this->_pixelRenderTimes[i] < fastest)
+		{
+			fastest = this->_pixelRenderTimes[i];
+		}
+
+		if (this->_pixelRenderTimes[i] > slowest)
+		{
+			slowest = this->_pixelRenderTimes[i];
+		}
+	}
+
+	for (unsigned int i = 0; i < this->_image.getWidth() * this->_image.getHeight(); i++)
+	{
+		Color orange(1.0, 0.94, 0.84); // Fastest
+		Color purple(0.1, 0.0, 0.18); // Slowest
+
+		// interpolate between orange (fast) and purple (slow)
+		const double ratio = (this->_pixelRenderTimes[i] - fastest) / (slowest - fastest);
+
+		// interpolate between two colors using 'ratio'
+
+		image.setPixel(i % this->_image.getWidth(), i / this->_image.getWidth(), (purple - orange) * ratio + orange);
+	}
+
+	return (image);
 }

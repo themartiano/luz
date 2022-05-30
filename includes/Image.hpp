@@ -14,6 +14,10 @@ class	Image
 		void			setHeight(unsigned int height);
 		Color			getPixel(unsigned int x, unsigned int y) const;
 		void			setPixel(unsigned int x, unsigned int y, Color color);
+		const std::vector<Color>&	data(void) const;
+		void			saveToBMP(const std::string &filename) const;
+		void			saveToTIFF(const std::string &filename) const;
+
 		Color&			operator[](unsigned int index);
 		Color&			at(unsigned int index);
 

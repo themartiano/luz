@@ -118,16 +118,16 @@ double Perlin::noise2D(double x, double y) const
 	return (this->noise(x, y, 0.0));
 }
 
-void	Perlin::saveToFile(std::string fileName, ImageFileTypes imageFileType, double xRes, double yRes, double noiseScale) const
+Image	Perlin::generateImage(double width, double height, double noiseScale) const
 {
-	Image image(xRes, yRes);
+	Image image(width, height);
 
-	for (int i = 0; i < yRes; i++)
+	for (int i = 0; i < height; i++)
 	{
-		for (int j = 0; j < xRes; j++)
+		for (int j = 0; j < width; j++)
 		{
-			double y = (double)i / ((double)yRes);
-			double x = (double)j / ((double)xRes);
+			double y = (double)i / ((double)height);
+			double x = (double)j / ((double)width);
 
 			double n = this->noise2D(noiseScale * x, noiseScale * y);
 
@@ -135,12 +135,5 @@ void	Perlin::saveToFile(std::string fileName, ImageFileTypes imageFileType, doub
 		}
 	}
 
-	// save image to file
-	(void)fileName;
-	(void)imageFileType;
-}
-
-void	Perlin::saveToFile(ImageFileTypes imageFileType, double xRes, double yRes, double noiseScale) const
-{
-	this->saveToFile(this->_defaultOutputFileName, imageFileType, xRes, yRes, noiseScale);
+	return (image);
 }

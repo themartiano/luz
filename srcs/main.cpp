@@ -16,7 +16,6 @@
 #include "Hittables/WaterBody.hpp"
 #include "Utilities.hpp"
 #include "Defaults.hpp"
-#include "ImageFiles/Types.hpp"
 #include "Materials/Lambertian.hpp"
 #include "Materials/Emissive.hpp"
 #include "Materials/Dielectric.hpp"
@@ -87,8 +86,9 @@ int	main(int argc, char *argv[])
 	if (Renderer::render(scene))
 	{
 		// Writes render image file
-		scene.saveRenderToFile("render", BMP_FILE);
-		scene.savePixelRenderTimesToFile("renderTimes", BMP_FILE);
+		scene.getImage().saveToBMP("render");
+		Image debugTime = scene.generateRenderTimeImage();
+		debugTime.saveToBMP("renderTime");
 	}
 
 	return (0);
