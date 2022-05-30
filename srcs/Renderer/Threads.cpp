@@ -20,17 +20,15 @@ void	Renderer::internal::_manageThreads(Scene& scene)
 	volatile std::atomic<int> currentRenderPixel(0);
 	std::vector<std::future<void>> futureVector;
 
-	const int defaultBlockSize = 100;
-
 	volatile std::atomic<double> lastCycleTime(1.0);
 	volatile std::atomic<double> previousCycleTime(1.0);
-	volatile std::atomic<int> blockSize(defaultBlockSize);
+	volatile std::atomic<int> blockSize(1);
 
 	// Creates threads.
 	for (unsigned int i = 0; i < threadCount; i++)
 	{
 		futureVector.push_back(
-			std::async([&scene, &currentRenderPixel, &lastCycleTime, &previousCycleTime, &blockSize, &defaultBlockSize]()
+			std::async([&scene, &currentRenderPixel, &lastCycleTime, &previousCycleTime, &blockSize]()
 			{
 				Clock clock(false);
 				const bool storePixelRenderTimes = scene.getStorePixelRenderTimes();
@@ -43,10 +41,7 @@ void	Renderer::internal::_manageThreads(Scene& scene)
 						break;
 					}
 
-					// std::cout << previousCycleTime << std::endl;
-					blockSize = std::min(std::max((int)(std::log1p(previousCycleTime / lastCycleTime) * 10 * blockSize), 1), defaultBlockSize);
-					// std::cout << blockSize << std::endl;
-					blockSize = 1;
+					blockSize = std::min(std::max((int)(std::log1p(previousCycleTime / lastCycleTime) * 10.0 * blockSize), 1), 100);
 
 					int whatever = currentRenderPixel;
 					currentRenderPixel += blockSize;
@@ -66,7 +61,6 @@ void	Renderer::internal::_manageThreads(Scene& scene)
 					}
 					previousCycleTime = lastCycleTime;
 					lastCycleTime = clock.stop(false) + 1.0;
-					// std::cout << lastCycleTime << std::endl;
 				}
 			}
 		));
