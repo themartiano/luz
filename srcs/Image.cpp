@@ -3,8 +3,8 @@
 
 Image::Image(void)
 {
-	this->_width = D_WIDTH;
-	this->_height = D_HEIGHT;
+	this->_width = D_WIDTH; // Should it be 0?
+	this->_height = D_HEIGHT;  // Should it be 0?
 
 	this->_pixels.reserve(this->_width * this->_height);
 }
@@ -45,7 +45,7 @@ Color	Image::getPixel(unsigned int x, unsigned int y) const
 {
 	if (x >= this->_width || y >= this->_height)
 	{
-		return (Color()); // Maybe throw?
+		throw std::out_of_range("Index out of range");
 	}
 
 	return (this->_pixels[y * this->_width + x]);
@@ -55,8 +55,23 @@ void	Image::setPixel(unsigned int x, unsigned int y, Color color)
 {
 	if (x >= this->_width || y >= this->_height)
 	{
-		return; // Maybe throw?
+		throw std::out_of_range("Index out of range");
 	}
 
 	this->_pixels[y * this->_width + x] = color;
+}
+
+Color&	Image::operator[](unsigned int index)
+{
+	return (this->_pixels[index]);
+}
+
+Color&	Image::at(unsigned int index)
+{
+	if (index >= this->_pixels.size())
+	{
+		throw std::out_of_range("Index out of range");
+	}
+
+	return (this->_pixels[index]);
 }

@@ -120,5 +120,5 @@ void	Renderer::internal::_threadRender(Scene& scene, int x, int y)
 		pixelColor.setBlue(0.0);
 	}
 
-	scene.setPixel(x, y, pixelColor);
+	scene.getImage().setPixel(x, y, pixelColor);
 }

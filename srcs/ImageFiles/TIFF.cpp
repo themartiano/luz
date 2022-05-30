@@ -75,16 +75,20 @@ void	TIFF::writeFile(Scene& scene, bool insideDir, std::string dirName)
 	delete[] ifd.tagList;
 
 	// Write bitmap image data
-	for (int row = 0; row < RESOLUTION / TILE_SIZE; row++)
+	for (unsigned int row = 0; row < RESOLUTION / TILE_SIZE; row++)
 	{
-		int rowPos = (row * TILE_SIZE * scene.getImageWidth() * 3);
+		unsigned int rowPos = (row * TILE_SIZE * scene.getImageWidth() * 3);
 		for (int column = 0; column < RESOLUTION / TILE_SIZE; column++)
 		{
-			int columnPos = (column * TILE_SIZE * 3);
-			for (int y = 0; y < TILE_SIZE; y++)
+			unsigned int columnPos = (column * TILE_SIZE * 3);
+			for (unsigned int y = 0; y < TILE_SIZE; y++)
 			{
-				int tilePos = (y * scene.getImageWidth() * 3);
-				fwrite(scene.getPixels().data() + rowPos + columnPos + tilePos, PIXEL_BYTES, TILE_SIZE, imageFile);
+				unsigned int tilePos = (y * scene.getImageWidth() * 3);
+
+				// fwrite(&scene.getImage()[rowPos + columnPos + tilePos], PIXEL_BYTES, TILE_SIZE, imageFile);
+				(void)tilePos;
+				(void)columnPos;
+				(void)rowPos;
 			}
 		}
 	}

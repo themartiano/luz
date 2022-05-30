@@ -14,6 +14,8 @@ class	Image
 		void			setHeight(unsigned int height);
 		Color			getPixel(unsigned int x, unsigned int y) const;
 		void			setPixel(unsigned int x, unsigned int y, Color color);
+		Color&			operator[](unsigned int index);
+		Color&			at(unsigned int index);
 
 	private:
 		std::vector<Color>	_pixels;

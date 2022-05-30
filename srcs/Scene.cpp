@@ -163,24 +163,6 @@ void	Scene::setBackgroundColor(Color backgroundColor)
 	this->_backgroundColor = backgroundColor;
 }
 
-// Sets the color for the pixel at 'index', which is a simple X/Y index.
-void	Scene::setPixel(unsigned int x, unsigned int y, Color color)
-{
-	this->_image.setPixel(x, y, color);
-}
-
-// Returns the pixel array
-std::vector<double>	Scene::getPixels(void) const
-{
-	return (this->_pixels);
-}
-
-// Returns the pixel at 'x', 'y'. Its RGB values are returned inside a Color object
-Color	Scene::getPixel(unsigned int x, unsigned int y) const
-{
-	return (this->_image.getPixel(x, y));
-}
-
 // Returns the vector (list) of Hittables
 std::vector<std::shared_ptr<Hittable>>	Scene::getHittables(void) const
 {
@@ -248,7 +230,7 @@ void	Scene::saveRenderToFile(std::string fileName, ImageFileTypes imageFileType)
 		case (BMP_FILE):
 		{
 			BMP	bmp(fileName);
-			bmp.writeFile(*this);
+			bmp.writeFile(this->_image);
 			break;
 		}
 		case (TIFF_FILE):
@@ -277,8 +259,6 @@ void	Scene::savePixelRenderTimesToFile(std::string fileName, ImageFileTypes imag
 		return;
 	}
 
-	// this->_renderTimePixels.reserve(this->_xResolution * this->_yResolution * 3);
-
 	// Looks like it is not possible to use iterators because we're settings values with [] so the vector doesn't properly recognizes it. size() is 0 btw
 	// const double fastest = *std::min_element(this->_pixelRenderTimes.begin(), this->_pixelRenderTimes.end());
 	// const double slowest = *std::max_element(this->_pixelRenderTimes.begin(), this->_pixelRenderTimes.end());
@@ -286,7 +266,7 @@ void	Scene::savePixelRenderTimesToFile(std::string fileName, ImageFileTypes imag
 	double fastest = 0.0;
 	double slowest = 0.0;
 
-	for (int i = 0; i < this->_xResolution * this->_yResolution; i++)
+	for (unsigned int i = 0; i < this->_image.getWidth() * this->_image.getHeight(); i++)
 	{
 		if (this->_pixelRenderTimes[i] < fastest)
 		{
@@ -299,7 +279,8 @@ void	Scene::savePixelRenderTimesToFile(std::string fileName, ImageFileTypes imag
 		}
 	}
 
-	for (int i = 0; i < this->_xResolution * this->_yResolution; i++)
+	Image renderTimeImage(this->_image.getWidth(), this->_image.getHeight());
+	for (unsigned int i = 0; i < this->_image.getWidth() * this->_image.getHeight(); i++)
 	{
 		Color orange(1.0, 0.64, 0.0); // Fastest
 		Color purple(0.29, 0.0, 0.5); // Slowest
@@ -309,7 +290,7 @@ void	Scene::savePixelRenderTimesToFile(std::string fileName, ImageFileTypes imag
 
 		// interpolate between two colors using 'ratio'
 
-		this->setPixel(i % this->_xResolution, i / this->_xResolution, (purple - orange) * ratio + orange);
+		renderTimeImage.setPixel(i % this->_image.getWidth(), i / this->_image.getWidth(), (purple - orange) * ratio + orange);
 	}
 
 	switch (imageFileType)
@@ -317,13 +298,13 @@ void	Scene::savePixelRenderTimesToFile(std::string fileName, ImageFileTypes imag
 		case (BMP_FILE):
 		{
 			BMP	bmp(fileName);
-			bmp.writeFile(*this);
+			bmp.writeFile(renderTimeImage);
 			break;
 		}
 		case (TIFF_FILE):
 		{
 			TIFF tiff(fileName);
-			tiff.writeFile(*this);
+			tiff.writeFile(*this); // renderTimeImage
 			break;
 		}
 		default:
@@ -346,7 +327,7 @@ void	Scene::setStorePixelRenderTimes(bool storePixelRenderTimes)
 
 	if (this->_storePixelRenderTimes)
 	{
-		this->_pixelRenderTimes.reserve(this->_xResolution * this->_yResolution);
+		this->_pixelRenderTimes.reserve(this->_image.getWidth() * this->_image.getHeight());
 	}
 }
 
@@ -354,8 +335,13 @@ void	Scene::setPixelRenderTime(int x, int y, double renderTime)
 {
 	if (this->_storePixelRenderTimes)
 	{
-		int index = (y * this->_xResolution) + x;
+		int index = (y * this->_image.getWidth()) + x;
 
 		this->_pixelRenderTimes[index] = renderTime;
 	}
+}
+
+Image&	Scene::getImage(void)
+{
+	return (this->_image);
 }

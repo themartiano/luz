@@ -120,10 +120,7 @@ double Perlin::noise2D(double x, double y) const
 
 void	Perlin::saveToFile(std::string fileName, ImageFileTypes imageFileType, double xRes, double yRes, double noiseScale) const
 {
-	Scene	scene;
-
-	scene.setImageWidth(xRes);
-	scene.setImageHeight(yRes);
+	Image image(xRes, yRes);
 
 	for (int i = 0; i < yRes; i++)
 	{
@@ -134,11 +131,13 @@ void	Perlin::saveToFile(std::string fileName, ImageFileTypes imageFileType, doub
 
 			double n = this->noise2D(noiseScale * x, noiseScale * y);
 
-			scene.setPixel(j, i, Color(n, n, n));
+			image.setPixel(j, i, Color(n, n, n));
 		}
 	}
 
-	scene.saveRenderToFile(fileName, imageFileType);
+	// save image to file
+	(void)fileName;
+	(void)imageFileType;
 }
 
 void	Perlin::saveToFile(ImageFileTypes imageFileType, double xRes, double yRes, double noiseScale) const

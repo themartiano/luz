@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Scene.hpp"
+#include "Image.hpp"
 #include <string>
 
 class	BMP
@@ -8,8 +8,8 @@ class	BMP
 	public:
 		BMP(void);
 		BMP(std::string fileName);
-		void	writeFile(Scene& scene, bool insideDir, std::string dirName);
-		void	writeFile(Scene& scene);
+		void	writeFile(const Image& image, bool insideDir, std::string dirName);
+		void	writeFile(const Image& image);
 
 	private:
 		std::string	_fileName;
