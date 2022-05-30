@@ -4,7 +4,6 @@
 #include "Hittables/Hittable.hpp"
 #include "Atmosphere.hpp"
 #include "SkyTypes.hpp"
-#include "ImageFiles/Types.hpp"
 #include "Image.hpp"
 #include <vector>
 #include <memory>
@@ -42,14 +41,11 @@ class	Scene
 		void		setDefaultRenderOutputFileName(std::string defaultRenderOutputFileName);
 		void		updateLights(void);
 		std::vector<std::shared_ptr<Hittable> > getLights(void) const;
-		void		saveRenderToFile(ImageFileTypes imageFileType); // Add const qualifier
-		void		saveRenderToFile(std::string fileName, ImageFileTypes imageFileType); // Add const qualifier
 		bool		getStorePixelRenderTimes(void) const;
 		void		setStorePixelRenderTimes(bool storePixelRenderTime);
 		void		setPixelRenderTime(int x, int y, double renderTime);
-		void		savePixelRenderTimesToFile(std::string fileName, ImageFileTypes imageFileType);
-		void		savePixelRenderTimesToFile(ImageFileTypes imageFileType);
 		Image&		getImage(void);
+		Image		generateRenderTimeImage(void) const;
 
 	private:
 		double					_t_max;

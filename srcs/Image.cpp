@@ -1,5 +1,7 @@
 #include "Image.hpp"
 #include "Defaults.hpp"
+#include "ImageFiles/BMP.hpp"
+#include "ImageFiles/TIFF.hpp"
 
 Image::Image(void)
 {
@@ -59,6 +61,23 @@ void	Image::setPixel(unsigned int x, unsigned int y, Color color)
 	}
 
 	this->_pixels[y * this->_width + x] = color;
+}
+
+void	Image::saveToBMP(const std::string &fileName) const
+{
+	BMP	bmp(fileName);
+	bmp.writeFile(*this);
+}
+
+void	Image::saveToTIFF(const std::string &fileName) const
+{
+	TIFF tiff(fileName);
+	tiff.writeFile(*this);
+}
+
+const std::vector<Color>&	Image::data(void) const
+{
+	return (this->_pixels);
 }
 
 Color&	Image::operator[](unsigned int index)

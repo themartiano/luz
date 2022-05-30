@@ -4,10 +4,9 @@
 #include "SkyTypes.hpp"
 #include "Defaults.hpp"
 #include "Atmosphere.hpp"
-#include "ImageFiles/Types.hpp"
 
 // Renders a sequence of frames
-void	Renderer::renderSequence(Scene& scene, Atmosphere baseAtmosphere, int fps, double duration, ImageFileTypes imageFileType)
+void	Renderer::renderSequence(Scene& scene, Atmosphere baseAtmosphere, int fps, double duration)
 {
 	scene.setRenderSky(SKY_ATMOSPHERE);
 
@@ -22,6 +21,6 @@ void	Renderer::renderSequence(Scene& scene, Atmosphere baseAtmosphere, int fps, 
 		sunPosition -= sunChangePerFrame;
 
 		Renderer::render(scene);
-		scene.saveRenderToFile("sequenceFrame" + std::to_string(i), imageFileType);
+		scene.getImage().saveToBMP("sequenceFrame" + std::to_string(i));
 	}
 }

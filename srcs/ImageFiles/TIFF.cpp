@@ -21,7 +21,7 @@ TIFF::TIFF(std::string fileName)
 }
 
 // Writes a .tiff image file using the information present on 'scene'
-void	TIFF::writeFile(Scene& scene, bool insideDir, std::string dirName)
+void	TIFF::writeFile(const Image& image, bool insideDir, std::string dirName)
 {
 	std::string filePath = "";
 	if (insideDir == true)
@@ -74,21 +74,21 @@ void	TIFF::writeFile(Scene& scene, bool insideDir, std::string dirName)
 	fwrite(&ifd.nextIFDOffset, sizeof(int), 1, imageFile);
 	delete[] ifd.tagList;
 
+	std::vector<double> pixelArray;
+	arrayColorToDouble(image, pixelArray);
+
 	// Write bitmap image data
 	for (unsigned int row = 0; row < RESOLUTION / TILE_SIZE; row++)
 	{
-		unsigned int rowPos = (row * TILE_SIZE * scene.getImageWidth() * 3);
+		unsigned int rowPos = (row * TILE_SIZE * image.getWidth() * 3);
 		for (int column = 0; column < RESOLUTION / TILE_SIZE; column++)
 		{
 			unsigned int columnPos = (column * TILE_SIZE * 3);
 			for (unsigned int y = 0; y < TILE_SIZE; y++)
 			{
-				unsigned int tilePos = (y * scene.getImageWidth() * 3);
+				unsigned int tilePos = (y * image.getWidth() * 3);
 
-				// fwrite(&scene.getImage()[rowPos + columnPos + tilePos], PIXEL_BYTES, TILE_SIZE, imageFile);
-				(void)tilePos;
-				(void)columnPos;
-				(void)rowPos;
+				fwrite(pixelArray.data() + rowPos + columnPos + tilePos, PIXEL_BYTES, TILE_SIZE, imageFile);
 			}
 		}
 	}
@@ -98,9 +98,9 @@ void	TIFF::writeFile(Scene& scene, bool insideDir, std::string dirName)
 }
 
 // TIFF::writeFile overload
-void	TIFF::writeFile(Scene& scene)
+void	TIFF::writeFile(const Image& image)
 {
-	writeFile(scene, false, "");
+	writeFile(image, false, "");
 }
 
 TIFF::tiffIFD	TIFF::_generateIFD(void)
@@ -191,4 +191,18 @@ TIFF::tiffIFD	TIFF::_generateIFD(void)
 	ifd.tagList = tags;
 
 	return (ifd);
+}
+
+void	TIFF::arrayColorToDouble(const Image& image, std::vector<double>& doubleArray) const
+{
+	const unsigned int originalSize = image.data().size();
+
+	doubleArray.reserve(originalSize * 3);
+
+	for (unsigned int i = 0; i < originalSize; i++)
+	{
+		doubleArray.push_back(image.data()[i].getRed());
+		doubleArray.push_back(image.data()[i].getGreen());
+		doubleArray.push_back(image.data()[i].getBlue());
+	}
 }
