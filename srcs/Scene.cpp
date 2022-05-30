@@ -282,8 +282,8 @@ void	Scene::savePixelRenderTimesToFile(std::string fileName, ImageFileTypes imag
 	Image renderTimeImage(this->_image.getWidth(), this->_image.getHeight());
 	for (unsigned int i = 0; i < this->_image.getWidth() * this->_image.getHeight(); i++)
 	{
-		Color orange(1.0, 0.64, 0.0); // Fastest
-		Color purple(0.29, 0.0, 0.5); // Slowest
+		Color orange(1.0, 0.94, 0.84); // Fastest
+		Color purple(0.1, 0.0, 0.18); // Slowest
 
 		// interpolate between orange (fast) and purple (slow)
 		const double ratio = (this->_pixelRenderTimes[i] - fastest) / (slowest - fastest);
