@@ -12,8 +12,6 @@ namespace Utilities
 	double  vectorLengthSquared(Vector3 vector);
 	double  vectorLength(Vector3 vector);
 	Vector3 normalize(Vector3 vector);
-	Vector3 randomPointInsideUnitSphere(void);
-	Vector3 randomPointInsideUnitDisk(void);
 	Vector3 reflect(Vector3 vector, Vector3 normal);
 	Vector3	refract(Vector3 vector, Vector3 normal, double refractiveIndex);
 	double  schlick(double cosine, double refractiveIndex);
@@ -23,9 +21,5 @@ namespace Utilities
 	AABB	mergeBoundingBoxes(AABB boundingBox1, AABB boundingBox2);
 	AABB	mergeBoundingBoxes(std::vector<AABB> boundingBoxes);
 	void	toLower(std::string& str);
-	Vector3 randomCosineDirection(void);
 	bool	stringEndsWith(std::string str, std::string ending);
-	double	randomDouble(void);
-	double	randomDouble(double min, double max);
-	int	randomInt(int min, int max);
 }

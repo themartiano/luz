@@ -1,5 +1,6 @@
 #include "PDFs/HittablePDF.hpp"
 #include "Utilities.hpp"
+#include "Random.hpp"
 
 HittablePDF::HittablePDF(std::shared_ptr<Hittable> hittable, const Vector3& origin)
 {
@@ -11,7 +12,7 @@ HittablePDF::HittablePDF(std::vector<std::shared_ptr<Hittable>> hittables, const
 {
 	// Throw exception if 'hittables' is empty
 
-	int randomIndex = Utilities::randomInt(0, hittables.size() - 1);
+	int randomIndex = Random::integer(0, hittables.size() - 1);
 
 	this->_hittable = hittables.at(randomIndex);
 	this->_origin = origin;

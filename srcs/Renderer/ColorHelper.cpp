@@ -5,6 +5,7 @@
 #include "PDFs/CosinePDF.hpp"
 #include "PDFs/MixturePDF.hpp"
 #include "SkyTypes.hpp"
+#include "Random.hpp"
 #include <cmath>
 
 // Calculates the color for the pixel at 'x' and 'y'. Creates rays, checks for intersections with objects on 'scene' and bounce light rays
@@ -13,8 +14,8 @@ Color	Renderer::internal::_calculatePixelColor(Scene& scene, int x, int y)
 	static double width = double(scene.getImageWidth());
 	static double height = double(scene.getImageHeight());
 
-	double xU = double(x + Utilities::randomDouble()) / (width - 1);
-	double yV = double(y + Utilities::randomDouble()) / (height - 1);
+	double xU = double(x + Random::doubleFloat()) / (width - 1);
+	double yV = double(y + Random::doubleFloat()) / (height - 1);
 
 	static Vector3	cameraPosition = scene.getActiveCamera().getPosition();
 	static Vector3	cameraLookDirection = scene.getActiveCamera().getDirection();
@@ -37,7 +38,7 @@ Color	Renderer::internal::_calculatePixelColor(Scene& scene, int x, int y)
 	Vector3	offset(0.0, 0.0, 0.0);
 	if (lensRadius > 0.0)
 	{
-		Vector3	rd = Utilities::randomPointInsideUnitDisk() * lensRadius;
+		Vector3	rd = Random::pointInsideUnitDisk() * lensRadius;
 		offset = u * rd.getX() + v * rd.getY();
 	}
 

@@ -29,8 +29,6 @@ int	main(int argc, char *argv[])
 {
 	std::cout << CLR_BLUE << "Preparing..." << CLR_RESET << std::endl << std::endl;
 
-	srand(time(0));
-
 	Scene scene;
 	scene.setStorePixelRenderTimes(true); // Test so it works for scene files (before it's natively there)
 	if (argc == 2)

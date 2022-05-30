@@ -1,6 +1,7 @@
 #include "Materials/Metal.hpp"
 #include "Utilities.hpp"
 #include "Vector3.hpp"
+#include "Random.hpp"
 
 Metal::Metal(void)
 {
@@ -28,7 +29,7 @@ bool	Metal::scatter(Ray& ray, HitRecord& hitRecord, ScatterRecord& scatterRecord
 {
 	Vector3	reflected = Utilities::reflect(Utilities::normalize(ray.getDirection()), hitRecord.normal);
 
-	scatterRecord.specularRay = Ray(hitRecord.position, reflected + this->_reflectionFuzziness * Utilities::randomPointInsideUnitSphere());
+	scatterRecord.specularRay = Ray(hitRecord.position, reflected + this->_reflectionFuzziness * Random::pointInsideUnitSphere());
 	scatterRecord.attenuation = this->_color;
 	scatterRecord.isSpecular = true;
 	scatterRecord.pdfPtr = nullptr;

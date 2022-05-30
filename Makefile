@@ -53,6 +53,7 @@ SRCS :=	AABB.cpp \
 		PDFs/HittablePDF.cpp \
 		PDFs/MixturePDF.cpp \
 		PDFs/SpherePDF.cpp \
+		Random.cpp \
 		Ray/Ray.cpp \
 		Renderer/Atmospherics.cpp \
 		Renderer/ColorHelper.cpp \
