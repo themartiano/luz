@@ -20,18 +20,18 @@ void	Renderer::internal::_manageThreads(Scene& scene)
 	volatile std::atomic<int> currentRenderPixel(0);
 	std::vector<std::future<void>> futureVector;
 
-	volatile std::atomic<double> lastCycleTime(1.0);
-	volatile std::atomic<double> previousCycleTime(1.0);
+	volatile std::atomic<double> blockRenderDifference(0.0);
 	volatile std::atomic<int> blockSize(1);
 
 	// Creates threads.
 	for (unsigned int i = 0; i < threadCount; i++)
 	{
 		futureVector.push_back(
-			std::async([&scene, &currentRenderPixel, &lastCycleTime, &previousCycleTime, &blockSize]()
+			std::async([&scene, &currentRenderPixel, &blockRenderDifference, &blockSize]()
 			{
-				Clock clock(false);
-				const bool storePixelRenderTimes = scene.getStorePixelRenderTimes();
+				Clock		clock(false);
+				const bool	storePixelRenderTimes = scene.getStorePixelRenderTimes();
+				double		blockRenderTime = 1.0;
 
 				int index = 0;
 				while (true)
@@ -41,17 +41,18 @@ void	Renderer::internal::_manageThreads(Scene& scene)
 						break;
 					}
 
-					blockSize = std::min(std::max((int)(std::log1p(previousCycleTime / lastCycleTime) * 10.0 * blockSize), 1), 100);
+					int newBlockSize;
+					blockSize = newBlockSize = std::min(std::max(blockRenderDifference * 10.0 * blockSize, 1.0), 100.0);
 
-					int whatever = currentRenderPixel;
-					currentRenderPixel += blockSize;
+					int renderStartIndex = currentRenderPixel;
+					currentRenderPixel += newBlockSize;
 
-					clock.start();
-					for (index = whatever; index < whatever + blockSize && index < pixelTotal; index++)
+					for (index = renderStartIndex; index < renderStartIndex + newBlockSize && index < pixelTotal; index++)
 					{
 						int	x = index % width;
 						int	y = index / width;
 
+						clock.start();
 						_threadRender(scene, x, y);
 
 						if (storePixelRenderTimes)
@@ -59,8 +60,10 @@ void	Renderer::internal::_manageThreads(Scene& scene)
 							scene.setPixelRenderTime(x, y, clock.elapsed(false));
 						}
 					}
-					previousCycleTime = lastCycleTime;
-					lastCycleTime = clock.stop(false) + 1.0;
+
+					double currentBlockRenderTime = clock.stop(false) + 1.0;
+					blockRenderDifference = std::log1p(blockRenderTime / currentBlockRenderTime);
+					blockRenderTime = currentBlockRenderTime;
 				}
 			}
 		));

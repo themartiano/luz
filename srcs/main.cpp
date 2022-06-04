@@ -29,7 +29,7 @@ int	main(int argc, char *argv[])
 	std::cout << CLR_BLUE << "Preparing..." << CLR_RESET << std::endl << std::endl;
 
 	Scene scene;
-	scene.setStorePixelRenderTimes(true); // Test so it works for scene files (before it's natively there)
+	// scene.setStorePixelRenderTimes(true); // Test so it works for scene files (before it's natively there)
 	if (argc == 2)
 	{
 		SceneFile::read(scene, argv[1]);
@@ -39,7 +39,6 @@ int	main(int argc, char *argv[])
 		scene.setImageHeight(500);
 		scene.setImageWidth(500);
 		scene.setSampleCount(1);
-		scene.setStorePixelRenderTimes(true);
 		scene.setGammaCorrected(true);
 		scene.setRenderSky(SKY_ATMOSPHERE);
 		scene.setDistanceBlueness(false);
