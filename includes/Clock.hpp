@@ -5,15 +5,18 @@
 class   Clock
 {
 	public:
+		typedef std::chrono::steady_clock					ClockType;
+		typedef std::chrono::duration<double>				Seconds;
+		typedef std::chrono::duration<double, std::milli>	Milliseconds;
+		typedef std::chrono::duration<double, std::micro>	Microseconds;
+
 		Clock(void);
-		Clock(bool startNow);
-		void	start(void);
-		double	elapsed(bool seconds);
-		double	elapsed(void);
-		double	stop(bool seconds);
-		double	stop(void);
+		void			start(void);
+		Seconds			elapsedS(void);
+		Milliseconds	elapsedMS(void);
+		Microseconds	elapsedUS(void);
 
 	private:
-		std::chrono::steady_clock::time_point   _startTimeMS;
-		bool									_running;
+		ClockType::time_point	_startTime;
+		bool					_running;
 };

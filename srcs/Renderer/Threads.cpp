@@ -29,7 +29,8 @@ void	Renderer::internal::_manageThreads(Scene& scene)
 		futureVector.push_back(
 			std::async([&scene, &currentRenderPixel, &blockRenderDifference, &blockSize]()
 			{
-				Clock		clock(false);
+				Clock		pixelClock;
+				Clock		blockClock;
 				const bool	storePixelRenderTimes = scene.getStorePixelRenderTimes();
 				double		blockRenderTime = 1.0;
 
@@ -41,27 +42,30 @@ void	Renderer::internal::_manageThreads(Scene& scene)
 						break;
 					}
 
+					int oldBlockSize = blockSize;
+
 					int newBlockSize;
-					blockSize = newBlockSize = std::min(std::max(blockRenderDifference * 10.0 * blockSize, 1.0), 100.0);
+					blockSize = newBlockSize = std::min(std::max(blockRenderDifference * 10.0 * oldBlockSize, 1.0), 1.0);
 
 					int renderStartIndex = currentRenderPixel;
 					currentRenderPixel += newBlockSize;
 
+					blockClock.start();
 					for (index = renderStartIndex; index < renderStartIndex + newBlockSize && index < pixelTotal; index++)
 					{
 						int	x = index % width;
 						int	y = index / width;
 
-						clock.start();
+						pixelClock.start();
 						_threadRender(scene, x, y);
 
 						if (storePixelRenderTimes)
 						{
-							scene.setPixelRenderTime(x, y, clock.elapsed(false));
+							scene.setPixelRenderTime(x, y, pixelClock.elapsedUS());
 						}
 					}
 
-					double currentBlockRenderTime = clock.stop(false) + 1.0;
+					double currentBlockRenderTime = blockClock.elapsedUS() + 1.0;
 					blockRenderDifference = std::log1p(blockRenderTime / currentBlockRenderTime);
 					blockRenderTime = currentBlockRenderTime;
 				}

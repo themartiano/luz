@@ -38,12 +38,12 @@ Mesh	readObj(std::string fileName, Vector3 positionOffset, std::shared_ptr<Mater
 	std::cout << CLR_YELLOW << "Parsing " << CLR_BLUE << fileName << CLR_YELLOW << "..." << CLR_RESET << std::endl;
 
 	Clock	clock;
+	clock.start();
 
 	Mesh	mesh;
 	parseObjFile(mesh, stream, positionOffset, material);
 
-	double elapsedS = clock.stop();
-	std::cout << CLR_BLUE << fileName << CLR_GREEN_BRIGHT << " parsing done! " << CLR_BLUE_BRIGHT << "(Duration: " << CLR_WHITE << elapsedS << "s" << CLR_BLUE_BRIGHT << ")\n\n" << CLR_RESET;
+	std::cout << CLR_BLUE << fileName << CLR_GREEN_BRIGHT << " parsing done! " << CLR_BLUE_BRIGHT << "(Duration: " << CLR_WHITE << clock.elapsedS() << "s" << CLR_BLUE_BRIGHT << ")\n\n" << CLR_RESET;
 
 	return (mesh);
 }

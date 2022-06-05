@@ -20,12 +20,12 @@ bool	Renderer::render(Scene& scene)
 	std::cout << CLR_GREEN << scene.getImageWidth() << CLR_BLUE << " x " << CLR_GREEN << scene.getImageHeight() << CLR_RESET << std::endl;
 
 	Clock	clock;
+	clock.start();
 
 	internal::_manageThreads(scene);
 
-	double elapsedS = clock.stop();
 	std::cout << "\r" << CLR_CYAN << "Progress: " << CLR_WHITE << "[ 100% ]";
-	std::cout << CLR_GREEN_BRIGHT << "\nRender done! " << CLR_BLUE_BRIGHT << "(Duration: " << CLR_WHITE << elapsedS << "s" << CLR_BLUE_BRIGHT << ")\n\n" << CLR_RESET;
+	std::cout << CLR_GREEN_BRIGHT << "\nRender done! " << CLR_BLUE_BRIGHT << "(Duration: " << CLR_WHITE << clock.elapsedS() << "s" << CLR_BLUE_BRIGHT << ")\n\n" << CLR_RESET;
 
 	return (true);
 }
