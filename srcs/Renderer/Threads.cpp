@@ -56,13 +56,13 @@ void	Renderer::internal::_manageThreads(Scene& scene)
 							scene.setPixelRenderTime(x, y, pixelClock.elapsedUS());
 						}
 					}
+					double currentBlockRenderTime = blockClock.elapsedUS();
 
 					if (index >= pixelTotal)
 					{
 						break;
 					}
 
-					double currentBlockRenderTime = blockClock.elapsedUS() + 1.0;
 					blockRenderDifference = std::log1p(blockRenderTime / currentBlockRenderTime);
 					blockRenderTime = currentBlockRenderTime;
 				}
