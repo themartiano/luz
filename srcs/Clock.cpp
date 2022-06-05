@@ -19,40 +19,40 @@ void	Clock::start(void)
 }
 
 // Returns elapsed seconds (s) since start
-Clock::Seconds	 Clock::elapsedS(void)
+double	 Clock::elapsedS(void)
 {
 	if (this->_running == true)
 	{
 		return (
-			Clock::Seconds(ClockType::now() - this->_startTime)
+			std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(ClockType::now() - this->_startTime).count()
 		);
 	}
 
-	return (Clock::Seconds(0.0));
+	return (0.0);
 }
 
 // Returns elapsed milliseconds (ms) since start
-Clock::Milliseconds	 Clock::elapsedMS(void)
+double	 Clock::elapsedMS(void)
 {
 	if (this->_running == true)
 	{
 		return (
-			Clock::Milliseconds(ClockType::now() - this->_startTime)
+			std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(ClockType::now() - this->_startTime).count()
 		);
 	}
 
-	return (Clock::Milliseconds(0.0));
+	return (0.0);
 }
 
 // Returns elapsed microseconds (μs) since start
-Clock::Microseconds	 Clock::elapsedUS(void)
+double	 Clock::elapsedUS(void)
 {
 	if (this->_running == true)
 	{
 		return (
-			Clock::Microseconds(ClockType::now() - this->_startTime)
+			std::chrono::duration_cast<std::chrono::duration<double, std::micro>>(ClockType::now() - this->_startTime).count()
 		);
 	}
 
-	return (Clock::Microseconds(0.0));
+	return (0.0);
 }

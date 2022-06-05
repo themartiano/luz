@@ -15,6 +15,8 @@
 #include <algorithm>
 #include <string>
 #include <unistd.h>
+#include <chrono>
+#include <iostream>
 
 static void	parseObjFile(Mesh& mesh, std::ifstream& stream, Vector3 positionOffset, std::shared_ptr<Material> material);
 
@@ -38,9 +40,9 @@ Mesh	readObj(std::string fileName, Vector3 positionOffset, std::shared_ptr<Mater
 	std::cout << CLR_YELLOW << "Parsing " << CLR_BLUE << fileName << CLR_YELLOW << "..." << CLR_RESET << std::endl;
 
 	Clock	clock;
-	clock.start();
-
 	Mesh	mesh;
+
+	clock.start();
 	parseObjFile(mesh, stream, positionOffset, material);
 
 	std::cout << CLR_BLUE << fileName << CLR_GREEN_BRIGHT << " parsing done! " << CLR_BLUE_BRIGHT << "(Duration: " << CLR_WHITE << clock.elapsedS() << "s" << CLR_BLUE_BRIGHT << ")\n\n" << CLR_RESET;

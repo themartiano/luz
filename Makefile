@@ -75,7 +75,7 @@ OBJS := $(patsubst %.cpp, $(OBJS_DIR)/%.o, $(SRCS))
 DPND := $(OBJS:.o=.d)
 
 INCLUDES := -Iincludes
-GENERAL_FLAGS := -std=c++17 -pthread
+GENERAL_FLAGS := -std=c++2a -pthread
 WWW_FLAGS := -Wall -Wextra -Werror
 OPT_FLAGS := -O3
 INC_FLAGS := -MD
