@@ -19,5 +19,6 @@ namespace	Renderer
 		Color	_computeAtmosphereColor(Scene& scene, Ray& ray);
 		Color	_calculateSkyInterpolation(Scene& scene, Ray& ray);
 		void	_manageThreads(Scene& scene);
+		Ray		_generateRay(Scene& scene, int x, int y);
 	}
 }

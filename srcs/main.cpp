@@ -40,7 +40,7 @@ int	main(int argc, char *argv[])
 	{
 		scene.setImageHeight(500);
 		scene.setImageWidth(500);
-		scene.setSampleCount(100);
+		scene.setSampleCount(5);
 		scene.setMaxLightBounces(50);
 		scene.setGammaCorrected(true);
 		scene.setRenderSky(SKY_NONE);

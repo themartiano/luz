@@ -8,46 +8,16 @@
 #include "Random.hpp"
 #include <cmath>
 
-// Calculates the color for the pixel at 'x' and 'y'. Creates rays, checks for intersections with objects on 'scene' and bounce light rays
 Color	Renderer::internal::_calculatePixelColor(Scene& scene, int x, int y)
 {
-	static double width = double(scene.getImageWidth());
-	static double height = double(scene.getImageHeight());
+	Ray	ray = internal::_generateRay(scene, x, y);
 
-	double xU = double(x + Random::doubleFloat()) / (width - 1);
-	double yV = double(y + Random::doubleFloat()) / (height - 1);
-
-	static Vector3	cameraPosition = scene.getActiveCamera().getPosition();
-	static Vector3	cameraLookDirection = scene.getActiveCamera().getDirection();
-
-	static double	viewportWidth = 2.0 * tan(((scene.getActiveCamera().getFOV() * D_PI) / 180.0) / 2.0);
-	static double	viewportHeight = (height / width) * viewportWidth;
-
-	static double	lensRadius = scene.getActiveCamera().getAperture() / 2.0;
-	static double	focusDistance = scene.getActiveCamera().getFocusDistance();
-
-	static Vector3	w = Utilities::normalize(cameraLookDirection);
-	static Vector3	viewUp(0.0, 1.0, 0.0);
-	static Vector3	u = Utilities::normalize(Utilities::cross(viewUp, w));
-	static Vector3	v = Utilities::cross(w, u);
-
-	static Vector3	horizontal = u * viewportWidth * focusDistance;
-	static Vector3	vertical = v * viewportHeight * focusDistance;
-	static Vector3	lowerLeftCorner = cameraPosition + (horizontal / 2.0) + (vertical / 2.0) + (w * focusDistance);
-
-	Vector3	offset(0.0, 0.0, 0.0);
-	if (lensRadius > 0.0)
-	{
-		Vector3	rd = Random::pointInsideUnitDisk() * lensRadius;
-		offset = u * rd.getX() + v * rd.getY();
-	}
-
-	Ray ray(cameraPosition + offset, lowerLeftCorner - (horizontal * xU) - (vertical * yV) - cameraPosition - offset);
-
-	return (_calculateLightRaysColor(ray, scene, 0));
+	return(
+		internal::_calculateLightRaysColor(ray, scene, 0)
+	);
 }
 
-// Properly calculates light rays bounces, reflections, etc and returns the resulting color
+// Properly calculates light rays bounces, reflections, refractions, intersection, etc and returns the resulting color
 Color	Renderer::internal::_calculateLightRaysColor(Ray& ray, Scene& scene, int bounces)
 {
 	static int		maxLightBounces = scene.getMaxLightBounces();
