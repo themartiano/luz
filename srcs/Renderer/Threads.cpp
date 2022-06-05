@@ -37,21 +37,13 @@ void	Renderer::internal::_manageThreads(Scene& scene)
 				int index = 0;
 				while (true)
 				{
-					if (index >= pixelTotal)
-					{
-						break;
-					}
+					int oldBlockSize = blockSize, newBlockSize;
+					blockSize = newBlockSize = std::min(std::max(blockRenderDifference * 10.0 * oldBlockSize, 1.0), 100.0);
 
-					int oldBlockSize = blockSize;
-
-					int newBlockSize;
-					blockSize = newBlockSize = std::min(std::max(blockRenderDifference * 10.0 * oldBlockSize, 1.0), 1.0);
-
-					int renderStartIndex = currentRenderPixel;
-					currentRenderPixel += newBlockSize;
+					int renderStopIndex = (currentRenderPixel += newBlockSize); // This way we make sure we're adding and using a 'currentRenderPixel' that has not been updated by another thread while we were doing the operations.
 
 					blockClock.start();
-					for (index = renderStartIndex; index < renderStartIndex + newBlockSize && index < pixelTotal; index++)
+					for (index = renderStopIndex - newBlockSize; index < renderStopIndex && index < pixelTotal; index++)
 					{
 						int	x = index % width;
 						int	y = index / width;
@@ -63,6 +55,11 @@ void	Renderer::internal::_manageThreads(Scene& scene)
 						{
 							scene.setPixelRenderTime(x, y, pixelClock.elapsedUS());
 						}
+					}
+
+					if (index >= pixelTotal)
+					{
+						break;
 					}
 
 					double currentBlockRenderTime = blockClock.elapsedUS() + 1.0;
