@@ -38,9 +38,9 @@ int	main(int argc, char *argv[])
 	}
 	else
 	{
-		scene.setImageHeight(500);
-		scene.setImageWidth(500);
-		scene.setSampleCount(5);
+		scene.setImageHeight(2000);
+		scene.setImageWidth(2000);
+		scene.setSampleCount(100);
 		scene.setMaxLightBounces(50);
 		scene.setGammaCorrected(true);
 		scene.setRenderSky(SKY_NONE);

@@ -58,6 +58,7 @@ SRCS :=	AABB.cpp \
 		Renderer/Atmospherics.cpp \
 		Renderer/ColorHelper.cpp \
 		Renderer/HitHelper.cpp \
+		Renderer/RayHelper.cpp \
 		Renderer/Renderer.cpp \
 		Renderer/SequenceRenderer.cpp \
 		Renderer/Threads.cpp \
