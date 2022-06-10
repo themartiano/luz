@@ -12,8 +12,8 @@
 
 void	Renderer::internal::_manageThreads(Scene& scene)
 {
-	static int	height = scene.getImageHeight();
-	static int	width = scene.getImageWidth();
+	static int	height = scene.getImage().getHeight();
+	static int	width = scene.getImage().getWidth();
 	static int	pixelTotal = width * height;
 
 	static unsigned int	threadCount = CORE_COUNT * THREAD_MULTIPLIER;

@@ -7,8 +7,8 @@
 // Generates a ray for the pixels 'x', 'y'
 Ray	Renderer::internal::_generateRay(Scene& scene, int x, int y)
 {
-	static double width = double(scene.getImageWidth());
-	static double height = double(scene.getImageHeight());
+	static double width = double(scene.getImage().getWidth());
+	static double height = double(scene.getImage().getHeight());
 
 	double xU = double(x + Random::doubleFloat()) / (width - 1);
 	double yV = double(y + Random::doubleFloat()) / (height - 1);

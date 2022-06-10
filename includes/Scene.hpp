@@ -15,10 +15,6 @@ class	Scene
 		~Scene(void);
 		void	addCamera(Camera camera);
 		void	addHittable(std::shared_ptr<Hittable> hittable);
-		unsigned int	getImageWidth(void) const;
-		void			setImageWidth(unsigned int width);
-		unsigned int	getImageHeight(void) const;
-		void			setImageHeight(unsigned int height);
 		int		getSampleCount(void) const;
 		void	setSampleCount(const int sampleCount);
 		int		getMaxLightBounces(void) const;
