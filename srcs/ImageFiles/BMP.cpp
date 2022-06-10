@@ -72,9 +72,9 @@ static unsigned char*	generateNewPixelArray(const Image& image)
 {
 	unsigned char* newPixelArray = new unsigned char[image.getWidth() * image.getHeight() * 3];
 
-	for (unsigned int y = 0; y < image.getHeight(); y++)
+	for (std::size_t y = 0; y < image.getHeight(); y++)
 	{
-		for (unsigned int x = 0; x < image.getWidth(); x++)
+		for (std::size_t x = 0; x < image.getWidth(); x++)
 		{
 			Color pixel = image.getPixel(x, y);
 
@@ -86,7 +86,7 @@ static unsigned char*	generateNewPixelArray(const Image& image)
 			Utilities::setDoubleRange(g, 0.0, 1.0);
 			Utilities::setDoubleRange(b, 0.0, 1.0);
 
-			unsigned int index = (y * image.getHeight()) + x;
+			std::size_t index = (y * image.getHeight()) + x;
 
 			newPixelArray[(index * 3) + 2] = (unsigned char)(r * 255.0);
 			newPixelArray[(index * 3) + 1] = (unsigned char)(g * 255.0);

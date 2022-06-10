@@ -195,11 +195,11 @@ TIFF::tiffIFD	TIFF::_generateIFD(void)
 
 void	TIFF::arrayColorToDouble(const Image& image, std::vector<double>& doubleArray) const
 {
-	const unsigned int originalSize = image.data().size();
+	const unsigned int capacity = image.data().getCapacity();
 
-	doubleArray.reserve(originalSize * 3);
+	doubleArray.reserve(capacity * 3);
 
-	for (unsigned int i = 0; i < originalSize; i++)
+	for (unsigned int i = 0; i < capacity; i++)
 	{
 		doubleArray.push_back(image.data()[i].getRed());
 		doubleArray.push_back(image.data()[i].getGreen());

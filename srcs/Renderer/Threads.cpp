@@ -12,16 +12,16 @@
 
 void	Renderer::internal::_manageThreads(Scene& scene)
 {
-	static int	height = scene.getImage().getHeight();
-	static int	width = scene.getImage().getWidth();
-	static int	pixelTotal = width * height;
+	static std::size_t	height = scene.getImage().getHeight();
+	static std::size_t	width = scene.getImage().getWidth();
+	static std::size_t	pixelTotal = width * height;
 
 	static unsigned int	threadCount = CORE_COUNT * THREAD_MULTIPLIER;
 	volatile std::atomic<int> currentRenderPixel(0);
 	std::vector<std::future<void>> futureVector;
 
 	volatile std::atomic<double> blockRenderDifference(0.0);
-	volatile std::atomic<int> blockSize(1);
+	volatile std::atomic<std::size_t> blockSize(1);
 
 	// Creates threads.
 	for (unsigned int i = 0; i < threadCount; i++)
@@ -34,19 +34,19 @@ void	Renderer::internal::_manageThreads(Scene& scene)
 				const bool	storePixelRenderTimes = scene.getStorePixelRenderTimes();
 				double		blockRenderTime = 1.0;
 
-				int index = 0;
+				std::size_t index = 0;
 				while (true)
 				{
-					int oldBlockSize = blockSize, newBlockSize;
+					std::size_t oldBlockSize = blockSize, newBlockSize;
 					blockSize = newBlockSize = std::min(std::max(blockRenderDifference * 10.0 * oldBlockSize, 1.0), 100.0);
 
-					int renderStopIndex = (currentRenderPixel += newBlockSize); // This way we make sure we're adding and using a 'currentRenderPixel' that has not been updated by another thread while we were doing the operations.
+					std::size_t renderStopIndex = (currentRenderPixel += newBlockSize); // This way we make sure we're adding and using a 'currentRenderPixel' that has not been updated by another thread while we were doing the operations.
 
 					blockClock.start();
 					for (index = renderStopIndex - newBlockSize; index < renderStopIndex && index < pixelTotal; index++)
 					{
-						int	x = index % width;
-						int	y = index / width;
+						std::size_t	x = index % width;
+						std::size_t	y = index / width;
 
 						pixelClock.start();
 						_threadRender(scene, x, y);
@@ -73,7 +73,7 @@ void	Renderer::internal::_manageThreads(Scene& scene)
 	// Outputs progress using the main thread until the render is complete.
 	while (true)
 	{
-		int localRenderPixel = currentRenderPixel;
+		std::size_t localRenderPixel = currentRenderPixel;
 		if (localRenderPixel >= pixelTotal)
 		{
 			break;
@@ -87,7 +87,7 @@ void	Renderer::internal::_manageThreads(Scene& scene)
 }
 
 // Renders the pixel color at X, Y
-void	Renderer::internal::_threadRender(Scene& scene, int x, int y)
+void	Renderer::internal::_threadRender(Scene& scene, std::size_t x, std::size_t y)
 {
 	static int	sampleCount = scene.getSampleCount();
 	static bool	gammaCorrected = scene.getGammaCorrected();

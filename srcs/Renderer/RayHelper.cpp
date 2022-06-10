@@ -5,10 +5,10 @@
 #include <cmath>
 
 // Generates a ray for the pixels 'x', 'y'
-Ray	Renderer::internal::_generateRay(Scene& scene, int x, int y)
+Ray	Renderer::internal::_generateRay(Scene& scene, std::size_t x, std::size_t y)
 {
-	static double width = double(scene.getImage().getWidth());
-	static double height = double(scene.getImage().getHeight());
+	static double width = scene.getImage().getWidth();
+	static double height = scene.getImage().getHeight();
 
 	double xU = double(x + Random::doubleFloat()) / (width - 1);
 	double yV = double(y + Random::doubleFloat()) / (height - 1);

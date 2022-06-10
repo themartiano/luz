@@ -8,7 +8,7 @@
 #include "Random.hpp"
 #include <cmath>
 
-Color	Renderer::internal::_calculatePixelColor(Scene& scene, int x, int y)
+Color	Renderer::internal::_calculatePixelColor(Scene& scene, std::size_t x, std::size_t y)
 {
 	Ray	ray = internal::_generateRay(scene, x, y);
 

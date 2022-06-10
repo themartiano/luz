@@ -32,14 +32,14 @@ class	Scene
 		void	setBackgroundColor(Color backgroundColor);
 		Camera	getActiveCamera(void) const;
 		bool	hasCamera(void) const;
-		std::vector<std::shared_ptr<Hittable> >	getHittables(void) const;
+		std::vector<std::shared_ptr<Hittable>>	getHittables(void) const;
 		std::string	getDefaultRenderOutputFileName(void) const;
 		void		setDefaultRenderOutputFileName(std::string defaultRenderOutputFileName);
 		void		updateLights(void);
-		std::vector<std::shared_ptr<Hittable> > getLights(void) const;
+		std::vector<std::shared_ptr<Hittable>> getLights(void) const;
 		bool		getStorePixelRenderTimes(void) const;
 		void		setStorePixelRenderTimes(bool storePixelRenderTime);
-		void		setPixelRenderTime(int x, int y, double renderTime);
+		void		setPixelRenderTime(std::size_t x, std::size_t y, double renderTime);
 		Image&		getImage(void);
 		Image		generateRenderTimeImage(void) const;
 
@@ -57,8 +57,8 @@ class	Scene
 		Color					_backgroundColor;
 		std::vector<Camera>		_cameras;
 		size_t					_activeCamera;
-		std::vector<std::shared_ptr<Hittable> >	_hittables;
-		std::vector<std::shared_ptr<Hittable> >	_lights;
+		std::vector<std::shared_ptr<Hittable>>	_hittables;
+		std::vector<std::shared_ptr<Hittable>>	_lights;
 		bool					_storePixelRenderTimes;
 		std::vector<double>		_pixelRenderTimes;
 };

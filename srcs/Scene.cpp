@@ -153,7 +153,7 @@ Camera	Scene::getActiveCamera(void) const
 		return (this->_cameras[this->_activeCamera]);
 	}
 
-	return (Camera());
+	return (Camera()); // No camera should be returned
 }
 
 // Returns 'true' if this Scene has at least one Camera
@@ -210,11 +210,11 @@ void	Scene::setStorePixelRenderTimes(bool storePixelRenderTimes)
 	}
 }
 
-void	Scene::setPixelRenderTime(int x, int y, double renderTime)
+void	Scene::setPixelRenderTime(std::size_t x, std::size_t y, double renderTime)
 {
 	if (this->_storePixelRenderTimes)
 	{
-		int index = (y * this->_image.getWidth()) + x;
+		std::size_t index = (y * this->_image.getWidth()) + x;
 
 		this->_pixelRenderTimes[index] = renderTime;
 	}
@@ -241,7 +241,7 @@ Image	Scene::generateRenderTimeImage(void) const
 	double fastest = 0.0;
 	double slowest = 0.0;
 
-	for (unsigned int i = 0; i < this->_image.getWidth() * this->_image.getHeight(); i++)
+	for (std::size_t i = 0; i < this->_image.getWidth() * this->_image.getHeight(); i++)
 	{
 		if (this->_pixelRenderTimes[i] < fastest)
 		{
@@ -254,7 +254,7 @@ Image	Scene::generateRenderTimeImage(void) const
 		}
 	}
 
-	for (unsigned int i = 0; i < this->_image.getWidth() * this->_image.getHeight(); i++)
+	for (std::size_t i = 0; i < this->_image.getWidth() * this->_image.getHeight(); i++)
 	{
 		Color orange(1.0, 0.94, 0.84); // Fastest
 		Color purple(0.1, 0.0, 0.18); // Slowest

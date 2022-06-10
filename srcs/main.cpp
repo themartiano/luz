@@ -22,6 +22,7 @@
 #include "Materials/Metal.hpp"
 #include "Materials/Isotropic.hpp"
 #include "Noise/Perlin.hpp"
+#include "Image.hpp"
 
 static void	mountCornellBox(Scene& scene);
 
@@ -38,8 +39,9 @@ int	main(int argc, char *argv[])
 	}
 	else
 	{
-		scene.getImage().setHeight(1000);
 		scene.getImage().setWidth(1000);
+		scene.getImage().setHeight(1000);
+		scene.getImage().initialize();
 		scene.setSampleCount(1);
 		scene.setMaxLightBounces(50);
 		scene.setGammaCorrected(true);
