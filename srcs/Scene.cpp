@@ -52,30 +52,6 @@ void	Scene::addHittable(std::shared_ptr<Hittable> hittable)
 	this->_hittables.push_back(hittable);
 }
 
-// Returns the image width
-unsigned int	Scene::getImageWidth(void) const
-{
-	return (this->_image.getWidth());
-}
-
-// Sets the X resolution (width)
-void	Scene::setImageWidth(unsigned int width)
-{
-	this->_image.setWidth(width);
-}
-
-// Returns the Y resolution (height)
-unsigned int	Scene::getImageHeight(void) const
-{
-	return (this->_image.getHeight());
-}
-
-// Sets the Y resolution (height)
-void	Scene::setImageHeight(unsigned int height)
-{
-	this->_image.setHeight(height);
-}
-
 // Returns the current Sample Count (rays per pixel)
 int	Scene::getSampleCount(void) const
 {

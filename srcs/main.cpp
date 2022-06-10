@@ -38,9 +38,9 @@ int	main(int argc, char *argv[])
 	}
 	else
 	{
-		scene.setImageHeight(2000);
-		scene.setImageWidth(2000);
-		scene.setSampleCount(100);
+		scene.getImage().setHeight(1000);
+		scene.getImage().setWidth(1000);
+		scene.setSampleCount(1);
 		scene.setMaxLightBounces(50);
 		scene.setGammaCorrected(true);
 		scene.setRenderSky(SKY_NONE);
@@ -52,7 +52,7 @@ int	main(int argc, char *argv[])
 
 		mountCornellBox(scene);
 
-		scene.addHittable(std::make_shared<Mesh>(readObj("objects/blender_monkey.obj", Vector3(0.0, -25.0, -100.0), std::make_shared<Dielectric>(Color(0.42, 0.42, 0.42)))));
+		// scene.addHittable(std::make_shared<Mesh>(readObj("objects/blender_monkey.obj", Vector3(0.0, -25.0, -100.0), std::make_shared<Dielectric>(Color(0.42, 0.42, 0.42)))));
 
 		// Metal Sphere
 		// scene.addHittable(std::make_shared<Sphere>(

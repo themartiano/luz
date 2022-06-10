@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Color.hpp"
-#include <vector>
+#include <array>
 
 class	Image
 {
@@ -14,7 +14,7 @@ class	Image
 		void			setHeight(unsigned int height);
 		Color			getPixel(unsigned int x, unsigned int y) const;
 		void			setPixel(unsigned int x, unsigned int y, Color color);
-		const std::vector<Color>&	data(void) const;
+		const std::array<Color>&	data(void) const;
 		void			saveToBMP(const std::string &filename) const;
 		void			saveToTIFF(const std::string &filename) const;
 
@@ -22,7 +22,7 @@ class	Image
 		Color&			at(unsigned int index);
 
 	private:
-		std::vector<Color>	_pixels;
+		std::array<Color>	_pixels;
 		unsigned int		_width;
 		unsigned int		_height;
 };

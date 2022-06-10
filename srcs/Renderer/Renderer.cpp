@@ -17,7 +17,7 @@ bool	Renderer::render(Scene& scene)
 	std::cout << CLR_YELLOW << "Rendering with:" << CLR_RESET << std::endl;
 	std::cout << CLR_GREEN << CORE_COUNT * THREAD_MULTIPLIER << CLR_BLUE << " threads;" << CLR_RESET << std::endl;
 	std::cout << CLR_GREEN << scene.getSampleCount() << CLR_BLUE << " samples per pixel;" << CLR_RESET << std::endl;
-	std::cout << CLR_GREEN << scene.getImageHeight() << CLR_BLUE << " x " << CLR_GREEN << scene.getImageWidth() << CLR_RESET << std::endl;
+	std::cout << CLR_GREEN << scene.getImage().getHeight() << CLR_BLUE << " x " << CLR_GREEN << scene.getImage().getWidth() << CLR_RESET << std::endl;
 
 	Clock	clock;
 	clock.start();
