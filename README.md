@@ -2,7 +2,7 @@
 
 **Luz ~ Ray Tracer**
 
-Developed with modern **C++ 17** using nothing but the language itself.
+Developed with modern **C++ 20** using nothing but the language itself.
 
 ![Luz Spheres](https://user-images.githubusercontent.com/32342284/138613098-84a5b9c0-e675-41a2-ac91-523510d41d7d.jpg)
 ###### Raw output converted from bmp to jpg
