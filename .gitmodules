@@ -1,0 +1,3 @@
+[submodule "Luz-Charts"]
+	path = Luz-Charts
+	url = https://github.com/brhaka/Luz-Charts.git
