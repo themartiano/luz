@@ -23,12 +23,25 @@
 #include "Materials/Isotropic.hpp"
 #include "Noise/Perlin.hpp"
 #include "Image.hpp"
+#include "Charts/Bar.hpp"
 
 static void	mountCornellBox(Scene& scene);
 
 // Main function
 int	main(int argc, char *argv[])
 {
+	Charts::Bar barChart;
+
+	barChart.setTitle("Hello World!");
+	barChart.setWidth(1000);
+	barChart.setHeight(1000);
+
+	Image chart = barChart.generate();
+
+	chart.saveToBMP("barChart");
+
+	return (0);
+
 	std::cout << CLR_BLUE << "Preparing..." << CLR_RESET << std::endl << std::endl;
 
 	Scene scene;

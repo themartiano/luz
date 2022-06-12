@@ -20,6 +20,7 @@ OBJS_DIR := ./objs
 SRCS :=	AABB.cpp \
 		Atmosphere.cpp \
 		Camera.cpp \
+		Charts/Bar.cpp \
 		Clock.cpp \
 		Color.cpp \
 		ExitError.cpp \
