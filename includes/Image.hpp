@@ -20,6 +20,7 @@ class	Image
 		void		saveToTIFF(const std::string &filename) const;
 		void		initialize(void);
 		Color&		at(std::size_t index);
+		void		fill(Color color);
 
 		Image&	operator=(const Image& other);
 		Color&	operator[](std::size_t index);

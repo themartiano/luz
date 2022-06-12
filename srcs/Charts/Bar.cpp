@@ -1,4 +1,5 @@
 #include "Charts/Bar.hpp"
+#include "Charts/Charts.hpp"
 
 namespace Charts
 {
@@ -29,14 +30,9 @@ namespace Charts
 		image.setWidth(this->_width);
 		image.setHeight(this->_height);
 		image.initialize();
+		image.fill(Color(1.0, 1.0, 1.0));
 
-		for (std::size_t y = 0; y < image.getHeight(); y++)
-		{
-			for (std::size_t x = 0; x < image.getWidth(); x++)
-			{
-				image.setPixel(x, y, Color(1.0, 1.0, 1.0));
-			}
-		}
+		addText(image, this->_title, 0, 0, Color(0.0, 0.0, 0.0));
 
 		return (image);
 	}

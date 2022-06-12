@@ -21,6 +21,7 @@ SRCS :=	AABB.cpp \
 		Atmosphere.cpp \
 		Camera.cpp \
 		Charts/Bar.cpp \
+		Charts/Charts.cpp \
 		Clock.cpp \
 		Color.cpp \
 		ExitError.cpp \

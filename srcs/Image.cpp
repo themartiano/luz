@@ -123,3 +123,12 @@ Image&	Image::operator=(const Image& other)
 
 	return (*this);
 }
+
+// Fills itself with 'color'
+void	Image::fill(Color color)
+{
+	for (std::size_t i = 0; i < this->_pixels.getCapacity(); i++)
+	{
+		this->_pixels[i] = color;
+	}
+}
