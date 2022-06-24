@@ -30,17 +30,17 @@ static void	mountCornellBox(Scene& scene);
 // Main function
 int	main(int argc, char *argv[])
 {
-	Charts::Bar barChart;
+	// Charts::Bar barChart;
 
-	barChart.setTitle("Hello World!");
-	barChart.setWidth(1000);
-	barChart.setHeight(1000);
+	// barChart.setTitle("Hello World!");
+	// barChart.setWidth(1000);
+	// barChart.setHeight(1000);
 
-	Image chart = barChart.generate();
+	// Image chart = barChart.generate();
 
-	chart.saveToBMP("barChart");
+	// chart.saveToBMP("barChart");
 
-	return (0);
+	// return (0);
 
 	std::cout << CLR_BLUE << "Preparing..." << CLR_RESET << std::endl << std::endl;
 
@@ -55,7 +55,7 @@ int	main(int argc, char *argv[])
 		scene.getImage().setWidth(1000);
 		scene.getImage().setHeight(1000);
 		scene.getImage().initialize();
-		scene.setSampleCount(1);
+		scene.setSampleCount(20);
 		scene.setMaxLightBounces(50);
 		scene.setGammaCorrected(true);
 		scene.setRenderSky(SKY_NONE);
@@ -95,8 +95,8 @@ int	main(int argc, char *argv[])
 	{
 		// Writes render image file
 		scene.getImage().saveToBMP("render");
-		Image debugTime = scene.generateRenderTimeImage();
-		debugTime.saveToBMP("renderTime");
+		// Image debugTime = scene.generateRenderTimeImage();
+		// debugTime.saveToBMP("renderTime");
 	}
 
 	return (0);

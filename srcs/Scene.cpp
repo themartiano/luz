@@ -140,7 +140,7 @@ void	Scene::setBackgroundColor(Color backgroundColor)
 }
 
 // Returns the vector (list) of Hittables
-std::vector<std::shared_ptr<Hittable>>	Scene::getHittables(void) const
+const std::vector<std::shared_ptr<Hittable>>&	Scene::getHittables(void) const
 {
 	return (this->_hittables);
 }

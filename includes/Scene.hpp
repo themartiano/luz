@@ -32,7 +32,7 @@ class	Scene
 		void	setBackgroundColor(Color backgroundColor);
 		Camera	getActiveCamera(void) const;
 		bool	hasCamera(void) const;
-		std::vector<std::shared_ptr<Hittable>>	getHittables(void) const;
+		const std::vector<std::shared_ptr<Hittable>>&	getHittables(void) const;
 		std::string	getDefaultRenderOutputFileName(void) const;
 		void		setDefaultRenderOutputFileName(std::string defaultRenderOutputFileName);
 		void		updateLights(void);
