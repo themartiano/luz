@@ -7,5 +7,5 @@ Font::Font(const std::string& path)
 
 void	Font::_read(const std::string& path)
 {
-
+	(void)path;
 }

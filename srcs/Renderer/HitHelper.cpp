@@ -6,16 +6,16 @@ bool	Renderer::internal::_checkHits(Scene& scene, Ray& ray, HitRecord& hitRecord
 {
 	bool	anyHit = false;
 	double	currentClosestObject = T_MAX;
-	static	std::vector<std::shared_ptr<Hittable>> hittables = scene.getHittables();
+	static auto& hittables = scene.getHittables();
 
-	for (std::shared_ptr<Hittable> hittable : hittables)
+	for (const std::shared_ptr<Hittable>& hittable : hittables)
 	{
 		if (hittable->hit(ray, hitRecord, T_MIN, currentClosestObject))
 		{
 			// if (hitRecord.t0 > T_MIN)
 			// {
 				currentClosestObject = hitRecord.t0;
-				anyHit = true;
+				anyHit = true; // Maybe update this code and return here?
 			// }
 		}
 	}
