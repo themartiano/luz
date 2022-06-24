@@ -101,7 +101,7 @@ void	Renderer::internal::_threadRender(Scene& scene, std::size_t x, std::size_t 
 	pixelColor /= sampleCount;
 	if (gammaCorrected)
 	{
-		pixelColor = Color(sqrtf(pixelColor.getRed()), sqrtf(pixelColor.getGreen()), sqrtf(pixelColor.getBlue())); // Gamma (2) correction
+		pixelColor = Color(sqrt(pixelColor.getRed()), sqrt(pixelColor.getGreen()), sqrt(pixelColor.getBlue())); // Gamma (2) correction
 	}
 
 	// Replaces NaN with zeros (in case there's a problematic sample)
