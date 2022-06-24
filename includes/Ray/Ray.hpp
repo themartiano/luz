@@ -18,5 +18,4 @@ class   Ray
 	private:
 		Vector3 _origin;
 		Vector3 _direction;
-
 };

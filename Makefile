@@ -79,9 +79,9 @@ OBJS := $(patsubst %.cpp, $(OBJS_DIR)/%.o, $(SRCS))
 DPND := $(OBJS:.o=.d)
 
 INCLUDES := -Iincludes
-GENERAL_FLAGS := -std=c++2a -pthread
+GENERAL_FLAGS := -std=c++2a
 WWW_FLAGS := -Wall -Wextra -Werror
-OPT_FLAGS := -O3
+OPT_FLAGS := -Ofast # -ffp-model=fast # -ffast-math
 INC_FLAGS := -MD
 
 TMP_FILE := Makefile.tmp
