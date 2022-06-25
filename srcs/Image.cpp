@@ -10,6 +10,14 @@ Image::Image(void)
 	this->_initialized = false;
 }
 
+Image::Image(const Image& image)
+{
+	this->_width = image._width;
+	this->_height = image._height;
+	this->_initialized = image._initialized;
+	this->_pixels = image._pixels;
+}
+
 Image::Image(std::size_t width, std::size_t height)
 {
 	this->_width = width;

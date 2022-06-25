@@ -7,7 +7,7 @@ class	Image
 {
 	public:
 		Image(void);
-		Image(const Image &image) = default;
+		Image(const Image &image);
 		Image(std::size_t width, std::size_t height);
 		std::size_t	getWidth(void) const;
 		void		setWidth(std::size_t width);

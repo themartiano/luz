@@ -41,7 +41,7 @@ class	Scene
 		void		setStorePixelRenderTimes(bool storePixelRenderTime);
 		void		setPixelRenderTime(std::size_t x, std::size_t y, double renderTime);
 		Image&		getImage(void);
-		Image		generateRenderTimeImage(void) const;
+		std::unique_ptr<Image>	generateRenderTimeImage(void) const;
 
 	private:
 		double					_t_max;
