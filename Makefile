@@ -81,7 +81,7 @@ DPND := $(OBJS:.o=.d)
 INCLUDES := -Iincludes
 GENERAL_FLAGS := -std=c++2a
 WWW_FLAGS := -Wall -Wextra -Werror
-OPT_FLAGS := -Ofast # -ffp-model=fast # -ffast-math
+OPT_FLAGS := -Ofast -ffast-math # ARM: -ffp-model=fast # X86: -ffast-math
 INC_FLAGS := -MD
 
 TMP_FILE := Makefile.tmp
