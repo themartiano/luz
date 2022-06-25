@@ -15,6 +15,18 @@ class	SmartArray
 			this->_capacity = 0;
 		}
 
+		// Copy constructor
+		SmartArray(const SmartArray<T>& other)
+		{
+			this->_array = new T[other._capacity];
+			this->_capacity = other._capacity;
+
+			for (std::size_t i = 0; i < this->_capacity; i++)
+			{
+				this->_array[i] = other._array[i];
+			}
+		}
+
 		// Initializes the array with the given size and default-initialized values
 		SmartArray(std::size_t size)
 		{

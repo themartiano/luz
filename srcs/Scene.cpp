@@ -207,6 +207,11 @@ void	Scene::setStorePixelRenderTimes(bool storePixelRenderTimes)
 	if (this->_storePixelRenderTimes)
 	{
 		this->_pixelRenderTimes.reserve(this->_image.getWidth() * this->_image.getHeight());
+
+		for (std::size_t i = 0; i < this->_image.getWidth() * this->_image.getHeight(); i++)
+		{
+			this->_pixelRenderTimes.push_back(0.0);
+		}
 	}
 }
 
@@ -225,14 +230,16 @@ Image&	Scene::getImage(void)
 	return (this->_image);
 }
 
-Image	Scene::generateRenderTimeImage(void) const
+std::unique_ptr<Image>	Scene::generateRenderTimeImage(void) const
 {
 	if (!this->_storePixelRenderTimes)
 	{
-		return (Image(0, 0));
+		return (std::make_unique<Image>(0, 0));
 	}
 
-	Image image(this->_image.getWidth(), this->_image.getHeight());
+
+	std::unique_ptr<Image> image = std::make_unique<Image>(this->_image.getWidth(), this->_image.getHeight());
+	image->initialize();
 
 	// Looks like it is not possible to use iterators because we're settings values with [] so the vector doesn't properly recognizes it. size() is 0 btw
 	// const double fastest = *std::min_element(this->_pixelRenderTimes.begin(), this->_pixelRenderTimes.end());
@@ -264,7 +271,7 @@ Image	Scene::generateRenderTimeImage(void) const
 
 		// interpolate between two colors using 'ratio'
 
-		image.setPixel(i % this->_image.getWidth(), i / this->_image.getWidth(), (purple - orange) * ratio + orange);
+		image->setPixel(i % this->_image.getWidth(), i / this->_image.getWidth(), (purple - orange) * ratio + orange);
 	}
 
 	return (image);
