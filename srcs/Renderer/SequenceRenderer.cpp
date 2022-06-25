@@ -21,6 +21,6 @@ void	Renderer::renderSequence(Scene& scene, Atmosphere baseAtmosphere, int fps, 
 		sunPosition -= sunChangePerFrame;
 
 		Renderer::render(scene);
-		scene.getImage().saveToBMP("sequenceFrame" + std::to_string(i));
+		scene.getImage()->saveToBMP("sequenceFrame" + std::to_string(i));
 	}
 }

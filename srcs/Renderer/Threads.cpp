@@ -12,8 +12,8 @@
 
 void	Renderer::internal::_manageThreads(Scene& scene)
 {
-	static std::size_t	height = scene.getImage().getHeight();
-	static std::size_t	width = scene.getImage().getWidth();
+	static std::size_t	height = scene.getImage()->getHeight();
+	static std::size_t	width = scene.getImage()->getWidth();
 	static std::size_t	pixelTotal = width * height;
 
 	static unsigned int	threadCount = CORE_COUNT * THREAD_MULTIPLIER;
@@ -118,5 +118,5 @@ void	Renderer::internal::_threadRender(Scene& scene, std::size_t x, std::size_t 
 		pixelColor.setBlue(0.0);
 	}
 
-	scene.getImage().setPixel(x, y, pixelColor);
+	scene.getImage()->setPixel(x, y, pixelColor);
 }

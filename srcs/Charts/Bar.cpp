@@ -1,5 +1,6 @@
 #include "Charts/Bar.hpp"
 #include "Charts/Charts.hpp"
+#include <utility>
 
 namespace Charts
 {
@@ -23,16 +24,14 @@ namespace Charts
 		this->_height = height;
 	}
 
-	Image	Bar::generate(void)
+	std::unique_ptr<Image>	Bar::generate(void)
 	{
-		Image	image;
+		auto image = std::make_unique<Image>(this->_width, this->_height);
 
-		image.setWidth(this->_width);
-		image.setHeight(this->_height);
-		image.initialize();
-		image.fill(Color(1.0, 1.0, 1.0));
+		image->initialize();
+		image->fill(Color(1.0, 1.0, 1.0));
 
-		addText(image, this->_title, 0, 0, Color(0.0, 0.0, 0.0));
+		addText(std::move(image), this->_title, 0, 0, Color(0.0, 0.0, 0.0));
 
 		return (image);
 	}

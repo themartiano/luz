@@ -13,7 +13,7 @@ class	Perlin
 		double	noise(double x, double y, double z) const;
 		double	noise(const Vector3& vector) const;
 		double	noise2D(double x, double y) const;
-		Image	generateImage(double width, double height, double noiseScale) const;
+		std::unique_ptr<Image>	generateImage(double width, double height, double noiseScale) const;
 
 	private:
 		double	_fade(double t) const;

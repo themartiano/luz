@@ -40,9 +40,9 @@ int	main(int argc, char *argv[])
 	}
 	else
 	{
-		scene.getImage().setWidth(1000);
-		scene.getImage().setHeight(1000);
-		scene.getImage().initialize();
+		scene.getImage()->setWidth(1000);
+		scene.getImage()->setHeight(1000);
+		scene.getImage()->initialize();
 		scene.setSampleCount(1);
 		scene.setMaxLightBounces(50);
 		scene.setGammaCorrected(true);
@@ -82,7 +82,7 @@ int	main(int argc, char *argv[])
 	if (Renderer::render(scene))
 	{
 		// Writes render image file
-		scene.getImage().saveToBMP("render");
+		scene.getImage()->saveToBMP("render");
 		std::unique_ptr<Image> debugTime = scene.generateRenderTimeImage();
 		debugTime->saveToBMP("renderTime");
 	}

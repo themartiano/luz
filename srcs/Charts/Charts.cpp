@@ -2,7 +2,7 @@
 
 namespace Charts
 {
-	void	addText(Image& image, const std::string& text, std::size_t x, std::size_t y, const Color& color)
+	void	addText(std::unique_ptr<Image> image, const std::string& text, std::size_t x, std::size_t y, const Color& color)
 	{
 		std::size_t	textLength = text.length();
 
@@ -15,7 +15,7 @@ namespace Charts
 			{
 				for (std::size_t k = 0; k < 5; k++)
 				{
-					image.setPixel(x + i * 5 + k, y + j, color);
+					image->setPixel(x + i * 5 + k, y + j, color);
 				}
 			}
 		}

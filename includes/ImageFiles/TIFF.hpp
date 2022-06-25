@@ -8,8 +8,8 @@ class	TIFF
 	public:
 		TIFF(void);
 		TIFF(std::string fileName);
-		void	writeFile(const Image& image, bool insideDir, std::string dirName);
-		void	writeFile(const Image& image);
+		void	writeFile(const std::unique_ptr<Image> image, bool insideDir, std::string dirName);
+		void	writeFile(const std::unique_ptr<Image> image);
 
 		#pragma pack(push, 1)
 		typedef struct	Header
@@ -36,7 +36,7 @@ class	TIFF
 		#pragma pack(pop)
 
 	private:
-		void	arrayColorToDouble(const Image& image, std::vector<double>& doubleArray) const;
+		void	arrayColorToDouble(const std::unique_ptr<Image> image, std::vector<double>& doubleArray) const;
 
 		std::string	_fileName;
 		static tiffIFD	_generateIFD(void);

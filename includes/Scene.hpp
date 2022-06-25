@@ -40,7 +40,7 @@ class	Scene
 		bool		getStorePixelRenderTimes(void) const;
 		void		setStorePixelRenderTimes(bool storePixelRenderTime);
 		void		setPixelRenderTime(std::size_t x, std::size_t y, double renderTime);
-		Image&		getImage(void);
+		std::unique_ptr<Image>	getImage(void);
 		std::unique_ptr<Image>	generateRenderTimeImage(void) const;
 
 	private:
@@ -49,7 +49,7 @@ class	Scene
 		int						_maxLightBounces;
 		bool					_gammaCorrected;
 		std::string				_defaultRenderOutputFileName;
-		Image					_image;
+		std::unique_ptr<Image>	_image;
 		double					_skyline;
 		SkyTypes				_renderSky;
 		bool					_distanceBlueness;

@@ -7,6 +7,7 @@
 #include "ImageFiles/TIFF.hpp"
 #include "Materials/Emissive.hpp"
 #include <limits>
+#include <utility>
 
 /*
 	Constructors & Destructor
@@ -15,7 +16,7 @@
 // Constructs the Scene with default values
 Scene::Scene(void)
 {
-	this->_image = Image(D_WIDTH, D_HEIGHT);
+	this->_image = std::make_unique<Image>(D_WIDTH, D_HEIGHT);
 
 	this->_sampleCount = D_SAMPLE_COUNT;
 	this->_maxLightBounces = D_MAX_LIGHT_BOUNCES;
@@ -206,9 +207,9 @@ void	Scene::setStorePixelRenderTimes(bool storePixelRenderTimes)
 
 	if (this->_storePixelRenderTimes)
 	{
-		this->_pixelRenderTimes.reserve(this->_image.getWidth() * this->_image.getHeight());
+		this->_pixelRenderTimes.reserve(this->_image->getWidth() * this->_image->getHeight());
 
-		for (std::size_t i = 0; i < this->_image.getWidth() * this->_image.getHeight(); i++)
+		for (std::size_t i = 0; i < this->_image->getWidth() * this->_image->getHeight(); i++)
 		{
 			this->_pixelRenderTimes.push_back(0.0);
 		}
@@ -219,15 +220,15 @@ void	Scene::setPixelRenderTime(std::size_t x, std::size_t y, double renderTime)
 {
 	if (this->_storePixelRenderTimes)
 	{
-		std::size_t index = (y * this->_image.getWidth()) + x;
+		std::size_t index = (y * this->_image->getWidth()) + x;
 
 		this->_pixelRenderTimes[index] = renderTime;
 	}
 }
 
-Image&	Scene::getImage(void)
+std::unique_ptr<Image>	Scene::getImage(void)
 {
-	return (this->_image);
+	return (std::move(this->_image));
 }
 
 std::unique_ptr<Image>	Scene::generateRenderTimeImage(void) const
@@ -238,7 +239,7 @@ std::unique_ptr<Image>	Scene::generateRenderTimeImage(void) const
 	}
 
 
-	std::unique_ptr<Image> image = std::make_unique<Image>(this->_image.getWidth(), this->_image.getHeight());
+	auto image = std::make_unique<Image>(this->_image->getWidth(), this->_image->getHeight());
 	image->initialize();
 
 	// Looks like it is not possible to use iterators because we're settings values with [] so the vector doesn't properly recognizes it. size() is 0 btw
@@ -248,7 +249,7 @@ std::unique_ptr<Image>	Scene::generateRenderTimeImage(void) const
 	double fastest = 0.0;
 	double slowest = 0.0;
 
-	for (std::size_t i = 0; i < this->_image.getWidth() * this->_image.getHeight(); i++)
+	for (std::size_t i = 0; i < this->_image->getWidth() * this->_image->getHeight(); i++)
 	{
 		if (this->_pixelRenderTimes[i] < fastest)
 		{
@@ -261,7 +262,7 @@ std::unique_ptr<Image>	Scene::generateRenderTimeImage(void) const
 		}
 	}
 
-	for (std::size_t i = 0; i < this->_image.getWidth() * this->_image.getHeight(); i++)
+	for (std::size_t i = 0; i < this->_image->getWidth() * this->_image->getHeight(); i++)
 	{
 		Color orange(1.0, 0.94, 0.84); // Fastest
 		Color purple(0.1, 0.0, 0.18); // Slowest
@@ -271,7 +272,7 @@ std::unique_ptr<Image>	Scene::generateRenderTimeImage(void) const
 
 		// interpolate between two colors using 'ratio'
 
-		image->setPixel(i % this->_image.getWidth(), i / this->_image.getWidth(), (purple - orange) * ratio + orange);
+		image->setPixel(i % this->_image->getWidth(), i / this->_image->getWidth(), (purple - orange) * ratio + orange);
 	}
 
 	return (image);

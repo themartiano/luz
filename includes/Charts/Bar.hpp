@@ -13,7 +13,7 @@ namespace	Charts
 			void	setTitle(const std::string& title);
 			void	setWidth(std::size_t width); // Maybe the user should just set a resolution and not a width/height, which implies a certain aspect ratio?
 			void	setHeight(std::size_t height);
-			Image	generate(void);
+			std::unique_ptr<Image>	generate(void);
 
 		private:
 			std::string	_title;

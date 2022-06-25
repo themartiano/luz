@@ -10,14 +10,6 @@ Image::Image(void)
 	this->_initialized = false;
 }
 
-Image::Image(const Image& image)
-{
-	this->_width = image._width;
-	this->_height = image._height;
-	this->_initialized = image._initialized;
-	this->_pixels = image._pixels;
-}
-
 Image::Image(std::size_t width, std::size_t height)
 {
 	this->_width = width;
@@ -70,7 +62,7 @@ void	Image::saveToBMP(const std::string &fileName) const
 	_checkInitialized();
 
 	BMP	bmp(fileName);
-	bmp.writeFile(*this);
+	bmp.writeFile(std::make_unique<Image>(*this));
 }
 
 void	Image::saveToTIFF(const std::string &fileName) const
@@ -78,7 +70,7 @@ void	Image::saveToTIFF(const std::string &fileName) const
 	_checkInitialized();
 
 	TIFF tiff(fileName);
-	tiff.writeFile(*this);
+	tiff.writeFile(std::make_unique<Image>(*this));
 }
 
 const SmartArray<Color>&	Image::data(void) const

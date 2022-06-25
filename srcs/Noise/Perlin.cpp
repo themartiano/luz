@@ -118,9 +118,9 @@ double Perlin::noise2D(double x, double y) const
 	return (this->noise(x, y, 0.0));
 }
 
-Image	Perlin::generateImage(double width, double height, double noiseScale) const
+std::unique_ptr<Image>	Perlin::generateImage(double width, double height, double noiseScale) const
 {
-	Image image(width, height);
+	auto image = std::make_unique<Image>(width, height);
 
 	for (int i = 0; i < height; i++)
 	{
@@ -131,7 +131,7 @@ Image	Perlin::generateImage(double width, double height, double noiseScale) cons
 
 			double n = this->noise2D(noiseScale * x, noiseScale * y);
 
-			image.setPixel(j, i, Color(n, n, n));
+			image->setPixel(j, i, Color(n, n, n));
 		}
 	}
 

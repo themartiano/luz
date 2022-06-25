@@ -4,11 +4,12 @@
 #include "Utilities.hpp"
 #include <iostream>
 #include <filesystem>
+#include <utility>
 
 // Static function prototypes
 static unsigned char*	createBitmapFileHeader(int height, int stride);
 static unsigned char*	createBitmapInfoHeader(int height, int width);
-static unsigned char*	generateNewPixelArray(const Image& image);
+static unsigned char*	generateNewPixelArray(std::unique_ptr<Image> image);
 
 BMP::BMP(void)
 {
@@ -21,13 +22,13 @@ BMP::BMP(std::string fileName)
 }
 
 // Writes a .bmp image file using the information present on 'scene'
-void	BMP::writeFile(const Image& image, bool insideDir, std::string dirName)
+void	BMP::writeFile(std::unique_ptr<Image> image, bool insideDir, std::string dirName)
 {
 	unsigned char	padding[3] = {0, 0, 0};
-	int				paddingSize = (4 - (image.getWidth() * 3) % 4) % 4;
-	int				stride = (image.getWidth() * 3) + paddingSize;
-	unsigned char*	fileHeader = createBitmapFileHeader(image.getHeight(), stride);
-	unsigned char*	infoHeader = createBitmapInfoHeader(image.getHeight(), image.getWidth());
+	int				paddingSize = (4 - (image->getWidth() * 3) % 4) % 4;
+	int				stride = (image->getWidth() * 3) + paddingSize;
+	unsigned char*	fileHeader = createBitmapFileHeader(image->getHeight(), stride);
+	unsigned char*	infoHeader = createBitmapInfoHeader(image->getHeight(), image->getWidth());
 
 	std::string filePath = "";
 	if (insideDir == true)
@@ -49,10 +50,10 @@ void	BMP::writeFile(const Image& image, bool insideDir, std::string dirName)
 	fwrite(fileHeader, 1, 14, imageFile);
 	fwrite(infoHeader, 1, 40, imageFile);
 
-	unsigned char*	newPixelArray = generateNewPixelArray(image);
+	unsigned char*	newPixelArray = generateNewPixelArray(std::move(image));
 
-	for (int i = image.getHeight() - 1; i >= 0; i--) {
-		fwrite(newPixelArray + (i * image.getWidth() * 3), 3, image.getWidth(), imageFile);
+	for (int i = image->getHeight() - 1; i >= 0; i--) {
+		fwrite(newPixelArray + (i * image->getWidth() * 3), 3, image->getWidth(), imageFile);
 		fwrite(padding, 1, paddingSize, imageFile);
 	}
 
@@ -63,20 +64,20 @@ void	BMP::writeFile(const Image& image, bool insideDir, std::string dirName)
 }
 
 // BMP::writeFile overload
-void	BMP::writeFile(const Image& image)
+void	BMP::writeFile(std::unique_ptr<Image> image)
 {
-	writeFile(image, false, "");
+	writeFile(std::move(image), false, "");
 }
 
-static unsigned char*	generateNewPixelArray(const Image& image)
+static unsigned char*	generateNewPixelArray(std::unique_ptr<Image> image)
 {
-	unsigned char* newPixelArray = new unsigned char[image.getWidth() * image.getHeight() * 3];
+	unsigned char* newPixelArray = new unsigned char[image->getWidth() * image->getHeight() * 3];
 
-	for (std::size_t y = 0; y < image.getHeight(); y++)
+	for (std::size_t y = 0; y < image->getHeight(); y++)
 	{
-		for (std::size_t x = 0; x < image.getWidth(); x++)
+		for (std::size_t x = 0; x < image->getWidth(); x++)
 		{
-			Color pixel = image.getPixel(x, y);
+			Color pixel = image->getPixel(x, y);
 
 			double r = pixel.getRed();
 			double g = pixel.getGreen();
@@ -86,7 +87,7 @@ static unsigned char*	generateNewPixelArray(const Image& image)
 			Utilities::setDoubleRange(g, 0.0, 1.0);
 			Utilities::setDoubleRange(b, 0.0, 1.0);
 
-			std::size_t index = (y * image.getHeight()) + x;
+			std::size_t index = (y * image->getHeight()) + x;
 
 			newPixelArray[(index * 3) + 2] = (unsigned char)(r * 255.0);
 			newPixelArray[(index * 3) + 1] = (unsigned char)(g * 255.0);

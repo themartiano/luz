@@ -4,6 +4,7 @@
 #include "Utilities.hpp"
 #include <iostream>
 #include <filesystem>
+#include <utility>
 
 #define PIXEL_BYTES (8 * 3)
 #define RESOLUTION 256
@@ -21,7 +22,7 @@ TIFF::TIFF(std::string fileName)
 }
 
 // Writes a .tiff image file using the information present on 'scene'
-void	TIFF::writeFile(const Image& image, bool insideDir, std::string dirName)
+void	TIFF::writeFile(std::unique_ptr<Image> image, bool insideDir, std::string dirName)
 {
 	std::string filePath = "";
 	if (insideDir == true)
@@ -75,18 +76,18 @@ void	TIFF::writeFile(const Image& image, bool insideDir, std::string dirName)
 	delete[] ifd.tagList;
 
 	std::vector<double> pixelArray;
-	arrayColorToDouble(image, pixelArray);
+	arrayColorToDouble(std::move(image), pixelArray);
 
 	// Write bitmap image data
 	for (unsigned int row = 0; row < RESOLUTION / TILE_SIZE; row++)
 	{
-		unsigned int rowPos = (row * TILE_SIZE * image.getWidth() * 3);
+		unsigned int rowPos = (row * TILE_SIZE * image->getWidth() * 3);
 		for (int column = 0; column < RESOLUTION / TILE_SIZE; column++)
 		{
 			unsigned int columnPos = (column * TILE_SIZE * 3);
 			for (unsigned int y = 0; y < TILE_SIZE; y++)
 			{
-				unsigned int tilePos = (y * image.getWidth() * 3);
+				unsigned int tilePos = (y * image->getWidth() * 3);
 
 				fwrite(pixelArray.data() + rowPos + columnPos + tilePos, PIXEL_BYTES, TILE_SIZE, imageFile);
 			}
@@ -98,9 +99,9 @@ void	TIFF::writeFile(const Image& image, bool insideDir, std::string dirName)
 }
 
 // TIFF::writeFile overload
-void	TIFF::writeFile(const Image& image)
+void	TIFF::writeFile(std::unique_ptr<Image> image)
 {
-	writeFile(image, false, "");
+	writeFile(std::move(image), false, "");
 }
 
 TIFF::tiffIFD	TIFF::_generateIFD(void)
@@ -193,16 +194,16 @@ TIFF::tiffIFD	TIFF::_generateIFD(void)
 	return (ifd);
 }
 
-void	TIFF::arrayColorToDouble(const Image& image, std::vector<double>& doubleArray) const
+void	TIFF::arrayColorToDouble(std::unique_ptr<Image> image, std::vector<double>& doubleArray) const
 {
-	const unsigned int capacity = image.data().getCapacity();
+	const unsigned int capacity = image->data().getCapacity();
 
 	doubleArray.reserve(capacity * 3);
 
 	for (unsigned int i = 0; i < capacity; i++)
 	{
-		doubleArray.push_back(image.data()[i].getRed());
-		doubleArray.push_back(image.data()[i].getGreen());
-		doubleArray.push_back(image.data()[i].getBlue());
+		doubleArray.push_back(image->data()[i].getRed());
+		doubleArray.push_back(image->data()[i].getGreen());
+		doubleArray.push_back(image->data()[i].getBlue());
 	}
 }
