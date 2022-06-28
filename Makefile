@@ -259,6 +259,14 @@ unix:
 fast:
 	@$(MAKE) all FAST_COMPILATION=1 --no-print-directory
 
+.PHONY: test
+test:
+	@$(MAKE) all --no-print-directory
+	@printf "\n[\e[1;34mStarting tests\e[0m]\n\n"
+	@docker build -t luz-test -f ./tests/Dockerfile .
+	# @docker run --interactive --tty --entrypoint /bin/sh luz-test
+	@docker run --memory=3g --cpus=2 luz-test
+
 -include $(DPND)
 
 
