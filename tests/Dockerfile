@@ -7,5 +7,5 @@ COPY ./srcs /Luz/srcs
 COPY ./includes /Luz/includes
 COPY ./Makefile /Luz
 
-CMD cd /Luz && make && ./Luz
+CMD cd /Luz && make Luz && ./Luz
 # CMD bash

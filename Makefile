@@ -261,12 +261,17 @@ fast:
 
 .PHONY: test
 test:
-	@printf "\n[\e[1;34mStarting tests\e[0m]\n\n"
+	@printf "[\e[1;34mBuilding container...\e[0m]\n\n"
+
 	@docker build -t luz-test -f ./tests/Dockerfile .
-	# @docker run --interactive --tty --entrypoint /bin/sh luz-test
+	@# @docker run --interactive --tty --entrypoint /bin/sh luz-test
+
+	@printf "\n[\e[1;34mStarting container...\e[0m]\n\n"
+
 	@docker run --memory=1g --memory-swap=1g --kernel-memory=1g --memory-swappiness=0 --cpus=2 luz-test
-	# 1gb ram, no swap, 2 cores
-	# set the same seed for the random generator
+	@# 1gb ram, no swap, 2 cores
+
+	@printf "\n[\e[0;32mDone.\e[0m]\n"
 
 -include $(DPND)
 
