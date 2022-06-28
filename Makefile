@@ -66,7 +66,8 @@ SRCS :=	AABB.cpp \
 		Renderer/Renderer.cpp \
 		Renderer/SequenceRenderer.cpp \
 		Renderer/Threads.cpp \
-		Scene.cpp \
+		Scene/Scene.cpp \
+		Scene/SceneHelpers.cpp \
 		SceneFile/Materials.cpp \
 		SceneFile/Objects.cpp \
 		SceneFile/Scene.cpp \

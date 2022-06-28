@@ -1,4 +1,4 @@
-#include "Scene.hpp"
+#include "Scene/Scene.hpp"
 #include "ImageFiles/BMP.hpp"
 #include "Renderer/Renderer.hpp"
 #include "SkyTypes.hpp"

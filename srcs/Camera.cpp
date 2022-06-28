@@ -15,7 +15,7 @@ Camera::Camera(void)
 }
 
 // Constructs the Camera with custom values
-Camera::Camera(Vector3 position, Vector3 direction, short fov, double aperture, double focusDistance)
+Camera::Camera(Vector3 position, Vector3 direction, double fov, double aperture, double focusDistance)
 {
 	this->_position = position;
 	this->_direction = direction;
@@ -49,13 +49,13 @@ void	Camera::setDirection(Vector3 direction)
 }
 
 // Returns the Camera's FOV (Field of View)
-short		Camera::getFOV(void) const
+double		Camera::getFOV(void) const
 {
 	return (this->_fov);
 }
 
 // Sets the Camera's FOV
-void	Camera::setFOV(short fov)
+void	Camera::setFOV(double fov)
 {
 	this->_fov = fov;
 }

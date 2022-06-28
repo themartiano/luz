@@ -1,5 +1,5 @@
 #include "Ray/Ray.hpp"
-#include "Scene.hpp"
+#include "Scene/Scene.hpp"
 #include "Utilities.hpp"
 #include <cmath>
 

@@ -1,5 +1,5 @@
 #include "Noise/Perlin.hpp"
-#include "Scene.hpp"
+#include "Scene/Scene.hpp"
 #include <numeric>
 #include <random>
 #include <algorithm>

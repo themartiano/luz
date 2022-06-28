@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Vector3.hpp"
-#include "Scene.hpp"
+#include "Scene/Scene.hpp"
 #include "Hittables/Hittable.hpp"
 #include <string>
 

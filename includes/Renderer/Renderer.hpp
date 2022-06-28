@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Scene.hpp"
+#include "Scene/Scene.hpp"
 #include "Ray/Ray.hpp"
 #include "Color.hpp"
 #include "PDFs/MixturePDF.hpp"
