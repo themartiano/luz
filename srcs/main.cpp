@@ -55,7 +55,7 @@ int	main(int argc, char *argv[])
 
 		mountCornellBox(scene);
 
-		// scene.addHittable(std::make_shared<Mesh>(readObj("objects/blender_monkey.obj", Vector3(0.0, -25.0, -100.0), std::make_shared<Dielectric>(Color(0.42, 0.42, 0.42)))));
+		scene.addHittable(std::make_shared<Mesh>(readObj("objects/blender_monkey.obj", Vector3(0.0, -25.0, -100.0), std::make_shared<Dielectric>(Color(0.42, 0.42, 0.42)))));
 
 		// Metal Sphere
 		// scene.addHittable(std::make_shared<Sphere>(
