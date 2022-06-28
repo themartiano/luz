@@ -79,8 +79,8 @@ void	Renderer::internal::_manageThreads(Scene& scene)
 			break;
 		}
 
-		int percentage = (double(localRenderPixel) / double(pixelTotal)) * 100.0;
-		std::cout << "\r" << CLR_CYAN << "Progress: " << CLR_WHITE << "[ " << percentage << "% ]" << std::flush;
+		// int percentage = (double(localRenderPixel) / double(pixelTotal)) * 100.0;
+		// std::cout << "\r" << CLR_CYAN << "Progress: " << CLR_WHITE << "[ " << percentage << "% ]" << std::flush;
 
 		usleep(42 * 1000); // 42ms ~~~ (42 milliseconds * 1000 microseconds)
 	}

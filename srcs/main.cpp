@@ -34,8 +34,6 @@ int	main(int argc, char *argv[])
 	Scene scene;
 	scene.setStorePixelRenderTimes(true); // Test so it works for scene files (before it's natively there)
 
-	std::cout << CLR_BLUE << "Preparing..." << CLR_RESET << std::endl << std::endl;
-
 	FlagsParser(argc, argv).parse(scene);
 	if (!scene.getIsFromFile())
 	{

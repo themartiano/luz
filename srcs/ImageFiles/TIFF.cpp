@@ -37,7 +37,7 @@ void	TIFF::writeFile(const std::unique_ptr<Image>& image, bool insideDir, std::s
 		filePath += ".tiff";
 	}
 
-	std::cout << CLR_YELLOW << "Writing render to " << CLR_BLUE_BRIGHT << filePath << CLR_YELLOW << "...\n" << CLR_RESET;
+	// std::cout << CLR_YELLOW << "Writing render to " << CLR_BLUE_BRIGHT << filePath << CLR_YELLOW << "...\n" << CLR_RESET;
 
 	FILE* imageFile = fopen(filePath.c_str(), "wb");
 	tiffIFD ifd = _generateIFD();
@@ -95,7 +95,7 @@ void	TIFF::writeFile(const std::unique_ptr<Image>& image, bool insideDir, std::s
 	}
 
 	fclose(imageFile);
-	std::cout << CLR_GREEN_BRIGHT << "File ready.\n\n" << CLR_RESET;
+	// std::cout << CLR_GREEN_BRIGHT << "File ready.\n\n" << CLR_RESET;
 }
 
 // TIFF::writeFile overload

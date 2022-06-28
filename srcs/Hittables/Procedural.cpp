@@ -29,8 +29,8 @@ bool	Procedural::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max)
 	double closestBorder = Utilities::vectorLength((origin * direction) - (this->_position + (direction * (this->_size / 2.0)))) * -1;
 	double farthestBorder = Utilities::vectorLength((origin * direction) - (this->_position - (direction * (this->_size / 2.0))));
 
-	// std::cout << "closestBorder:" << closestBorder << std::endl;
-	// std::cout << "farthestBorder:" << farthestBorder << std::endl;
+	// // std::cout << "closestBorder:" << closestBorder << std::endl;
+	// // std::cout << "farthestBorder:" << farthestBorder << std::endl;
 
 	if (closestBorder < 0.0)
 	{

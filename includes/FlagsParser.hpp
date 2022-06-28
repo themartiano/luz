@@ -1,0 +1,25 @@
+#pragma once
+
+#include "Scene/Scene.hpp"
+#include <vector>
+#include <string>
+
+class	FlagsParser
+{
+	public:
+		FlagsParser(int argc, char** argv);
+		void parse(Scene& scene);
+
+	private:
+		typedef std::vector<std::string> _stringVec;
+		typedef _stringVec::iterator _iterator;
+
+		_stringVec _args;
+
+		_iterator	_findFlag(_stringVec flagVariations);
+		_iterator	_findFlag(std::string flag);
+
+		void	_parseSeed(void);
+		void	_parseFile(Scene& scene);
+		void	_parseBenchmark(Scene& scene);
+};
