@@ -28,7 +28,7 @@ BVHNode::BVHNode(std::vector<std::shared_ptr<Hittable>> hittables, size_t start,
 	size_t	hittableCount = end - start;
 	this->_childs.reserve(hittableCount);
 
-	size_t	amount = 1000;
+	size_t	amount = 15; // Child count
 	if (hittableCount <= amount)
 	{
 		for (size_t i = start; i < end; i++)
