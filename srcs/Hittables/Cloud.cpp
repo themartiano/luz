@@ -49,8 +49,8 @@ bool	Cloud::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) cons
 	double closestBorder = Utilities::vectorLength(origin - this->_position) + (direction * (this->_size / 2.0)).getZ();
 	double farthestBorder = Utilities::vectorLength(origin - this->_position) + (direction * (this->_size / 2.0)).getZ();
 
-	// // std::cout << "closestBorder:" << closestBorder << std::endl;
-	// // std::cout << "farthestBorder:" << farthestBorder << std::endl;
+	// std::cout << "closestBorder:" << closestBorder << std::endl;
+	// std::cout << "farthestBorder:" << farthestBorder << std::endl;
 
 	if (closestBorder < 0.0)
 	{
@@ -126,6 +126,6 @@ double	Cloud::_getHeightAtPoint2(Vector3 point) const
 	double z = point.getZ() - (this->_size / 2.0);
 
 	double n = 0.7 * sla(x, y, z);
-	// // std::cout << "height: " << n << std::endl;
+	// std::cout << "height: " << n << std::endl;
 	return (n);
 }

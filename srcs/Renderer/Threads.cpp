@@ -21,29 +21,29 @@ void	Renderer::internal::_manageThreads(Scene& scene)
 	std::vector<std::future<void>> futureVector;
 
 	volatile std::atomic<double> blockRenderDifference(0.0);
+	volatile std::atomic<double> oldBlockRenderTime(1.0);
 	volatile std::atomic<std::size_t> blockSize(1);
+	volatile std::atomic<std::size_t> oldBlockSize(1);
 
 	// Creates threads.
 	for (unsigned int i = 0; i < threadCount; i++)
 	{
 		futureVector.push_back(
-			std::async([&scene, &currentRenderPixel, &blockRenderDifference, &blockSize]()
+			std::async([&scene, &currentRenderPixel, &blockRenderDifference, &blockSize, &oldBlockRenderTime, &oldBlockSize]()
 			{
 				Clock		pixelClock;
 				Clock		blockClock;
 				const bool	storePixelRenderTimes = scene.getStorePixelRenderTimes();
-				double		blockRenderTime = 1.0;
 
 				std::size_t index = 0;
 				while (true)
 				{
-					std::size_t oldBlockSize = blockSize, newBlockSize;
-					blockSize = newBlockSize = std::min(std::max(blockRenderDifference * 10.0 * oldBlockSize, 1.0), 100.0);
+					std::size_t lBlockSize = blockSize;
 
-					std::size_t renderStopIndex = (currentRenderPixel += newBlockSize); // This way we make sure we're adding and using a 'currentRenderPixel' that has not been updated by another thread while we were doing the operations.
+					std::size_t renderStopIndex = (currentRenderPixel += lBlockSize); // This way we make sure we're adding and using a 'currentRenderPixel' that has not been updated by another thread while we were doing the operations.
 
 					blockClock.start();
-					for (index = renderStopIndex - newBlockSize; index < renderStopIndex && index < pixelTotal; index++)
+					for (index = renderStopIndex - lBlockSize; index < renderStopIndex && index < pixelTotal; index++)
 					{
 						std::size_t	x = index % width;
 						std::size_t	y = index / width;
@@ -63,8 +63,13 @@ void	Renderer::internal::_manageThreads(Scene& scene)
 						break;
 					}
 
-					blockRenderDifference = std::log1p(blockRenderTime / currentBlockRenderTime);
-					blockRenderTime = currentBlockRenderTime;
+					// If it gets slower to rende, blocks will be smaller.
+					blockRenderDifference = std::log1p((oldBlockRenderTime / oldBlockSize) / (currentBlockRenderTime / lBlockSize)); // The difference must be proportional to the block size.
+					// std::cout << std::endl << "oldBlockRenderTime: " << oldBlockRenderTime << "; oldBlockSize: " << oldBlockSize << "; currentBlockRenderTime: " << currentBlockRenderTime << "; lBlockSize: " << lBlockSize << "; blockRenderDifference: " << blockRenderDifference << std::endl;
+					oldBlockRenderTime = currentBlockRenderTime;
+					oldBlockSize = lBlockSize;
+
+					blockSize = std::min(std::max(lBlockSize * blockRenderDifference, 10.0), 1000.0);
 				}
 			}
 		));
@@ -79,8 +84,8 @@ void	Renderer::internal::_manageThreads(Scene& scene)
 			break;
 		}
 
-		// int percentage = (double(localRenderPixel) / double(pixelTotal)) * 100.0;
-		// std::cout << "\r" << CLR_CYAN << "Progress: " << CLR_WHITE << "[ " << percentage << "% ]" << std::flush;
+		int percentage = (double(localRenderPixel) / double(pixelTotal)) * 100.0;
+		std::cout << "\r" << CLR_CYAN << "Progress: " << CLR_WHITE << "[ " << percentage << "% ]" << std::flush;
 
 		usleep(42 * 1000); // 42ms ~~~ (42 milliseconds * 1000 microseconds)
 	}
