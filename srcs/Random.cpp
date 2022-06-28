@@ -18,7 +18,8 @@ double	Random::doubleFloat(void)
 {
 	if (!isSeeded) // All other functions use this one to actually generate the random number.
 	{
-		setSeed(time(NULL));
+		// setSeed(time(NULL));
+		setSeed(42);
 		isSeeded = true;
 	}
 
