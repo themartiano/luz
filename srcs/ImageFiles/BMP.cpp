@@ -9,7 +9,7 @@
 // Static function prototypes
 static unsigned char*	createBitmapFileHeader(int height, int stride);
 static unsigned char*	createBitmapInfoHeader(int height, int width);
-static unsigned char*	generateNewPixelArray(std::unique_ptr<Image> image);
+static unsigned char*	generateNewPixelArray(const std::unique_ptr<Image>& image);
 
 BMP::BMP(void)
 {
@@ -22,7 +22,7 @@ BMP::BMP(std::string fileName)
 }
 
 // Writes a .bmp image file using the information present on 'scene'
-void	BMP::writeFile(std::unique_ptr<Image> image, bool insideDir, std::string dirName)
+void	BMP::writeFile(const std::unique_ptr<Image>& image, bool insideDir, std::string dirName)
 {
 	unsigned char	padding[3] = {0, 0, 0};
 	int				paddingSize = (4 - (image->getWidth() * 3) % 4) % 4;
@@ -50,7 +50,7 @@ void	BMP::writeFile(std::unique_ptr<Image> image, bool insideDir, std::string di
 	fwrite(fileHeader, 1, 14, imageFile);
 	fwrite(infoHeader, 1, 40, imageFile);
 
-	unsigned char*	newPixelArray = generateNewPixelArray(std::move(image));
+	unsigned char*	newPixelArray = generateNewPixelArray(image);
 
 	for (int i = image->getHeight() - 1; i >= 0; i--) {
 		fwrite(newPixelArray + (i * image->getWidth() * 3), 3, image->getWidth(), imageFile);
@@ -64,12 +64,12 @@ void	BMP::writeFile(std::unique_ptr<Image> image, bool insideDir, std::string di
 }
 
 // BMP::writeFile overload
-void	BMP::writeFile(std::unique_ptr<Image> image)
+void	BMP::writeFile(const std::unique_ptr<Image>& image)
 {
-	writeFile(std::move(image), false, "");
+	writeFile(image, false, "");
 }
 
-static unsigned char*	generateNewPixelArray(std::unique_ptr<Image> image)
+static unsigned char*	generateNewPixelArray(const std::unique_ptr<Image>& image)
 {
 	unsigned char* newPixelArray = new unsigned char[image->getWidth() * image->getHeight() * 3];
 

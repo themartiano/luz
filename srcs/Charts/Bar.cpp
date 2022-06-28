@@ -31,7 +31,7 @@ namespace Charts
 		image->initialize();
 		image->fill(Color(1.0, 1.0, 1.0));
 
-		addText(std::move(image), this->_title, 0, 0, Color(0.0, 0.0, 0.0));
+		addText(std::move(image), this->_title, 0, 0, Color(0.0, 0.0, 0.0)); // This has to be fixed
 
 		return (image);
 	}
