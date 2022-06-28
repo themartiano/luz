@@ -4,6 +4,7 @@
 #include "Image.hpp"
 #include <vector>
 #include <string>
+#include <memory>
 
 class	Perlin
 {

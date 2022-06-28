@@ -24,6 +24,7 @@
 #include "Noise/Perlin.hpp"
 #include "Image.hpp"
 #include "Charts/Bar.hpp"
+#include <memory>
 
 static void	mountCornellBox(Scene& scene);
 

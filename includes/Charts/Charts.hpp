@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Image.hpp"
+#include <memory>
 
 namespace	Charts
 {

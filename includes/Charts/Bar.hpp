@@ -3,6 +3,7 @@
 #include "Image.hpp"
 #include <string>
 #include <cstdint>
+#include <memory>
 
 namespace	Charts
 {

@@ -1,6 +1,7 @@
 #include "Charts/Bar.hpp"
 #include "Charts/Charts.hpp"
 #include <utility>
+#include <memory>
 
 namespace Charts
 {

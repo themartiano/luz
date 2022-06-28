@@ -2,6 +2,7 @@
 
 #include "Image.hpp"
 #include <string>
+#include <memory>
 
 class	BMP
 {

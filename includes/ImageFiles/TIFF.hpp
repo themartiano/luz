@@ -2,6 +2,7 @@
 
 #include "Scene.hpp"
 #include <string>
+#include <memory>
 
 class	TIFF
 {
