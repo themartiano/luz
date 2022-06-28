@@ -1,7 +1,7 @@
 FROM ubuntu:latest
 
 # Install dependencies
-RUN apt-get update -y && apt-get install -y make clang
+RUN apt-get update -y && apt-get install -y make clang bc
 RUN mkdir /Luz
 
 # Copy source files
