@@ -226,9 +226,9 @@ void	Scene::setPixelRenderTime(std::size_t x, std::size_t y, double renderTime)
 	}
 }
 
-std::unique_ptr<Image>	Scene::getImage(void)
+std::unique_ptr<Image>&	Scene::getImage(void)
 {
-	return (std::move(this->_image));
+	return (this->_image);
 }
 
 std::unique_ptr<Image>	Scene::generateRenderTimeImage(void) const

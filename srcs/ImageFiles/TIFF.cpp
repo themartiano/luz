@@ -22,7 +22,7 @@ TIFF::TIFF(std::string fileName)
 }
 
 // Writes a .tiff image file using the information present on 'scene'
-void	TIFF::writeFile(std::unique_ptr<Image> image, bool insideDir, std::string dirName)
+void	TIFF::writeFile(const std::unique_ptr<Image>& image, bool insideDir, std::string dirName)
 {
 	std::string filePath = "";
 	if (insideDir == true)
@@ -76,7 +76,7 @@ void	TIFF::writeFile(std::unique_ptr<Image> image, bool insideDir, std::string d
 	delete[] ifd.tagList;
 
 	std::vector<double> pixelArray;
-	arrayColorToDouble(std::move(image), pixelArray);
+	arrayColorToDouble(image, pixelArray);
 
 	// Write bitmap image data
 	for (unsigned int row = 0; row < RESOLUTION / TILE_SIZE; row++)
@@ -99,9 +99,9 @@ void	TIFF::writeFile(std::unique_ptr<Image> image, bool insideDir, std::string d
 }
 
 // TIFF::writeFile overload
-void	TIFF::writeFile(std::unique_ptr<Image> image)
+void	TIFF::writeFile(const std::unique_ptr<Image>& image)
 {
-	writeFile(std::move(image), false, "");
+	writeFile(image, false, "");
 }
 
 TIFF::tiffIFD	TIFF::_generateIFD(void)
@@ -194,7 +194,7 @@ TIFF::tiffIFD	TIFF::_generateIFD(void)
 	return (ifd);
 }
 
-void	TIFF::arrayColorToDouble(std::unique_ptr<Image> image, std::vector<double>& doubleArray) const
+void	TIFF::arrayColorToDouble(const std::unique_ptr<Image>& image, std::vector<double>& doubleArray) const
 {
 	const unsigned int capacity = image->data().getCapacity();
 
