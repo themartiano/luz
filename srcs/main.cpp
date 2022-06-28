@@ -24,6 +24,7 @@
 #include "Noise/Perlin.hpp"
 #include "Image.hpp"
 #include "Charts/Bar.hpp"
+#include "FlagsParser.hpp"
 #include <memory>
 
 static void	mountCornellBox(Scene& scene);
@@ -31,15 +32,13 @@ static void	mountCornellBox(Scene& scene);
 // Main function
 int	main(int argc, char *argv[])
 {
-	std::cout << CLR_BLUE << "Preparing..." << CLR_RESET << std::endl << std::endl;
-
 	Scene scene;
 	scene.setStorePixelRenderTimes(true); // Test so it works for scene files (before it's natively there)
-	if (argc == 2)
-	{
-		SceneFile::read(scene, argv[1]);
-	}
-	else
+
+	std::cout << CLR_BLUE << "Preparing..." << CLR_RESET << std::endl << std::endl;
+
+	FlagsParser(argc, argv).parse(scene);
+	if (!scene.getIsFromFile())
 	{
 		scene.getImage()->setWidth(1000);
 		scene.getImage()->setHeight(1000);

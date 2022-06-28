@@ -6,6 +6,8 @@
 // Searches and reads / parses the Scene file named 'fileName' into 'Scene' (searches in the current directory)
 void	SceneFile::read(Scene& scene, std::string fileName)
 {
+	scene.setIsFromFile(true);
+
 	std::ifstream stream;
 	stream.open(fileName);
 	if (!stream)

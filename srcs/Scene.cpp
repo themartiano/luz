@@ -34,6 +34,7 @@ Scene::Scene(void)
 	this->_t_max = std::numeric_limits<double>::max();
 
 	this->_storePixelRenderTimes = false;
+	this->_isFromFile = false;
 }
 
 // Properly frees all allocated memory (destructor)
@@ -276,4 +277,14 @@ std::unique_ptr<Image>	Scene::generateRenderTimeImage(void) const
 	}
 
 	return (image);
+}
+
+void	Scene::setIsFromFile(bool isFromFile)
+{
+	this->_isFromFile = isFromFile;
+}
+
+bool	Scene::getIsFromFile(void) const
+{
+	return (this->_isFromFile);
 }

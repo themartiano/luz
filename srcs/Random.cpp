@@ -6,6 +6,7 @@
 void	Random::setSeed(unsigned int newSeed)
 {
 	seed = newSeed;
+	isSeeded = true;
 	srand(seed);
 }
 
@@ -18,9 +19,7 @@ double	Random::doubleFloat(void)
 {
 	if (!isSeeded) // All other functions use this one to actually generate the random number.
 	{
-		// setSeed(time(NULL));
-		setSeed(42);
-		isSeeded = true;
+		setSeed(time(NULL));
 	}
 
 	return (rand() / (RAND_MAX + 1.0));

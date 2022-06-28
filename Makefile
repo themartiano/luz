@@ -25,6 +25,7 @@ SRCS :=	AABB.cpp \
 		Clock.cpp \
 		Color.cpp \
 		ExitError.cpp \
+		FlagsParser.cpp \
 		Font.cpp \
 		Hittables/BVHNode.cpp \
 		Hittables/Cloud.cpp \

@@ -42,6 +42,8 @@ class	Scene
 		void		setPixelRenderTime(std::size_t x, std::size_t y, double renderTime);
 		std::unique_ptr<Image>&	getImage(void);
 		std::unique_ptr<Image>	generateRenderTimeImage(void) const;
+		void		setIsFromFile(bool isFromFile);
+		bool		getIsFromFile(void) const;
 
 	private:
 		double					_t_max;
@@ -61,4 +63,5 @@ class	Scene
 		std::vector<std::shared_ptr<Hittable>>	_lights;
 		bool					_storePixelRenderTimes;
 		std::vector<double>		_pixelRenderTimes;
+		bool					_isFromFile;
 };
