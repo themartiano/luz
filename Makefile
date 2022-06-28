@@ -261,11 +261,12 @@ fast:
 
 .PHONY: test
 test:
-	@$(MAKE) all --no-print-directory
 	@printf "\n[\e[1;34mStarting tests\e[0m]\n\n"
 	@docker build -t luz-test -f ./tests/Dockerfile .
 	# @docker run --interactive --tty --entrypoint /bin/sh luz-test
-	@docker run --memory=3g --cpus=2 luz-test
+	@docker run --memory=1g --memory-swap=1g --kernel-memory=1g --memory-swappiness=0 --cpus=2 luz-test
+	# 1gb ram, no swap, 2 cores
+	# set the same seed for the random generator
 
 -include $(DPND)
 
