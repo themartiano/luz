@@ -4,7 +4,7 @@
 
 Developed with modern **C++ 20** using nothing but the language itself.
 
-![Luz Spheres](https://user-images.githubusercontent.com/32342284/138613098-84a5b9c0-e675-41a2-ac91-523510d41d7d.jpg)
+![Cornell Box 2048 Samples](https://user-images.githubusercontent.com/32342284/176393730-df3e0ab6-f514-4ce0-bfce-80a8014f3279.jpg)
 ###### Raw output converted from bmp to jpg
 ---
 
@@ -50,8 +50,6 @@ Developed with modern **C++ 20** using nothing but the language itself.
 ---
 
 ## Showcase:
-### Cornell Box
-![Luz Cornell Box](https://user-images.githubusercontent.com/32342284/139581650-2f11c939-92e2-421a-aef8-a1de5809ca4c.jpg)
 ### Atmosphere
 #### Sunset gif
 ![Luz Atmosphere](https://user-images.githubusercontent.com/32342284/144286415-7fbcf17a-6e2a-454e-8f7c-641998d98e4e.gif)
