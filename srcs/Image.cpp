@@ -2,6 +2,7 @@
 #include "Defaults.hpp"
 #include "ImageFiles/BMP.hpp"
 #include "ImageFiles/TIFF.hpp"
+#include <cmath>
 
 Image::Image(void)
 {
@@ -130,5 +131,15 @@ void	Image::fill(Color color)
 	for (std::size_t i = 0; i < this->_pixels.getCapacity(); i++)
 	{
 		this->_pixels[i] = color;
+	}
+}
+
+void	Image::gammaCorrect(void)
+{
+	for (std::size_t i = 0; i < this->_pixels.getCapacity(); i++)
+	{
+		Color& pixel = this->_pixels[i];
+
+		pixel = Color(sqrt(pixel.getRed()), sqrt(pixel.getGreen()), sqrt(pixel.getBlue())); // Gamma (2) correction
 	}
 }

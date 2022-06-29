@@ -21,6 +21,7 @@ class	Image
 		void		initialize(void);
 		Color&		at(std::size_t index);
 		void		fill(Color color);
+		void		gammaCorrect(void);
 
 		Image&	operator=(const Image& other);
 		Color&	operator[](std::size_t index);

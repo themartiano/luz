@@ -89,13 +89,17 @@ void	Renderer::internal::_manageThreads(Scene& scene)
 
 		usleep(42 * 1000); // 42ms ~~~ (42 milliseconds * 1000 microseconds)
 	}
+
+	if (scene.getGammaCorrected())
+	{
+		scene.getImage()->gammaCorrect();
+	}
 }
 
 // Renders the pixel color at X, Y
 void	Renderer::internal::_threadRender(Scene& scene, std::size_t x, std::size_t y)
 {
 	static int	sampleCount = scene.getSampleCount();
-	static bool	gammaCorrected = scene.getGammaCorrected();
 
 	Color pixelColor(0.0, 0.0, 0.0);
 
@@ -104,10 +108,6 @@ void	Renderer::internal::_threadRender(Scene& scene, std::size_t x, std::size_t 
 		pixelColor += _calculatePixelColor(scene, x, y);
 	}
 	pixelColor /= sampleCount;
-	if (gammaCorrected)
-	{
-		pixelColor = Color(sqrt(pixelColor.getRed()), sqrt(pixelColor.getGreen()), sqrt(pixelColor.getBlue())); // Gamma (2) correction
-	}
 
 	// Replaces NaN with zeros (in case there's a problematic sample)
 	if (pixelColor.getRed() != pixelColor.getRed())
