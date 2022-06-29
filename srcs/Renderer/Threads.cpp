@@ -90,14 +90,14 @@ void	Renderer::internal::_manageThreads(Scene& scene)
 		usleep(42 * 1000); // 42ms ~~~ (42 milliseconds * 1000 microseconds)
 	}
 
-	if (scene.getGammaCorrected())
-	{
-		scene.getImage()->gammaCorrect();
-	}
-
 	if (scene.getToneMapped())
 	{
 		scene.getImage()->toneMap();
+	}
+
+	if (scene.getGammaCorrected())
+	{
+		scene.getImage()->gammaCorrect();
 	}
 }
 
