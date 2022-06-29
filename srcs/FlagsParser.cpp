@@ -14,6 +14,9 @@ void	FlagsParser::parse(Scene& scene)
 	this->_parseFile(scene);
 	this->_parseBenchmark(scene);
 	this->_parseSeed();
+	this->_parseSamples(scene);
+	this->_parseMaxLightBounces(scene);
+	this->_parseResolution(scene);
 }
 
 FlagsParser::_iterator	FlagsParser::_findFlag(_stringVec flagVariations)
@@ -73,5 +76,34 @@ void	FlagsParser::_parseBenchmark(Scene& scene)
 		scene.setRenderSky(SKY_NONE);
 		scene.setDistanceBlueness(false);
 		scene.setBackgroundColor(Color(0.0, 0.0, 0.0));
+	}
+}
+
+void	FlagsParser::_parseSamples(Scene& scene)
+{
+	auto it = this->_findFlag(_stringVec{"--samples", "-s"});
+	if (it != this->_args.end())
+	{
+		scene.setSampleCount(std::stoi(*(it + 1)));
+	}
+}
+
+void	FlagsParser::_parseMaxLightBounces(Scene& scene)
+{
+	auto it = this->_findFlag(_stringVec{"--maxLightBounces", "-mlb"});
+	if (it != this->_args.end())
+	{
+		scene.setMaxLightBounces(std::stoi(*(it + 1)));
+	}
+}
+
+void	FlagsParser::_parseResolution(Scene& scene)
+{
+	auto it = this->_findFlag(_stringVec{"--resolution", "-r"});
+	if (it != this->_args.end())
+	{
+		std::string res = *(it + 1);
+		scene.getImage()->setWidth(std::stoi(res.substr(0, res.find("x"))));
+		scene.getImage()->setHeight(std::stoi(res.substr(res.find("x") + 1)));
 	}
 }

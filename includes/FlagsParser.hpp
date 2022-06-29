@@ -22,4 +22,7 @@ class	FlagsParser
 		void	_parseSeed(void);
 		void	_parseFile(Scene& scene);
 		void	_parseBenchmark(Scene& scene);
+		void	_parseSamples(Scene& scene);
+		void	_parseMaxLightBounces(Scene& scene);
+		void	_parseResolution(Scene& scene);
 };
