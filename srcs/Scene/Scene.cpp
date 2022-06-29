@@ -21,6 +21,7 @@ Scene::Scene(void)
 	this->_sampleCount = D_SAMPLE_COUNT;
 	this->_maxLightBounces = D_MAX_LIGHT_BOUNCES;
 	this->_gammaCorrected = true;
+	this->_toneMapped = true;
 	this->_skyline = 0.5;
 	this->_renderSky = SKY_ATMOSPHERE;
 	this->_distanceBlueness = true;
@@ -89,6 +90,17 @@ void	Scene::setGammaCorrected(bool gammaCorrected)
 {
 	this->_gammaCorrected = gammaCorrected;
 }
+
+bool	Scene::getToneMapped(void) const
+{
+	return (this->_toneMapped);
+}
+
+void	Scene::setToneMapped(bool toneMapped)
+{
+	this->_toneMapped = toneMapped;
+}
+
 // Returns Skyline (used on sky colors interpolation)
 double	Scene::getSkyline(void) const
 {

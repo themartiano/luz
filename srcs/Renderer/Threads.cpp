@@ -94,6 +94,11 @@ void	Renderer::internal::_manageThreads(Scene& scene)
 	{
 		scene.getImage()->gammaCorrect();
 	}
+
+	if (scene.getToneMapped())
+	{
+		scene.getImage()->toneMap();
+	}
 }
 
 // Renders the pixel color at X, Y

@@ -21,6 +21,8 @@ class	Scene
 		void	setMaxLightBounces(const int maxLightBounces);
 		bool	getGammaCorrected(void) const;
 		void	setGammaCorrected(bool gamma);
+		bool	getToneMapped(void) const;
+		void	setToneMapped(bool toneMapped);
 		double	getSkyline(void) const;
 		SkyTypes	getRenderSky(void) const;
 		void	setRenderSky(SkyTypes renderSky);
@@ -52,6 +54,7 @@ class	Scene
 		int						_sampleCount;
 		int						_maxLightBounces;
 		bool					_gammaCorrected;
+		bool					_toneMapped;
 		std::string				_defaultRenderOutputFileName;
 		std::unique_ptr<Image>	_image;
 		double					_skyline;

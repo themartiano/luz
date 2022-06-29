@@ -2,6 +2,7 @@
 #include "Defaults.hpp"
 #include "ImageFiles/BMP.hpp"
 #include "ImageFiles/TIFF.hpp"
+#include "Utilities.hpp"
 #include <cmath>
 
 Image::Image(void)
@@ -141,5 +142,15 @@ void	Image::gammaCorrect(void)
 		Color& pixel = this->_pixels[i];
 
 		pixel = Color(sqrt(pixel.getRed()), sqrt(pixel.getGreen()), sqrt(pixel.getBlue())); // Gamma (2) correction
+	}
+}
+
+void	Image::toneMap(void)
+{
+	for (std::size_t i = 0; i < this->_pixels.getCapacity(); i++)
+	{
+		Color& pixel = this->_pixels[i];
+
+		pixel = Utilities::reinhardJodie(pixel);
 	}
 }
