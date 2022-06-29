@@ -102,14 +102,31 @@ Color	Color::operator/(const double f) const
 	return (Color(this->_red / f, this->_green / f, this->_blue / f));
 }
 
+// (/) Operator overload
+Color	Color::operator/(const Color color) const
+{
+	return (Color(this->_red / color.getRed(), this->_green / color.getGreen(), this->_blue / color.getBlue()));
+}
+
 // (+) Operator overload
 Color	Color::operator+(const Color color) const
 {
 	return (Color(this->_red + color.getRed(), this->_green + color.getGreen(), this->_blue + color.getBlue()));
 }
 
+// (+) Operator overload
+Color	Color::operator+(const double f) const
+{
+	return (Color(this->_red + f, this->_green + f, this->_blue + f));
+}
+
 // (-) Operator overload
 Color	Color::operator-(const Color color) const
 {
 	return (Color(this->_red - color.getRed(), this->_green - color.getGreen(), this->_blue - color.getBlue()));
+}
+
+Color::operator Vector3(void) const
+{
+	return (Vector3(this->_red, this->_green, this->_blue));
 }

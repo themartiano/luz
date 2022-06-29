@@ -22,4 +22,6 @@ namespace Utilities
 	AABB	mergeBoundingBoxes(std::vector<AABB> boundingBoxes);
 	void	toLower(std::string& str);
 	bool	stringEndsWith(std::string str, std::string ending);
+	double	luminance(const Color& color);
+	Color	reinhardJodie(const Color& color);
 }

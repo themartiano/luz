@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Vector3.hpp"
 #include <iostream>
 
 class	Color
@@ -17,10 +18,14 @@ class	Color
 		Color&	operator-=(const Color &color2);
 		Color&	operator/=(const double f);
 		Color	operator+(const Color color) const;
+		Color	operator+(const double f) const;
 		Color	operator-(const Color color) const;
 		Color	operator*(const double f) const;
 		Color	operator*(const Color color) const;
 		Color	operator/(const double f) const;
+		Color	operator/(const Color color) const;
+
+		operator Vector3(void) const;
 
 	private:
 		double	_red;

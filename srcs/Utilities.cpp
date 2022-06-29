@@ -167,3 +167,24 @@ bool	Utilities::stringEndsWith(std::string str, std::string ending)
 
 	return (false);
 }
+
+// Returns the luminance of the color 'color'
+double	Utilities::luminance(const Color& color)
+{
+	return (
+		dot(color, Vector3(0.2126, 0.7152, 0.0722))
+	);
+}
+
+// Reinhard-Jodie Tone Mapping. It is applied to luminance and then scaled to RBG. In theory, at least.
+Color	Utilities::reinhardJodie(const Color& color)
+{
+	double	l = luminance(color);
+	double	max = fmax(fmax(color.getRed(), color.getGreen()), color.getBlue());
+
+	return (Color(
+		(color.getRed() * l) / max,
+		(color.getGreen() * l) / max,
+		(color.getBlue() * l) / max
+	));
+}

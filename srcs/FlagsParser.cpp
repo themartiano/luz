@@ -73,6 +73,7 @@ void	FlagsParser::_parseBenchmark(Scene& scene)
 		scene.setSampleCount(2048);
 		scene.setMaxLightBounces(64);
 		scene.setGammaCorrected(true);
+		scene.setToneMapped(true);
 		scene.setRenderSky(SKY_NONE);
 		scene.setDistanceBlueness(false);
 		scene.setBackgroundColor(Color(0.0, 0.0, 0.0));
