@@ -13,7 +13,7 @@ Developed with modern **C++ 20** using nothing but the language itself.
 * **Monte Carlo Path Tracing**
 * **Physically based** rendering
 * **Multithreaded** rendering
-* **Objects** rendering (sphere, plane, rectangle, triangle, cube)
+* **Objects** rendering (sphere, plane, rectangle, triangle, cube, mesh)
 * Custom **Scene file** (**.luz** extension)
 * **OBJ file** rendering (**.obj** extension)
 * Lambertian (**Diffuse**) Rendering
@@ -40,7 +40,8 @@ Developed with modern **C++ 20** using nothing but the language itself.
 * Customizable **Position**
 * Customizable **Aperture**
 ### General:
-* **.bmp** image file creation with the resulting render
+* **.bmp** image file generation
+* **.tiff** image file generation
 * Customizable resolution
 ### Terminal output:
 * Progress indicators
@@ -50,7 +51,11 @@ Developed with modern **C++ 20** using nothing but the language itself.
 ---
 
 ## Showcase:
+#### Mirror, emissive surface and glass
+![Mirror, emissive surface and glass](https://user-images.githubusercontent.com/32342284/176394366-067a6d01-1276-4364-a589-8021ce3914a0.jpg)
 ### Atmosphere
+#### Space view (real dimensions)
+![Earth's atmosphere viewed from space in real dimensions](https://user-images.githubusercontent.com/32342284/176394736-281915e0-d88b-4166-a4f9-e279c2305583.jpg)
 #### Sunset gif
 ![Luz Atmosphere](https://user-images.githubusercontent.com/32342284/144286415-7fbcf17a-6e2a-454e-8f7c-641998d98e4e.gif)
 ###### Raw output converted from bmp to jpg / gif
