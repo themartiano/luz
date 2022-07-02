@@ -2,6 +2,7 @@
 
 #include "SmartArray.hpp"
 #include "Color.hpp"
+#include <memory>
 
 class	Image
 {
@@ -23,7 +24,9 @@ class	Image
 		void		fill(Color color);
 		void		gammaCorrect(void);
 		void		toneMap(void);
+		std::unique_ptr<Image>	extractBrightness(void) const;
 
+		Image&	operator+=(const Image& other);
 		Image&	operator=(const Image& other);
 		Color&	operator[](std::size_t index);
 

@@ -50,6 +50,9 @@ class	Scene
 		bool		getBenchmarkMode(void) const;
 		void		setRenderingThreads(std::size_t renderingThreads);
 		std::size_t	getRenderingThreads(void) const;
+		void		setBloom(bool bloom);
+		bool		getBloom(void) const;
+
 
 	private:
 		double					_t_max;
@@ -73,4 +76,5 @@ class	Scene
 		bool					_isFromFile;
 		bool					_benchmarkMode;
 		std::size_t				_renderingThreads;
+		bool					_bloom;
 };

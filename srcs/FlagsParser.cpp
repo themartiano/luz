@@ -23,6 +23,7 @@ void	FlagsParser::parse(Scene& scene)
 	this->_parseThreads(scene);
 	this->_parseGamma(scene);
 	this->_parseToneMapping(scene);
+	this->_parseBloom(scene);
 }
 
 FlagsParser::_iterator	FlagsParser::_findFlag(_stringVec flagVariations)
@@ -202,6 +203,28 @@ void	FlagsParser::_parseToneMapping(Scene& scene)
 		else
 		{
 			std::cerr << "Invalid value for " << *it << "." << std::endl << "(true / 1 || false / 0)" << std::endl;
+			exit(EXIT_FAILURE);
+		}
+	}
+}
+
+void	FlagsParser::_parseBloom(Scene& scene)
+{
+	auto it = this->_findFlag("--bloom");
+	if (it != this->_args.end())
+	{
+		std::string bloom = *(it + 1);
+		if (bloom == "true" || bloom == "1")
+		{
+			scene.setBloom(true);
+		}
+		else if (bloom == "false" || bloom == "0")
+		{
+			scene.setBloom(false);
+		}
+		else
+		{
+			std::cerr << "Invalid value for --bloom" << std::endl << "(true / 1 || false / 0)" << std::endl;
 			exit(EXIT_FAILURE);
 		}
 	}

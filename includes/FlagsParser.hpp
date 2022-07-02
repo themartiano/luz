@@ -29,4 +29,5 @@ class	FlagsParser
 		void	_parseThreads(Scene& scene);
 		void	_parseGamma(Scene& scene);
 		void	_parseToneMapping(Scene& scene);
+		void	_parseBloom(Scene& scene);
 };

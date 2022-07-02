@@ -19,6 +19,7 @@ SRCS_DIR := ./srcs
 OBJS_DIR := ./objs
 SRCS :=	AABB.cpp \
 		Atmosphere.cpp \
+		Blur/Gaussian.cpp \
 		Camera.cpp \
 		Charts/Bar.cpp \
 		Charts/Charts.cpp \

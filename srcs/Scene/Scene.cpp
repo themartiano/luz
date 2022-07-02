@@ -322,3 +322,13 @@ std::size_t	Scene::getRenderingThreads(void) const
 {
 	return (this->_renderingThreads);
 }
+
+void	Scene::setBloom(bool bloom)
+{
+	this->_bloom = bloom;
+}
+
+bool	Scene::getBloom(void) const
+{
+	return (this->_bloom);
+}

@@ -115,6 +115,21 @@ void	Image::_checkInitialized(void) const
 	}
 }
 
+Image&	Image::operator+=(const Image& other)
+{
+	if (this->_width != other._width || this->_height != other._height)
+	{
+		throw std::runtime_error("Images must have the same dimensions");
+	}
+
+	for (std::size_t i = 0; i < this->_width * this->_height; i++)
+	{
+		this->_pixels[i] += other._pixels[i];
+	}
+
+	return (*this);
+}
+
 // Assigns 'other' to this image
 Image&	Image::operator=(const Image& other)
 {
@@ -159,4 +174,24 @@ void	Image::toneMap(void)
 
 		pixel = Utilities::reinhardJodie(pixel);
 	}
+}
+
+std::unique_ptr<Image>	Image::extractBrightness(void) const
+{
+	std::unique_ptr<Image> brightnessImage = std::make_unique<Image>(this->getWidth(), this->getHeight());
+	brightnessImage->initialize();
+
+	for (std::size_t y = 0; y < brightnessImage->getHeight(); y++)
+	{
+		for (std::size_t x = 0; x < brightnessImage->getWidth(); x++)
+		{
+			double brightness = Utilities::luminance(this->getPixel(x, y));
+
+			brightness = brightness >= 1.0 ? brightness : 0.0; // 1.0 Threshold
+
+			brightnessImage->setPixel(x, y, Color(brightness, brightness, brightness));
+		}
+	}
+
+	return (brightnessImage);
 }
