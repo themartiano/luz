@@ -10,6 +10,8 @@
 #include <unistd.h>
 #include <algorithm>
 
+void FilterCreation(double GKernel[][5]);
+
 void	Renderer::internal::_manageThreads(Scene& scene)
 {
 	static std::size_t	height = scene.getImage()->getHeight();
@@ -89,6 +91,56 @@ void	Renderer::internal::_manageThreads(Scene& scene)
 		usleep(42 * 1000); // 42ms ~~~ (42 milliseconds * 1000 microseconds)
 	}
 
+	// Bloom
+	if (true) // Will be a var later
+	{
+		Image brightnessImage(scene.getImage()->getWidth(), scene.getImage()->getHeight());
+		brightnessImage.initialize();
+
+		// Defines the brightness image
+		for (std::size_t y = 0; y < brightnessImage.getHeight(); y++)
+		{
+			for (std::size_t x = 0; x < brightnessImage.getWidth(); x++)
+			{
+				double brightness = Utilities::luminance(scene.getImage()->getPixel(x, y));
+				brightness = brightness >= 1.0 ? brightness : 0.0;
+				brightnessImage.setPixel(x, y, Color(brightness, brightness, brightness));
+			}
+		}
+
+		double GKernel[5][5];
+		FilterCreation(GKernel);
+
+		// Blurs the brightness image
+		for (std::size_t y = 0 + 2; y < brightnessImage.getHeight() - 2; y++)
+		{
+			for (std::size_t x = 0 + 2; x < brightnessImage.getWidth() - 2; x++)
+			{
+				Color result(0.0, 0.0, 0.0);
+
+				for (int bx = -2; bx <= 2; bx++) {
+					for (int by = -2; by <= 2; by++) {
+						double blurVal = GKernel[bx + 2][by + 2];
+
+						result += brightnessImage.getPixel(x - bx, y - by) * blurVal; // R * blurVal, G * blurVal, B * blurVal
+					}
+				}
+
+				brightnessImage.setPixel(x, y, result);
+			}
+		}
+
+		// Adds the blurred brightness image to the original image
+		for (std::size_t y = 0; y < brightnessImage.getHeight(); y++)
+		{
+			for (std::size_t x = 0; x < brightnessImage.getWidth(); x++)
+			{
+				Color result = scene.getImage()->getPixel(x, y) + brightnessImage.getPixel(x, y);
+				scene.getImage()->setPixel(x, y, result);
+			}
+		}
+	}
+
 	if (scene.getToneMapped())
 	{
 		scene.getImage()->toneMap();
@@ -99,6 +151,31 @@ void	Renderer::internal::_manageThreads(Scene& scene)
 		scene.getImage()->gammaCorrect();
 	}
 }
+
+void FilterCreation(double GKernel[][5])
+{
+	// initialising standard deviation to 1.0
+	double sigma = 1.0;
+	double r, s = 2.0 * sigma * sigma;
+
+	// sum is for normalization
+	double sum = 0.0;
+
+	// generating 5x5 kernel
+	for (int x = -2; x <= 2; x++) {
+		for (int y = -2; y <= 2; y++) {
+		   r = sqrt(x * x + y * y);
+			GKernel[x + 2][y + 2] = (exp(-(r * r) / s)) / (M_PI * s);
+			sum += GKernel[x + 2][y + 2];
+		}
+	}
+
+	// normalising the Kernel
+	for (int i = 0; i < 5; ++i)
+		for (int j = 0; j < 5; ++j)
+			GKernel[i][j] /= sum;
+}
+
 
 // Renders the pixel color at X, Y
 void	Renderer::internal::_threadRender(Scene& scene, std::size_t x, std::size_t y)

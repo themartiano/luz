@@ -42,18 +42,32 @@ int	main(int argc, char *argv[])
 		scene.getImage()->initialize();
 		scene.setSampleCount(5);
 		scene.setMaxLightBounces(5);
-		scene.setGammaCorrected(true);
 		scene.setRenderSky(SKY_NONE);
 		scene.setDistanceBlueness(false);
 		// scene.setAtmosphere(Atmosphere(0.28, D_EARTH_RADIUS, D_ATMOSPHERE_RADIUS, D_HR, D_HM, 16, 8, 0.468)); // Only needed if Scene.Sky == SKY_ATMOSPHERE
-		scene.setBackgroundColor(Color(0.0, 0.0, 0.0)); // Only needed if Scene.Sky == SKY_NONE
+		scene.setBackgroundColor(Color(0.1, 0.1, 0.1)); // Only needed if Scene.Sky == SKY_NONE
 
 		// Coordinate system ~~ Right Hand ~~ Forward: -Z | Up: +Y | Right: +X
 
-		SceneHelpers::cornellBox(scene, true);
+		scene.addCamera(Camera(Vector3(0.0, 0.0, 0.0), Vector3(0.0, 0.0, 1.0), 39.31, 0.0, 20.0)); // 35 mm
 
-		// scene.addHittable(std::make_shared<Mesh>(readObj("objects/blender_monkey.obj", Vector3(0.0, 0.0, 0.0), std::make_shared<Dielectric>(Color(0.42, 0.42, 0.42)))));
-		// scene.addHittable(std::make_shared<Cube>(Transform(Vector3(0.0, 100.0, 130.0), Vector3(0.0, 0.0, 0.0), Vector3(1.0, 1.0, 1.0)), 100.0, 100.0, 100.0, std::make_shared<Lambertian>(Color(1.0, 1.0, 1.0))));
+		scene.addHittable(std::make_shared<Plane>(
+			-5.0,
+			Vector3(0.0, 1.0, 0.0),
+			std::make_shared<Metal>(Color(0.6, 0.6, 0.6), 0.1)
+		));
+
+		scene.addHittable(std::make_shared<Sphere>(
+			Vector3(10.0, 0.0, 50.0),
+			5.0,
+			std::make_shared<Metal>(Color(0.32, 0.32, 0.32), 0.1)
+		));
+
+		scene.addHittable(std::make_shared<Sphere>(
+			Vector3(0.0, 0.0, 100.0),
+			5.0,
+			std::make_shared<Emissive>(Color(1.0, 1.0, 1.0), 1.0)
+		));
 	}
 
 	if (Renderer::render(scene))
