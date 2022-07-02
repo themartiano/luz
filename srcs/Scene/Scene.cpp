@@ -38,6 +38,7 @@ Scene::Scene(void)
 	this->_isFromFile = false;
 	this->_benchmarkMode = false;
 	this->_renderingThreads = CORE_COUNT;
+	this->_bloom = true;
 }
 
 // Properly frees all allocated memory (destructor)
