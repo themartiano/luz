@@ -141,7 +141,13 @@ void	Image::gammaCorrect(void)
 	{
 		Color& pixel = this->_pixels[i];
 
-		pixel = Color(sqrt(pixel.getRed()), sqrt(pixel.getGreen()), sqrt(pixel.getBlue())); // Gamma (2) correction
+		// sRGB EOTF-1
+		// https://www.khronos.org/registry/DataFormat/specs/1.3/dataformat.1.3.html#TRANSFER_SRGB_INVEOTF
+		pixel = Color(
+			1.055 * std::pow(pixel.getRed(), 1.0 / 2.4) - 0.055,
+			1.055 * std::pow(pixel.getGreen(), 1.0 / 2.4) - 0.055,
+			1.055 * std::pow(pixel.getBlue(), 1.0 / 2.4) - 0.055
+		);
 	}
 }
 
