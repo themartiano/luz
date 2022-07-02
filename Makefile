@@ -83,7 +83,7 @@ DPND := $(OBJS:.o=.d)
 INCLUDES := -Iincludes
 GENERAL_FLAGS := -std=c++2a
 WWW_FLAGS := -Wall -Wextra -Werror
-OPT_FLAGS := -Ofast -ffast-math # ARM: -ffp-model=fast # X86: -ffast-math
+OPT_FLAGS = -Ofast
 INC_FLAGS := -MD
 
 TMP_FILE := Makefile.tmp
@@ -192,6 +192,13 @@ else ifeq ($(shell uname -s),Darwin)
 	DEBUGGER = lldb
 endif
 
+ifeq ($(shell uname -m),x86_64)
+	OPT_FLAGS += -ffast-math
+else ifeq ($(shell uname -m),i686)
+	OPT_FLAGS += -ffast-math
+else ifeq ($(shell uname -m),arm64)
+	OPT_FLAGS += -ffp-model=fast
+endif
 
 ###############################################
 
