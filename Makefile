@@ -154,6 +154,14 @@ else
 	PRE_EXECUTE = clean
 endif
 
+ifeq ($(shell uname -m),x86_64)
+	OPT_FLAGS += -ffast-math
+else ifeq ($(shell uname -m),i686)
+	OPT_FLAGS += -ffast-math
+else ifeq ($(shell uname -m),arm64)
+	OPT_FLAGS += -ffp-model=fast
+endif
+
 # Configure DEBUG
 ifeq ($(DEBUG),1)
 	DEBUG_FLAGS = -g
@@ -190,14 +198,6 @@ ifeq ($(shell uname -s),Linux)
 	DEBUGGER = gdb
 else ifeq ($(shell uname -s),Darwin)
 	DEBUGGER = lldb
-endif
-
-ifeq ($(shell uname -m),x86_64)
-	OPT_FLAGS += -ffast-math
-else ifeq ($(shell uname -m),i686)
-	OPT_FLAGS += -ffast-math
-else ifeq ($(shell uname -m),arm64)
-	OPT_FLAGS += -ffp-model=fast
 endif
 
 ###############################################
