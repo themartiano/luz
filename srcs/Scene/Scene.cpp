@@ -36,6 +36,7 @@ Scene::Scene(void)
 
 	this->_storePixelRenderTimes = false;
 	this->_isFromFile = false;
+	this->_benchmarkMode = false;
 }
 
 // Properly frees all allocated memory (destructor)

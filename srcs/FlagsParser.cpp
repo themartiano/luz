@@ -2,6 +2,7 @@
 #include "Random.hpp"
 #include "SceneFile/SceneFile.hpp"
 #include "Scene/SceneHelpers.hpp"
+#include <unistd.h>
 
 FlagsParser::FlagsParser(int argc, char** argv)
 {
@@ -17,6 +18,7 @@ void	FlagsParser::parse(Scene& scene)
 	this->_parseSamples(scene);
 	this->_parseMaxLightBounces(scene);
 	this->_parseResolution(scene);
+	this->_parseDetach();
 }
 
 FlagsParser::_iterator	FlagsParser::_findFlag(_stringVec flagVariations)
@@ -106,5 +108,31 @@ void	FlagsParser::_parseResolution(Scene& scene)
 		std::string res = *(it + 1);
 		scene.getImage()->setWidth(std::stoi(res.substr(0, res.find("x"))));
 		scene.getImage()->setHeight(std::stoi(res.substr(res.find("x") + 1)));
+	}
+}
+
+void	FlagsParser::_parseDetach(void)
+{
+	auto it = this->_findFlag(_stringVec{"--detach", "--detached", "-d"});
+	if (it != this->_args.end())
+	{
+		int pid = fork();
+		if (pid < 0)
+		{
+			std::cerr << "An error occurred while detaching the process." << std::endl;
+			exit(EXIT_FAILURE);
+		}
+		else if (pid > 0) // Exits the original process
+		{
+			std::cout << "Process detached with success. PID: " << pid << std::endl;
+			exit(EXIT_SUCCESS);
+		}
+		else // Sets the new process as the group owner and closes stdin, stdou and stderr.
+		{
+			setsid();
+			close(STDIN_FILENO);
+			close(STDOUT_FILENO);
+			close(STDERR_FILENO);
+		}
 	}
 }

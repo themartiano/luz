@@ -25,4 +25,5 @@ class	FlagsParser
 		void	_parseSamples(Scene& scene);
 		void	_parseMaxLightBounces(Scene& scene);
 		void	_parseResolution(Scene& scene);
+		void	_parseDetach(void);
 };
