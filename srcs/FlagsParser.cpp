@@ -21,6 +21,8 @@ void	FlagsParser::parse(Scene& scene)
 	this->_parseResolution(scene);
 	this->_parseDetach();
 	this->_parseThreads(scene);
+	this->_parseGamma(scene);
+	this->_parseToneMapping(scene);
 }
 
 FlagsParser::_iterator	FlagsParser::_findFlag(_stringVec flagVariations)
@@ -138,7 +140,8 @@ void	FlagsParser::_parseDetach(void)
 				close(STDERR_FILENO);
 			}
 		#else
-			std::cerr << "Detaching is not supported on this platform." << std::endl << "Continuing without detaching." << std::endl;
+			std::cerr << "Detaching is not supported on this platform." << std::endl;
+			exit(EXIT_FAILURE);
 		#endif
 	}
 }
@@ -156,6 +159,50 @@ void	FlagsParser::_parseThreads(Scene& scene)
 		else
 		{
 			scene.setRenderingThreads(CORE_COUNT);
+		}
+	}
+}
+
+void	FlagsParser::_parseGamma(Scene& scene)
+{
+	auto it = this->_findFlag("--gamma");
+	if (it != this->_args.end())
+	{
+		std::string gamma = *(it + 1);
+		if (gamma == "true" || gamma == "1")
+		{
+			scene.setGammaCorrected(true);
+		}
+		else if (gamma == "false" || gamma == "0")
+		{
+			scene.setGammaCorrected(false);
+		}
+		else
+		{
+			std::cerr << "Invalid value for --gamma." << std::endl << "(true / 1 || false / 0)" << std::endl;
+			exit(EXIT_FAILURE);
+		}
+	}
+}
+
+void	FlagsParser::_parseToneMapping(Scene& scene)
+{
+	auto it = this->_findFlag(_stringVec{"--tonemapping", "-tm"});
+	if (it != this->_args.end())
+	{
+		std::string toneMapping = *(it + 1);
+		if (toneMapping == "true" || toneMapping == "1")
+		{
+			scene.setToneMapped(true);
+		}
+		else if (toneMapping == "false" || toneMapping == "0")
+		{
+			scene.setToneMapped(false);
+		}
+		else
+		{
+			std::cerr << "Invalid value for " << *it << "." << std::endl << "(true / 1 || false / 0)" << std::endl;
+			exit(EXIT_FAILURE);
 		}
 	}
 }
