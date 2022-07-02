@@ -1,6 +1,7 @@
 #include "Scene/SceneHelpers.hpp"
 #include "Hittables/Rectangle.hpp"
 #include "Hittables/Sphere.hpp"
+#include "Hittables/Cube.hpp"
 #include "Materials/Lambertian.hpp"
 #include "Materials/Emissive.hpp"
 #include "Materials/Metal.hpp"
@@ -10,10 +11,9 @@
 // Dimensions and other data from https://www.graphics.cornell.edu/online/box/data.html
 // Small roundings have been done
 // Basic dimensions: 550w X 560d X 550h
-void	SceneHelpers::cornellBox(Scene& scene)
+void	SceneHelpers::cornellBox(Scene& scene, bool cubes)
 {
 	// Camera
-
 	scene.addCamera(Camera(Vector3(0.0, 275.0, -1075.0), Vector3(0.0, 0.0, 1.0), 39.31, 0.0, 20.0));
 
 	// Floor
@@ -57,6 +57,25 @@ void	SceneHelpers::cornellBox(Scene& scene)
 		560.0, 550.0,
 		std::make_shared<Lambertian>(Color(1.0, 0.0, 0.0))
 	));
+
+	if (cubes)
+	{
+		// // Left (back, tall) cube
+		// scene.addHittable(std::make_shared<Cube>(
+		// 	Transform(Vector3(0.0, 165.0, 0.0), Vector3(0.0, 0.0, -1.0), Vector3(1.0, 1.0, 1.0)),
+		// 	50.0,
+		// 	165.0,
+		// 	50.0,
+		// 	std::make_shared<Lambertian>(Color(1.0, 1.0, 1.0))
+		// ));
+
+		// Right (front, short) cube
+	}
+}
+
+void	SceneHelpers::cornellBox(Scene& scene)
+{
+	cornellBox(scene, false);
 }
 
 void	SceneHelpers::benchmark(Scene& scene)

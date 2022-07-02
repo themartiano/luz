@@ -37,11 +37,11 @@ int	main(int argc, char *argv[])
 	FlagsParser(argc, argv).parse(scene);
 	if (!scene.getIsFromFile())
 	{
-		scene.getImage()->setWidth(1000);
-		scene.getImage()->setHeight(1000);
+		scene.getImage()->setWidth(500);
+		scene.getImage()->setHeight(500);
 		scene.getImage()->initialize();
-		scene.setSampleCount(1);
-		scene.setMaxLightBounces(50);
+		scene.setSampleCount(5);
+		scene.setMaxLightBounces(5);
 		scene.setGammaCorrected(true);
 		scene.setRenderSky(SKY_NONE);
 		scene.setDistanceBlueness(false);
@@ -50,9 +50,10 @@ int	main(int argc, char *argv[])
 
 		// Coordinate system ~~ Right Hand ~~ Forward: -Z | Up: +Y | Right: +X
 
-		SceneHelpers::cornellBox(scene);
+		SceneHelpers::cornellBox(scene, true);
 
-		// scene.addHittable(std::make_shared<Mesh>(readObj("objects/blender_monkey.obj", Vector3(0.0, -25.0, -100.0), std::make_shared<Dielectric>(Color(0.42, 0.42, 0.42)))));
+		// scene.addHittable(std::make_shared<Mesh>(readObj("objects/blender_monkey.obj", Vector3(0.0, 0.0, 0.0), std::make_shared<Dielectric>(Color(0.42, 0.42, 0.42)))));
+		// scene.addHittable(std::make_shared<Cube>(Transform(Vector3(0.0, 100.0, 130.0), Vector3(0.0, 0.0, 0.0), Vector3(1.0, 1.0, 1.0)), 100.0, 100.0, 100.0, std::make_shared<Lambertian>(Color(1.0, 1.0, 1.0))));
 	}
 
 	if (Renderer::render(scene))
