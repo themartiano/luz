@@ -16,7 +16,6 @@ void	Renderer::internal::_manageThreads(Scene& scene)
 	static std::size_t	width = scene.getImage()->getWidth();
 	static std::size_t	pixelTotal = width * height;
 
-	static unsigned int	threadCount = CORE_COUNT * THREAD_MULTIPLIER;
 	volatile std::atomic<int> currentRenderPixel(0);
 	std::vector<std::future<void>> futureVector;
 
@@ -26,7 +25,7 @@ void	Renderer::internal::_manageThreads(Scene& scene)
 	volatile std::atomic<std::size_t> oldBlockSize(1);
 
 	// Creates threads.
-	for (unsigned int i = 0; i < threadCount; i++)
+	for (unsigned int i = 0; i < scene.getRenderingThreads(); i++)
 	{
 		futureVector.push_back(
 			std::async([&scene, &currentRenderPixel, &blockRenderDifference, &blockSize, &oldBlockRenderTime, &oldBlockSize]()

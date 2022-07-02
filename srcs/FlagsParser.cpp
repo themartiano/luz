@@ -2,6 +2,7 @@
 #include "Random.hpp"
 #include "SceneFile/SceneFile.hpp"
 #include "Scene/SceneHelpers.hpp"
+#include "Defaults.hpp"
 #include <unistd.h>
 
 FlagsParser::FlagsParser(int argc, char** argv)
@@ -19,6 +20,7 @@ void	FlagsParser::parse(Scene& scene)
 	this->_parseMaxLightBounces(scene);
 	this->_parseResolution(scene);
 	this->_parseDetach();
+	this->_parseThreads(scene);
 }
 
 FlagsParser::_iterator	FlagsParser::_findFlag(_stringVec flagVariations)
@@ -116,7 +118,7 @@ void	FlagsParser::_parseDetach(void)
 	auto it = this->_findFlag(_stringVec{"--detach", "--detached", "-d"});
 	if (it != this->_args.end())
 	{
-		#ifdef __linux__
+		#if defined __linux__ || defined __APPLE__
 			int pid = fork();
 			if (pid < 0)
 			{
@@ -138,5 +140,22 @@ void	FlagsParser::_parseDetach(void)
 		#else
 			std::cerr << "Detaching is not supported on this platform." << std::endl << "Continuing without detaching." << std::endl;
 		#endif
+	}
+}
+
+void	FlagsParser::_parseThreads(Scene& scene)
+{
+	auto it = this->_findFlag(_stringVec{"--threads", "-t"});
+	if (it != this->_args.end())
+	{
+		int threads = std::stoi(*(it + 1));
+		if (threads > 0)
+		{
+			scene.setRenderingThreads(threads);
+		}
+		else
+		{
+			scene.setRenderingThreads(CORE_COUNT);
+		}
 	}
 }

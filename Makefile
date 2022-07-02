@@ -132,20 +132,9 @@ else
 	PRE_EXECUTE = clean
 endif
 
-# Reads WINDOWS option from TMP_FILE if user hasn't provided it
-ifndef WINDOWS
-	ifeq ($(shell awk 'NR==4 {print $$3}' $(TMP_FILE)),1)
-		WINDOWS = 1
-	else
-		WINDOWS = 0
-	endif
-else
-	PRE_EXECUTE = clean
-endif
-
 # Reads FAST_COMPILATION option from TMP_FILE if user hasn't provided it
 ifndef FAST_COMPILATION
-	ifeq ($(shell awk 'NR==5 {print $$3}' $(TMP_FILE)),1)
+	ifeq ($(shell awk 'NR==4 {print $$3}' $(TMP_FILE)),1)
 		FAST_COMPILATION = 1
 	else
 		FAST_COMPILATION = 0
@@ -190,7 +179,7 @@ ifeq ($(FAST_COMPILATION),1)
 	OPT_FLAGS =
 endif
 
-$(shell echo -e -n "DEBUG = $(DEBUG)\nSANITIZER = $(SANITIZER)\nNO_FLAGS = $(NO_FLAGS)\nWINDOWS = $(WINDOWS)\nFAST_COMPILATION = $(FAST_COMPILATION)" > $(TMP_FILE))
+$(shell echo -e -n "DEBUG = $(DEBUG)\nSANITIZER = $(SANITIZER)\nNO_FLAGS = $(NO_FLAGS)\nFAST_COMPILATION = $(FAST_COMPILATION)" > $(TMP_FILE))
 
 ifeq ($(shell uname -s),Linux)
 	DEBUGGER = gdb
@@ -210,11 +199,11 @@ all: $(PRE_EXECUTE)
 
 $(OBJS_DIR)/%.o: $(SRCS_DIR)/%.cpp
 	$(shell [ ! -d $(@D) ] && mkdir -p $(@D))
-	$(COMPILER) $(COMPILER_FLAGS) $(WWW_FLAGS) $(GENERAL_FLAGS) $(OPT_FLAGS) $(INC_FLAGS) $(DEBUG_FLAGS) $(INCLUDES) -DOS=$(WINDOWS) -c $< -o $@
+	$(COMPILER) $(COMPILER_FLAGS) $(WWW_FLAGS) $(GENERAL_FLAGS) $(OPT_FLAGS) $(INC_FLAGS) $(DEBUG_FLAGS) $(INCLUDES) -c $< -o $@
 
 $(NAME): $(OBJS)
 	@printf "\n[\e[1;34mCompiling $(NAME)\e[0m]\n\n"
-	$(COMPILER) $(COMPILER_FLAGS) $(WWW_FLAGS) $(GENERAL_FLAGS) $(OPT_FLAGS) $(INC_FLAGS) $(DEBUG_FLAGS) $(INCLUDES) $(OBJS) -DOS=$(WINDOWS) -o $(NAME)
+	$(COMPILER) $(COMPILER_FLAGS) $(WWW_FLAGS) $(GENERAL_FLAGS) $(OPT_FLAGS) $(INC_FLAGS) $(DEBUG_FLAGS) $(INCLUDES) $(OBJS) -o $(NAME)
 
 	@printf "\n[\e[0;32mCompilation done. $(NAME) ready.\e[0m]\n"
 

@@ -48,6 +48,8 @@ class	Scene
 		bool		getIsFromFile(void) const;
 		void		setBenchmarkMode(bool benchmarkMode);
 		bool		getBenchmarkMode(void) const;
+		void		setRenderingThreads(std::size_t renderingThreads);
+		std::size_t	getRenderingThreads(void) const;
 
 	private:
 		double					_t_max;
@@ -70,4 +72,5 @@ class	Scene
 		std::vector<double>		_pixelRenderTimes;
 		bool					_isFromFile;
 		bool					_benchmarkMode;
+		std::size_t				_renderingThreads;
 };

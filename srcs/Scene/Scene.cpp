@@ -37,6 +37,7 @@ Scene::Scene(void)
 	this->_storePixelRenderTimes = false;
 	this->_isFromFile = false;
 	this->_benchmarkMode = false;
+	this->_renderingThreads = CORE_COUNT;
 }
 
 // Properly frees all allocated memory (destructor)
@@ -310,4 +311,14 @@ void	Scene::setBenchmarkMode(bool benchmarkMode)
 bool	Scene::getBenchmarkMode(void) const
 {
 	return (this->_benchmarkMode);
+}
+
+void	Scene::setRenderingThreads(std::size_t renderingThreads)
+{
+	this->_renderingThreads = renderingThreads;
+}
+
+std::size_t	Scene::getRenderingThreads(void) const
+{
+	return (this->_renderingThreads);
 }
