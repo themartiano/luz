@@ -2,7 +2,7 @@
 
 **Luz ~ Ray Tracer**
 
-Developed with modern **C++ 20** using nothing but the language itself.
+Developed with modern **C++ 20** using only the language's standard library.
 
 ![Cornell Box 4200samples](https://user-images.githubusercontent.com/32342284/177021592-6b07fe41-f90f-4cc0-8fc9-c6865d8f8f35.jpg)
 ###### Raw output converted from bmp to jpg
