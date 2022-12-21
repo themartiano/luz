@@ -40,34 +40,57 @@ int	main(int argc, char *argv[])
 		scene.getImage()->setWidth(500);
 		scene.getImage()->setHeight(500);
 		scene.getImage()->initialize();
-		scene.setSampleCount(5);
-		scene.setMaxLightBounces(5);
+		scene.setSampleCount(2000);
+		scene.setMaxLightBounces(12);
 		scene.setRenderSky(SKY_NONE);
 		scene.setDistanceBlueness(false);
 		// scene.setAtmosphere(Atmosphere(0.28, D_EARTH_RADIUS, D_ATMOSPHERE_RADIUS, D_HR, D_HM, 16, 8, 0.468)); // Only needed if Scene.Sky == SKY_ATMOSPHERE
-		scene.setBackgroundColor(Color(0.1, 0.1, 0.1)); // Only needed if Scene.Sky == SKY_NONE
+		scene.setBackgroundColor(Color(0.0, 0.0, 0.0)); // Only needed if Scene.Sky == SKY_NONE
 
 		// Coordinate system ~~ Right Hand ~~ Forward: -Z | Up: +Y | Right: +X
 
-		scene.addCamera(Camera(Vector3(0.0, 0.0, 0.0), Vector3(0.0, 0.0, 1.0), 39.31, 0.0, 20.0)); // 35 mm
+		// A bigger aperture means more focus. ?(real aperture == aperture parameter / focus distance)?
+		scene.addCamera(Camera(Vector3(-4.5, 1.0, 4.5), Vector3(0.5, 0.0, -0.5), 39.31, 0.0, 20.0)); // 35 mm
 
 		scene.addHittable(std::make_shared<Plane>(
-			-5.0,
+			0.0,
 			Vector3(0.0, 1.0, 0.0),
-			std::make_shared<Metal>(Color(0.6, 0.6, 0.6), 0.1)
+			std::make_shared<Lambertian>(Color(1.0, 1.0, 1.0))
 		));
 
 		scene.addHittable(std::make_shared<Sphere>(
-			Vector3(10.0, 0.0, 50.0),
-			5.0,
-			std::make_shared<Metal>(Color(0.32, 0.32, 0.32), 0.1)
+			Vector3(0.0, 1.0, 0.0),
+			1.0,
+			std::make_shared<Dielectric>(Color(1.0, 1.0, 2.0))//Color(0.42, 0.42, 1.0))
 		));
 
-		scene.addHittable(std::make_shared<Sphere>(
-			Vector3(0.0, 0.0, 100.0),
+		scene.addHittable(std::make_shared<Rectangle>(
+			Transform(Vector3(-15.0, 2.5, 0.0), Vector3(1.0, 0.0, 0.0), Vector3(1.0, 0.0, 0.0)),
+			10.0,
 			5.0,
-			std::make_shared<Emissive>(Color(1.0, 1.0, 1.0), 1.0)
+			std::make_shared<Emissive>(Color(1.0, 1.0, 1.0), 10.0)
 		));
+
+		// scene.addHittable(std::make_shared<Rectangle>(
+		// 	Transform(Vector3(-10.0, 2.5, -5.0), Vector3(0.0, 0.0, 1.0), Vector3(1.0, 0.0, 0.0)),
+		// 	10.0,
+		// 	5.0,
+		// 	std::make_shared<Lambertian>(Color(1.0, 1.0, 1.0))
+		// ));
+
+		// scene.addHittable(std::make_shared<Rectangle>(
+		// 	Transform(Vector3(-10.0, 2.5, 5.0), Vector3(0.0, 0.0, -1.0), Vector3(1.0, 0.0, 0.0)),
+		// 	10.0,
+		// 	5.0,
+		// 	std::make_shared<Lambertian>(Color(1.0, 1.0, 1.0))
+		// ));
+
+		// scene.addHittable(std::make_shared<Rectangle>(
+		// 	Transform(Vector3(-10.0, 5.0, 0.0), Vector3(0.0, -1.0, 0.0), Vector3(1.0, 0.0, 0.0)),
+		// 	10.0,
+		// 	10.0,
+		// 	std::make_shared<Lambertian>(Color(1.0, 1.0, 1.0))
+		// ));
 	}
 
 	if (Renderer::render(scene))
