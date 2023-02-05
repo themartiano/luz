@@ -138,8 +138,8 @@ Vector3	Sphere::random(const Vector3& origin) const
 
 Vector3 Sphere::randomToSphere(double distanceSquared) const
 {
-	double rand1 = Random::doubleFloat();
-	double rand2 = Random::doubleFloat();
+	double rand1 = randomEngine.doubleFloat();
+	double rand2 = randomEngine.doubleFloat();
 	double z = 1.0 + rand2 * (sqrt(1.0 - this->_radius * this->_radius / distanceSquared) - 1.0);
 
 	double phi = 2.0 * D_PI * rand1;

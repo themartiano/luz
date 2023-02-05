@@ -10,5 +10,5 @@ double SpherePDF::value(const Vector3& direction) const
 
 Vector3 SpherePDF::generate(void) const
 {
-	return (Random::pointInsideUnitSphere());
+	return (randomEngine.pointInsideUnitSphere());
 }

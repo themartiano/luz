@@ -20,10 +20,10 @@ Color	Renderer::internal::_computeAtmosphereColor(Scene& scene, Ray& ray)
 
 	Color atmosphereColor = scene.getAtmosphere().computeIncidentLight(atmosphereRay, atmosphereHitRecord, t_max);
 
-	double random = Random::doubleFloat(0.0, 1.0);
+	double random = randomEngine.doubleFloat(0.0, 1.0);
 	if (random >= 0.9996)
 	{
-		double diff = Random::doubleFloat(scene.getAtmosphere().getStarsBrightness() - 0.2, scene.getAtmosphere().getStarsBrightness() + 0.2) - ((atmosphereColor.getRed() + atmosphereColor.getGreen() + atmosphereColor.getBlue()) / 3.0);
+		double diff = randomEngine.doubleFloat(scene.getAtmosphere().getStarsBrightness() - 0.2, scene.getAtmosphere().getStarsBrightness() + 0.2) - ((atmosphereColor.getRed() + atmosphereColor.getGreen() + atmosphereColor.getBlue()) / 3.0);
 		if (diff < 0.0)
 		{
 			diff = 0.0;

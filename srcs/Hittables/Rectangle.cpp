@@ -151,7 +151,7 @@ Vector3 Rectangle::random(const Vector3& origin) const
 	double halfWidth = this->_width / 2.0;
 	double halfHeight = this->_height / 2.0;
 
-	randomPointInsideRectangle = Vector3(Random::doubleFloat(x - halfWidth, x + halfWidth), y, Random::doubleFloat(z - halfHeight, z + halfHeight));
+	randomPointInsideRectangle = Vector3(randomEngine.doubleFloat(x - halfWidth, x + halfWidth), y, randomEngine.doubleFloat(z - halfHeight, z + halfHeight));
 
 	// if (fabs(this->_transform.getOrientation().getY()) > 0.0)
 	// {

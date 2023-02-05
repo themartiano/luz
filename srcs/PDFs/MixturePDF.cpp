@@ -15,7 +15,7 @@ double MixturePDF::value(const Vector3& direction) const
 
 Vector3 MixturePDF::generate(void) const
 {
-	if (Random::doubleFloat() < 0.5)
+	if (randomEngine.doubleFloat() < 0.5)
 	{
 		return (this->_pdfs[0]->generate());
 	}

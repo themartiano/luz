@@ -3,41 +3,49 @@
 #include "Defaults.hpp"
 #include <cmath>
 
-void	Random::setSeed(unsigned int newSeed)
+Random randomEngine = Random();
+
+Random::Random()
 {
-	seed = newSeed;
-	isSeeded = true;
-	srand(seed);
+	this->_engine = std::mt19937(std::random_device{}()); // Seeds
 }
 
-unsigned int	Random::getSeed(void)
+Random::Random(int_fast32_t seed)
 {
-	return (seed);
+	this->_engine = std::mt19937(seed); // Seeds
+}
+
+void	Random::seed(int_fast32_t newSeed)
+{
+	this->_engine.seed(newSeed);
 }
 
 double	Random::doubleFloat(void)
 {
-	if (!isSeeded) // All other functions use this one to actually generate the random number.
-	{
-		setSeed(time(NULL));
-	}
+	std::uniform_real_distribution<double> dist;
 
-	return (rand() / (RAND_MAX + 1.0));
+	return (dist(this->_engine));
 }
 
 double	Random::doubleFloat(double min, double max)
 {
-	return (min + (max - min) * doubleFloat());
+	std::uniform_real_distribution<double> dist(min, max);
+
+	return (dist(this->_engine));
 }
 
 int	Random::integer(void)
 {
-	return (static_cast<int>(doubleFloat()));
+	std::uniform_int_distribution<int> dist;
+
+	return (dist(this->_engine));
 }
 
 int	Random::integer(int min, int max)
 {
-	return (static_cast<int>(doubleFloat(min, max + 1)));
+	std::uniform_int_distribution<int> dist(min, max);
+
+	return (dist(this->_engine));
 }
 
 // Returns a 3D point (Vector3) that's random and inside a unit sphere (normalized)

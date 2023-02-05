@@ -36,7 +36,7 @@ int	main(int argc, char *argv[])
 	scene.setStorePixelRenderTimes(true); // Test so it works for scene files (before it's natively there)
 
 	FlagsParser(argc, argv).parse(scene);
-	// std::cout << Random::doubleFloat() << std::endl;
+	// std::cout << randomEngine.integer() << std::endl;
 	if (!scene.getIsFromFile())
 	{
 		scene.getImage()->setWidth(500);
