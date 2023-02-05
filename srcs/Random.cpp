@@ -7,12 +7,12 @@ Random randomEngine = Random();
 
 Random::Random()
 {
-	this->_engine = std::mt19937(std::random_device{}()); // Seeds
+	this->_engine = RANDOM_ENGINE(std::random_device{}()); // Seeds
 }
 
 Random::Random(int_fast32_t seed)
 {
-	this->_engine = std::mt19937(seed); // Seeds
+	this->_engine = RANDOM_ENGINE(seed); // Seeds
 }
 
 void	Random::seed(int_fast32_t newSeed)
@@ -22,30 +22,38 @@ void	Random::seed(int_fast32_t newSeed)
 
 double	Random::doubleFloat(void)
 {
-	std::uniform_real_distribution<double> dist;
+	// std::uniform_real_distribution<double> dist;
 
-	return (dist(this->_engine));
+	// return (dist(this->_engine));
+
+	return (this->_engine() / (this->_engine.max() + 1.0));
 }
 
 double	Random::doubleFloat(double min, double max)
 {
-	std::uniform_real_distribution<double> dist(min, max);
+	// std::uniform_real_distribution<double> dist(min, max);
 
-	return (dist(this->_engine));
+	// return (dist(this->_engine));
+
+	return (min + (max - min) * doubleFloat());
 }
 
-int	Random::integer(void)
+unsigned int	Random::integer(void)
 {
-	std::uniform_int_distribution<int> dist;
+	// std::uniform_int_distribution<int> dist;
 
-	return (dist(this->_engine));
+	// return (dist(this->_engine));
+
+	return (this->_engine() / (this->_engine.max() + 1.0));
 }
 
-int	Random::integer(int min, int max)
+unsigned int	Random::integer(int min, int max)
 {
-	std::uniform_int_distribution<int> dist(min, max);
+	// std::uniform_int_distribution<int> dist(min, max);
 
-	return (dist(this->_engine));
+	// return (dist(this->_engine));
+
+	return (min + (max - min) * integer());
 }
 
 // Returns a 3D point (Vector3) that's random and inside a unit sphere (normalized)
