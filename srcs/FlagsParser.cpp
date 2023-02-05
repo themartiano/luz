@@ -50,7 +50,7 @@ void	FlagsParser::_parseSeed(void)
 	auto it = this->_findFlag("--seed");
 	if (it != this->_args.end())
 	{
-		Random::setSeed(std::stoi(*(it + 1)));
+		randomEngine.seed(std::stoi(*(it + 1)));
 	}
 }
 

@@ -40,7 +40,7 @@ bool	Dielectric::scatter(Ray& ray, HitRecord& hitRecord, ScatterRecord& scatterR
 	bool	cannotRefract = refractionRatio * sinTheta > 1.0;
 
 	Vector3	direction;
-	if (cannotRefract || Utilities::schlick(cosTheta, refractionRatio) > Random::doubleFloat())
+	if (cannotRefract || Utilities::schlick(cosTheta, refractionRatio) > randomEngine.doubleFloat())
 	{
 		direction = Utilities::reflect(normalizedDirection, hitRecord.normal);
 	}

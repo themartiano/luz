@@ -18,5 +18,5 @@ double CosinePDF::value(const Vector3& direction) const
 
 Vector3 CosinePDF::generate(void) const
 {
-	return (this->_uvw.local(Random::cosineDirection()));
+	return (this->_uvw.local(randomEngine.cosineDirection()));
 }

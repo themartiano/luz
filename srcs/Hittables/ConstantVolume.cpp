@@ -72,7 +72,7 @@ bool	ConstantVolume::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_
 
 	double rayLength = Utilities::vectorLength(ray.getDirection());
 	double distanceInsideBoundary = (hitRecord2.t0 - hitRecord1.t0) * rayLength;
-	double hitDistance = this->_negativeInverseDensity * log(Random::doubleFloat());
+	double hitDistance = this->_negativeInverseDensity * log(randomEngine.doubleFloat());
 
 	if (hitDistance > distanceInsideBoundary)
 	{

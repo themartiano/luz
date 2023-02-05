@@ -12,7 +12,7 @@ HittablePDF::HittablePDF(std::vector<std::shared_ptr<Hittable>> hittables, const
 {
 	// Throw exception if 'hittables' is empty
 
-	int randomIndex = Random::integer(0, hittables.size() - 1);
+	int randomIndex = randomEngine.integer(0, hittables.size() - 1);
 
 	this->_hittable = hittables.at(randomIndex);
 	this->_origin = origin;

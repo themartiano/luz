@@ -10,8 +10,8 @@ Ray	Renderer::internal::_generateRay(Scene& scene, std::size_t x, std::size_t y)
 	static double width = scene.getImage()->getWidth();
 	static double height = scene.getImage()->getHeight();
 
-	double xU = double(x + Random::doubleFloat()) / (width - 1);
-	double yV = double(y + Random::doubleFloat()) / (height - 1);
+	double xU = double(x + randomEngine.doubleFloat()) / (width - 1);
+	double yV = double(y + randomEngine.doubleFloat()) / (height - 1);
 
 	static Vector3	cameraPosition = scene.getActiveCamera().getPosition();
 	static Vector3	cameraLookDirection = scene.getActiveCamera().getDirection();
@@ -34,7 +34,7 @@ Ray	Renderer::internal::_generateRay(Scene& scene, std::size_t x, std::size_t y)
 	Vector3	offset(0.0, 0.0, 0.0);
 	if (lensRadius > 0.0)
 	{
-		Vector3	rd = Random::pointInsideUnitDisk() * lensRadius;
+		Vector3	rd = randomEngine.pointInsideUnitDisk() * lensRadius;
 		offset = u * rd.getX() + v * rd.getY();
 	}
 
