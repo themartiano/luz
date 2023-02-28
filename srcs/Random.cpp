@@ -44,7 +44,7 @@ unsigned int	Random::integer(void)
 
 	// return (dist(this->_engine));
 
-	return (this->_engine() / (this->_engine.max() + 1.0));
+	return (this->_engine());
 }
 
 unsigned int	Random::integer(int min, int max)
@@ -53,7 +53,7 @@ unsigned int	Random::integer(int min, int max)
 
 	// return (dist(this->_engine));
 
-	return (min + (max - min) * integer());
+	return (min + (max - min) * doubleFloat());
 }
 
 // Returns a 3D point (Vector3) that's random and inside a unit sphere (normalized)
