@@ -26,8 +26,9 @@ void	SceneFile::internal::_readSettingsSection(Scene& scene, std::ifstream& stre
 
 			if (sscanf(line.c_str(), "resolution=%lf,%lf\n", &x, &y) != EOF)
 			{
-				// scene.getImage()->setWidth(x);
-				// scene.getImage()->setHeight(y);
+				scene.getImage()->setWidth(x);
+				scene.getImage()->setHeight(y);
+                scene.getImage()->initialize();
 			}
 		}
 		else if (line.rfind("samples=", 0) != std::string::npos)
