@@ -58,6 +58,15 @@ void	SceneFile::internal::_readSettingsSection(Scene& scene, std::ifstream& stre
 				scene.setGammaCorrected(gammaCorrected);
 			}
 		}
+		else if (line.rfind("bloom=", 0) != std::string::npos)
+		{
+			int useBloom;
+
+			if (sscanf(line.c_str(), "bloom=%d\n", &useBloom) != EOF)
+			{
+				scene.setBloom(useBloom);
+			}
+		}
 		else if (line.rfind("outputfilename=", 0) != std::string::npos)
 		{
 			char outputFileName[256];
