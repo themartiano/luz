@@ -22,8 +22,6 @@ Developed with modern **C++ 20** using only the language's standard library.
 * Emissive materials (**light** emitting objects)
 * **Atmospheric** scattering
 * **Perlin noise** generation
-* Procedural landscape generation
-* Procedural water bodies generation
 * **Sky** rendering with customizable skyline (linear interpolated)
 * Custom (solid) background color (if sky and atmosphere rendering is disabled)
 * **Anti-aliasing**

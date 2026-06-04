@@ -29,19 +29,15 @@ SRCS :=	AABB.cpp \
 		FlagsParser.cpp \
 		Font.cpp \
 		Hittables/BVHNode.cpp \
-		Hittables/Cloud.cpp \
 		Hittables/ConstantVolume.cpp \
 		Hittables/Cube.cpp \
 		Hittables/Hittable.cpp \
-		Hittables/Landscape.cpp \
 		Hittables/Mesh.cpp \
 		Hittables/PerlinSphere.cpp \
 		Hittables/Plane.cpp \
-		Hittables/Procedural.cpp \
 		Hittables/Rectangle.cpp \
 		Hittables/Sphere.cpp \
 		Hittables/Triangle.cpp \
-		Hittables/WaterBody.cpp \
 		ImageFiles/BMP.cpp \
 		ImageFiles/TIFF.cpp \
 		Image.cpp \
