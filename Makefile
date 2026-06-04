@@ -15,130 +15,34 @@
 #######  ~~~   Initial variable setup   ~~~  #######
 
 NAME := Luz
-SRCS_DIR := ./srcs
+TEST_NAME := LuzTests
+SRCS_DIR := ./src
 OBJS_DIR := ./objs
-SRCS :=	AABB.cpp \
-		Atmosphere.cpp \
-		Blur/Gaussian.cpp \
-		Camera.cpp \
-		Charts/Bar.cpp \
-		Charts/Charts.cpp \
-		Clock.cpp \
-		Color.cpp \
-		ExitError.cpp \
-		FlagsParser.cpp \
-		Font.cpp \
-		Hittables/BVHNode.cpp \
-		Hittables/ConstantVolume.cpp \
-		Hittables/Cube.cpp \
-		Hittables/Hittable.cpp \
-		Hittables/Mesh.cpp \
-		Hittables/PerlinSphere.cpp \
-		Hittables/Plane.cpp \
-		Hittables/Rectangle.cpp \
-		Hittables/Sphere.cpp \
-		Hittables/Triangle.cpp \
-		ImageFiles/BMP.cpp \
-		ImageFiles/TIFF.cpp \
-		Image.cpp \
-		Materials/Dielectric.cpp \
-		Materials/Emissive.cpp \
-		Materials/Isotropic.cpp \
-		Materials/Lambertian.cpp \
-		Materials/Material.cpp \
-		Materials/Metal.cpp \
-		Noise/Perlin.cpp \
-		OBJReader.cpp \
-		ONB.cpp \
-		PDFs/CosinePDF.cpp \
-		PDFs/HittablePDF.cpp \
-		PDFs/MixturePDF.cpp \
-		PDFs/SpherePDF.cpp \
-		Random.cpp \
-		Ray/Ray.cpp \
-		Renderer/Atmospherics.cpp \
-		Renderer/ColorHelper.cpp \
-		Renderer/HitHelper.cpp \
-		Renderer/RayHelper.cpp \
-		Renderer/Renderer.cpp \
-		Renderer/SequenceRenderer.cpp \
-		Renderer/Threads.cpp \
-		Scene/Scene.cpp \
-		Scene/SceneHelpers.cpp \
-		SceneFile/Materials.cpp \
-		SceneFile/Objects.cpp \
-		SceneFile/Scene.cpp \
-		SceneFile/SceneFile.cpp \
-		SceneFile/Settings.cpp \
-		Transform.cpp \
-		Utilities.cpp \
-		Vector3.cpp \
-		main.cpp
-OBJS := $(patsubst %.cpp, $(OBJS_DIR)/%.o, $(SRCS))
+MAIN_SRC := $(SRCS_DIR)/cli/main.cpp
+LIB_SRCS := $(shell find $(SRCS_DIR) -name '*.cpp' ! -path '$(MAIN_SRC)' | sort)
+SRCS := $(LIB_SRCS) $(MAIN_SRC)
+TEST_SRCS := $(LIB_SRCS) tests/Tests.cpp
+OBJS := $(patsubst $(SRCS_DIR)/%.cpp, $(OBJS_DIR)/%.o, $(SRCS))
 DPND := $(OBJS:.o=.d)
 
 COMPILER = clang++
-INCLUDES := -Iincludes
+INCLUDES := -Iinclude/luz
 GENERAL_FLAGS := -std=c++2a
 WWW_FLAGS := -Wall -Wextra -Werror
-OPT_FLAGS = -Ofast
+OPT_FLAGS = -O3
 INC_FLAGS := -MD
-
-TMP_FILE := Makefile.tmp
 SHELL := /bin/bash
+DEBUG ?= 0
+SANITIZER ?= 0
+NO_FLAGS ?= 0
+FAST_COMPILATION ?= 0
+WINDOWS ?= 0
 
 
 ####################################################
 
 
 #######  ~~~   Compilation setup   ~~~  #######
-
-# Ensures that TMP_FILE exists before calling awk
-$(shell touch $(TMP_FILE))
-
-# Reads DEBUG option from TMP_FILE if user hasn't provided it
-ifndef DEBUG
-	ifeq ($(shell awk 'NR==1 {print $$3}' $(TMP_FILE)),1)
-		DEBUG = 1
-	else
-		DEBUG = 0
-	endif
-else
-	PRE_EXECUTE = clean
-endif
-
-# Reads SANITIZER option from TMP_FILE if user hasn't provided it
-ifndef SANITIZER
-	ifeq ($(shell awk 'NR==2 {print $$3}' $(TMP_FILE)),1)
-		SANITIZER = 1
-	else
-		SANITIZER = 0
-	endif
-else
-	PRE_EXECUTE = clean
-endif
-
-# Reads NO_FLAGS option from TMP_FILE if user hasn't provided it
-ifndef NO_FLAGS
-	ifeq ($(shell awk 'NR==3 {print $$3}' $(TMP_FILE)),1)
-		NO_FLAGS = 1
-	else
-		NO_FLAGS = 0
-	endif
-else
-	PRE_EXECUTE = clean
-endif
-
-# Reads FAST_COMPILATION option from TMP_FILE if user hasn't provided it
-ifndef FAST_COMPILATION
-	ifeq ($(shell awk 'NR==4 {print $$3}' $(TMP_FILE)),1)
-		FAST_COMPILATION = 1
-	else
-		FAST_COMPILATION = 0
-	endif
-else
-	PRE_EXECUTE = clean
-endif
 
 ifeq ($(shell uname -m),x86_64)
 	OPT_FLAGS += -ffast-math
@@ -176,8 +80,6 @@ ifeq ($(FAST_COMPILATION),1)
 	OPT_FLAGS =
 endif
 
-$(shell echo -e -n "DEBUG = $(DEBUG)\nSANITIZER = $(SANITIZER)\nNO_FLAGS = $(NO_FLAGS)\nFAST_COMPILATION = $(FAST_COMPILATION)" > $(TMP_FILE))
-
 ifeq ($(shell uname -s),Linux)
 	DEBUGGER = gdb
 else ifeq ($(shell uname -s),Darwin)
@@ -190,7 +92,7 @@ endif
 #######  ~~~   Rules and commands setup   ~~~  #######
 
 .PHONY: all
-all: $(PRE_EXECUTE)
+all:
 	@printf "[\e[1;34mPreparing objects\e[0m]\n\n"
 	@$(MAKE) $(NAME) --no-print-directory
 
@@ -204,17 +106,24 @@ $(NAME): $(OBJS)
 
 	@printf "\n[\e[0;32mCompilation done. $(NAME) ready.\e[0m]\n"
 
+.PHONY: test
+test:
+	@printf "[\e[1;34mCompiling $(TEST_NAME)\e[0m]\n\n"
+	$(COMPILER) $(COMPILER_FLAGS) $(WWW_FLAGS) $(GENERAL_FLAGS) $(OPT_FLAGS) $(DEBUG_FLAGS) $(INCLUDES) $(TEST_SRCS) -o $(TEST_NAME)
+	@printf "\n[\e[1;34mRunning tests\e[0m]\n\n"
+	./$(TEST_NAME)
+
 .PHONY: clean
 clean:
 	@printf "[\e[1;33mCleaning\e[0m]\n\n"
 	rm -f $(OBJS)
 	rm -f $(DPND)
-	@$(shell if [[ "$(shell find $(OBJS_DIR) -type f | wc -l)" -eq "0" ]]; then rm -rf $(OBJS_DIR); fi;)
+	@if [[ -d "$(OBJS_DIR)" && "$$(find $(OBJS_DIR) -type f | wc -l)" -eq "0" ]]; then rm -rf $(OBJS_DIR); fi;
 
 .PHONY: fclean
 fclean: clean
 	rm -f $(NAME)
-	rm -f $(TMP_FILE)
+	rm -f $(TEST_NAME)
 
 .PHONY: re
 re:
@@ -224,24 +133,29 @@ re:
 
 .PHONY: noflags
 noflags:
+	@$(MAKE) clean --no-print-directory
 	@$(MAKE) all NO_FLAGS=1 --no-print-directory
 
 .PHONY: debugger
 debugger:
+	@$(MAKE) clean --no-print-directory
 	@$(MAKE) all DEBUG=1 --no-print-directory
 	@printf "\n[\e[1;34mStarting $(DEBUGGER)\e[0m]\n\n"
 	$(DEBUGGER) ./$(NAME)
 
 .PHONY: debug
 debug:
+	@$(MAKE) clean --no-print-directory
 	@$(MAKE) all DEBUG=1 --no-print-directory
 
 .PHONY: sanitizer
 sanitizer:
+	@$(MAKE) clean --no-print-directory
 	@$(MAKE) all SANITIZER=1 --no-print-directory
 
 .PHONY: windows
 windows:
+	@$(MAKE) clean --no-print-directory
 	@$(MAKE) all WINDOWS=1 --no-print-directory
 
 .PHONY: unix
@@ -250,6 +164,7 @@ unix:
 
 .PHONY: fast
 fast:
+	@$(MAKE) clean --no-print-directory
 	@$(MAKE) all FAST_COMPILATION=1 --no-print-directory
 
 .PHONY: benchmark

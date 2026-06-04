@@ -5,8 +5,12 @@
 *.d
 *.out
 *.dSYM
-Luz
-Luz.exe
+/Luz
+/Luz.exe
+/LuzTests
+/LuzTests.exe
+build/
+cmake-build-*/
 .idea
 .DS_Store
 .vscode
@@ -14,6 +18,7 @@ render.bmp
 render.tiff
 sequence/**
 objs
+renders/
 Makefile.tmp
 perlinNoise.bmp
 perlinNoise.tiff
