@@ -39,6 +39,16 @@ The parser is intentionally strict: unknown lines and malformed values throw an 
 | `atmosphere` | `atmosphere=SUN,EARTH_RADIUS,ATMOSPHERE_RADIUS,HR,HM,SAMPLES,LIGHT_SAMPLES,STARS` | Only valid after `sky=atmosphere`. |
 | `distanceblueness` | `distanceblueness=0` or `distanceblueness=1` | Enables distance blue tinting when set to `1`. |
 
+### Denoising Notes
+
+`denoise=1` has no hard minimum resolution or sample count, but NFOR needs
+enough signal to estimate useful color and feature statistics. One sample per
+pixel is not a good quality target: there is no per-pixel variance estimate, so
+the denoised image can look almost unchanged or can smooth the wrong details.
+Use at least a few samples per pixel for quick previews, and prefer roughly 16+
+samples per pixel when judging denoiser quality. Very low resolutions can also
+be misleading because each local filter window covers too much of the image.
+
 ## Scene
 
 Each scene needs at least one camera:

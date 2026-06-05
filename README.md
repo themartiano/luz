@@ -105,6 +105,20 @@ Usage: ./Luz [options]
   --benchmark-case NAME       Benchmark case: default, many-objects, mesh-bvh, diffuse, postprocess, atmosphere, lights, emissive-geometry, primitives-materials, volumes, obj-mesh
 ```
 
+## Denoising
+
+`--denoise` enables Luz's NFOR-style feature-buffer denoiser and writes a
+separate companion image. By default, `render.bmp` becomes
+`render_denoised.bmp`; use `--denoise-output PATH` to choose the exact path.
+
+The denoiser has no hard minimum resolution or sample count, but it needs enough
+signal to estimate useful color and feature statistics. One sample per pixel is
+mainly a stress test: there is no per-pixel variance estimate, so the denoised
+image can look almost unchanged or can smooth the wrong details. Use at least a
+few samples per pixel for previews, and prefer roughly 16+ samples per pixel
+when judging denoiser quality. Very low resolutions also make evaluation
+misleading because each local filter window covers too much of the image.
+
 ## Scene Files
 
 Example scenes live in `examples/scenes/`. Mesh assets live in `assets/objects/`. The scene-file format is documented in [`docs/scene-files.md`](docs/scene-files.md).
