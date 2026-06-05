@@ -46,6 +46,19 @@ Run the deterministic benchmark scene:
 ./Luz --benchmark --seed 424242424 --threads 1
 ```
 
+Run the containerized benchmark matrix and save raw results:
+
+```sh
+make benchmark BENCH_CPUS=1 BENCH_THREADS=1 > before.csv
+```
+
+After an optimization, run it again and compare medians:
+
+```sh
+make benchmark BENCH_CPUS=1 BENCH_THREADS=1 > after.csv
+make benchmark-compare BEFORE=before.csv AFTER=after.csv
+```
+
 ## CMake
 
 A CMake build is also available:
@@ -72,6 +85,7 @@ Usage: ./Luz [options]
   --bloom true|false          Toggle bloom
   --render-times              Write renderTime.bmp
   --benchmark                 Run the built-in benchmark scene
+  --benchmark-case NAME       Benchmark case: default, many-objects, mesh-bvh, diffuse, postprocess, atmosphere
 ```
 
 ## Scene Files

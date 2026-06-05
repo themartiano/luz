@@ -8,6 +8,25 @@
 #include "Random.hpp"
 #include <cmath>
 
+namespace
+{
+	Color	clampRayColor(Color color)
+	{
+		const double luminance = Utilities::luminance(color);
+
+		if (!std::isfinite(luminance))
+		{
+			return (Color(0.0, 0.0, 0.0));
+		}
+		if (luminance > D_MAX_RAY_COLOR_LUMINANCE)
+		{
+			color = color * (D_MAX_RAY_COLOR_LUMINANCE / luminance);
+		}
+
+		return (color);
+	}
+}
+
 Color	Renderer::internal::_calculatePixelColor(Scene& scene, std::size_t x, std::size_t y)
 {
 	Ray	ray = internal::_generateRay(scene, x, y);
@@ -56,7 +75,7 @@ Color	Renderer::internal::_calculateLightRaysColor(Ray& ray, Scene& scene, int b
 
 	if (scatterRecord.isSpecular)
 	{
-		return (scatterRecord.attenuation * _calculateLightRaysColor(scatterRecord.specularRay, scene, bounces + 1));
+		return (clampRayColor(scatterRecord.attenuation * _calculateLightRaysColor(scatterRecord.specularRay, scene, bounces + 1)));
 	}
 
 	double	pdfValue;
@@ -75,10 +94,12 @@ Color	Renderer::internal::_calculateLightRaysColor(Ray& ray, Scene& scene, int b
 		pdfValue = pdf->value(scattered.getDirection());
 	}
 
-	if (pdfValue < 0.5) // Clamping to fix fireflies
+	if (pdfValue <= 0.0 || !std::isfinite(pdfValue))
 	{
-		pdfValue = 0.5;
+		return (emitted);
 	}
 
-	return (emitted + scatterRecord.attenuation * hitRecord.material->scatteringPDF(scattered, hitRecord) * _calculateLightRaysColor(scattered, scene, bounces + 1) / pdfValue);
+	const Color contribution = scatterRecord.attenuation * hitRecord.material->scatteringPDF(scattered, hitRecord) * _calculateLightRaysColor(scattered, scene, bounces + 1) / pdfValue;
+
+	return (emitted + clampRayColor(contribution));
 }

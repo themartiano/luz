@@ -112,15 +112,40 @@ bool	Rectangle::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) 
 	return (true);
 }
 
-// Creates an AABB / bounding box for this Rectanglstd::shared_ptr<Material>e
+// Creates an AABB / bounding box for this Rectangle
 bool	Rectangle::createBoundingBox(AABB& outputBoundingBox) const
 {
-	// outputBoundingBox = AABB(
-	//	 Vector3(this->_x0, this->_y0, this->_position.getZ() - T_MIN),
-	//	 Vector3(this->_x1, this->_y1, this->_position.getZ() + T_MIN));
+	const Vector3 position = this->_transform.getPosition();
+	const Vector3 orientation = this->_transform.getOrientation();
+	const double halfWidth = this->_width / 2.0;
+	const double halfHeight = this->_height / 2.0;
 
-	return (true);
-	(void)outputBoundingBox;
+	if (fabs(orientation.getY()) > 0.0)
+	{
+		outputBoundingBox = AABB(
+			Vector3(position.getX() - halfWidth, position.getY() - T_MIN, position.getZ() - halfHeight),
+			Vector3(position.getX() + halfWidth, position.getY() + T_MIN, position.getZ() + halfHeight)
+		);
+		return (true);
+	}
+	if (fabs(orientation.getZ()) > 0.0)
+	{
+		outputBoundingBox = AABB(
+			Vector3(position.getX() - halfWidth, position.getY() - halfHeight, position.getZ() - T_MIN),
+			Vector3(position.getX() + halfWidth, position.getY() + halfHeight, position.getZ() + T_MIN)
+		);
+		return (true);
+	}
+	if (fabs(orientation.getX()) > 0.0)
+	{
+		outputBoundingBox = AABB(
+			Vector3(position.getX() - T_MIN, position.getY() - halfHeight, position.getZ() - halfWidth),
+			Vector3(position.getX() + T_MIN, position.getY() + halfHeight, position.getZ() + halfWidth)
+		);
+		return (true);
+	}
+
+	return (false);
 }
 
 double  Rectangle::pdfValue(const Vector3& origin, const Vector3& vec) const
@@ -151,20 +176,18 @@ Vector3 Rectangle::random(const Vector3& origin) const
 	double halfWidth = this->_width / 2.0;
 	double halfHeight = this->_height / 2.0;
 
-	randomPointInsideRectangle = Vector3(randomEngine.doubleFloat(x - halfWidth, x + halfWidth), y, randomEngine.doubleFloat(z - halfHeight, z + halfHeight));
-
-	// if (fabs(this->_transform.getOrientation().getY()) > 0.0)
-	// {
-	//	 randomPointInsideRectangle = Vector3(Random::doubleFloat(x - halfWidth, x + halfWidth), y, Random::doubleFloat(z - halfHeight, z + halfHeight));
-	// }
-	// else if (fabs(this->_transform.getOrientation().getZ()) > 0.0)
-	// {
-	//	 randomPointInsideRectangle = Vector3(Random::doubleFloat(x - halfWidth, x + halfWidth), z, Random::doubleFloat(y - halfHeight, y + halfHeight));
-	// }
-	// else if (fabs(this->_transform.getOrientation().getX()) > 0.0)
-	// {
-	//	 randomPointInsideRectangle = Vector3(Random::doubleFloat(z - halfWidth, z + halfWidth), x, Random::doubleFloat(y - halfHeight, y + halfHeight));
-	// }
+	if (fabs(this->_transform.getOrientation().getY()) > 0.0)
+	{
+		randomPointInsideRectangle = Vector3(randomEngine.doubleFloat(x - halfWidth, x + halfWidth), y, randomEngine.doubleFloat(z - halfHeight, z + halfHeight));
+	}
+	else if (fabs(this->_transform.getOrientation().getZ()) > 0.0)
+	{
+		randomPointInsideRectangle = Vector3(randomEngine.doubleFloat(x - halfWidth, x + halfWidth), randomEngine.doubleFloat(y - halfHeight, y + halfHeight), z);
+	}
+	else if (fabs(this->_transform.getOrientation().getX()) > 0.0)
+	{
+		randomPointInsideRectangle = Vector3(x, randomEngine.doubleFloat(y - halfHeight, y + halfHeight), randomEngine.doubleFloat(z - halfWidth, z + halfWidth));
+	}
 
 	return (Utilities::normalize(randomPointInsideRectangle - origin));
 }

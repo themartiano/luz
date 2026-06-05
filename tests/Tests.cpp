@@ -1,14 +1,20 @@
+#include "AABB.hpp"
 #include "Color.hpp"
 #include "FlagsParser.hpp"
 #include "Image.hpp"
 #include "Materials/Lambertian.hpp"
+#include "PDFs/HittablePDF.hpp"
 #include "Renderer/Renderer.hpp"
 #include "Scene/Scene.hpp"
 #include "SceneFile/SceneFile.hpp"
 #include "Hittables/BVHNode.hpp"
+#include "Hittables/Cube.hpp"
+#include "Hittables/Rectangle.hpp"
 #include "Hittables/Sphere.hpp"
 #include "Hittables/Triangle.hpp"
+#include "Defaults.hpp"
 #include "Random.hpp"
+#include "Transform.hpp"
 #include "Utilities.hpp"
 
 #include <cmath>
@@ -42,6 +48,13 @@ namespace
 	void	requireNear(double actual, double expected, const std::string& message)
 	{
 		require(std::abs(actual - expected) < 0.000001, message);
+	}
+
+	void	requireVectorNear(const Vector3& actual, const Vector3& expected, const std::string& message)
+	{
+		requireNear(actual.getX(), expected.getX(), message + " X component is wrong.");
+		requireNear(actual.getY(), expected.getY(), message + " Y component is wrong.");
+		requireNear(actual.getZ(), expected.getZ(), message + " Z component is wrong.");
 	}
 
 	template <typename Function>
@@ -437,6 +450,144 @@ namespace
 		require(hitRecord.normal.getZ() > 0.0, "Triangle hit normal was not oriented against the ray.");
 	}
 
+	void	testAABBDefaultBounds(void)
+	{
+		const AABB boundingBox;
+
+		requireVectorNear(boundingBox.getMinimum(), Vector3(0.0, 0.0, 0.0), "Default AABB minimum");
+		requireVectorNear(boundingBox.getMaximum(), Vector3(0.0, 0.0, 0.0), "Default AABB maximum");
+	}
+
+	void	testRectangleBoundingBoxes(void)
+	{
+		auto material = std::make_shared<Lambertian>(Color(0.8, 0.8, 0.8));
+		AABB boundingBox;
+
+		Rectangle yRectangle(
+			Transform(Vector3(1.0, 2.0, 3.0), Vector3(0.0, 1.0, 0.0), Vector3(1.0, 1.0, 1.0)),
+			4.0,
+			6.0,
+			material
+		);
+		require(yRectangle.createBoundingBox(boundingBox), "Y-aligned rectangle did not create a bounding box.");
+		requireVectorNear(boundingBox.getMinimum(), Vector3(-1.0, 2.0 - T_MIN, 0.0), "Y-aligned rectangle minimum");
+		requireVectorNear(boundingBox.getMaximum(), Vector3(3.0, 2.0 + T_MIN, 6.0), "Y-aligned rectangle maximum");
+
+		Rectangle zRectangle(
+			Transform(Vector3(1.0, 2.0, 3.0), Vector3(0.0, 0.0, 1.0), Vector3(1.0, 1.0, 1.0)),
+			4.0,
+			6.0,
+			material
+		);
+		require(zRectangle.createBoundingBox(boundingBox), "Z-aligned rectangle did not create a bounding box.");
+		requireVectorNear(boundingBox.getMinimum(), Vector3(-1.0, -1.0, 3.0 - T_MIN), "Z-aligned rectangle minimum");
+		requireVectorNear(boundingBox.getMaximum(), Vector3(3.0, 5.0, 3.0 + T_MIN), "Z-aligned rectangle maximum");
+
+		Rectangle xRectangle(
+			Transform(Vector3(1.0, 2.0, 3.0), Vector3(1.0, 0.0, 0.0), Vector3(1.0, 1.0, 1.0)),
+			4.0,
+			6.0,
+			material
+		);
+		require(xRectangle.createBoundingBox(boundingBox), "X-aligned rectangle did not create a bounding box.");
+		requireVectorNear(boundingBox.getMinimum(), Vector3(1.0 - T_MIN, -1.0, 1.0), "X-aligned rectangle minimum");
+		requireVectorNear(boundingBox.getMaximum(), Vector3(1.0 + T_MIN, 5.0, 5.0), "X-aligned rectangle maximum");
+
+		Rectangle zeroNormalRectangle(
+			Transform(Vector3(1.0, 2.0, 3.0), Vector3(0.0, 0.0, 0.0), Vector3(1.0, 1.0, 1.0)),
+			4.0,
+			6.0,
+			material
+		);
+		require(!zeroNormalRectangle.createBoundingBox(boundingBox), "Zero-normal rectangle created a bounding box.");
+	}
+
+	void	requireRectangleRandomSamplesHit(Rectangle& rectangle, const Vector3& origin, const std::string& message)
+	{
+		for (int i = 0; i < 8; i++)
+		{
+			Ray ray(origin, rectangle.random(origin));
+			HitRecord hitRecord;
+
+			require(rectangle.hit(ray, hitRecord, 0.001, 100.0), message);
+		}
+	}
+
+	void	testRectangleRandomSamplesSupportedAxes(void)
+	{
+		setRandomSeed(123);
+
+		auto material = std::make_shared<Lambertian>(Color(0.8, 0.8, 0.8));
+		Rectangle yRectangle(
+			Transform(Vector3(0.0, 5.0, 0.0), Vector3(0.0, -1.0, 0.0), Vector3(1.0, 1.0, 1.0)),
+			4.0,
+			6.0,
+			material
+		);
+		Rectangle zRectangle(
+			Transform(Vector3(0.0, 0.0, 5.0), Vector3(0.0, 0.0, -1.0), Vector3(1.0, 1.0, 1.0)),
+			4.0,
+			6.0,
+			material
+		);
+		Rectangle xRectangle(
+			Transform(Vector3(5.0, 0.0, 0.0), Vector3(-1.0, 0.0, 0.0), Vector3(1.0, 1.0, 1.0)),
+			4.0,
+			6.0,
+			material
+		);
+
+		requireRectangleRandomSamplesHit(yRectangle, Vector3(0.0, 0.0, 0.0), "Y-aligned rectangle generated a direction that missed.");
+		requireRectangleRandomSamplesHit(zRectangle, Vector3(0.0, 0.0, 0.0), "Z-aligned rectangle generated a direction that missed.");
+		requireRectangleRandomSamplesHit(xRectangle, Vector3(0.0, 0.0, 0.0), "X-aligned rectangle generated a direction that missed.");
+	}
+
+	void	testCubeBoundingBoxAndSetters(void)
+	{
+		auto material = std::make_shared<Lambertian>(Color(0.8, 0.8, 0.8));
+		Cube cube;
+		cube.setTransform(Transform(Vector3(10.0, 20.0, 30.0), Vector3(0.0, 0.0, 1.0), Vector3(1.0, 1.0, 1.0)));
+		cube.setWidth(4.0);
+		cube.setHeight(6.0);
+		cube.setDepth(8.0);
+		cube.setMaterial(material);
+
+		AABB boundingBox;
+		require(cube.createBoundingBox(boundingBox), "Cube did not create a bounding box.");
+		requireVectorNear(boundingBox.getMinimum(), Vector3(8.0, 17.0, 26.0), "Cube minimum");
+		requireVectorNear(boundingBox.getMaximum(), Vector3(12.0, 23.0, 34.0), "Cube maximum");
+
+		HitRecord hitRecord;
+		Ray backFaceRay(Vector3(10.0, 20.0, 40.0), Vector3(0.0, 0.0, -1.0));
+		require(cube.hit(backFaceRay, hitRecord, 0.001, 100.0), "Cube setters did not regenerate back face geometry.");
+		requireNear(hitRecord.t0, 6.0, "Cube back face hit distance is wrong.");
+
+		Ray rightFaceRay(Vector3(20.0, 20.0, 34.0), Vector3(-1.0, 0.0, 0.0));
+		require(cube.hit(rightFaceRay, hitRecord, 0.001, 100.0), "Cube side face did not span the cube depth.");
+		requireNear(hitRecord.t0, 8.0, "Cube side face hit distance is wrong.");
+	}
+
+	void	testHittablePDFAveragesMultipleLights(void)
+	{
+		auto material = std::make_shared<Lambertian>(Color(0.8, 0.8, 0.8));
+		auto visibleLight = std::make_shared<Sphere>(Vector3(0.0, 0.0, -2.0), 0.5, material);
+		auto offAxisLight = std::make_shared<Sphere>(Vector3(10.0, 0.0, -2.0), 0.5, material);
+		const Vector3 origin(0.0, 0.0, 0.0);
+		const Vector3 direction(0.0, 0.0, -1.0);
+
+		HittablePDF singleLightPDF(visibleLight, origin);
+		HittablePDF multiLightPDF(
+			std::vector<std::shared_ptr<Hittable>>{visibleLight, offAxisLight},
+			origin
+		);
+
+		requireNear(
+			multiLightPDF.value(direction),
+			singleLightPDF.value(direction) / 2.0,
+			"Multi-light HittablePDF did not average light densities."
+		);
+	}
+
 	void	requireFlagParseThrows(std::vector<std::string> arguments, const std::string& message)
 	{
 		std::vector<char*> argv;
@@ -528,6 +679,11 @@ int	main(void)
 		testSceneFileRejectsInvalidMaterial();
 		testBVHReturnsClosestHit();
 		testTinyTriangleHitAndNormal();
+		testAABBDefaultBounds();
+		testRectangleBoundingBoxes();
+		testRectangleRandomSamplesSupportedAxes();
+		testCubeBoundingBoxAndSetters();
+		testHittablePDFAveragesMultipleLights();
 		testFlagsRejectInvalidValues();
 		testSettersRejectInvalidValues();
 		testTinyRender();

@@ -1,7 +1,8 @@
-FROM ubuntu:latest
+FROM ubuntu:24.04
 
-# Install dependencies
-RUN apt-get update -y && apt-get install -y make clang bc
+RUN apt-get update -y \
+	&& apt-get install -y --no-install-recommends make clang \
+	&& rm -rf /var/lib/apt/lists/*
 RUN mkdir /Luz
 
 # Copy source files

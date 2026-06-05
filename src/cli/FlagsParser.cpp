@@ -49,7 +49,8 @@ void	FlagsParser::_parseHelp(void)
 			<< "  -tm, --tonemapping true|false  Toggle tone mapping\n"
 			<< "  --bloom true|false          Toggle bloom\n"
 			<< "  --render-times              Write renderTime.bmp\n"
-			<< "  --benchmark                 Run the built-in benchmark scene\n";
+			<< "  --benchmark                 Run the built-in benchmark scene\n"
+			<< "  --benchmark-case NAME       Benchmark case: default, many-objects, mesh-bvh, diffuse, postprocess, atmosphere\n";
 		exit(EXIT_SUCCESS);
 	}
 }
@@ -105,10 +106,21 @@ void	FlagsParser::_parseBenchmark(Scene& scene)
 	auto it = this->_findFlag("--benchmark");
 	if (it != this->_args.end())
 	{
+		std::string benchmarkCase = "default";
+		auto caseIt = this->_findFlag("--benchmark-case");
+		if (caseIt != this->_args.end())
+		{
+			if (caseIt + 1 == this->_args.end())
+			{
+				throw std::runtime_error("--benchmark-case requires a value.");
+			}
+			benchmarkCase = *(caseIt + 1);
+		}
+
 		scene.setIsFromFile(true); // We simulate that it read a scene file.
 		scene.setBenchmarkMode(true);
 
-		SceneHelpers::benchmark(scene);
+		SceneHelpers::benchmark(scene, benchmarkCase);
 
 		scene.getImage()->setWidth(200);
 		scene.getImage()->setHeight(200);

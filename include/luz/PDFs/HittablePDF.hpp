@@ -16,5 +16,5 @@ class   HittablePDF : public PDF
 
 	private:
 		Vector3 _origin;
-		std::shared_ptr<Hittable> _hittable;
+		std::vector<std::shared_ptr<Hittable>> _hittables;
 };
