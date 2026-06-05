@@ -5,6 +5,7 @@
 #include "ANSIColors.hpp"
 #include "ImageFiles/BMP.hpp"
 #include "ImageFiles/TIFF.hpp"
+#include "Hittables/BVHNode.hpp"
 #include "Materials/Emissive.hpp"
 #include <limits>
 #include <utility>
@@ -219,6 +220,51 @@ void	Scene::updateLights(void)
 const std::vector<std::shared_ptr<Hittable>>&	Scene::getLights(void) const
 {
 	return (this->_lights);
+}
+
+void	Scene::updateAccelerationStructure(void)
+{
+	std::vector<std::shared_ptr<Hittable>> boundedHittables;
+
+	this->_unacceleratedHittables.clear();
+	boundedHittables.reserve(this->_hittables.size());
+
+	for (const std::shared_ptr<Hittable>& hittable : this->_hittables)
+	{
+		AABB boundingBox;
+
+		if (hittable->createBoundingBox(boundingBox))
+		{
+			boundedHittables.push_back(hittable);
+		}
+		else
+		{
+			this->_unacceleratedHittables.push_back(hittable);
+		}
+	}
+
+	if (boundedHittables.empty())
+	{
+		this->_accelerationStructure = nullptr;
+	}
+	else if (boundedHittables.size() == 1)
+	{
+		this->_accelerationStructure = boundedHittables[0];
+	}
+	else
+	{
+		this->_accelerationStructure = std::make_shared<BVHNode>(boundedHittables);
+	}
+}
+
+const std::shared_ptr<Hittable>&	Scene::getAccelerationStructure(void) const
+{
+	return (this->_accelerationStructure);
+}
+
+const std::vector<std::shared_ptr<Hittable>>&	Scene::getUnacceleratedHittables(void) const
+{
+	return (this->_unacceleratedHittables);
 }
 
 bool	Scene::getStorePixelRenderTimes(void) const

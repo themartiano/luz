@@ -24,7 +24,7 @@ Dielectric::Dielectric(Color color, double refractiveIndex)
 bool	Dielectric::scatter(Ray& ray, HitRecord& hitRecord, ScatterRecord& scatterRecord)
 {
 	scatterRecord.isSpecular = true;
-	scatterRecord.pdfPtr = nullptr;
+	scatterRecord.pdfType = SCATTER_PDF_NONE;
 	scatterRecord.attenuation = this->_color;
 
 	double	refractionRatio = this->_refractiveIndex;

@@ -20,6 +20,7 @@ void	Renderer::internal::_manageThreads(Scene& scene)
 	const std::size_t	pixelTotal = width * height;
 	const std::size_t	threadCount = std::max<std::size_t>(1, scene.getRenderingThreads());
 	const std::size_t	blockSize = 16;
+	const RenderCamera	renderCamera = _prepareRenderCamera(scene);
 
 	std::atomic<std::size_t> nextRenderPixel(0);
 	std::atomic<std::size_t> completedRenderPixels(0);
@@ -30,7 +31,7 @@ void	Renderer::internal::_manageThreads(Scene& scene)
 	for (std::size_t i = 0; i < threadCount; i++)
 	{
 		futureVector.push_back(
-			std::async(std::launch::async, [&scene, &nextRenderPixel, &completedRenderPixels, width, pixelTotal, i]()
+			std::async(std::launch::async, [&scene, &renderCamera, &nextRenderPixel, &completedRenderPixels, width, pixelTotal, i]()
 			{
 				Clock		pixelClock;
 				const bool	storePixelRenderTimes = scene.getStorePixelRenderTimes();
@@ -55,7 +56,7 @@ void	Renderer::internal::_manageThreads(Scene& scene)
 						std::size_t	y = index / width;
 
 						pixelClock.start();
-						_threadRender(scene, x, y);
+						_threadRender(scene, renderCamera, x, y);
 
 						if (storePixelRenderTimes)
 						{
@@ -131,7 +132,7 @@ void	Renderer::internal::_manageThreads(Scene& scene)
 }
 
 // Renders the pixel color at X, Y
-void	Renderer::internal::_threadRender(Scene& scene, std::size_t x, std::size_t y)
+void	Renderer::internal::_threadRender(Scene& scene, const RenderCamera& renderCamera, std::size_t x, std::size_t y)
 {
 	const int	sampleCount = scene.getSampleCount();
 
@@ -139,7 +140,7 @@ void	Renderer::internal::_threadRender(Scene& scene, std::size_t x, std::size_t 
 
 	for (int samples = 0; samples < sampleCount; samples++)
 	{
-		pixelColor += _calculatePixelColor(scene, x, y);
+		pixelColor += _calculatePixelColor(scene, renderCamera, x, y);
 	}
 	pixelColor /= sampleCount;
 

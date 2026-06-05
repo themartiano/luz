@@ -39,6 +39,9 @@ class	Scene
 		void		setDefaultRenderOutputFileName(std::string defaultRenderOutputFileName);
 		void		updateLights(void);
 		const std::vector<std::shared_ptr<Hittable>>& getLights(void) const;
+		void		updateAccelerationStructure(void);
+		const std::shared_ptr<Hittable>&	getAccelerationStructure(void) const;
+		const std::vector<std::shared_ptr<Hittable>>&	getUnacceleratedHittables(void) const;
 		bool		getStorePixelRenderTimes(void) const;
 		void		setStorePixelRenderTimes(bool storePixelRenderTime);
 		void		setPixelRenderTime(std::size_t x, std::size_t y, double renderTime);
@@ -71,6 +74,8 @@ class	Scene
 		size_t					_activeCamera;
 		std::vector<std::shared_ptr<Hittable>>	_hittables;
 		std::vector<std::shared_ptr<Hittable>>	_lights;
+		std::shared_ptr<Hittable>	_accelerationStructure;
+		std::vector<std::shared_ptr<Hittable>>	_unacceleratedHittables;
 		bool					_storePixelRenderTimes;
 		std::vector<double>		_pixelRenderTimes;
 		bool					_isFromFile;
