@@ -50,7 +50,7 @@ void	FlagsParser::_parseHelp(void)
 			<< "  --bloom true|false          Toggle bloom\n"
 			<< "  --render-times              Write renderTime.bmp\n"
 			<< "  --benchmark                 Run the built-in benchmark scene\n"
-			<< "  --benchmark-case NAME       Benchmark case: default, many-objects, mesh-bvh, diffuse, postprocess, atmosphere\n";
+			<< "  --benchmark-case NAME       Benchmark case: default, many-objects, mesh-bvh, diffuse, postprocess, atmosphere, lights, emissive-geometry, primitives-materials, volumes, obj-mesh\n";
 		exit(EXIT_SUCCESS);
 	}
 }

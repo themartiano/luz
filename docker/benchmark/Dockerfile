@@ -9,6 +9,7 @@ RUN mkdir /Luz
 COPY ./src /Luz/src
 COPY ./include /Luz/include
 COPY ./tests /Luz/tests
+COPY ./assets /Luz/assets
 COPY ./Makefile /Luz
 
 # Copy scripts

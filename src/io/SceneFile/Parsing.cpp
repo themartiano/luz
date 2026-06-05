@@ -1,4 +1,5 @@
 #include "SceneFileInternal.hpp"
+#include "AssetPath.hpp"
 #include "Utilities.hpp"
 #include <cctype>
 #include <cstdio>
@@ -31,37 +32,7 @@ std::string	SceneFile::internal::_lowerCopy(std::string input)
 
 std::string	SceneFile::internal::_resolveAssetPath(const std::filesystem::path& baseDirectory, const std::string& assetPath)
 {
-	const std::filesystem::path path(assetPath);
-
-	if (path.is_absolute())
-	{
-		return (path.string());
-	}
-
-	const std::filesystem::path sceneRelativePath = baseDirectory / path;
-	if (!baseDirectory.empty() && std::filesystem::exists(sceneRelativePath))
-	{
-		return (sceneRelativePath.string());
-	}
-
-	if (std::filesystem::exists(path))
-	{
-		return (path.string());
-	}
-
-	const std::filesystem::path assetsPath = std::filesystem::path("assets/objects") / path;
-	if (std::filesystem::exists(assetsPath))
-	{
-		return (assetsPath.string());
-	}
-
-	const std::filesystem::path objectsPath = std::filesystem::path("objects") / path;
-	if (std::filesystem::exists(objectsPath))
-	{
-		return (objectsPath.string());
-	}
-
-	return (sceneRelativePath.string());
+	return (AssetPath::resolve(baseDirectory, assetPath));
 }
 
 bool	SceneFile::internal::_parseNamedBlockHeader(const std::string& line, const std::string& keyword, std::string& name)
