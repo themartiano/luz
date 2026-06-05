@@ -182,6 +182,11 @@ Color	Utilities::reinhardJodie(const Color& color)
 	double	l = luminance(color);
 	double	max = fmax(fmax(color.getRed(), color.getGreen()), color.getBlue());
 
+	if (max <= 0.0 || !std::isfinite(max) || !std::isfinite(l))
+	{
+		return (Color(0.0, 0.0, 0.0));
+	}
+
 	return (Color(
 		(color.getRed() * l) / max,
 		(color.getGreen() * l) / max,

@@ -1,0 +1,30 @@
+[settings]
+resolution=720,480
+samples=64
+maxlightbounces=8
+gamma=1
+bloom=1
+sky=linear
+distanceblueness=0
+outputfilename=koenigsegg
+
+[scene]
+camera=(45.0,13.0,48.0),(-45.0,-8.1,-48.0),42,0.10,66.0
+objects{
+# Warm concrete floor
+plane=0.0,(0,1,0),material[
+lambertian=(0.48,0.45,0.39)
+]
+# Large softbox
+rectangle=(0.0,26.0,1.0),(0,-1,0),44.0,32.0,material[
+emissive=(1.0,0.95,0.84),4.0
+]
+# Cool fill light for body highlights
+sphere=(58.0,16.0,60.0),5.0,material[
+emissive=(0.58,0.70,1.0),2.5
+]
+# Koenigsegg mesh
+obj=koenigsegg.obj,(-8.28017,0.06897,-0.39543),material[
+metal=(0.88,0.90,0.86),0.05
+]
+}

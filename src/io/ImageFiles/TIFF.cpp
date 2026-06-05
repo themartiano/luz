@@ -2,14 +2,104 @@
 #include "ANSIColors.hpp"
 #include "Defaults.hpp"
 #include "Utilities.hpp"
+#include <cmath>
+#include <cstdint>
+#include <fstream>
 #include <iostream>
 #include <filesystem>
-#include <utility>
+#include <limits>
+#include <stdexcept>
+#include <vector>
 
-#define PIXEL_BYTES (8 * 3)
-#define RESOLUTION 256
-#define TILE_SIZE 16 // multiple of 16
-#define TILE_COUNT ((RESOLUTION / TILE_SIZE) * (RESOLUTION / TILE_SIZE))
+namespace
+{
+	struct TiffTag
+	{
+		std::uint16_t	id;
+		std::uint16_t	type;
+		std::uint32_t	count;
+		std::uint32_t	valueOrOffset;
+	};
+
+	constexpr std::uint16_t	TIFF_VERSION = 42;
+	constexpr std::uint16_t	TYPE_SHORT = 3;
+	constexpr std::uint16_t	TYPE_LONG = 4;
+	constexpr std::uint16_t	TAG_COUNT = 10;
+	constexpr std::uint32_t	IFD_OFFSET = 8;
+	constexpr std::uint32_t	IFD_BYTE_COUNT = sizeof(std::uint16_t) + (TAG_COUNT * 12) + sizeof(std::uint32_t);
+	constexpr std::uint32_t	BITS_PER_SAMPLE_OFFSET = IFD_OFFSET + IFD_BYTE_COUNT;
+	constexpr std::uint32_t	PIXEL_DATA_OFFSET = BITS_PER_SAMPLE_OFFSET + (3 * sizeof(std::uint16_t));
+
+	void	writeU16(std::ofstream& stream, std::uint16_t value)
+	{
+		const unsigned char bytes[2] = {
+			static_cast<unsigned char>(value & 0xff),
+			static_cast<unsigned char>((value >> 8) & 0xff)
+		};
+
+		stream.write(reinterpret_cast<const char*>(bytes), sizeof(bytes));
+	}
+
+	void	writeU32(std::ofstream& stream, std::uint32_t value)
+	{
+		const unsigned char bytes[4] = {
+			static_cast<unsigned char>(value & 0xff),
+			static_cast<unsigned char>((value >> 8) & 0xff),
+			static_cast<unsigned char>((value >> 16) & 0xff),
+			static_cast<unsigned char>((value >> 24) & 0xff)
+		};
+
+		stream.write(reinterpret_cast<const char*>(bytes), sizeof(bytes));
+	}
+
+	void	writeTag(std::ofstream& stream, const TiffTag& tag)
+	{
+		writeU16(stream, tag.id);
+		writeU16(stream, tag.type);
+		writeU32(stream, tag.count);
+		writeU32(stream, tag.valueOrOffset);
+	}
+
+	std::uint32_t	checkedU32(std::size_t value, const std::string& name)
+	{
+		if (value > std::numeric_limits<std::uint32_t>::max())
+		{
+			throw std::runtime_error("TIFF " + name + " is too large.");
+		}
+
+		return (static_cast<std::uint32_t>(value));
+	}
+
+	unsigned char	colorByte(double value)
+	{
+		if (!std::isfinite(value))
+		{
+			value = 0.0;
+		}
+		Utilities::setDoubleRange(value, 0.0, 1.0);
+		return (static_cast<unsigned char>((value * 255.0) + 0.5));
+	}
+
+	std::vector<unsigned char>	buildPixelData(const std::unique_ptr<Image>& image)
+	{
+		std::vector<unsigned char> pixels;
+
+		pixels.reserve(image->getWidth() * image->getHeight() * 3);
+		for (std::size_t y = 0; y < image->getHeight(); y++)
+		{
+			for (std::size_t x = 0; x < image->getWidth(); x++)
+			{
+				const Color pixel = image->getPixel(x, y);
+
+				pixels.push_back(colorByte(pixel.getRed()));
+				pixels.push_back(colorByte(pixel.getGreen()));
+				pixels.push_back(colorByte(pixel.getBlue()));
+			}
+		}
+
+		return (pixels);
+	}
+}
 
 TIFF::TIFF(void)
 {
@@ -27,74 +117,65 @@ void	TIFF::writeFile(const std::unique_ptr<Image>& image, bool insideDir, std::s
 	std::string filePath = "";
 	if (insideDir == true)
 	{
-		std::filesystem::create_directory(dirName);
+		std::filesystem::create_directories(dirName);
 		filePath = dirName + "/";
 	}
 	filePath += this->_fileName;
 
-	if (!Utilities::stringEndsWith(filePath, ".tiff"))
+	if (!Utilities::stringEndsWith(filePath, ".tiff") && !Utilities::stringEndsWith(filePath, ".tif"))
 	{
 		filePath += ".tiff";
 	}
 
+	if (image->getWidth() == 0 || image->getHeight() == 0)
+	{
+		throw std::runtime_error("Cannot write an empty TIFF image.");
+	}
+
+	const std::uint32_t width = checkedU32(image->getWidth(), "width");
+	const std::uint32_t height = checkedU32(image->getHeight(), "height");
+	const std::vector<unsigned char> pixelData = buildPixelData(image);
+	const std::uint32_t stripByteCount = checkedU32(pixelData.size(), "pixel data");
+	const TiffTag tags[TAG_COUNT] = {
+		{256, TYPE_LONG, 1, width},
+		{257, TYPE_LONG, 1, height},
+		{258, TYPE_SHORT, 3, BITS_PER_SAMPLE_OFFSET},
+		{259, TYPE_SHORT, 1, 1},
+		{262, TYPE_SHORT, 1, 2},
+		{273, TYPE_LONG, 1, PIXEL_DATA_OFFSET},
+		{277, TYPE_SHORT, 1, 3},
+		{278, TYPE_LONG, 1, height},
+		{279, TYPE_LONG, 1, stripByteCount},
+		{284, TYPE_SHORT, 1, 1}
+	};
+
 	std::cout << CLR_YELLOW << "Writing render to " << CLR_BLUE_BRIGHT << filePath << CLR_YELLOW << "...\n" << CLR_RESET;
 
-	FILE* imageFile = fopen(filePath.c_str(), "wb");
-	tiffIFD ifd = _generateIFD();
-
-	// Write header
-	tiffHeader header;
-	header.IFDOffset = sizeof(tiffHeader) + (sizeof(short) * 3) + (TILE_COUNT * sizeof(int) * 2);
-	fwrite(&header, sizeof(tiffHeader), 1, imageFile);
-
-	// Write bits per sample
-	short	bits = 64;
-	for (int i = 0; i < 3; i++)
+	std::ofstream stream(filePath, std::ios::binary);
+	if (!stream)
 	{
-		fwrite(&bits, sizeof(short), 1, imageFile);
+		throw std::runtime_error("Could not open TIFF output file: " + filePath);
 	}
 
-	// Write tile offsets
-	int	baseOffset = sizeof(tiffHeader) + (sizeof(short) * 3) + (TILE_COUNT * sizeof(int) * 2) + (sizeof(short) + (sizeof(tiffTag) * ifd.tagCount) + sizeof(int));
-	for (int i = 0; i < TILE_COUNT; i++)
+	stream.write("II", 2);
+	writeU16(stream, TIFF_VERSION);
+	writeU32(stream, IFD_OFFSET);
+	writeU16(stream, TAG_COUNT);
+	for (const TiffTag& tag : tags)
 	{
-		int offset = baseOffset + (i * TILE_SIZE * TILE_SIZE * PIXEL_BYTES);
-		fwrite(&offset, sizeof(int), 1, imageFile);
+		writeTag(stream, tag);
+	}
+	writeU32(stream, 0);
+	writeU16(stream, 8);
+	writeU16(stream, 8);
+	writeU16(stream, 8);
+	stream.write(reinterpret_cast<const char*>(pixelData.data()), pixelData.size());
+
+	if (!stream)
+	{
+		throw std::runtime_error("Could not write TIFF output file: " + filePath);
 	}
 
-	// Write tile byte count
-	int	tileByteCount = TILE_SIZE * TILE_SIZE * PIXEL_BYTES;
-	for (int i = 0; i < TILE_COUNT; i++)
-	{
-		fwrite(&tileByteCount, sizeof(int), 1, imageFile);
-	}
-
-	// Write IFD
-	fwrite(&ifd.tagCount, sizeof(short), 1, imageFile);
-	fwrite(ifd.tagList, sizeof(tiffTag), ifd.tagCount, imageFile);
-	fwrite(&ifd.nextIFDOffset, sizeof(int), 1, imageFile);
-	delete[] ifd.tagList;
-
-	std::vector<double> pixelArray;
-	arrayColorToDouble(image, pixelArray);
-
-	// Write bitmap image data
-	for (unsigned int row = 0; row < RESOLUTION / TILE_SIZE; row++)
-	{
-		unsigned int rowPos = (row * TILE_SIZE * image->getWidth() * 3);
-		for (int column = 0; column < RESOLUTION / TILE_SIZE; column++)
-		{
-			unsigned int columnPos = (column * TILE_SIZE * 3);
-			for (unsigned int y = 0; y < TILE_SIZE; y++)
-			{
-				unsigned int tilePos = (y * image->getWidth() * 3);
-
-				fwrite(pixelArray.data() + rowPos + columnPos + tilePos, PIXEL_BYTES, TILE_SIZE, imageFile);
-			}
-		}
-	}
-
-	fclose(imageFile);
 	std::cout << CLR_GREEN_BRIGHT << "File ready.\n\n" << CLR_RESET;
 }
 
@@ -102,108 +183,4 @@ void	TIFF::writeFile(const std::unique_ptr<Image>& image, bool insideDir, std::s
 void	TIFF::writeFile(const std::unique_ptr<Image>& image)
 {
 	writeFile(image, false, "");
-}
-
-TIFF::tiffIFD	TIFF::_generateIFD(void)
-{
-	tiffIFD ifd;
-
-	ifd.tagCount = 15;
-
-	tiffTag*	tags = new tiffTag[ifd.tagCount];
-
-	int tag = 0;
-
-	tags[tag].tagId = 254; // NewSubfileType
-	tags[tag].dataType = 0x04;
-	tags[tag].dataCount = 0x01;
-	tags[tag++].dataOffset = 0;
-
-	tags[tag].tagId = 256; // ImageWidth
-	tags[tag].dataType = 0x03;
-	tags[tag].dataCount = 0x01;
-	tags[tag++].dataOffset = RESOLUTION;
-
-	tags[tag].tagId = 257; // ImageHeight
-	tags[tag].dataType = 0x03;
-	tags[tag].dataCount = 0x01;
-	tags[tag++].dataOffset = RESOLUTION;
-
-	tags[tag].tagId = 258; // BitsPerSample
-	tags[tag].dataType = 0x03;
-	tags[tag].dataCount = 0x03;
-	tags[tag++].dataOffset = 0x08;
-
-	tags[tag].tagId = 259; // Compression (none)
-	tags[tag].dataType = 0x03;
-	tags[tag].dataCount = 0x01;
-	tags[tag++].dataOffset = 1;
-
-	tags[tag].tagId = 262; // PhotometricInterpretation (Color Scheme) (RGB)
-	tags[tag].dataType = 0x03;
-	tags[tag].dataCount = 0x01;
-	tags[tag++].dataOffset = 2;
-
-	tags[tag].tagId = 266; // FillOrder
-	tags[tag].dataType = 0x03;
-	tags[tag].dataCount = 0x01;
-	tags[tag++].dataOffset = 1;
-
-	tags[tag].tagId = 274; // Orientation
-	tags[tag].dataType = 0x03;
-	tags[tag].dataCount = 0x01;
-	tags[tag++].dataOffset = 1;
-
-	tags[tag].tagId = 277; // SamplesPerPixel
-	tags[tag].dataType = 0x03;
-	tags[tag].dataCount = 0x01;
-	tags[tag++].dataOffset = 3;
-
-	tags[tag].tagId = 284; // PlanarConfiguration
-	tags[tag].dataType = 0x03;
-	tags[tag].dataCount = 0x01;
-	tags[tag++].dataOffset = 1;
-
-	tags[tag].tagId = 296; // ResolutionUnit
-	tags[tag].dataType = 0x03;
-	tags[tag].dataCount = 0x01;
-	tags[tag++].dataOffset = 1;
-
-	tags[tag].tagId = 322; // TileWidth
-	tags[tag].dataType = 0x03;
-	tags[tag].dataCount = 0x01;
-	tags[tag++].dataOffset = TILE_SIZE;
-
-	tags[tag].tagId = 323; // TileLength
-	tags[tag].dataType = 0x03;
-	tags[tag].dataCount = 0x01;
-	tags[tag++].dataOffset = TILE_SIZE;
-
-	tags[tag].tagId = 324; // TileOffsets
-	tags[tag].dataType = 0x04;
-	tags[tag].dataCount = TILE_COUNT;
-	tags[tag++].dataOffset = 8 + (sizeof(short) * 3);
-
-	tags[tag].tagId = 325; // TileByteCounts
-	tags[tag].dataType = 0x04;
-	tags[tag].dataCount = TILE_COUNT;
-	tags[tag++].dataOffset = 8 + (sizeof(short) * 3) + (TILE_COUNT * sizeof(int));
-
-	ifd.tagList = tags;
-
-	return (ifd);
-}
-
-void	TIFF::arrayColorToDouble(const std::unique_ptr<Image>& image, std::vector<double>& doubleArray) const
-{
-	const unsigned int capacity = image->data().getCapacity();
-
-	doubleArray.reserve(capacity * 3);
-
-	for (unsigned int i = 0; i < capacity; i++)
-	{
-		doubleArray.push_back(image->data()[i].getRed());
-		doubleArray.push_back(image->data()[i].getGreen());
-		doubleArray.push_back(image->data()[i].getBlue());
-	}
 }

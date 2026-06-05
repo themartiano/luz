@@ -26,6 +26,23 @@
 #include "Random.hpp"
 #include <memory>
 #include <exception>
+#include <string>
+
+static void	saveRenderImage(Scene& scene)
+{
+	std::string outputFileName = scene.getDefaultRenderOutputFileName();
+	std::string lowerOutputFileName = outputFileName;
+
+	Utilities::toLower(lowerOutputFileName);
+	if (Utilities::stringEndsWith(lowerOutputFileName, ".tiff") || Utilities::stringEndsWith(lowerOutputFileName, ".tif"))
+	{
+		scene.getImage()->saveToTIFF(outputFileName);
+	}
+	else
+	{
+		scene.getImage()->saveToBMP(outputFileName);
+	}
+}
 
 // Main function
 int	main(int argc, char *argv[])
@@ -97,7 +114,7 @@ int	main(int argc, char *argv[])
 		{
 			if (!scene.getBenchmarkMode())
 			{
-				scene.getImage()->saveToBMP(scene.getDefaultRenderOutputFileName());
+				saveRenderImage(scene);
 				if (scene.getStorePixelRenderTimes())
 				{
 					std::unique_ptr<Image> debugTime = scene.generateRenderTimeImage();

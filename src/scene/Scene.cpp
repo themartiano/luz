@@ -9,6 +9,7 @@
 #include <limits>
 #include <utility>
 #include <algorithm>
+#include <stdexcept>
 
 /*
 	Constructors & Destructor
@@ -68,6 +69,10 @@ int	Scene::getSampleCount(void) const
 // Sets the Sample Count
 void	Scene::setSampleCount(const int sampleCount)
 {
+	if (sampleCount <= 0)
+	{
+		throw std::invalid_argument("Sample count must be positive.");
+	}
 	this->_sampleCount = sampleCount;
 }
 
@@ -80,6 +85,10 @@ int		Scene::getMaxLightBounces(void) const
 // Sets the Maximum Bounces of Light
 void	Scene::setMaxLightBounces(const int maxLightBounces)
 {
+	if (maxLightBounces < 0)
+	{
+		throw std::invalid_argument("Maximum light bounces must be non-negative.");
+	}
 	this->_maxLightBounces = maxLightBounces;
 }
 
@@ -307,6 +316,10 @@ bool	Scene::getBenchmarkMode(void) const
 
 void	Scene::setRenderingThreads(std::size_t renderingThreads)
 {
+	if (renderingThreads == 0)
+	{
+		throw std::invalid_argument("Rendering thread count must be positive.");
+	}
 	this->_renderingThreads = renderingThreads;
 }
 

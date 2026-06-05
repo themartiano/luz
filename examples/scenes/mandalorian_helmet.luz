@@ -1,0 +1,27 @@
+[settings]
+resolution=700,500
+samples=80
+maxlightbounces=8
+gamma=1
+bloom=1
+sky=atmosphere
+atmosphere=0.22,6360000.0,6420000.0,7994.0,1200.0,16,8,0.12
+distanceblueness=0
+outputfilename=mandalorian_helmet
+
+[scene]
+camera=(6.2,6360003.8,8.2),(-6.2,-1.54,-8.2),46,0.04,10.5
+objects{
+# Sand floor
+plane=6360000.0,(0,1,0),material[
+lambertian=(0.76,0.62,0.43)
+]
+# Warm overhead sun panel
+rectangle=(-2.5,6360011.0,1.5),(0,-1,0),10.0,8.0,material[
+emissive=(1.0,0.86,0.62),3.5
+]
+# Mandalorian helmet
+obj=blender_mandalorian.obj,(-0.01305,6360002.15618,0.02082),material[
+metal=(0.64,0.62,0.56),0.16
+]
+}

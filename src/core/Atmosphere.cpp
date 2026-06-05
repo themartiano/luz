@@ -3,6 +3,7 @@
 #include "Utilities.hpp"
 #include "SystemSpecifics.hpp"
 #include <cmath>
+#include <stdexcept>
 
 /*
 	Constructors
@@ -25,15 +26,14 @@ Atmosphere::Atmosphere(void)
 // Constructs the Atmosphere with custom values
 Atmosphere::Atmosphere(double sunAngle, double earthRadius, double atmosphereRadius, double hR, double hM, int samples, int lightSamples, double starsBrightness)
 {
-	this->_sunAngle = sunAngle;
-	updateSunDirectionVector();
-	this->_earthRadius = earthRadius;
-	this->_atmosphereRadius = atmosphereRadius;
-	this->_hR = hR;
-	this->_hM = hM;
-	this->_samples = samples;
-	this->_lightSamples = lightSamples;
-	this->_starsBrightness = starsBrightness;
+	setSunAngle(sunAngle);
+	setEarthRadius(earthRadius);
+	setAtmosphereRadius(atmosphereRadius);
+	setHR(hR);
+	setHM(hM);
+	setSamples(samples);
+	setLightSamples(lightSamples);
+	setStarsBrightness(starsBrightness);
 }
 
 const Vector3 Atmosphere::betaR(3.8e-6, 13.5e-6, 33.1e-6);
@@ -73,42 +73,70 @@ void	Atmosphere::setSunAngle(double newAngle)
 // Sets the EarthRadius
 void	Atmosphere::setEarthRadius(double earthRadius)
 {
+	if (earthRadius <= 0.0)
+	{
+		throw std::invalid_argument("Earth radius must be positive.");
+	}
 	this->_earthRadius = earthRadius;
 }
 
 // Sets the AtmosphereRadius
 void	Atmosphere::setAtmosphereRadius(double atmosphereRadius)
 {
+	if (atmosphereRadius <= 0.0)
+	{
+		throw std::invalid_argument("Atmosphere radius must be positive.");
+	}
 	this->_atmosphereRadius = atmosphereRadius;
 }
 
 // Sets the HR value
 void	Atmosphere::setHR(double hR)
 {
+	if (hR <= 0.0)
+	{
+		throw std::invalid_argument("Atmosphere HR must be positive.");
+	}
 	this->_hR = hR;
 }
 
 // Sets the HM value
 void	Atmosphere::setHM(double hM)
 {
+	if (hM <= 0.0)
+	{
+		throw std::invalid_argument("Atmosphere HM must be positive.");
+	}
 	this->_hM = hM;
 }
 
 // Sets the Sample count
 void	Atmosphere::setSamples(int samples)
 {
+	if (samples <= 0)
+	{
+		throw std::invalid_argument("Atmosphere sample count must be positive.");
+	}
 	this->_samples = samples;
 }
 
 // Sets the Light Sample count
 void	Atmosphere::setLightSamples(int lightSamples)
 {
+	if (lightSamples <= 0)
+	{
+		throw std::invalid_argument("Atmosphere light sample count must be positive.");
+	}
 	this->_lightSamples = lightSamples;
 }
 
 // Sets the Stars Brightness
 void	Atmosphere::setStarsBrightness(double starsBrightness)
 {
+	if (starsBrightness < 0.0)
+	{
+		throw std::invalid_argument("Stars brightness must be non-negative.");
+	}
 	this->_starsBrightness = starsBrightness;
 }
 

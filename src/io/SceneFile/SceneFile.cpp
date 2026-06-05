@@ -30,15 +30,20 @@ void	SceneFile::read(Scene& scene, std::string fileName)
 		{
 			continue;
 		}
-		Utilities::toLower(line);
+		std::string lowerLine = line;
+		Utilities::toLower(lowerLine);
 
-		if (line.rfind("[settings]", 0) != std::string::npos)
+		if (lowerLine.rfind("[settings]", 0) != std::string::npos)
 		{
 			internal::_readSettingsSection(scene, stream);
 		}
-		else if (line.rfind("[scene]", 0) != std::string::npos)
+		else if (lowerLine.rfind("[scene]", 0) != std::string::npos)
 		{
 			internal::_readSceneSection(scene, stream, baseDirectory);
+		}
+		else
+		{
+			throw std::runtime_error("Unknown scene-file section: " + line);
 		}
 	} while (!stream.eof());
 }

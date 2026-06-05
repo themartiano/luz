@@ -4,6 +4,7 @@
 #include "ImageFiles/TIFF.hpp"
 #include "Utilities.hpp"
 #include <cmath>
+#include <stdexcept>
 
 Image::Image(void)
 {
@@ -26,6 +27,10 @@ std::size_t	Image::getWidth(void) const
 
 void	Image::setWidth(std::size_t width)
 {
+	if (width == 0)
+	{
+		throw std::invalid_argument("Image width must be positive.");
+	}
 	this->_width = width;
 }
 
@@ -36,6 +41,10 @@ std::size_t	Image::getHeight(void) const
 
 void	Image::setHeight(std::size_t height)
 {
+	if (height == 0)
+	{
+		throw std::invalid_argument("Image height must be positive.");
+	}
 	this->_height = height;
 }
 

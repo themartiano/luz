@@ -159,12 +159,19 @@ void	FlagsParser::_parseResolution(Scene& scene)
 			throw std::runtime_error("--resolution requires a value.");
 		}
 		std::string res = *(it + 1);
-		if (res.find("x") == std::string::npos)
+		const std::size_t separator = res.find("x");
+		if (separator == std::string::npos || separator == 0 || separator == res.length() - 1)
 		{
 			throw std::runtime_error("--resolution must use WIDTHxHEIGHT format.");
 		}
-		scene.getImage()->setWidth(std::stoi(res.substr(0, res.find("x"))));
-		scene.getImage()->setHeight(std::stoi(res.substr(res.find("x") + 1)));
+		long long width = std::stoll(res.substr(0, separator));
+		long long height = std::stoll(res.substr(separator + 1));
+		if (width <= 0 || height <= 0)
+		{
+			throw std::runtime_error("--resolution dimensions must be positive.");
+		}
+		scene.getImage()->setWidth(static_cast<std::size_t>(width));
+		scene.getImage()->setHeight(static_cast<std::size_t>(height));
 		scene.getImage()->initialize();
 	}
 }
@@ -210,14 +217,11 @@ void	FlagsParser::_parseThreads(Scene& scene)
 			throw std::runtime_error("--threads requires a value.");
 		}
 		int threads = std::stoi(*(it + 1));
-		if (threads > 0)
+		if (threads <= 0)
 		{
-			scene.setRenderingThreads(threads);
+			throw std::runtime_error("--threads must be positive.");
 		}
-		else
-		{
-			scene.setRenderingThreads(CORE_COUNT);
-		}
+		scene.setRenderingThreads(static_cast<std::size_t>(threads));
 	}
 }
 

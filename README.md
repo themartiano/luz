@@ -76,9 +76,17 @@ Usage: ./Luz [options]
 
 ## Scene Files
 
-Example scenes live in `examples/scenes/`. Mesh assets live in `assets/objects/`.
+Example scenes live in `examples/scenes/`. Mesh assets live in `assets/objects/`. The scene-file format is documented in [`docs/scene-files.md`](docs/scene-files.md).
 
 Object paths in `.luz` files are resolved relative to the scene file first, then relative to the current working directory, then under `assets/objects/`. This means `examples/scenes/demo.luz` can reference `../../assets/objects/pyramid.obj` and still run from the repository root.
+
+OBJ meshes can also be offset and assigned a scene material:
+
+```text
+obj=mesh.obj,(x,y,z),material[
+metal=(0.8,0.8,0.8),0.1
+]
+```
 
 ## Repository Layout
 

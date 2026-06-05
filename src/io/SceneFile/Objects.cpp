@@ -9,6 +9,7 @@
 #include "OBJReader.hpp"
 #include <fstream>
 #include <filesystem>
+#include <stdexcept>
 
 static std::string	resolveAssetPath(const std::filesystem::path& baseDirectory, const std::string& assetPath)
 {
@@ -49,6 +50,8 @@ static std::string	resolveAssetPath(const std::filesystem::path& baseDirectory, 
 void	SceneFile::internal::_readObjectsSubSection(Scene& scene, std::ifstream& stream, const std::filesystem::path& baseDirectory)
 {
 	std::string line;
+	bool closed = false;
+
 	do
 	{
 		getline(stream, line);
@@ -59,6 +62,7 @@ void	SceneFile::internal::_readObjectsSubSection(Scene& scene, std::ifstream& st
 		}
 		if (line == "}")
 		{
+			closed = true;
 			break;
 		}
 		std::string lowerLine = line;
@@ -80,6 +84,7 @@ void	SceneFile::internal::_readObjectsSubSection(Scene& scene, std::ifstream& st
 
 				continue;
 			}
+			throw std::runtime_error("Invalid sphere object: " + line);
 		}
 		else if (lowerLine.rfind("cube=", 0) != std::string::npos)
 		{
@@ -99,6 +104,7 @@ void	SceneFile::internal::_readObjectsSubSection(Scene& scene, std::ifstream& st
 
 				continue;
 			}
+			throw std::runtime_error("Invalid cube object: " + line);
 		}
 		else if (lowerLine.rfind("plane=", 0) != std::string::npos)
 		{
@@ -116,6 +122,7 @@ void	SceneFile::internal::_readObjectsSubSection(Scene& scene, std::ifstream& st
 
 				continue;
 			}
+			throw std::runtime_error("Invalid plane object: " + line);
 		}
 		else if (lowerLine.rfind("rectangle=", 0) != std::string::npos)
 		{
@@ -134,6 +141,7 @@ void	SceneFile::internal::_readObjectsSubSection(Scene& scene, std::ifstream& st
 
 				continue;
 			}
+			throw std::runtime_error("Invalid rectangle object: " + line);
 		}
 		else if (lowerLine.rfind("triangle=", 0) != std::string::npos)
 		{
@@ -152,16 +160,41 @@ void	SceneFile::internal::_readObjectsSubSection(Scene& scene, std::ifstream& st
 
 				continue;
 			}
+			throw std::runtime_error("Invalid triangle object: " + line);
 		}
 		else if (lowerLine.rfind("obj=", 0) != std::string::npos)
 		{
 			std::string strObjFileName = line.substr(std::string("obj=").size());
+			char objFileName[1024];
+			double pX, pY, pZ;
+
+			if (sscanf(strObjFileName.c_str(), "%1023[^,],(%lf,%lf,%lf),material[", objFileName, &pX, &pY, &pZ) == 4)
+			{
+				scene.addHittable(std::make_shared<Mesh>(readObj(
+					resolveAssetPath(baseDirectory, objFileName),
+					Vector3(pX, pY, pZ),
+					internal::_readMaterialSubSection(stream)
+				)));
+
+				continue;
+			}
+
 			if (!strObjFileName.empty())
 			{
 				scene.addHittable(std::make_shared<Mesh>(readObj(resolveAssetPath(baseDirectory, strObjFileName))));
 
 				continue;
 			}
+			throw std::runtime_error("Invalid OBJ object: " + line);
+		}
+		else
+		{
+			throw std::runtime_error("Unknown object line: " + line);
 		}
 	} while (!stream.eof());
+
+	if (!closed)
+	{
+		throw std::runtime_error("Objects section is missing a closing }.");
+	}
 }

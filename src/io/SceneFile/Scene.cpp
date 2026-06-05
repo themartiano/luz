@@ -1,6 +1,7 @@
 #include "SceneFileInternal.hpp"
 #include "Utilities.hpp"
 #include <fstream>
+#include <stdexcept>
 
 // Parses the [scene] section of a Scene file
 void	SceneFile::internal::_readSceneSection(Scene& scene, std::ifstream& stream, const std::filesystem::path& baseDirectory)
@@ -38,10 +39,18 @@ void	SceneFile::internal::_readSceneSection(Scene& scene, std::ifstream& stream,
 
 				scene.addCamera(camera);
 			}
+			else
+			{
+				throw std::runtime_error("Invalid camera line: " + line);
+			}
 		}
 		else if (lowerLine.rfind("objects{", 0) != std::string::npos)
 		{
 			internal::_readObjectsSubSection(scene, stream, baseDirectory);
+		}
+		else
+		{
+			throw std::runtime_error("Unknown scene line: " + line);
 		}
 	} while (!stream.eof());
 }
