@@ -3,7 +3,9 @@
 *.o
 *.a
 *.d
+*.pyc
 *.out
+__pycache__/
 *.dSYM
 /Luz
 /Luz.exe

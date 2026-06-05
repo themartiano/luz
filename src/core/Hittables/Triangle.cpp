@@ -2,12 +2,31 @@
 #include "Utilities.hpp"
 #include "Defaults.hpp"
 #include "Materials/Lambertian.hpp"
+#include "Random.hpp"
 #include <cmath>
 
 namespace
 {
 	const double	TRIANGLE_DETERMINANT_EPSILON = 1e-12;
 	const double	TRIANGLE_NORMAL_LENGTH_EPSILON_SQUARED = 1e-24;
+
+	Vector3	normalizedOrFallback(Vector3 normal, Vector3 fallback)
+	{
+		if (Utilities::vectorLengthSquared(normal) <= TRIANGLE_NORMAL_LENGTH_EPSILON_SQUARED)
+		{
+			return (fallback);
+		}
+		return (Utilities::normalize(normal));
+	}
+
+	Vector3	orientAgainstRay(Vector3 normal, const Ray& ray)
+	{
+		if (Utilities::dot(normal, ray.getDirection()) > 0.0)
+		{
+			return (normal * -1.0);
+		}
+		return (normal);
+	}
 }
 
 /*
@@ -20,6 +39,10 @@ Triangle::Triangle(void)
 	this->_vertex0 = Vector3(0.0, 1.0, 0.0);
 	this->_vertex1 = Vector3(-1.0, 0.0, 0.0);
 	this->_vertex2 = Vector3(1.0, 0.0, 0.0);
+	this->_normal0 = Vector3();
+	this->_normal1 = Vector3();
+	this->_normal2 = Vector3();
+	this->_hasVertexNormals = false;
 	this->_material = std::make_shared<Lambertian>(Color(0.6, 0.6, 0.6));
 }
 
@@ -29,6 +52,33 @@ Triangle::Triangle(Vector3 vertex0, Vector3 vertex1, Vector3 vertex2, std::share
 	this->_vertex0 = vertex0;
 	this->_vertex1 = vertex1;
 	this->_vertex2 = vertex2;
+	this->_normal0 = Vector3();
+	this->_normal1 = Vector3();
+	this->_normal2 = Vector3();
+	this->_hasVertexNormals = false;
+	this->_material = material;
+}
+
+Triangle::Triangle(
+	Vector3 vertex0,
+	Vector3 vertex1,
+	Vector3 vertex2,
+	Vector3 normal0,
+	Vector3 normal1,
+	Vector3 normal2,
+	std::shared_ptr<Material> material
+)
+{
+	this->_vertex0 = vertex0;
+	this->_vertex1 = vertex1;
+	this->_vertex2 = vertex2;
+	this->_normal0 = normal0;
+	this->_normal1 = normal1;
+	this->_normal2 = normal2;
+	this->_hasVertexNormals =
+		Utilities::vectorLengthSquared(normal0) > TRIANGLE_NORMAL_LENGTH_EPSILON_SQUARED
+		&& Utilities::vectorLengthSquared(normal1) > TRIANGLE_NORMAL_LENGTH_EPSILON_SQUARED
+		&& Utilities::vectorLengthSquared(normal2) > TRIANGLE_NORMAL_LENGTH_EPSILON_SQUARED;
 	this->_material = material;
 }
 
@@ -105,11 +155,20 @@ bool	Triangle::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) c
 	}
 
 	hitRecord.t0 = t;
-	if (Utilities::dot(n, ray.getDirection()) > 0.0)
+	Vector3 faceNormal = Utilities::normalize(n);
+	if (this->_hasVertexNormals)
 	{
-		n = n * -1.0;
+		const Vector3 interpolatedNormal =
+			(this->_normal0 * (1.0 - u - v))
+			+ (this->_normal1 * u)
+			+ (this->_normal2 * v);
+		hitRecord.normal = normalizedOrFallback(interpolatedNormal, faceNormal);
 	}
-	hitRecord.normal = Utilities::normalize(n);
+	else
+	{
+		hitRecord.normal = faceNormal;
+	}
+	hitRecord.normal = orientAgainstRay(hitRecord.normal, ray);
 	hitRecord.material = this->_material;
 	hitRecord.position = ray.pointAtRay(hitRecord.t0);
 
@@ -166,4 +225,56 @@ bool	Triangle::createBoundingBox(AABB& outputBoundingBox) const
 	outputBoundingBox = AABB(minimum, maximum);
 
 	return (true);
+}
+
+double	Triangle::area(void) const
+{
+	return (Utilities::vectorLength(Utilities::cross(this->_vertex1 - this->_vertex0, this->_vertex2 - this->_vertex0)) / 2.0);
+}
+
+double	Triangle::pdfValue(const Vector3& origin, const Vector3& vec) const
+{
+	Ray ray(origin, vec);
+	HitRecord hitRecord;
+
+	if (!this->hit(ray, hitRecord, T_MIN, T_MAX))
+	{
+		return (0.0);
+	}
+
+	const double triangleArea = this->area();
+	if (triangleArea <= 0.0)
+	{
+		return (0.0);
+	}
+
+	Vector3 geometricNormal = Utilities::normalize(Utilities::cross(this->_vertex1 - this->_vertex0, this->_vertex2 - this->_vertex0));
+	geometricNormal = orientAgainstRay(geometricNormal, ray);
+
+	const double distanceSquared = hitRecord.t0 * hitRecord.t0 * Utilities::vectorLengthSquared(vec);
+	const double cosine = std::fabs(Utilities::dot(vec, geometricNormal) / Utilities::vectorLength(vec));
+	if (cosine <= 0.0)
+	{
+		return (0.0);
+	}
+
+	return (distanceSquared / (cosine * triangleArea));
+}
+
+Vector3	Triangle::random(const Vector3& origin) const
+{
+	double u = randomEngine.doubleFloat();
+	double v = randomEngine.doubleFloat();
+
+	if (u + v > 1.0)
+	{
+		u = 1.0 - u;
+		v = 1.0 - v;
+	}
+
+	const Vector3 randomPoint = this->_vertex0
+		+ ((this->_vertex1 - this->_vertex0) * u)
+		+ ((this->_vertex2 - this->_vertex0) * v);
+
+	return (Utilities::normalize(randomPoint - origin));
 }

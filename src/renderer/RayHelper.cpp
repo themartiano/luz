@@ -4,6 +4,34 @@
 #include "Utilities.hpp"
 #include <cmath>
 
+namespace
+{
+	Vector3	cameraUpOrFallback(const Vector3& cameraUpDirection, const Vector3& lookDirection)
+	{
+		Vector3 viewUp = cameraUpDirection;
+
+		if (
+			!std::isfinite(viewUp.getX())
+			|| !std::isfinite(viewUp.getY())
+			|| !std::isfinite(viewUp.getZ())
+			|| Utilities::vectorLengthSquared(viewUp) <= 1e-12
+		)
+		{
+			viewUp = Vector3(0.0, 1.0, 0.0);
+		}
+		viewUp = Utilities::normalize(viewUp);
+		if (Utilities::vectorLengthSquared(Utilities::cross(viewUp, lookDirection)) <= 1e-12)
+		{
+			viewUp = Vector3(0.0, 0.0, 1.0);
+		}
+		if (Utilities::vectorLengthSquared(Utilities::cross(viewUp, lookDirection)) <= 1e-12)
+		{
+			viewUp = Vector3(1.0, 0.0, 0.0);
+		}
+		return (viewUp);
+	}
+}
+
 Renderer::internal::RenderCamera	Renderer::internal::_prepareRenderCamera(Scene& scene)
 {
 	RenderCamera renderCamera;
@@ -20,13 +48,15 @@ Renderer::internal::RenderCamera	Renderer::internal::_prepareRenderCamera(Scene&
 
 	const double	viewportWidth = 2.0 * tan(((camera.getFOV() * D_PI) / 180.0) / 2.0);
 	const double	viewportHeight = (renderCamera.height / renderCamera.width) * viewportWidth;
-	const double	focusDistance = camera.getFocusDistance();
+	const double	rawFocusDistance = camera.getFocusDistance();
+	const bool		hasValidFocusDistance = std::isfinite(rawFocusDistance) && rawFocusDistance > 0.0;
+	const double	focusDistance = hasValidFocusDistance ? rawFocusDistance : 1.0;
 
 	const Vector3	w = Utilities::normalize(cameraLookDirection);
-	const Vector3	viewUp(0.0, 1.0, 0.0);
+	const Vector3	viewUp = cameraUpOrFallback(camera.getUpDirection(), w);
 	renderCamera.u = Utilities::normalize(Utilities::cross(viewUp, w));
 	renderCamera.v = Utilities::cross(w, renderCamera.u);
-	renderCamera.lensRadius = camera.getAperture() / 2.0;
+	renderCamera.lensRadius = hasValidFocusDistance ? camera.getAperture() / 2.0 : 0.0;
 	renderCamera.horizontal = renderCamera.u * viewportWidth * focusDistance;
 	renderCamera.vertical = renderCamera.v * viewportHeight * focusDistance;
 	renderCamera.lowerLeftCorner = renderCamera.position

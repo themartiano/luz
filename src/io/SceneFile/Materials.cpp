@@ -3,6 +3,7 @@
 #include "Materials/Metal.hpp"
 #include "Materials/Dielectric.hpp"
 #include "Materials/Emissive.hpp"
+#include "Materials/Principled.hpp"
 #include "Utilities.hpp"
 #include <fstream>
 #include <stdexcept>
@@ -185,7 +186,7 @@ namespace
 			{
 				return (std::make_shared<Metal>(builder.color, builder.fuzz >= 0.0 ? builder.fuzz : builder.roughness));
 			}
-			return (std::make_shared<Lambertian>(builder.color));
+			return (std::make_shared<Principled>(builder.color, builder.metallic, builder.roughness));
 		}
 		if (type == "lambertian")
 		{

@@ -54,6 +54,10 @@ namespace
 			{
 				camera.setDirection(SceneFile::internal::_parseVector3Value(value, key));
 			}
+			else if (key == "up" || key == "updirection" || key == "up_direction")
+			{
+				camera.setUpDirection(SceneFile::internal::_parseVector3Value(value, key));
+			}
 			else if (key == "fov")
 			{
 				camera.setFOV(std::stod(value));
@@ -77,7 +81,7 @@ namespace
 }
 
 // Parses the [scene] section of a Scene file
-void	SceneFile::internal::_readSceneSection(Scene& scene, std::ifstream& stream, const SceneFile::internal::SceneFileContext& context)
+void	SceneFile::internal::_readSceneSection(Scene& scene, std::ifstream& stream, SceneFile::internal::SceneFileContext& context)
 {
 	std::string line;
 	do
@@ -97,10 +101,9 @@ void	SceneFile::internal::_readSceneSection(Scene& scene, std::ifstream& stream,
 
 		if (lowerLine.rfind("camera=", 0) != std::string::npos)
 		{
-			double pX, pY, pZ, dX, dY, dZ, aperture, focusDistance;
-			int fov;
+			double pX, pY, pZ, dX, dY, dZ, fov, aperture, focusDistance;
 
-			if (sscanf(lowerLine.c_str(), "camera=(%lf,%lf,%lf),(%lf,%lf,%lf),%d,%lf,%lf", &pX, &pY, &pZ, &dX, &dY, &dZ, &fov, &aperture, &focusDistance) == 9)
+			if (sscanf(lowerLine.c_str(), "camera=(%lf,%lf,%lf),(%lf,%lf,%lf),%lf,%lf,%lf", &pX, &pY, &pZ, &dX, &dY, &dZ, &fov, &aperture, &focusDistance) == 9)
 			{
 				Camera camera;
 

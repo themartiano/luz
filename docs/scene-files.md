@@ -1,6 +1,7 @@
 # Luz Scene Files
 
-Luz scene files use a small line-oriented format with two top-level sections:
+Luz scene files use a small line-oriented format. Classic scenes can use only
+`[settings]` and `[scene]`:
 
 ```text
 [settings]
@@ -12,6 +13,10 @@ objects{
 object=...
 }
 ```
+
+Exporter-friendly scenes can also use `[materials]` and `[meshes]` sections.
+Do not put blank lines between blocks inside the same section; a blank line ends
+the section.
 
 Blank lines end the current top-level section. Comments are lines whose first character is `#`. Do not put spaces around setting or object keys.
 
@@ -28,6 +33,7 @@ The parser is intentionally strict: unknown lines and malformed values throw an 
 | `bloom` | `bloom=0` or `bloom=1` | Enables bloom when set to `1`. |
 | `outputfilename` | `outputfilename=PATH` | `.bmp` is appended if no `.bmp` suffix is present. |
 | `sky` | `sky=none`, `sky=linear`, or `sky=atmosphere` | Selects background rendering. |
+| `background` | `background=(R,G,B)` | Background color used when `sky=none`. Aliases: `backgroundcolor`, `background_color`. |
 | `atmosphere` | `atmosphere=SUN,EARTH_RADIUS,ATMOSPHERE_RADIUS,HR,HM,SAMPLES,LIGHT_SAMPLES,STARS` | Only valid after `sky=atmosphere`. |
 | `distanceblueness` | `distanceblueness=0` or `distanceblueness=1` | Enables distance blue tinting when set to `1`. |
 
@@ -40,6 +46,19 @@ camera=(x,y,z),(dx,dy,dz),fov,aperture,focusDistance
 ```
 
 The first vector is the camera position. The second vector is the camera direction.
+The `fov` value is horizontal FOV. The `aperture` value is a lens diameter in
+Luz world units; use `0` to disable depth of field.
+
+Named camera blocks also support an optional `up` vector:
+
+| Camera Property | Format | Notes |
+| --- | --- | --- |
+| `position` | `position=(x,y,z)` | Camera origin in Luz world space. |
+| `direction` | `direction=(x,y,z)` | Look direction. It does not need to be normalized. |
+| `up` | `up=(x,y,z)` | Image-up direction used to preserve camera roll. Defaults to `(0,1,0)`. |
+| `fov` | `fov=DEGREES` | Horizontal field of view. |
+| `aperture` | `aperture=DIAMETER` | Lens diameter in Luz world units. |
+| `focusDistance` | `focusDistance=DISTANCE` | Distance to the focal plane along the camera direction. |
 
 Objects are placed inside an `objects{` block:
 
@@ -73,6 +92,7 @@ file=assets/objects/blender_mandalorian.obj
 camera main {
 position=(6.2,3.8,8.2)
 direction=(-6.2,-1.54,-8.2)
+up=(0,1,0)
 fov=46
 aperture=0.04
 focusDistance=10.5
@@ -136,11 +156,11 @@ Color channels are floating point values. The renderer normally expects values i
 Named material blocks can use the direct material lines above, or property syntax:
 
 ```text
+[materials]
 material glass {
 type=dielectric
 color=(1.0,1.0,1.0)
 }
-
 material principled_export {
 type=principled
 base_color=(0.8,0.2,0.1)
@@ -153,8 +173,8 @@ emissionStrength=0
 
 `type=principled` is an approximation for Blender exporter output. Emissive
 principled materials become `emissive`, metallic materials become `metal`,
-transmissive or alpha-blended materials become `dielectric`, and the rest become
-`lambertian`.
+transmissive or alpha-blended materials become `dielectric`, and the rest use
+Luz's rough plastic/specular `principled` approximation.
 
 ## Named Meshes, Objects, And Lights
 

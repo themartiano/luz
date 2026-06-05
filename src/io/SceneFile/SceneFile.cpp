@@ -6,6 +6,32 @@
 #include <filesystem>
 #include <stdexcept>
 
+namespace
+{
+	std::size_t	countSceneMeshLoads(const std::string& fileName)
+	{
+		std::ifstream stream(fileName);
+		std::string line;
+		std::size_t meshLoads = 0;
+
+		while (getline(stream, line))
+		{
+			const std::string lowerLine = SceneFile::internal::_lowerCopy(SceneFile::internal::_trim(line));
+
+			if (lowerLine.empty() || lowerLine.at(0) == '#')
+			{
+				continue;
+			}
+			if (lowerLine.rfind("object ", 0) == 0 || lowerLine.rfind("obj=", 0) == 0)
+			{
+				meshLoads++;
+			}
+		}
+
+		return (meshLoads);
+	}
+}
+
 // Searches and reads / parses the Scene file named 'fileName' into 'Scene' (searches in the current directory)
 void	SceneFile::read(Scene& scene, std::string fileName)
 {
@@ -19,8 +45,14 @@ void	SceneFile::read(Scene& scene, std::string fileName)
 	}
 
 	const std::filesystem::path scenePath(fileName);
+	ObjLoadProgress meshLoadProgress;
 	internal::SceneFileContext context;
 	context.baseDirectory = scenePath.parent_path();
+	meshLoadProgress.total = countSceneMeshLoads(fileName);
+	if (meshLoadProgress.total > 0)
+	{
+		context.meshLoadProgress = &meshLoadProgress;
+	}
 
 	std::string line;
 	do
@@ -55,4 +87,9 @@ void	SceneFile::read(Scene& scene, std::string fileName)
 			throw std::runtime_error("Unknown scene-file section: " + line);
 		}
 	} while (!stream.eof());
+
+	for (const std::shared_future<std::shared_ptr<Hittable>>& pendingMeshLoad : context.pendingMeshLoads)
+	{
+		pendingMeshLoad.get();
+	}
 }

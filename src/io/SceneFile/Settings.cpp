@@ -139,6 +139,20 @@ void	SceneFile::internal::_readSettingsSection(Scene& scene, std::ifstream& stre
 				throw std::runtime_error("Unknown sky setting: " + line);
 			}
 		}
+		else if (
+			lowerLine.rfind("background=", 0) != std::string::npos
+			|| lowerLine.rfind("backgroundcolor=", 0) != std::string::npos
+			|| lowerLine.rfind("background_color=", 0) != std::string::npos
+		)
+		{
+			const std::size_t separator = line.find('=');
+
+			if (separator == std::string::npos || separator == line.length() - 1)
+			{
+				throw std::runtime_error("Invalid background setting. Use background=(R,G,B).");
+			}
+			scene.setBackgroundColor(_parseColorValue(line.substr(separator + 1), "background"));
+		}
 		else if (lowerLine.rfind("atmosphere=", 0) != std::string::npos)
 		{
 			double sunAngle, earthRadius, atmosphereRadius, hR, hM, starsBrightness;

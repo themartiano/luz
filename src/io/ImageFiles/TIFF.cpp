@@ -149,7 +149,7 @@ void	TIFF::writeFile(const std::unique_ptr<Image>& image, bool insideDir, std::s
 		{284, TYPE_SHORT, 1, 1}
 	};
 
-	std::cout << CLR_YELLOW << "Writing render to " << CLR_BLUE_BRIGHT << filePath << CLR_YELLOW << "...\n" << CLR_RESET;
+	std::cout << CLR_YELLOW << "Writing render to " << CLR_BLUE_BRIGHT << filePath << "\n" << CLR_RESET;
 
 	std::ofstream stream(filePath, std::ios::binary);
 	if (!stream)

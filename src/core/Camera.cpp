@@ -9,6 +9,7 @@ Camera::Camera(void)
 {
 	this->_position = Vector3(0.0, 0.0, 15.0);
 	this->_direction = Vector3(0.0, 0.0, -1.0);
+	this->_upDirection = Vector3(0.0, 1.0, 0.0);
 	this->_fov = 65;
 	this->_aperture = 2.0;
 	this->_focusDistance = 10.0;
@@ -19,6 +20,7 @@ Camera::Camera(Vector3 position, Vector3 direction, double fov, double aperture,
 {
 	this->_position = position;
 	this->_direction = direction;
+	this->_upDirection = Vector3(0.0, 1.0, 0.0);
 	this->_fov = fov;
 	this->_aperture = aperture;
 	this->_focusDistance = focusDistance;
@@ -46,6 +48,16 @@ Vector3		Camera::getDirection(void) const
 void	Camera::setDirection(Vector3 direction)
 {
 	this->_direction = direction;
+}
+
+Vector3	Camera::getUpDirection(void) const
+{
+	return (this->_upDirection);
+}
+
+void	Camera::setUpDirection(Vector3 upDirection)
+{
+	this->_upDirection = upDirection;
 }
 
 // Returns the Camera's FOV (Field of View)

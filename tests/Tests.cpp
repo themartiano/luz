@@ -3,12 +3,15 @@
 #include "FlagsParser.hpp"
 #include "Image.hpp"
 #include "Materials/Lambertian.hpp"
+#include "Materials/Principled.hpp"
+#include "OBJReader.hpp"
 #include "PDFs/HittablePDF.hpp"
 #include "Renderer/Renderer.hpp"
 #include "Scene/Scene.hpp"
 #include "SceneFile/SceneFile.hpp"
 #include "Hittables/BVHNode.hpp"
 #include "Hittables/Cube.hpp"
+#include "Hittables/Mesh.hpp"
 #include "Hittables/Rectangle.hpp"
 #include "Hittables/Sphere.hpp"
 #include "Hittables/Triangle.hpp"
@@ -339,6 +342,47 @@ namespace
 		requireSceneFileSettingThrows("atmosphere=0,1,2,3,4,0,1,0", "Scene file accepted zero atmosphere samples.");
 	}
 
+	void	testSceneFileBackgroundSetting(void)
+	{
+		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_background_setting_test.luz";
+		{
+			std::ofstream sceneStream(scenePath);
+			sceneStream
+				<< "[settings]\n"
+				<< "sky=none\n"
+				<< "background=(0.1,0.2,0.3)\n\n";
+		}
+
+		Scene scene;
+		SceneFile::read(scene, scenePath.string());
+
+		const Color background = scene.getBackgroundColor();
+		requireNear(background.getRed(), 0.1, "Background red component was not parsed.");
+		requireNear(background.getGreen(), 0.2, "Background green component was not parsed.");
+		requireNear(background.getBlue(), 0.3, "Background blue component was not parsed.");
+
+		std::filesystem::remove(scenePath);
+	}
+
+	void	testSceneFileLegacyCameraPreservesDecimalFOV(void)
+	{
+		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_legacy_camera_fov_test.luz";
+		{
+			std::ofstream sceneStream(scenePath);
+			sceneStream
+				<< "[scene]\n"
+				<< "camera=(0,0,1),(0,0,-1),35.489342,0,1\n\n";
+		}
+
+		Scene scene;
+		SceneFile::read(scene, scenePath.string());
+
+		require(scene.hasCamera(), "Legacy camera scene did not load a camera.");
+		requireNear(scene.getActiveCamera().getFOV(), 35.489342, "Legacy camera FOV lost decimal precision.");
+
+		std::filesystem::remove(scenePath);
+	}
+
 	void	testSceneFileLoadsRelativeObject(void)
 	{
 		Scene scene;
@@ -421,6 +465,7 @@ namespace
 				<< "camera main {\n"
 				<< "position=(0,0,5)\n"
 				<< "direction=(0,0,-1)\n"
+				<< "up=(0,1,0)\n"
 				<< "fov=45\n"
 				<< "aperture=0\n"
 				<< "focusDistance=5\n"
@@ -451,6 +496,7 @@ namespace
 		SceneFile::read(scene, scenePath.string());
 
 		require(scene.hasCamera(), "Named-block scene did not load a camera.");
+		requireNear(scene.getActiveCamera().getUpDirection().getY(), 1.0, "Named-block camera up vector was not parsed.");
 		require(scene.getHittables().size() == 3, "Named-block scene did not load object and lights.");
 		require(scene.getHittables()[0]->getMaterial()->getType() == METAL, "Principled material did not map to metal.");
 		require(scene.getHittables()[1]->getMaterial()->getType() == EMISSIVE, "Area light did not create an emissive hittable.");
@@ -464,6 +510,62 @@ namespace
 		require(boundingBox.getMinimum().getX() > -0.01 && boundingBox.getMinimum().getX() < 0.01, "Named-block object rotation X minimum is wrong.");
 		require(boundingBox.getMaximum().getY() > 3.99 && boundingBox.getMaximum().getY() < 4.01, "Named-block object rotation Y maximum is wrong.");
 		require(boundingBox.getMinimum().getZ() > 2.99 && boundingBox.getMinimum().getZ() < 3.0, "Named-block object Z offset is wrong.");
+
+		std::filesystem::remove(scenePath);
+		std::filesystem::remove(objectPath);
+	}
+
+	void	testSceneFileLoadsNonMetallicPrincipledMaterial(void)
+	{
+		const std::filesystem::path directory = std::filesystem::temp_directory_path();
+		const std::filesystem::path scenePath = directory / "luz_principled_material_test.luz";
+		const std::filesystem::path objectPath = directory / "luz_principled_material_test.obj";
+		{
+			std::ofstream objectStream(objectPath);
+			objectStream
+				<< "v 0.0 0.0 0.0\n"
+				<< "v 1.0 0.0 0.0\n"
+				<< "v 0.0 1.0 0.0\n"
+				<< "f 1 2 3\n";
+		}
+		{
+			std::ofstream sceneStream(scenePath);
+			sceneStream
+				<< "[settings]\n"
+				<< "resolution=2,2\n\n"
+				<< "[materials]\n"
+				<< "material plastic {\n"
+				<< "type=principled\n"
+				<< "base_color=(0.8,0.8,0.75)\n"
+				<< "metallic=0\n"
+				<< "roughness=0.35\n"
+				<< "}\n\n"
+				<< "[meshes]\n"
+				<< "mesh triangle_mesh {\n"
+				<< "file=" << objectPath.filename().string() << "\n"
+				<< "}\n\n"
+				<< "[scene]\n"
+				<< "camera main {\n"
+				<< "position=(0,0,3)\n"
+				<< "direction=(0,0,-1)\n"
+				<< "fov=45\n"
+				<< "aperture=0\n"
+				<< "focusDistance=3\n"
+				<< "}\n"
+				<< "object triangle {\n"
+				<< "mesh=triangle_mesh\n"
+				<< "position=(0,0,-1)\n"
+				<< "rotation=(0,0,0)\n"
+				<< "scale=(1,1,1)\n"
+				<< "material=plastic\n"
+				<< "}\n";
+		}
+
+		Scene scene;
+		SceneFile::read(scene, scenePath.string());
+
+		require(scene.getHittables().size() == 1, "Principled scene did not load the sphere.");
+		require(scene.getHittables()[0]->getMaterial()->getType() == PRINCIPLED, "Non-metallic principled material did not remain principled.");
 
 		std::filesystem::remove(scenePath);
 		std::filesystem::remove(objectPath);
@@ -529,6 +631,121 @@ namespace
 		requireNear(hitRecord.t0, 1.0, "Tiny triangle returned the wrong hit distance.");
 		requireNear(Utilities::vectorLength(hitRecord.normal), 1.0, "Triangle hit normal was not normalized.");
 		require(hitRecord.normal.getZ() > 0.0, "Triangle hit normal was not oriented against the ray.");
+	}
+
+	void	testTrianglePDFAndRandomSampling(void)
+	{
+		setRandomSeed(123);
+
+		auto material = std::make_shared<Lambertian>(Color(0.8, 0.8, 0.8));
+		Triangle triangle(
+			Vector3(0.0, 0.0, -1.0),
+			Vector3(1.0, 0.0, -1.0),
+			Vector3(0.0, 1.0, -1.0),
+			material
+		);
+		const Vector3 origin(0.25, 0.25, 0.0);
+		const Vector3 direction(0.0, 0.0, -1.0);
+
+		requireNear(triangle.area(), 0.5, "Triangle area is wrong.");
+		requireNear(triangle.pdfValue(origin, direction), 2.0, "Triangle PDF is wrong.");
+
+		for (int i = 0; i < 8; i++)
+		{
+			Ray ray(origin, triangle.random(origin));
+			HitRecord hitRecord;
+
+			require(triangle.hit(ray, hitRecord, 0.001, 100.0), "Triangle generated a random direction that missed.");
+		}
+	}
+
+	void	testTriangleInterpolatesVertexNormals(void)
+	{
+		auto material = std::make_shared<Lambertian>(Color(0.8, 0.8, 0.8));
+		Triangle triangle(
+			Vector3(0.0, 0.0, -1.0),
+			Vector3(1.0, 0.0, -1.0),
+			Vector3(0.0, 1.0, -1.0),
+			Vector3(0.0, 1.0, 1.0),
+			Vector3(0.0, 1.0, 1.0),
+			Vector3(0.0, 1.0, 1.0),
+			material
+		);
+		Ray ray(Vector3(0.25, 0.25, 0.0), Vector3(0.0, 0.0, -1.0));
+		HitRecord hitRecord;
+
+		require(triangle.hit(ray, hitRecord, 0.001, 100.0), "Triangle with vertex normals was not hit.");
+		require(hitRecord.normal.getY() > 0.6, "Triangle did not use interpolated vertex normal Y.");
+		require(hitRecord.normal.getZ() > 0.6, "Triangle did not use interpolated vertex normal Z.");
+	}
+
+	void	testOBJReaderLoadsVertexNormals(void)
+	{
+		const std::filesystem::path objectPath = std::filesystem::temp_directory_path() / "luz_obj_normals_test.obj";
+		{
+			std::ofstream objectStream(objectPath);
+			objectStream
+				<< "v 0.0 0.0 -1.0\n"
+				<< "v 1.0 0.0 -1.0\n"
+				<< "v 0.0 1.0 -1.0\n"
+				<< "vn 0.0 1.0 1.0\n"
+				<< "vn 0.0 1.0 1.0\n"
+				<< "vn 0.0 1.0 1.0\n"
+				<< "f 1//1 2//2 3//3\n";
+		}
+
+		ObjReadOptions options;
+		options.quiet = true;
+		auto material = std::make_shared<Lambertian>(Color(0.8, 0.8, 0.8));
+		Mesh mesh = readObj(
+			objectPath.string(),
+			Vector3(0.0, 0.0, 0.0),
+			Vector3(0.0, 0.0, 0.0),
+			Vector3(1.0, 1.0, 1.0),
+			material,
+			options
+		);
+		Ray ray(Vector3(0.25, 0.25, 0.0), Vector3(0.0, 0.0, -1.0));
+		HitRecord hitRecord;
+
+		require(mesh.hit(ray, hitRecord, 0.001, 100.0), "OBJ mesh with vertex normals was not hit.");
+		require(hitRecord.normal.getY() > 0.6, "OBJ reader did not preserve vertex normal Y.");
+		require(hitRecord.normal.getZ() > 0.6, "OBJ reader did not preserve vertex normal Z.");
+
+		std::filesystem::remove(objectPath);
+	}
+
+	void	testMeshPDFAndRandomSampling(void)
+	{
+		setRandomSeed(123);
+
+		auto material = std::make_shared<Lambertian>(Color(0.8, 0.8, 0.8));
+		std::vector<std::shared_ptr<Hittable>> triangles;
+		triangles.push_back(std::make_shared<Triangle>(
+			Vector3(0.0, 0.0, -1.0),
+			Vector3(1.0, 0.0, -1.0),
+			Vector3(0.0, 1.0, -1.0),
+			material
+		));
+		triangles.push_back(std::make_shared<Triangle>(
+			Vector3(2.0, 0.0, -1.0),
+			Vector3(4.0, 0.0, -1.0),
+			Vector3(2.0, 1.0, -1.0),
+			material
+		));
+		Mesh mesh(Vector3(), material, triangles);
+		const Vector3 origin(0.25, 0.25, 0.0);
+		const Vector3 direction(0.0, 0.0, -1.0);
+
+		requireNear(mesh.pdfValue(origin, direction), 2.0 / 3.0, "Mesh PDF did not use total mesh area.");
+
+		for (int i = 0; i < 8; i++)
+		{
+			Ray ray(origin, mesh.random(origin));
+			HitRecord hitRecord;
+
+			require(mesh.hit(ray, hitRecord, 0.001, 100.0), "Mesh generated a random direction that missed.");
+		}
 	}
 
 	void	testAABBDefaultBounds(void)
@@ -742,6 +959,37 @@ namespace
 			}
 		}
 	}
+
+	void	testZeroFocusDistanceRender(void)
+	{
+		setRandomSeed(42);
+
+		Scene scene;
+		scene.getImage()->setWidth(2);
+		scene.getImage()->setHeight(2);
+		scene.getImage()->initialize();
+		scene.setSampleCount(1);
+		scene.setMaxLightBounces(1);
+		scene.setGammaCorrected(false);
+		scene.setToneMapped(false);
+		scene.setBloom(false);
+		scene.setRenderSky(SKY_NONE);
+		scene.setBackgroundColor(Color(0.1, 0.2, 0.3));
+		scene.setRenderingThreads(1);
+		scene.addCamera(Camera(Vector3(0.0, 0.0, 1.0), Vector3(0.0, 0.0, -1.0), 45, 3.0, 0.0));
+
+		require(Renderer::render(scene), "Zero-focus render failed.");
+		for (std::size_t y = 0; y < scene.getImage()->getHeight(); y++)
+		{
+			for (std::size_t x = 0; x < scene.getImage()->getWidth(); x++)
+			{
+				const Color pixel = scene.getImage()->getPixel(x, y);
+				require(std::isfinite(pixel.getRed()), "Zero-focus render produced non-finite red value.");
+				require(std::isfinite(pixel.getGreen()), "Zero-focus render produced non-finite green value.");
+				require(std::isfinite(pixel.getBlue()), "Zero-focus render produced non-finite blue value.");
+			}
+		}
+	}
 }
 
 int	main(void)
@@ -755,12 +1003,19 @@ int	main(void)
 		testSceneFileOutputName();
 		testSceneFileTiffOutputName();
 		testSceneFileRejectsInvalidSettings();
+		testSceneFileBackgroundSetting();
+		testSceneFileLegacyCameraPreservesDecimalFOV();
 		testSceneFileLoadsRelativeObject();
 		testSceneFileLoadsTransformedObject();
 		testSceneFileLoadsNamedBlocks();
+		testSceneFileLoadsNonMetallicPrincipledMaterial();
 		testSceneFileRejectsInvalidMaterial();
 		testBVHReturnsClosestHit();
 		testTinyTriangleHitAndNormal();
+		testTrianglePDFAndRandomSampling();
+		testTriangleInterpolatesVertexNormals();
+		testOBJReaderLoadsVertexNormals();
+		testMeshPDFAndRandomSampling();
 		testAABBDefaultBounds();
 		testRectangleBoundingBoxes();
 		testRectangleRandomSamplesSupportedAxes();
@@ -769,6 +1024,7 @@ int	main(void)
 		testFlagsRejectInvalidValues();
 		testSettersRejectInvalidValues();
 		testTinyRender();
+		testZeroFocusDistanceRender();
 	}
 	catch (const std::exception& exception)
 	{

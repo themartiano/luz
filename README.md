@@ -114,6 +114,18 @@ metal=(0.8,0.8,0.8),0.1
 ]
 ```
 
+## Blender Exporter
+
+Blender scenes can be exported through Blender's Python API:
+
+```sh
+"/Applications/Blender.app/Contents/MacOS/Blender" -b scene.blend --python tools/blender_export_luz.py -- --output exports/scene.luz
+./Luz --file exports/scene.luz --threads 8
+```
+
+The exporter writes a `.luz` file plus OBJ meshes. Usage and current fidelity
+limits are documented in [`docs/blender-exporter.md`](docs/blender-exporter.md).
+
 ## Repository Layout
 
 ```text
@@ -126,6 +138,7 @@ src/cli/           Command-line entry point and flags
 examples/scenes/   Example .luz scene files
 assets/objects/    OBJ assets used by examples
 docs/images/       Compressed showcase images
+tools/             Export and utility scripts
 tests/             Standard-library-only test program
 docker/            Benchmark container
 ```

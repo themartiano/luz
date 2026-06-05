@@ -11,6 +11,8 @@
 #include "Materials/Lambertian.hpp"
 #include <fstream>
 #include <filesystem>
+#include <future>
+#include <mutex>
 #include <stdexcept>
 #include <memory>
 #include <utility>
@@ -69,6 +71,83 @@ namespace
 		return (std::make_pair(x, y));
 	}
 
+	ObjReadOptions	sceneObjReadOptions(const SceneFile::internal::SceneFileContext& context)
+	{
+		ObjReadOptions options;
+
+		options.progress = context.meshLoadProgress;
+		options.quiet = context.meshLoadProgress != nullptr;
+		return (options);
+	}
+
+	class	DeferredHittable : public Hittable
+	{
+		public:
+			explicit DeferredHittable(std::shared_future<std::shared_ptr<Hittable>> future)
+				: _future(std::move(future))
+			{
+			}
+
+			bool	hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) const override
+			{
+				return (this->hittable()->hit(ray, hitRecord, t_min, t_max));
+			}
+
+			bool	createBoundingBox(AABB& outputBoundingBox) const override
+			{
+				return (this->hittable()->createBoundingBox(outputBoundingBox));
+			}
+
+			std::shared_ptr<Material>	getMaterial(void) const override
+			{
+				return (this->hittable()->getMaterial());
+			}
+
+			double	pdfValue(const Vector3& origin, const Vector3& vec) const override
+			{
+				return (this->hittable()->pdfValue(origin, vec));
+			}
+
+			Vector3	random(const Vector3& origin) const override
+			{
+				return (this->hittable()->random(origin));
+			}
+
+		private:
+			std::shared_ptr<Hittable>	hittable(void) const
+			{
+				std::call_once(this->_loadOnce, [this] {
+					this->_hittable = this->_future.get();
+				});
+				return (this->_hittable);
+			}
+
+			std::shared_future<std::shared_ptr<Hittable>>	_future;
+			mutable std::once_flag	_loadOnce;
+			mutable std::shared_ptr<Hittable>	_hittable;
+	};
+
+	std::shared_ptr<Hittable>	scheduleMeshLoad(
+		SceneFile::internal::SceneFileContext& context,
+		const std::string& fileName,
+		Vector3 position,
+		Vector3 rotation,
+		Vector3 scale,
+		std::shared_ptr<Material> material
+	)
+	{
+		const ObjReadOptions options = sceneObjReadOptions(context);
+		std::shared_future<std::shared_ptr<Hittable>> future = std::async(
+			std::launch::async,
+			[fileName, position, rotation, scale, material, options]() -> std::shared_ptr<Hittable> {
+				return (std::make_shared<Mesh>(readObj(fileName, position, rotation, scale, material, options)));
+			}
+		).share();
+
+		context.pendingMeshLoads.push_back(future);
+		return (std::make_shared<DeferredHittable>(future));
+	}
+
 	struct ObjectBlock
 	{
 		std::string	meshName;
@@ -97,7 +176,7 @@ namespace
 		double	intensity = 1.0;
 	};
 
-	void	addObjectBlock(Scene& scene, std::ifstream& stream, const SceneFile::internal::SceneFileContext& context, const std::string& objectName)
+	void	addObjectBlock(Scene& scene, std::ifstream& stream, SceneFile::internal::SceneFileContext& context, const std::string& objectName)
 	{
 		std::string line;
 		ObjectBlock object;
@@ -126,13 +205,14 @@ namespace
 					? SceneFile::internal::_resolveAssetPath(context.baseDirectory, object.fileName)
 					: findNamedMeshPath(context, object.meshName);
 
-				scene.addHittable(std::make_shared<Mesh>(readObj(
+				scene.addHittable(scheduleMeshLoad(
+					context,
 					objectFileName,
 					object.position,
 					object.rotation,
 					object.scale,
 					object.material
-				)));
+				));
 				return;
 			}
 
@@ -317,7 +397,7 @@ namespace
 		throw std::runtime_error("Sphere light '" + lightName + "' is missing a closing }.");
 	}
 
-	bool	addSceneObjectOrLightBlock(Scene& scene, std::ifstream& stream, const SceneFile::internal::SceneFileContext& context, const std::string& line)
+	bool	addSceneObjectOrLightBlock(Scene& scene, std::ifstream& stream, SceneFile::internal::SceneFileContext& context, const std::string& line)
 	{
 		std::string blockName;
 
@@ -355,13 +435,13 @@ namespace
 	}
 }
 
-bool	SceneFile::internal::_readSceneObjectOrLightBlock(Scene& scene, std::ifstream& stream, const SceneFile::internal::SceneFileContext& context, const std::string& line)
+bool	SceneFile::internal::_readSceneObjectOrLightBlock(Scene& scene, std::ifstream& stream, SceneFile::internal::SceneFileContext& context, const std::string& line)
 {
 	return (addSceneObjectOrLightBlock(scene, stream, context, line));
 }
 
 // Parses the 'objects' sub-section of a Scene file
-void	SceneFile::internal::_readObjectsSubSection(Scene& scene, std::ifstream& stream, const SceneFile::internal::SceneFileContext& context)
+void	SceneFile::internal::_readObjectsSubSection(Scene& scene, std::ifstream& stream, SceneFile::internal::SceneFileContext& context)
 {
 	std::string line;
 	bool closed = false;
@@ -488,18 +568,28 @@ void	SceneFile::internal::_readObjectsSubSection(Scene& scene, std::ifstream& st
 
 			if (sscanf(strObjFileName.c_str(), "%1023[^,],(%lf,%lf,%lf),material[", objFileName, &pX, &pY, &pZ) == 4)
 			{
-				scene.addHittable(std::make_shared<Mesh>(readObj(
+				scene.addHittable(scheduleMeshLoad(
+					context,
 					_resolveAssetPath(context.baseDirectory, objFileName),
 					Vector3(pX, pY, pZ),
+					Vector3(0.0, 0.0, 0.0),
+					Vector3(1.0, 1.0, 1.0),
 					internal::_readMaterialSubSection(stream)
-				)));
+				));
 
 				continue;
 			}
 
 			if (!strObjFileName.empty())
 			{
-				scene.addHittable(std::make_shared<Mesh>(readObj(_resolveAssetPath(context.baseDirectory, strObjFileName))));
+				scene.addHittable(scheduleMeshLoad(
+					context,
+					_resolveAssetPath(context.baseDirectory, strObjFileName),
+					Vector3(0.0, 0.0, 0.0),
+					Vector3(0.0, 0.0, 0.0),
+					Vector3(1.0, 1.0, 1.0),
+					std::make_shared<Lambertian>(Color(0.6, 0.6, 0.6))
+				));
 
 				continue;
 			}
