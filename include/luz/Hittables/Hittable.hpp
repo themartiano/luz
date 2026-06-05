@@ -4,6 +4,7 @@
 #include "Materials/Material.hpp"
 #include "Ray/Ray.hpp"
 #include "Vector3.hpp"
+#include <memory>
 
 class	AABB;
 class	Material;

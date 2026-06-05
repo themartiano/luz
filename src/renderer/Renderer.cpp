@@ -14,6 +14,7 @@ bool	Renderer::render(Scene& scene)
 	}
 
 	scene.updateLights();
+	scene.updateAccelerationStructure();
 
 	if (!scene.getBenchmarkMode())
 	{

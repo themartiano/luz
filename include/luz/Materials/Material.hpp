@@ -3,18 +3,26 @@
 #include "Color.hpp"
 #include "Ray/Ray.hpp"
 #include "MaterialTypes.hpp"
-#include "PDFs/PDF.hpp"
+#include "ONB.hpp"
 #include "Hittables/Hittable.hpp"
 #include <memory>
 
 struct	HitRecord;
+
+enum	ScatterPDFType
+{
+	SCATTER_PDF_NONE,
+	SCATTER_PDF_COSINE,
+	SCATTER_PDF_SPHERE
+};
 
 struct	ScatterRecord
 {
 	Ray	specularRay;
 	bool	isSpecular = false;
 	Color	attenuation;
-	std::shared_ptr<PDF>	pdfPtr = nullptr;
+	ScatterPDFType	pdfType = SCATTER_PDF_NONE;
+	ONB	cosineBasis;
 };
 
 class	Material

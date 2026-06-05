@@ -1,6 +1,5 @@
 #include "Materials/Isotropic.hpp"
 #include "Utilities.hpp"
-#include "PDFs/SpherePDF.hpp"
 #include "Defaults.hpp"
 
 Isotropic::Isotropic(void)
@@ -17,7 +16,7 @@ bool	Isotropic::scatter(Ray& ray, HitRecord& hitRecord, ScatterRecord& scatterRe
 {
 	scatterRecord.isSpecular = false;
 	scatterRecord.attenuation = this->_color;
-	scatterRecord.pdfPtr = std::make_shared<SpherePDF>();
+	scatterRecord.pdfType = SCATTER_PDF_SPHERE;
 
 	return (true);
 	(void)ray;

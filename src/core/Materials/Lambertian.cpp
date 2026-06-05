@@ -1,8 +1,6 @@
 #include "Materials/Lambertian.hpp"
-#include "PDFs/CosinePDF.hpp"
 #include "Utilities.hpp"
 #include "Defaults.hpp"
-#include <memory>
 
 Lambertian::Lambertian(void)
 {
@@ -18,7 +16,8 @@ bool	Lambertian::scatter(Ray& ray, HitRecord& hitRecord, ScatterRecord& scatterR
 {
 	scatterRecord.isSpecular = false;
 	scatterRecord.attenuation = this->_color;
-	scatterRecord.pdfPtr = std::make_shared<CosinePDF>(hitRecord.normal);
+	scatterRecord.pdfType = SCATTER_PDF_COSINE;
+	scatterRecord.cosineBasis = ONB(hitRecord.normal);
 
 	return (true);
 	(void)ray;

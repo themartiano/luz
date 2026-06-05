@@ -8,6 +8,7 @@
 #     debugger -> Compiles with "-g" flag and opens LLDB / GDB              #
 #     sanitizer -> Compiles with "-g" and "-fsanitize=address" flags        #
 #     noflags -> Compiles without "-Wall", "-Wextra" and "-Werror" flags    #
+#     release-native -> Compiles with native CPU tuning and LTO             #
 #                                                                           #
 #~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#
 
@@ -31,12 +32,15 @@ GENERAL_FLAGS := -std=c++2a
 WWW_FLAGS := -Wall -Wextra -Werror
 OPT_FLAGS = -O3
 INC_FLAGS := -MD
+LINK_FLAGS =
 SHELL := /bin/bash
 DEBUG ?= 0
 SANITIZER ?= 0
 NO_FLAGS ?= 0
 FAST_COMPILATION ?= 0
 WINDOWS ?= 0
+NATIVE ?= 1
+LTO ?= 1
 BENCH_IMAGE ?= luz-benchmark-image
 BENCH_CPUS ?= 1
 BENCH_CPUSET ?=
@@ -93,6 +97,15 @@ ifeq ($(WINDOWS),1)
 	COMPILER_FLAGS = -U__STRICT_ANSI__ -static-libgcc -static-libstdc++ -static
 endif
 
+ifeq ($(NATIVE),1)
+	OPT_FLAGS += -march=native
+endif
+
+ifeq ($(LTO),1)
+	OPT_FLAGS += -flto
+	LINK_FLAGS += -flto
+endif
+
 ifneq ($(BENCH_CPUSET),)
 	BENCH_CPUSET_FLAG = --cpuset-cpus=$(BENCH_CPUSET)
 endif
@@ -124,14 +137,23 @@ $(OBJS_DIR)/%.o: $(SRCS_DIR)/%.cpp
 
 $(NAME): $(OBJS)
 	@printf "\n[\e[1;34mCompiling $(NAME)\e[0m]\n\n"
-	$(COMPILER) $(COMPILER_FLAGS) $(WWW_FLAGS) $(GENERAL_FLAGS) $(OPT_FLAGS) $(INC_FLAGS) $(DEBUG_FLAGS) $(INCLUDES) $(OBJS) -o $(NAME)
+	$(COMPILER) $(COMPILER_FLAGS) $(WWW_FLAGS) $(GENERAL_FLAGS) $(OPT_FLAGS) $(INC_FLAGS) $(DEBUG_FLAGS) $(INCLUDES) $(OBJS) $(LINK_FLAGS) -o $(NAME)
 
 	@printf "\n[\e[0;32mCompilation done. $(NAME) ready.\e[0m]\n"
+
+.PHONY: release
+release:
+	@$(MAKE) all --no-print-directory
+
+.PHONY: release-native
+release-native:
+	@$(MAKE) clean --no-print-directory
+	@$(MAKE) all NATIVE=1 LTO=1 --no-print-directory
 
 .PHONY: test
 test:
 	@printf "[\e[1;34mCompiling $(TEST_NAME)\e[0m]\n\n"
-	$(COMPILER) $(COMPILER_FLAGS) $(WWW_FLAGS) $(GENERAL_FLAGS) $(OPT_FLAGS) $(DEBUG_FLAGS) $(INCLUDES) $(TEST_SRCS) -o $(TEST_NAME)
+	$(COMPILER) $(COMPILER_FLAGS) $(WWW_FLAGS) $(GENERAL_FLAGS) $(OPT_FLAGS) $(DEBUG_FLAGS) $(INCLUDES) $(TEST_SRCS) $(LINK_FLAGS) -o $(TEST_NAME)
 	@printf "\n[\e[1;34mRunning tests\e[0m]\n\n"
 	./$(TEST_NAME)
 

@@ -5,17 +5,48 @@
 class	Vector3
 {
 	public:
-		Vector3(void);
-		Vector3(double x, double y, double z);
-		double		getX(void) const;
-		void		setX(double x);
-		double		getY(void) const;
-		void		setY(double y);
-		double		getZ(void) const;
-		void		setZ(double z);
-		Vector3&	operator/=(const double f);
-		Vector3&	operator+=(const Vector3 vector);
-		double		operator[](int index) const;
+		Vector3(void) : _x(0.0), _y(0.0), _z(0.0) {}
+		Vector3(double x, double y, double z) : _x(x), _y(y), _z(z) {}
+
+		double		getX(void) const { return (this->_x); }
+		void		setX(double x) { this->_x = x; }
+		double		getY(void) const { return (this->_y); }
+		void		setY(double y) { this->_y = y; }
+		double		getZ(void) const { return (this->_z); }
+		void		setZ(double z) { this->_z = z; }
+
+		Vector3&	operator/=(const double f)
+		{
+			this->_x /= f;
+			this->_y /= f;
+			this->_z /= f;
+			return (*this);
+		}
+
+		Vector3&	operator+=(const Vector3& vector)
+		{
+			this->_x += vector._x;
+			this->_y += vector._y;
+			this->_z += vector._z;
+			return (*this);
+		}
+
+		double		operator[](int index) const
+		{
+			if (index == 0)
+			{
+				return (this->_x);
+			}
+			if (index == 1)
+			{
+				return (this->_y);
+			}
+			if (index == 2)
+			{
+				return (this->_z);
+			}
+			return (0.0);
+		}
 
 	private:
 		double	_x;
