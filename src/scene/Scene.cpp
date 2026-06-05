@@ -430,3 +430,24 @@ std::string	Scene::getDenoiseOutputFileName(void) const
 {
 	return (this->_denoiseOutputFileName);
 }
+
+void	Scene::initializeDenoiseBuffers(std::size_t width, std::size_t height)
+{
+	this->_denoiseBuffers = std::make_unique<Denoise::NFORBuffers>();
+	this->_denoiseBuffers->initialize(width, height);
+}
+
+Denoise::NFORBuffers*	Scene::getDenoiseBuffers(void)
+{
+	return (this->_denoiseBuffers.get());
+}
+
+const Denoise::NFORBuffers*	Scene::getDenoiseBuffers(void) const
+{
+	return (this->_denoiseBuffers.get());
+}
+
+void	Scene::clearDenoiseBuffers(void)
+{
+	this->_denoiseBuffers = nullptr;
+}

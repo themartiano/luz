@@ -1,6 +1,5 @@
 #include "AABB.hpp"
 #include "Color.hpp"
-#include "Denoise/NonLocalMeans.hpp"
 #include "FlagsParser.hpp"
 #include "Image.hpp"
 #include "Materials/Lambertian.hpp"
@@ -185,31 +184,6 @@ namespace
 		requireNear(pixel.getRed(), 0.0, "Tone mapping black changed red value.");
 		requireNear(pixel.getGreen(), 0.0, "Tone mapping black changed green value.");
 		requireNear(pixel.getBlue(), 0.0, "Tone mapping black changed blue value.");
-	}
-
-	void	testNonLocalMeansReducesImpulseAndPreservesEdge(void)
-	{
-		Image image(7, 5);
-		image.initialize();
-
-		for (std::size_t y = 0; y < image.getHeight(); y++)
-		{
-			for (std::size_t x = 0; x < image.getWidth(); x++)
-			{
-				image.setPixel(x, y, x < 3 ? Color(0.0, 0.0, 0.0) : Color(1.0, 1.0, 1.0));
-			}
-		}
-		image.setPixel(1, 2, Color(1.0, 1.0, 1.0));
-
-		Denoise::NonLocalMeansSettings settings;
-		settings.searchRadius = 2;
-		settings.patchRadius = 1;
-		settings.strength = 0.3;
-		Denoise::apply(image, settings);
-
-		require(image.getPixel(1, 2).getRed() < 0.75, "Denoise did not reduce an isolated impulse.");
-		require(image.getPixel(2, 2).getRed() < 0.25, "Denoise blurred too much color across the dark side of an edge.");
-		require(image.getPixel(3, 2).getRed() > 0.75, "Denoise blurred too much color across the bright side of an edge.");
 	}
 
 	void	testTerminalFilePath(void)
@@ -1006,11 +980,26 @@ namespace
 		std::unique_ptr<Scene> disabledScene = parseFlags({"--denoise", "--no-denoise"});
 		require(!disabledScene->getDenoise(), "--no-denoise did not override --denoise.");
 
+		std::unique_ptr<Scene> reenabledScene = parseFlags({"--no-denoise", "--denoise"});
+		require(reenabledScene->getDenoise(), "Later --denoise did not override --no-denoise.");
+
 		std::unique_ptr<Scene> outputScene = parseFlags({"--denoise-output", "custom_denoised.tiff"});
 		require(
 			outputScene->getDenoiseOutputFileName() == "custom_denoised.tiff",
 			"--denoise-output was not parsed."
 		);
+
+		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_cli_denoise_override_test.luz";
+		std::ofstream sceneFile(scenePath);
+
+		sceneFile
+			<< "[settings]\n"
+			<< "resolution=1,1\n"
+			<< "denoise=0\n\n";
+		sceneFile.close();
+
+		std::unique_ptr<Scene> fileOverrideScene = parseFlags({"--file", scenePath.string(), "--denoise"});
+		require(fileOverrideScene->getDenoise(), "--denoise did not override scene file denoise setting.");
 	}
 
 	void	testFlagsRejectInvalidValues(void)
@@ -1097,7 +1086,9 @@ namespace
 		require(scene.getDenoisedImage()->getWidth() == scene.getImage()->getWidth(), "Denoised image width is wrong.");
 		require(scene.getDenoisedImage()->getHeight() == scene.getImage()->getHeight(), "Denoised image height is wrong.");
 		requireNear(scene.getImage()->getPixel(0, 0).getRed(), 0.1, "Original render image was changed by denoising.");
-		requireNear(scene.getDenoisedImage()->getPixel(0, 0).getRed(), 0.1, "Denoised companion image value is wrong.");
+		const Color denoisedPixel = scene.getDenoisedImage()->getPixel(0, 0);
+		require(std::isfinite(denoisedPixel.getRed()), "Denoised companion red value is non-finite.");
+		require(std::abs(denoisedPixel.getRed() - 0.1) < 0.02, "Denoised companion image value drifted too far.");
 	}
 
 	void	testZeroFocusDistanceRender(void)
@@ -1138,7 +1129,6 @@ int	main(void)
 	{
 		testColorMath();
 		testToneMappingBlackPixel();
-		testNonLocalMeansReducesImpulseAndPreservesEdge();
 		testTerminalFilePath();
 		testNonSquareBMP();
 		testNonSquareTIFF();

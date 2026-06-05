@@ -15,7 +15,7 @@ Luz is a hand-written C++20 path tracer built with only the C++ standard library
 - Importance sampling with PDFs
 - BVH acceleration
 - Atmospheric scattering
-- Depth of field, antialiasing, tone mapping, gamma correction, and bloom
+- Depth of field, antialiasing, tone mapping, gamma correction, bloom, and NFOR-style denoising
 - BMP and TIFF output
 
 ## Quick Start
