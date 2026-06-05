@@ -18,6 +18,14 @@ class	Scene
 		void	addHittable(std::shared_ptr<Hittable> hittable);
 		int		getSampleCount(void) const;
 		void	setSampleCount(const int sampleCount);
+		bool	getAdaptiveSampling(void) const;
+		void	setAdaptiveSampling(bool adaptiveSampling);
+		int		getAdaptiveMinSamples(void) const;
+		void	setAdaptiveMinSamples(int adaptiveMinSamples);
+		int		getAdaptiveCheckInterval(void) const;
+		void	setAdaptiveCheckInterval(int adaptiveCheckInterval);
+		double	getAdaptiveThreshold(void) const;
+		void	setAdaptiveThreshold(double adaptiveThreshold);
 		int		getMaxLightBounces(void) const;
 		void	setMaxLightBounces(const int maxLightBounces);
 		bool	getGammaCorrected(void) const;
@@ -74,6 +82,10 @@ class	Scene
 	private:
 		double					_t_max;
 		int						_sampleCount;
+		bool					_adaptiveSampling;
+		int						_adaptiveMinSamples;
+		int						_adaptiveCheckInterval;
+		double					_adaptiveThreshold;
 		int						_maxLightBounces;
 		bool					_gammaCorrected;
 		bool					_toneMapped;

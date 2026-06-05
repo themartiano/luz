@@ -85,6 +85,64 @@ namespace
 		return (color);
 	}
 
+	double	sampleLuminance(Color color)
+	{
+		const double luminance = Utilities::luminance(color);
+
+		if (!std::isfinite(luminance))
+		{
+			return (0.0);
+		}
+		return (luminance);
+	}
+
+	bool	adaptiveSampleConverged(
+		const Scene& scene,
+		unsigned int samplesUsed,
+		double luminanceSum,
+		double luminanceSquareSum
+	)
+	{
+		const unsigned int maxSamples = static_cast<unsigned int>(scene.getSampleCount());
+
+		if (samplesUsed >= maxSamples)
+		{
+			return (true);
+		}
+
+		const unsigned int minSamples = static_cast<unsigned int>(
+			std::min(scene.getAdaptiveMinSamples(), scene.getSampleCount())
+		);
+		if (samplesUsed < minSamples)
+		{
+			return (false);
+		}
+
+		const unsigned int checkInterval = static_cast<unsigned int>(scene.getAdaptiveCheckInterval());
+		if ((samplesUsed - minSamples) % checkInterval != 0)
+		{
+			return (false);
+		}
+		if (samplesUsed <= 1)
+		{
+			return (false);
+		}
+
+		const double n = static_cast<double>(samplesUsed);
+		const double mean = luminanceSum / n;
+		const double variance = (luminanceSquareSum - (luminanceSum * luminanceSum / n)) / (n - 1.0);
+		if (!std::isfinite(variance) || variance <= 0.0)
+		{
+			return (true);
+		}
+
+		const double standardError = std::sqrt(variance / n);
+		const double confidenceInterval = 1.96 * standardError;
+		const double target = scene.getAdaptiveThreshold() * std::max(std::fabs(mean), 1e-6);
+
+		return (confidenceInterval <= target);
+	}
+
 	void	addDenoiseFeatureSample(
 		DenoiseHalfAccumulator& half,
 		Denoise::FeatureVector& featureSum,
@@ -220,6 +278,7 @@ void	Renderer::internal::_manageThreads(Scene& scene)
 
 	std::atomic<std::size_t> nextRenderPixel(0);
 	std::atomic<std::size_t> completedRenderPixels(0);
+	std::atomic<std::size_t> completedRenderSamples(0);
 	std::vector<std::future<void>> futureVector;
 	futureVector.reserve(threadCount);
 
@@ -227,7 +286,7 @@ void	Renderer::internal::_manageThreads(Scene& scene)
 	for (std::size_t i = 0; i < threadCount; i++)
 	{
 		futureVector.push_back(
-			std::async(std::launch::async, [&scene, &renderCamera, &nextRenderPixel, &completedRenderPixels, width, pixelTotal, i]()
+			std::async(std::launch::async, [&scene, &renderCamera, &nextRenderPixel, &completedRenderPixels, &completedRenderSamples, width, pixelTotal, i]()
 			{
 				Clock		pixelClock;
 				const bool	storePixelRenderTimes = scene.getStorePixelRenderTimes();
@@ -246,19 +305,21 @@ void	Renderer::internal::_manageThreads(Scene& scene)
 					}
 
 					const std::size_t stopIndex = std::min(startIndex + blockSize, pixelTotal);
+					std::size_t blockSampleCount = 0;
 					for (std::size_t index = startIndex; index < stopIndex; index++)
 					{
 						std::size_t	x = index % width;
 						std::size_t	y = index / width;
 
 						pixelClock.start();
-						_threadRender(scene, renderCamera, x, y);
+						blockSampleCount += _threadRender(scene, renderCamera, x, y);
 
 						if (storePixelRenderTimes)
 						{
 							scene.setPixelRenderTime(x, y, pixelClock.elapsedUS());
 						}
 					}
+					completedRenderSamples.fetch_add(blockSampleCount);
 					completedRenderPixels.fetch_add(stopIndex - startIndex);
 				}
 			}
@@ -306,6 +367,16 @@ void	Renderer::internal::_manageThreads(Scene& scene)
 	{
 		printRenderProgress(100);
 		std::cout << std::endl;
+		if (scene.getAdaptiveSampling() && pixelTotal > 0)
+		{
+			const double averageSamples = static_cast<double>(completedRenderSamples.load())
+				/ static_cast<double>(pixelTotal);
+			std::cout
+				<< CLR_GREEN_BRIGHT << "Average samples per pixel: "
+				<< CLR_WHITE << averageSamples
+				<< CLR_BLUE_BRIGHT << " / " << scene.getSampleCount()
+				<< CLR_RESET << std::endl;
+		}
 	}
 
 	if (scene.getDenoise() && scene.getDenoiseBuffers() != nullptr)
@@ -335,32 +406,53 @@ void	Renderer::internal::_manageThreads(Scene& scene)
 }
 
 // Renders the pixel color at X, Y
-void	Renderer::internal::_threadRender(Scene& scene, const RenderCamera& renderCamera, std::size_t x, std::size_t y)
+unsigned int	Renderer::internal::_threadRender(Scene& scene, const RenderCamera& renderCamera, std::size_t x, std::size_t y)
 {
-	const int	sampleCount = scene.getSampleCount();
+	const unsigned int	sampleCount = static_cast<unsigned int>(scene.getSampleCount());
+	const bool			adaptiveSampling = scene.getAdaptiveSampling();
 	Denoise::NFORBuffers* denoiseBuffers = scene.getDenoiseBuffers();
 
 	if (denoiseBuffers == nullptr)
 	{
 		Color pixelColor(0.0, 0.0, 0.0);
+		double luminanceSum = 0.0;
+		double luminanceSquareSum = 0.0;
+		unsigned int samplesUsed = 0;
 
-		for (int samples = 0; samples < sampleCount; samples++)
+		for (unsigned int samples = 0; samples < sampleCount; samples++)
 		{
-			pixelColor += cleanColor(_calculatePixelColor(scene, renderCamera, x, y));
+			const Color sampleColor = cleanColor(_calculatePixelColor(scene, renderCamera, x, y));
+
+			pixelColor += sampleColor;
+			samplesUsed = samples + 1;
+			if (adaptiveSampling)
+			{
+				const double luminance = sampleLuminance(sampleColor);
+
+				luminanceSum += luminance;
+				luminanceSquareSum += luminance * luminance;
+				if (adaptiveSampleConverged(scene, samplesUsed, luminanceSum, luminanceSquareSum))
+				{
+					break;
+				}
+			}
 		}
-		pixelColor /= sampleCount;
+		pixelColor /= static_cast<double>(samplesUsed);
 		scene.getImage()->setPixel(x, y, cleanColor(pixelColor));
-		return;
+		return (samplesUsed);
 	}
 
 	Color pixelColor(0.0, 0.0, 0.0);
 	Color pixelColorSquare(0.0, 0.0, 0.0);
+	double luminanceSum = 0.0;
+	double luminanceSquareSum = 0.0;
 	Denoise::FeatureVector featureSum;
 	Denoise::FeatureVector featureSquareSum;
 	DenoiseHalfAccumulator halfA;
 	DenoiseHalfAccumulator halfB;
+	unsigned int samplesUsed = 0;
 
-	for (int samples = 0; samples < sampleCount; samples++)
+	for (unsigned int samples = 0; samples < sampleCount; samples++)
 	{
 		RenderSample sample = _calculatePixelSample(scene, renderCamera, x, y);
 		DenoiseHalfAccumulator& half = (samples % 2 == 0) ? halfA : halfB;
@@ -375,9 +467,21 @@ void	Renderer::internal::_threadRender(Scene& scene, const RenderCamera& renderC
 			sampleColor.getGreen() * sampleColor.getGreen(),
 			sampleColor.getBlue() * sampleColor.getBlue()
 		);
+		samplesUsed = samples + 1;
+		if (adaptiveSampling)
+		{
+			const double luminance = sampleLuminance(sampleColor);
+
+			luminanceSum += luminance;
+			luminanceSquareSum += luminance * luminance;
+			if (adaptiveSampleConverged(scene, samplesUsed, luminanceSum, luminanceSquareSum))
+			{
+				break;
+			}
+		}
 	}
 	const Color pixelColorSum = pixelColor;
-	pixelColor /= sampleCount;
+	pixelColor /= static_cast<double>(samplesUsed);
 	pixelColor = cleanColor(pixelColor);
 	storeDenoisePixel(
 		scene,
@@ -389,8 +493,9 @@ void	Renderer::internal::_threadRender(Scene& scene, const RenderCamera& renderC
 		pixelColorSquare,
 		featureSum,
 		featureSquareSum,
-		static_cast<unsigned int>(sampleCount)
+		samplesUsed
 	);
 
 	scene.getImage()->setPixel(x, y, pixelColor);
+	return (samplesUsed);
 }

@@ -28,6 +28,10 @@ The parser is intentionally strict: unknown lines and malformed values throw an 
 | --- | --- | --- |
 | `resolution` | `resolution=WIDTH,HEIGHT` | Width and height must be positive. |
 | `samples` | `samples=N` | Rays per pixel. |
+| `adaptive` | `adaptive=0` or `adaptive=1` | Enables adaptive per-pixel sampling. When enabled, `samples` is the maximum samples per pixel. Aliases: `adaptivesampling`, `adaptive_sampling`. |
+| `adaptiveminsamples` | `adaptiveminsamples=N` | Minimum samples before adaptive stopping can occur. Alias: `adaptive_min_samples`. |
+| `adaptivethreshold` | `adaptivethreshold=F` | Relative 95% confidence interval threshold for luminance convergence. Lower values render longer. Alias: `adaptive_threshold`. |
+| `adaptivecheckinterval` | `adaptivecheckinterval=N` | Sample interval between adaptive convergence checks. Alias: `adaptive_check_interval`. |
 | `maxlightbounces` | `maxlightbounces=N` | Maximum recursive light bounces. |
 | `gamma` | `gamma=0` or `gamma=1` | Enables gamma correction when set to `1`. |
 | `bloom` | `bloom=0` or `bloom=1` | Enables bloom when set to `1`. |
@@ -38,6 +42,14 @@ The parser is intentionally strict: unknown lines and malformed values throw an 
 | `background` | `background=(R,G,B)` | Background color used when `sky=none`. Aliases: `backgroundcolor`, `background_color`. |
 | `atmosphere` | `atmosphere=SUN,EARTH_RADIUS,ATMOSPHERE_RADIUS,HR,HM,SAMPLES,LIGHT_SAMPLES,STARS` | Only valid after `sky=atmosphere`. |
 | `distanceblueness` | `distanceblueness=0` or `distanceblueness=1` | Enables distance blue tinting when set to `1`. |
+
+### Adaptive Sampling Notes
+
+Adaptive sampling never exceeds `samples`. It renders at least
+`adaptiveminsamples`, then periodically estimates luminance variance and stops a
+pixel early only when the configured confidence threshold is met. Dark pixels
+that are consistently black can finish quickly, while low-light pixels with rare
+bright contributions continue sampling.
 
 ### Denoising Notes
 

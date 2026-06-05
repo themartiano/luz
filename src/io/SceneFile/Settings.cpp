@@ -60,6 +60,60 @@ void	SceneFile::internal::_readSettingsSection(Scene& scene, std::ifstream& stre
 			}
 			scene.setSampleCount(samples);
 		}
+		else if (
+			lowerLine.rfind("adaptive=", 0) != std::string::npos
+			|| lowerLine.rfind("adaptivesampling=", 0) != std::string::npos
+			|| lowerLine.rfind("adaptive_sampling=", 0) != std::string::npos
+		)
+		{
+			int adaptiveSampling;
+
+			if (sscanf(lowerLine.c_str(), "%*[^=]=%d", &adaptiveSampling) != 1)
+			{
+				throw std::runtime_error("Invalid adaptive setting. Use adaptive=0 or adaptive=1.");
+			}
+			requireBinarySetting(adaptiveSampling, "adaptive");
+			scene.setAdaptiveSampling(adaptiveSampling);
+		}
+		else if (
+			lowerLine.rfind("adaptiveminsamples=", 0) != std::string::npos
+			|| lowerLine.rfind("adaptive_min_samples=", 0) != std::string::npos
+		)
+		{
+			int adaptiveMinSamples;
+
+			if (sscanf(lowerLine.c_str(), "%*[^=]=%d", &adaptiveMinSamples) != 1)
+			{
+				throw std::runtime_error("Invalid adaptive minimum samples setting. Use adaptiveminsamples=N.");
+			}
+			scene.setAdaptiveMinSamples(adaptiveMinSamples);
+		}
+		else if (
+			lowerLine.rfind("adaptivethreshold=", 0) != std::string::npos
+			|| lowerLine.rfind("adaptive_threshold=", 0) != std::string::npos
+		)
+		{
+			double adaptiveThreshold;
+
+			if (sscanf(lowerLine.c_str(), "%*[^=]=%lf", &adaptiveThreshold) != 1)
+			{
+				throw std::runtime_error("Invalid adaptive threshold setting. Use adaptivethreshold=F.");
+			}
+			scene.setAdaptiveThreshold(adaptiveThreshold);
+		}
+		else if (
+			lowerLine.rfind("adaptivecheckinterval=", 0) != std::string::npos
+			|| lowerLine.rfind("adaptive_check_interval=", 0) != std::string::npos
+		)
+		{
+			int adaptiveCheckInterval;
+
+			if (sscanf(lowerLine.c_str(), "%*[^=]=%d", &adaptiveCheckInterval) != 1)
+			{
+				throw std::runtime_error("Invalid adaptive check interval setting. Use adaptivecheckinterval=N.");
+			}
+			scene.setAdaptiveCheckInterval(adaptiveCheckInterval);
+		}
 		else if (lowerLine.rfind("maxlightbounces=", 0) != std::string::npos)
 		{
 			int maxLightBounces;

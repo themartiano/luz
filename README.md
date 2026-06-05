@@ -15,7 +15,7 @@ Luz is a hand-written C++20 path tracer built with only the C++ standard library
 - Importance sampling with PDFs
 - BVH acceleration
 - Atmospheric scattering
-- Depth of field, antialiasing, tone mapping, gamma correction, bloom, and NFOR-style denoising
+- Depth of field, antialiasing, adaptive sampling, tone mapping, gamma correction, bloom, and NFOR-style denoising
 - BMP and TIFF output
 
 ## Quick Start
@@ -91,6 +91,11 @@ Usage: ./Luz [options]
   -f, --file PATH             Load a .luz scene file
   -r, --resolution WxH        Override render resolution
   -s, --samples N             Override samples per pixel
+  --adaptive [true|false]     Enable adaptive per-pixel sampling
+  --no-adaptive               Disable adaptive sampling
+  --adaptive-min-samples N    Minimum samples before adaptive stopping
+  --adaptive-threshold F      Relative adaptive noise threshold
+  --adaptive-check-interval N Adaptive convergence check interval
   -mlb, --maxLightBounces N   Override maximum light bounces
   -t, --threads N             Render with N worker threads
   --seed N                    Seed random sampling
@@ -103,6 +108,20 @@ Usage: ./Luz [options]
   --render-times              Write renderTime.bmp
   --benchmark                 Run the built-in benchmark scene
   --benchmark-case NAME       Benchmark case: default, many-objects, mesh-bvh, diffuse, postprocess, atmosphere, lights, emissive-geometry, primitives-materials, volumes, obj-mesh
+```
+
+## Adaptive Sampling
+
+`--adaptive` treats `--samples` as the maximum samples per pixel. Each pixel
+renders at least `--adaptive-min-samples`, then periodically estimates luminance
+variance and stops early when the 95% confidence interval is below
+`--adaptive-threshold` of the current mean luminance.
+
+Lower thresholds keep more detail and cost more time. For final renders, start
+with a high max sample count and tune with values like:
+
+```sh
+./Luz --file exports/stormtroopers.luz --samples 2048 --adaptive --adaptive-min-samples 128 --adaptive-threshold 0.01 --denoise
 ```
 
 ## Denoising

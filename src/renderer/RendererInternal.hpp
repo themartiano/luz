@@ -30,7 +30,7 @@ namespace Renderer::internal
 		Denoise::FeatureVector	features;
 	};
 
-	void	_threadRender(Scene& scene, const RenderCamera& renderCamera, std::size_t x, std::size_t y);
+	unsigned int	_threadRender(Scene& scene, const RenderCamera& renderCamera, std::size_t x, std::size_t y);
 	Color	_calculatePixelColor(Scene& scene, const RenderCamera& renderCamera, std::size_t x, std::size_t y);
 	RenderSample	_calculatePixelSample(Scene& scene, const RenderCamera& renderCamera, std::size_t x, std::size_t y);
 	bool	_checkHits(Scene& scene, Ray& ray, HitRecord& hitRecord);
