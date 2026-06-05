@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Color.hpp"
+#include "Denoise/NFOR.hpp"
 #include "Ray/Ray.hpp"
 #include "Scene/Scene.hpp"
 #include "Vector3.hpp"
@@ -23,8 +24,15 @@ namespace Renderer::internal
 		Vector3	lowerLeftCorner;
 	};
 
+	struct	RenderSample
+	{
+		Color	color;
+		Denoise::FeatureVector	features;
+	};
+
 	void	_threadRender(Scene& scene, const RenderCamera& renderCamera, std::size_t x, std::size_t y);
 	Color	_calculatePixelColor(Scene& scene, const RenderCamera& renderCamera, std::size_t x, std::size_t y);
+	RenderSample	_calculatePixelSample(Scene& scene, const RenderCamera& renderCamera, std::size_t x, std::size_t y);
 	bool	_checkHits(Scene& scene, Ray& ray, HitRecord& hitRecord);
 	Color	_calculateLightRaysColor(const Ray& ray, Scene& scene);
 	Color	_computeAtmosphereColor(Scene& scene, Ray& ray);

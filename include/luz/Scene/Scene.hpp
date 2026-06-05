@@ -5,6 +5,7 @@
 #include "Atmosphere.hpp"
 #include "SkyTypes.hpp"
 #include "Image.hpp"
+#include "Denoise/NFOR.hpp"
 #include <vector>
 #include <memory>
 
@@ -64,6 +65,10 @@ class	Scene
 		void		clearDenoisedImage(void);
 		void		setDenoiseOutputFileName(std::string denoiseOutputFileName);
 		std::string	getDenoiseOutputFileName(void) const;
+		void		initializeDenoiseBuffers(std::size_t width, std::size_t height);
+		Denoise::NFORBuffers*	getDenoiseBuffers(void);
+		const Denoise::NFORBuffers*	getDenoiseBuffers(void) const;
+		void		clearDenoiseBuffers(void);
 
 
 	private:
@@ -94,4 +99,5 @@ class	Scene
 		bool					_denoise;
 		std::unique_ptr<Image>	_denoisedImage;
 		std::string				_denoiseOutputFileName;
+		std::unique_ptr<Denoise::NFORBuffers>	_denoiseBuffers;
 };

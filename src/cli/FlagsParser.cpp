@@ -338,29 +338,30 @@ void	FlagsParser::_parseBloom(Scene& scene)
 
 void	FlagsParser::_parseDenoise(Scene& scene)
 {
-	auto it = this->_findFlag("--denoise");
-	if (it != this->_args.end())
+	for (auto it = this->_args.begin(); it != this->_args.end(); it++)
 	{
-		if (it + 1 == this->_args.end() || (it + 1)->rfind("-", 0) == 0)
+		if (*it == "--denoise")
 		{
-			scene.setDenoise(true);
-		}
-		else
-		{
-			bool denoise;
-
-			if (!parseOptionalBoolean(*(it + 1), denoise))
+			if (it + 1 == this->_args.end() || (it + 1)->rfind("-", 0) == 0)
 			{
-				throw std::runtime_error("Invalid value for --denoise. Use true, false, 1, or 0.");
+				scene.setDenoise(true);
 			}
-			scene.setDenoise(denoise);
-		}
-	}
+			else
+			{
+				bool denoise;
 
-	it = this->_findFlag("--no-denoise");
-	if (it != this->_args.end())
-	{
-		scene.setDenoise(false);
+				if (!parseOptionalBoolean(*(it + 1), denoise))
+				{
+					throw std::runtime_error("Invalid value for --denoise. Use true, false, 1, or 0.");
+				}
+				scene.setDenoise(denoise);
+				it++;
+			}
+		}
+		else if (*it == "--no-denoise")
+		{
+			scene.setDenoise(false);
+		}
 	}
 }
 

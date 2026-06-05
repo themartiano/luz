@@ -122,6 +122,90 @@ namespace
 
 		return (true);
 	}
+
+	double	normalizedColorChannel(double value)
+	{
+		if (!std::isfinite(value) || value <= 0.0)
+		{
+			return (0.0);
+		}
+		return (std::min(1.0, std::log1p(value) / std::log1p(D_MAX_RAY_COLOR_LUMINANCE)));
+	}
+
+	void	setPrimaryCoordinates(
+		Denoise::FeatureVector& features,
+		const Renderer::internal::RenderCamera& renderCamera,
+		std::size_t x,
+		std::size_t y
+	)
+	{
+		features[0] = renderCamera.width > 1.0 ? static_cast<double>(x) / (renderCamera.width - 1.0) : 0.0;
+		features[1] = renderCamera.height > 1.0 ? static_cast<double>(y) / (renderCamera.height - 1.0) : 0.0;
+	}
+
+	Denoise::FeatureVector	primaryMissFeatures(
+		Scene& scene,
+		const Renderer::internal::RenderCamera& renderCamera,
+		std::size_t x,
+		std::size_t y
+	)
+	{
+		Denoise::FeatureVector features;
+		const Color background = scene.getBackgroundColor();
+
+		setPrimaryCoordinates(features, renderCamera, x, y);
+		features[2] = 0.0;
+		features[3] = 1.0;
+		features[4] = 0.5;
+		features[5] = 0.5;
+		features[6] = 0.5;
+		features[7] = normalizedColorChannel(background.getRed());
+		features[8] = normalizedColorChannel(background.getGreen());
+		features[9] = normalizedColorChannel(background.getBlue());
+		features[10] = 0.0;
+		return (features);
+	}
+
+	Denoise::FeatureVector	primaryHitFeatures(
+		const HitRecord& hitRecord,
+		const Renderer::internal::RenderCamera& renderCamera,
+		std::size_t x,
+		std::size_t y
+	)
+	{
+		Denoise::FeatureVector features;
+
+		Vector3 normal = hitRecord.normal;
+		if (Utilities::vectorLengthSquared(normal) > 0.0)
+		{
+			normal = Utilities::normalize(normal);
+		}
+		const Color albedo = hitRecord.material ? hitRecord.material->getColor() : Color(0.0, 0.0, 0.0);
+		const double materialType = hitRecord.material
+			? static_cast<double>(hitRecord.material->getType()) / static_cast<double>(PRINCIPLED)
+			: 0.0;
+
+		setPrimaryCoordinates(features, renderCamera, x, y);
+		features[2] = 1.0;
+		features[3] = hitRecord.t0 > 0.0 ? hitRecord.t0 / (1.0 + hitRecord.t0) : 0.0;
+		features[4] = normal.getX() * 0.5 + 0.5;
+		features[5] = normal.getY() * 0.5 + 0.5;
+		features[6] = normal.getZ() * 0.5 + 0.5;
+		features[7] = normalizedColorChannel(albedo.getRed());
+		features[8] = normalizedColorChannel(albedo.getGreen());
+		features[9] = normalizedColorChannel(albedo.getBlue());
+		features[10] = materialType;
+		return (features);
+	}
+
+	Color	calculateLightRaysColor(
+		const Ray& ray,
+		Scene& scene,
+		Denoise::FeatureVector* primaryFeatures,
+		const Renderer::internal::RenderCamera* renderCamera,
+		std::size_t x,
+		std::size_t y
+	);
 }
 
 Color	Renderer::internal::_calculatePixelColor(Scene& scene, const RenderCamera& renderCamera, std::size_t x, std::size_t y)
@@ -133,107 +217,139 @@ Color	Renderer::internal::_calculatePixelColor(Scene& scene, const RenderCamera&
 	);
 }
 
+Renderer::internal::RenderSample	Renderer::internal::_calculatePixelSample(Scene& scene, const RenderCamera& renderCamera, std::size_t x, std::size_t y)
+{
+	Ray	ray = internal::_generateRay(renderCamera, x, y);
+	RenderSample sample;
+
+	sample.color = calculateLightRaysColor(ray, scene, &sample.features, &renderCamera, x, y);
+	return (sample);
+}
+
 // Properly calculates light rays bounces, reflections, refractions, intersection, etc and returns the resulting color
 Color	Renderer::internal::_calculateLightRaysColor(const Ray& ray, Scene& scene)
 {
-	const int		maxLightBounces = scene.getMaxLightBounces();
-	const auto		skyType = scene.getRenderSky();
-	const Color		backgroundColor = scene.getBackgroundColor();
-	const auto&		lights = scene.getLights();
-	const auto		lightCount = lights.size();
-	//static bool		distanceBlueness = scene.getDistanceBlueness();
+	return (calculateLightRaysColor(ray, scene, nullptr, nullptr, 0, 0));
+}
 
-	Ray		currentRay = ray;
-	Color	accumulatedColor(0.0, 0.0, 0.0);
-	Color	throughput(1.0, 1.0, 1.0);
-
-	for (int bounces = 0; bounces <= maxLightBounces; bounces++)
+namespace
+{
+	Color	calculateLightRaysColor(
+		const Ray& ray,
+		Scene& scene,
+		Denoise::FeatureVector* primaryFeatures,
+		const Renderer::internal::RenderCamera* renderCamera,
+		std::size_t x,
+		std::size_t y
+	)
 	{
-		HitRecord	hitRecord;
-		if (!_checkHits(scene, currentRay, hitRecord))
+		const int		maxLightBounces = scene.getMaxLightBounces();
+		const auto		skyType = scene.getRenderSky();
+		const Color		backgroundColor = scene.getBackgroundColor();
+		const auto&		lights = scene.getLights();
+		const auto		lightCount = lights.size();
+		//static bool		distanceBlueness = scene.getDistanceBlueness();
+
+		Ray		currentRay = ray;
+		Color	accumulatedColor(0.0, 0.0, 0.0);
+		Color	throughput(1.0, 1.0, 1.0);
+
+		for (int bounces = 0; bounces <= maxLightBounces; bounces++)
 		{
-			Color	skyColor;
-			switch(skyType)
+			HitRecord	hitRecord;
+			if (!Renderer::internal::_checkHits(scene, currentRay, hitRecord))
 			{
-				case (SKY_ATMOSPHERE):
-					skyColor = _computeAtmosphereColor(scene, currentRay);
-					break;
-				case (SKY_LINEAR):
-					skyColor = _calculateSkyInterpolation(scene, currentRay);
-					break;
-				default:
-					skyColor = backgroundColor;
-					break;
+				if (bounces == 0 && primaryFeatures != nullptr && renderCamera != nullptr)
+				{
+					*primaryFeatures = primaryMissFeatures(scene, *renderCamera, x, y);
+				}
+				Color	skyColor;
+				switch(skyType)
+				{
+					case (SKY_ATMOSPHERE):
+						skyColor = Renderer::internal::_computeAtmosphereColor(scene, currentRay);
+						break;
+					case (SKY_LINEAR):
+						skyColor = Renderer::internal::_calculateSkyInterpolation(scene, currentRay);
+						break;
+					default:
+						skyColor = backgroundColor;
+						break;
+				}
+
+				return (accumulatedColor + clampRayColor(throughput * skyColor));
+			}
+			if (bounces == 0 && primaryFeatures != nullptr && renderCamera != nullptr)
+			{
+				*primaryFeatures = primaryHitFeatures(hitRecord, *renderCamera, x, y);
 			}
 
-			return (accumulatedColor + clampRayColor(throughput * skyColor));
-		}
+			ScatterRecord	scatterRecord;
+			Color emitted = hitRecord.material->emitted();
 
-		ScatterRecord	scatterRecord;
-		Color emitted = hitRecord.material->emitted();
+			if (!hitRecord.material->scatter(currentRay, hitRecord, scatterRecord))
+			{
+				return (accumulatedColor + clampRayColor(throughput * emitted));
+			}
 
-		if (!hitRecord.material->scatter(currentRay, hitRecord, scatterRecord))
-		{
-			return (accumulatedColor + clampRayColor(throughput * emitted));
-		}
+			if (scatterRecord.isSpecular)
+			{
+				throughput = clampRayColor(throughput * scatterRecord.attenuation);
+				if (isTerminatedThroughput(throughput) || !applyRussianRoulette(throughput, bounces))
+				{
+					return (accumulatedColor);
+				}
+				currentRay = scatterRecord.specularRay;
+				continue;
+			}
 
-		if (scatterRecord.isSpecular)
-		{
-			throughput = clampRayColor(throughput * scatterRecord.attenuation);
+			accumulatedColor += throughput * emitted;
+			if (isTerminatedThroughput(throughput * scatterRecord.attenuation))
+			{
+				return (accumulatedColor);
+			}
+
+			double	pdfValue;
+			Ray		scattered;
+			if (lightCount > 0)
+			{
+				Vector3 scatteredDirection;
+				if (randomEngine.doubleFloat() < 0.5)
+				{
+					scatteredDirection = lightPDFGenerate(lights, hitRecord.position);
+				}
+				else
+				{
+					scatteredDirection = scatterPDFGenerate(scatterRecord);
+				}
+				scattered = Ray(hitRecord.position, scatteredDirection);
+				pdfValue = 0.5 * lightPDFValue(lights, hitRecord.position, scattered.getDirection())
+					+ 0.5 * scatterPDFValue(scatterRecord, scattered.getDirection());
+			}
+			else
+			{
+				scattered = Ray(hitRecord.position, scatterPDFGenerate(scatterRecord));
+				pdfValue = scatterPDFValue(scatterRecord, scattered.getDirection());
+			}
+
+			if (pdfValue <= 0.0 || !std::isfinite(pdfValue))
+			{
+				return (accumulatedColor);
+			}
+
+			throughput = clampRayColor(
+				throughput *
+				scatterRecord.attenuation *
+				hitRecord.material->scatteringPDF(scattered, hitRecord) /
+				pdfValue
+			);
 			if (isTerminatedThroughput(throughput) || !applyRussianRoulette(throughput, bounces))
 			{
 				return (accumulatedColor);
 			}
-			currentRay = scatterRecord.specularRay;
-			continue;
+			currentRay = scattered;
 		}
 
-		accumulatedColor += throughput * emitted;
-		if (isTerminatedThroughput(throughput * scatterRecord.attenuation))
-		{
-			return (accumulatedColor);
-		}
-
-		double	pdfValue;
-		Ray		scattered;
-		if (lightCount > 0)
-		{
-			Vector3 scatteredDirection;
-			if (randomEngine.doubleFloat() < 0.5)
-			{
-				scatteredDirection = lightPDFGenerate(lights, hitRecord.position);
-			}
-			else
-			{
-				scatteredDirection = scatterPDFGenerate(scatterRecord);
-			}
-			scattered = Ray(hitRecord.position, scatteredDirection);
-			pdfValue = 0.5 * lightPDFValue(lights, hitRecord.position, scattered.getDirection())
-				+ 0.5 * scatterPDFValue(scatterRecord, scattered.getDirection());
-		}
-		else
-		{
-			scattered = Ray(hitRecord.position, scatterPDFGenerate(scatterRecord));
-			pdfValue = scatterPDFValue(scatterRecord, scattered.getDirection());
-		}
-
-		if (pdfValue <= 0.0 || !std::isfinite(pdfValue))
-		{
-			return (accumulatedColor);
-		}
-
-		throughput = clampRayColor(
-			throughput *
-			scatterRecord.attenuation *
-			hitRecord.material->scatteringPDF(scattered, hitRecord) /
-			pdfValue
-		);
-		if (isTerminatedThroughput(throughput) || !applyRussianRoulette(throughput, bounces))
-		{
-			return (accumulatedColor);
-		}
-		currentRay = scattered;
+		return (accumulatedColor);
 	}
-
-	return (accumulatedColor);
 }
