@@ -52,12 +52,24 @@ Run the containerized benchmark matrix and save raw results:
 make benchmark BENCH_CPUS=1 BENCH_THREADS=1 > before.csv
 ```
 
+The benchmark score is printed to stderr at the end of the run, so redirecting stdout still writes a clean raw CSV.
+
 After an optimization, run it again and compare medians:
 
 ```sh
 make benchmark BENCH_CPUS=1 BENCH_THREADS=1 > after.csv
 make benchmark-compare BEFORE=before.csv AFTER=after.csv
 ```
+
+Score benchmark results:
+
+```sh
+make benchmark-score RESULTS=after.csv
+```
+
+Each case score is the median kilo-samples per minute for that case.
+The overall score uses the geometric mean of per-case scores, so running the score command on `before.csv` and `after.csv`
+gives comparable scores when the benchmark settings are the same.
 
 ## CMake
 

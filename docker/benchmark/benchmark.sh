@@ -17,6 +17,7 @@ global_bounces=${BENCH_BOUNCES:-}
 global_gamma=${BENCH_GAMMA:-}
 global_tonemapping=${BENCH_TONEMAPPING:-}
 global_bloom=${BENCH_BLOOM:-}
+score_sample_unit=${BENCH_SCORE_SAMPLE_UNIT:-1000}
 git_commit=${BENCH_GIT_COMMIT:-unknown}
 git_status=${BENCH_GIT_STATUS:-unknown}
 system=$(uname -srm | tr ',' ';')
@@ -31,6 +32,17 @@ if (( warmup < 0 )); then
 	echo "BENCH_WARMUP cannot be negative." >&2
 	exit 1
 fi
+
+awk -v score_sample_unit="$score_sample_unit" '
+	BEGIN {
+		if (score_sample_unit !~ /^[0-9]+(\.[0-9]+)?$/ || score_sample_unit <= 0) {
+			exit 1
+		}
+	}
+' || {
+	echo "BENCH_SCORE_SAMPLE_UNIT must be positive." >&2
+	exit 1
+}
 
 case_defaults()
 {
@@ -61,11 +73,18 @@ case_defaults()
 	esac
 }
 
-print_case_summary()
+print_case_summary_and_score()
 {
 	local benchmark_case=$1
-	shift
-	printf '%s\n' "$@" | sort -n | awk -v benchmark_case="$benchmark_case" '
+	local width=$2
+	local height=$3
+	local samples=$4
+	shift 4
+	printf '%s\n' "$@" | sort -n | awk -v benchmark_case="$benchmark_case" \
+		-v width="$width" \
+		-v height="$height" \
+		-v samples="$samples" \
+		-v score_sample_unit="$score_sample_unit" '
 		{
 			values[NR] = $1
 			sum += $1
@@ -85,13 +104,39 @@ print_case_summary()
 				variance += diff * diff
 			}
 			stddev = sqrt(variance / NR)
+			paths = width * height * samples
+			samples_per_second = paths / (median / 1000.0)
+			score = samples_per_second * 60.0 / score_sample_unit
 			printf "summary case=%s min_ms=%.6f median_ms=%.6f mean_ms=%.6f max_ms=%.6f stddev_ms=%.6f\n", benchmark_case, values[1], median, mean, values[NR], stddev > "/dev/stderr"
+			printf "score case=%s median_samples_per_second=%.6f score=%.2f\n", benchmark_case, samples_per_second, score > "/dev/stderr"
+			printf "%.12f\n", score
+		}
+	'
+}
+
+print_overall_score()
+{
+	printf '%s\n' "$@" | awk '
+		{
+			if ($1 <= 0) {
+				exit 1
+			}
+			sum_log += log($1)
+			count++
+		}
+		END {
+			if (count == 0) {
+				exit 1
+			}
+			score = exp(sum_log / count)
+			printf "score overall=%.2f\n", score > "/dev/stderr"
 		}
 	'
 }
 
 echo "case,run,elapsed_ms,samples_per_second,width,height,samples,bounces,threads,seed,gamma,tonemapping,bloom,git_commit,git_status,compiler,system"
 
+case_scores=()
 for benchmark_case in $cases; do
 	IFS=',' read -r width height samples bounces gamma tonemapping bloom <<< "$(case_defaults "$benchmark_case")"
 
@@ -123,5 +168,8 @@ for benchmark_case in $cases; do
 		echo "$benchmark_case,$n,$elapsed_ms,$samples_per_second,$width,$height,$samples,$bounces,$threads,$seed,$gamma,$tonemapping,$bloom,$git_commit,$git_status,$compiler,$system"
 	done
 
-	print_case_summary "$benchmark_case" "${times[@]}"
+	case_score=$(print_case_summary_and_score "$benchmark_case" "$width" "$height" "$samples" "${times[@]}")
+	case_scores+=("$case_score")
 done
+
+print_overall_score "${case_scores[@]}"

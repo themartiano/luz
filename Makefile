@@ -57,6 +57,7 @@ BENCH_BOUNCES ?=
 BENCH_GAMMA ?=
 BENCH_TONEMAPPING ?=
 BENCH_BLOOM ?=
+BENCH_SCORE_SAMPLE_UNIT ?= 1000
 BENCH_GIT_COMMIT ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo unknown)
 BENCH_GIT_STATUS ?= $(shell if [ -n "$$(git status --short 2>/dev/null)" ]; then echo dirty; else echo clean; fi)
 
@@ -232,6 +233,7 @@ benchmark:
 		-e BENCH_GAMMA="$(BENCH_GAMMA)" \
 		-e BENCH_TONEMAPPING="$(BENCH_TONEMAPPING)" \
 		-e BENCH_BLOOM="$(BENCH_BLOOM)" \
+		-e BENCH_SCORE_SAMPLE_UNIT=$(BENCH_SCORE_SAMPLE_UNIT) \
 		-e BENCH_GIT_COMMIT=$(BENCH_GIT_COMMIT) \
 		-e BENCH_GIT_STATUS=$(BENCH_GIT_STATUS) \
 		-e BENCH_CPUS=$(BENCH_CPUS) \
@@ -246,6 +248,14 @@ benchmark-compare:
 		exit 1; \
 	fi
 	@bash benchmarks/compare.sh "$(BEFORE)" "$(AFTER)"
+
+.PHONY: benchmark-score
+benchmark-score:
+	@if [ -z "$(RESULTS)" ]; then \
+		echo "Usage: make benchmark-score RESULTS=results.csv" >&2; \
+		exit 1; \
+	fi
+	@BENCH_SCORE_SAMPLE_UNIT=$(BENCH_SCORE_SAMPLE_UNIT) bash benchmarks/score.sh "$(RESULTS)"
 
 -include $(DPND)
 
