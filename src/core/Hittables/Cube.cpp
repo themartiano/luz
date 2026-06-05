@@ -36,6 +36,7 @@ Cube::Cube(Transform transform, double width, double height, double depth, std::
 void	Cube::setTransform(Transform transform)
 {
 	this->_transform = transform;
+	_generateFaces();
 }
 
 // Returns the Cube's material
@@ -48,30 +49,36 @@ std::shared_ptr<Material>	Cube::getMaterial(void) const
 void	Cube::setMaterial(std::shared_ptr<Material> material)
 {
 	this->_material = material;
+	_generateFaces();
 }
 
 // Sets the Cube's Width
 void	Cube::setWidth(double width)
 {
 	this->_width = width;
+	_generateFaces();
 }
 
 // Sets the Cube's Height
 void	Cube::setHeight(double height)
 {
 	this->_height = height;
+	_generateFaces();
 }
 
 // Sets the Cube's Depth
 void	Cube::setDepth(double depth)
 {
 	this->_depth = depth;
+	_generateFaces();
 }
 
 // Updates the Cube's faces
 void	Cube::_generateFaces(void)
 {
 	Vector3 position = this->_transform.getPosition();
+
+	this->_faces.clear();
 
 	// Front
 	this->_faces.push_back(Rectangle(Transform(position - Vector3(0.0, 0.0, this->_depth / 2.0), Vector3(0.0, 0.0, -1.0), Vector3(1.0, 1.0, 1.0)), this->_width, this->_height, this->_material));
@@ -80,16 +87,16 @@ void	Cube::_generateFaces(void)
 	this->_faces.push_back(Rectangle(Transform(position + Vector3(0.0, 0.0, this->_depth / 2.0), Vector3(0.0, 0.0, 1.0), Vector3(1.0, 1.0, 1.0)), this->_width, this->_height, this->_material));
 
 	// Top
-	this->_faces.push_back(Rectangle(Transform(position + Vector3(0.0, this->_height / 2.0, 0.0), Vector3(0.0, 1.0, 0.0), Vector3(1.0, 1.0, 1.0)), this->_width, this->_height, this->_material));
+	this->_faces.push_back(Rectangle(Transform(position + Vector3(0.0, this->_height / 2.0, 0.0), Vector3(0.0, 1.0, 0.0), Vector3(1.0, 1.0, 1.0)), this->_width, this->_depth, this->_material));
 
 	// Bottom
-	this->_faces.push_back(Rectangle(Transform(position - Vector3(0.0, this->_height / 2.0, 0.0), Vector3(0.0, -1.0, 0.0), Vector3(1.0, 1.0, 1.0)), this->_width, this->_height, this->_material));
+	this->_faces.push_back(Rectangle(Transform(position - Vector3(0.0, this->_height / 2.0, 0.0), Vector3(0.0, -1.0, 0.0), Vector3(1.0, 1.0, 1.0)), this->_width, this->_depth, this->_material));
 
 	// Right
-	this->_faces.push_back(Rectangle(Transform(position + Vector3(this->_width / 2.0, 0.0, 0.0), Vector3(1.0, 0.0, 0.0), Vector3(1.0, 1.0, 1.0)), this->_width, this->_height, this->_material));
+	this->_faces.push_back(Rectangle(Transform(position + Vector3(this->_width / 2.0, 0.0, 0.0), Vector3(1.0, 0.0, 0.0), Vector3(1.0, 1.0, 1.0)), this->_depth, this->_height, this->_material));
 
 	// Left
-	this->_faces.push_back(Rectangle(Transform(position - Vector3(this->_width / 2.0, 0.0, 0.0), Vector3(-1.0, 0.0, 0.0), Vector3(1.0, 1.0, 1.0)), this->_width, this->_height, this->_material));
+	this->_faces.push_back(Rectangle(Transform(position - Vector3(this->_width / 2.0, 0.0, 0.0), Vector3(-1.0, 0.0, 0.0), Vector3(1.0, 1.0, 1.0)), this->_depth, this->_height, this->_material));
 }
 
 // Calculates if the Rectangle is hit by 'ray', is closer than 't_max' and farther than T_MIN
@@ -112,11 +119,19 @@ bool	Cube::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) const
 // Creates an AABB / bounding box for this Cube
 bool	Cube::createBoundingBox(AABB& outputBoundingBox) const
 {
-	// outputBoundingBox = AABB(
-	//	 Vector3(this->_x0, this->_y0, this->_position.getZ() - T_MIN),
-	//	 Vector3(this->_x1, this->_y1, this->_position.getZ() + T_MIN));
+	const Vector3 position = this->_transform.getPosition();
 
+	outputBoundingBox = AABB(
+		Vector3(
+			position.getX() - this->_width / 2.0,
+			position.getY() - this->_height / 2.0,
+			position.getZ() - this->_depth / 2.0
+		),
+		Vector3(
+			position.getX() + this->_width / 2.0,
+			position.getY() + this->_height / 2.0,
+			position.getZ() + this->_depth / 2.0
+		)
+	);
 	return (true);
-	(void)outputBoundingBox;
 }
-

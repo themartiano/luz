@@ -11,7 +11,7 @@
 AABB::AABB(void)
 {
 	this->_minimum = Vector3(0.0, 0.0, 0.0);
-	this->_minimum = Vector3(0.0, 0.0, 0.0);
+	this->_maximum = Vector3(0.0, 0.0, 0.0);
 }
 
 // Constructs the AABB with custom values
