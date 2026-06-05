@@ -44,7 +44,7 @@ void	BMP::writeFile(const std::unique_ptr<Image>& image, bool insideDir, std::st
 		filePath += ".bmp";
 	}
 
-	std::cout << CLR_YELLOW << "Writing render to " << CLR_BLUE_BRIGHT << filePath << "\n" << CLR_RESET;
+	std::cout << CLR_YELLOW << "Writing render to " << CLR_BLUE_BRIGHT << Utilities::terminalFilePath(filePath) << "\n" << CLR_RESET;
 
 	FILE* imageFile = fopen(filePath.c_str(), "wb");
 	if (imageFile == nullptr)
