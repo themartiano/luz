@@ -24,24 +24,58 @@
 #include "FlagsParser.hpp"
 #include "Scene/SceneHelpers.hpp"
 #include "Random.hpp"
+#include <filesystem>
 #include <memory>
 #include <exception>
 #include <string>
 
-static void	saveRenderImage(Scene& scene)
+static bool	isTiffOutput(std::string outputFileName)
 {
-	std::string outputFileName = scene.getDefaultRenderOutputFileName();
 	std::string lowerOutputFileName = outputFileName;
 
 	Utilities::toLower(lowerOutputFileName);
-	if (Utilities::stringEndsWith(lowerOutputFileName, ".tiff") || Utilities::stringEndsWith(lowerOutputFileName, ".tif"))
+	return (
+		Utilities::stringEndsWith(lowerOutputFileName, ".tiff")
+		|| Utilities::stringEndsWith(lowerOutputFileName, ".tif")
+	);
+}
+
+static void	saveImage(const std::unique_ptr<Image>& image, const std::string& outputFileName)
+{
+	if (isTiffOutput(outputFileName))
 	{
-		scene.getImage()->saveToTIFF(outputFileName);
+		image->saveToTIFF(outputFileName);
 	}
 	else
 	{
-		scene.getImage()->saveToBMP(outputFileName);
+		image->saveToBMP(outputFileName);
 	}
+}
+
+static std::string	denoisedOutputFileName(Scene& scene)
+{
+	const std::string explicitDenoiseOutput = scene.getDenoiseOutputFileName();
+	if (!explicitDenoiseOutput.empty())
+	{
+		return (explicitDenoiseOutput);
+	}
+
+	const std::filesystem::path outputPath(scene.getDefaultRenderOutputFileName());
+	const std::filesystem::path extension = outputPath.extension();
+	std::string lowerExtension = extension.string();
+
+	Utilities::toLower(lowerExtension);
+	if (lowerExtension == ".bmp" || lowerExtension == ".tiff" || lowerExtension == ".tif")
+	{
+		std::filesystem::path denoisedPath = outputPath;
+
+		denoisedPath.replace_filename(outputPath.stem().string() + "_denoised" + extension.string());
+		return (denoisedPath.string());
+	}
+
+	std::filesystem::path denoisedPath = outputPath;
+	denoisedPath.replace_filename(outputPath.filename().string() + "_denoised");
+	return (denoisedPath.string());
 }
 
 // Main function
@@ -114,7 +148,11 @@ int	main(int argc, char *argv[])
 		{
 			if (!scene.getBenchmarkMode())
 			{
-				saveRenderImage(scene);
+				saveImage(scene.getImage(), scene.getDefaultRenderOutputFileName());
+				if (scene.hasDenoisedImage())
+				{
+					saveImage(scene.getDenoisedImage(), denoisedOutputFileName(scene));
+				}
 				if (scene.getStorePixelRenderTimes())
 				{
 					std::unique_ptr<Image> debugTime = scene.generateRenderTimeImage();

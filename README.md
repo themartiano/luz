@@ -97,6 +97,9 @@ Usage: ./Luz [options]
   --gamma true|false          Toggle gamma correction
   -tm, --tonemapping true|false  Toggle tone mapping
   --bloom true|false          Toggle bloom
+  --denoise [true|false]      Write a denoised companion render
+  --no-denoise                Disable denoising
+  --denoise-output PATH       Override denoised output path
   --render-times              Write renderTime.bmp
   --benchmark                 Run the built-in benchmark scene
   --benchmark-case NAME       Benchmark case: default, many-objects, mesh-bvh, diffuse, postprocess, atmosphere, lights, emissive-geometry, primitives-materials, volumes, obj-mesh

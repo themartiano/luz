@@ -92,6 +92,31 @@ void	SceneFile::internal::_readSettingsSection(Scene& scene, std::ifstream& stre
 			requireBinarySetting(useBloom, "bloom");
 			scene.setBloom(useBloom);
 		}
+		else if (lowerLine.rfind("denoise=", 0) != std::string::npos)
+		{
+			int useDenoise;
+
+			if (sscanf(lowerLine.c_str(), "denoise=%d", &useDenoise) != 1)
+			{
+				throw std::runtime_error("Invalid denoise setting. Use denoise=0 or denoise=1.");
+			}
+			requireBinarySetting(useDenoise, "denoise");
+			scene.setDenoise(useDenoise);
+		}
+		else if (
+			lowerLine.rfind("denoiseoutputfilename=", 0) != std::string::npos
+			|| lowerLine.rfind("denoiseoutput=", 0) != std::string::npos
+			|| lowerLine.rfind("denoise_output=", 0) != std::string::npos
+		)
+		{
+			const std::size_t separator = line.find('=');
+
+			if (separator == std::string::npos || separator == line.length() - 1)
+			{
+				throw std::runtime_error("Invalid denoise output setting. Use denoiseoutputfilename=PATH.");
+			}
+			scene.setDenoiseOutputFileName(line.substr(separator + 1));
+		}
 		else if (lowerLine.rfind("outputfilename=", 0) != std::string::npos)
 		{
 			std::string strOutputFileName = line.substr(std::string("outputfilename=").size());

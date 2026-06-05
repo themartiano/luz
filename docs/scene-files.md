@@ -31,6 +31,8 @@ The parser is intentionally strict: unknown lines and malformed values throw an 
 | `maxlightbounces` | `maxlightbounces=N` | Maximum recursive light bounces. |
 | `gamma` | `gamma=0` or `gamma=1` | Enables gamma correction when set to `1`. |
 | `bloom` | `bloom=0` or `bloom=1` | Enables bloom when set to `1`. |
+| `denoise` | `denoise=0` or `denoise=1` | Writes a denoised companion image using a color-buffer Non-Local Means denoiser before bloom, tone mapping, and gamma correction. |
+| `denoiseoutputfilename` | `denoiseoutputfilename=PATH` | Optional denoised companion output path. Defaults to `outputfilename` with `_denoised` before the extension. Aliases: `denoiseoutput`, `denoise_output`. |
 | `outputfilename` | `outputfilename=PATH` | `.bmp` is appended if no `.bmp` suffix is present. |
 | `sky` | `sky=none`, `sky=linear`, or `sky=atmosphere` | Selects background rendering. |
 | `background` | `background=(R,G,B)` | Background color used when `sky=none`. Aliases: `backgroundcolor`, `background_color`. |

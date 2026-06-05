@@ -42,6 +42,8 @@ Scene::Scene(void)
 	this->_benchmarkMode = false;
 	this->_renderingThreads = CORE_COUNT;
 	this->_bloom = true;
+	this->_denoise = false;
+	this->_denoiseOutputFileName = "";
 }
 
 // Properly frees all allocated memory (destructor)
@@ -382,4 +384,49 @@ void	Scene::setBloom(bool bloom)
 bool	Scene::getBloom(void) const
 {
 	return (this->_bloom);
+}
+
+void	Scene::setDenoise(bool denoise)
+{
+	this->_denoise = denoise;
+}
+
+bool	Scene::getDenoise(void) const
+{
+	return (this->_denoise);
+}
+
+void	Scene::setDenoisedImage(std::unique_ptr<Image> denoisedImage)
+{
+	this->_denoisedImage = std::move(denoisedImage);
+}
+
+std::unique_ptr<Image>&	Scene::getDenoisedImage(void)
+{
+	return (this->_denoisedImage);
+}
+
+const std::unique_ptr<Image>&	Scene::getDenoisedImage(void) const
+{
+	return (this->_denoisedImage);
+}
+
+bool	Scene::hasDenoisedImage(void) const
+{
+	return (this->_denoisedImage != nullptr);
+}
+
+void	Scene::clearDenoisedImage(void)
+{
+	this->_denoisedImage = nullptr;
+}
+
+void	Scene::setDenoiseOutputFileName(std::string denoiseOutputFileName)
+{
+	this->_denoiseOutputFileName = denoiseOutputFileName;
+}
+
+std::string	Scene::getDenoiseOutputFileName(void) const
+{
+	return (this->_denoiseOutputFileName);
 }

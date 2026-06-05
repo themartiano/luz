@@ -245,12 +245,12 @@ namespace
 		return (Triangle(vertex0, vertex1, vertex2, material));
 	}
 
-	void	printMeshLoadProgress(const ObjLoadProgress& progress)
+	void	printMeshLoadProgress(const ObjLoadProgress& progress, bool rewriteLine)
 	{
 		const std::size_t percent = progress.total == 0 ? 100 : (progress.loaded * 100) / progress.total;
 
 		std::cout
-			<< "\r" << CLR_CYAN << "Loading meshes: " << CLR_WHITE
+			<< (rewriteLine ? "\r" : "") << CLR_CYAN << "Loading meshes: " << CLR_WHITE
 			<< "[ " << percent << "% ]" << CLR_RESET << std::flush;
 	}
 
@@ -262,7 +262,7 @@ namespace
 		{
 			progress.started = true;
 			progress.startTime = std::chrono::steady_clock::now();
-			printMeshLoadProgress(progress);
+			printMeshLoadProgress(progress, false);
 		}
 	}
 
@@ -275,7 +275,7 @@ namespace
 			progress.loaded++;
 		}
 		progress.skippedDegenerateTriangles += skippedDegenerateTriangles;
-		printMeshLoadProgress(progress);
+		printMeshLoadProgress(progress, true);
 		if (progress.loaded >= progress.total)
 		{
 			const std::chrono::duration<double> elapsed = std::chrono::steady_clock::now() - progress.startTime;

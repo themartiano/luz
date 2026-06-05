@@ -21,7 +21,7 @@ namespace
 		{
 			case SCATTER_PDF_COSINE:
 			{
-				double cosine = Utilities::dot(Utilities::normalize(direction), scatterRecord.cosineBasis.getW());
+				double cosine = Utilities::dot(direction, scatterRecord.cosineBasis.getW());
 
 				return ((cosine <= 0.0) ? 0.0 : cosine / D_PI);
 			}
@@ -47,6 +47,11 @@ namespace
 
 	double	lightPDFValue(const std::vector<std::shared_ptr<Hittable>>& lights, const Vector3& origin, const Vector3& direction)
 	{
+		if (lights.size() == 1)
+		{
+			return (lights[0]->pdfValue(origin, direction));
+		}
+
 		double sum = 0.0;
 
 		for (const std::shared_ptr<Hittable>& light : lights)
@@ -59,9 +64,14 @@ namespace
 
 	Vector3	lightPDFGenerate(const std::vector<std::shared_ptr<Hittable>>& lights, const Vector3& origin)
 	{
+		if (lights.size() == 1)
+		{
+			return (lights[0]->random(origin));
+		}
+
 		const unsigned int randomIndex = randomEngine.integer(0, lights.size() - 1);
 
-		return (lights.at(randomIndex)->random(origin));
+		return (lights[randomIndex]->random(origin));
 	}
 
 	Color	clampRayColor(Color color)

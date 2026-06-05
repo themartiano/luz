@@ -8,6 +8,25 @@
 #include <stdexcept>
 #include <cstdlib>
 
+namespace
+{
+	bool	parseOptionalBoolean(const std::string& value, bool& output)
+	{
+		if (value == "true" || value == "1")
+		{
+			output = true;
+			return (true);
+		}
+		if (value == "false" || value == "0")
+		{
+			output = false;
+			return (true);
+		}
+
+		return (false);
+	}
+}
+
 FlagsParser::FlagsParser(int argc, char** argv)
 {
 	this->_args = _stringVec(argv + 1, argv + argc);
@@ -28,6 +47,8 @@ void	FlagsParser::parse(Scene& scene)
 	this->_parseGamma(scene);
 	this->_parseToneMapping(scene);
 	this->_parseBloom(scene);
+	this->_parseDenoise(scene);
+	this->_parseDenoiseOutput(scene);
 	this->_parseRenderTimes(scene);
 }
 
@@ -48,6 +69,9 @@ void	FlagsParser::_parseHelp(void)
 			<< "  --gamma true|false          Toggle gamma correction\n"
 			<< "  -tm, --tonemapping true|false  Toggle tone mapping\n"
 			<< "  --bloom true|false          Toggle bloom\n"
+			<< "  --denoise [true|false]      Write a denoised companion render\n"
+			<< "  --no-denoise                Disable denoising\n"
+			<< "  --denoise-output PATH       Override denoised output path\n"
 			<< "  --render-times              Write renderTime.bmp\n"
 			<< "  --benchmark                 Run the built-in benchmark scene\n"
 			<< "  --benchmark-case NAME       Benchmark case: default, many-objects, mesh-bvh, diffuse, postprocess, atmosphere, lights, emissive-geometry, primitives-materials, volumes, obj-mesh\n";
@@ -309,6 +333,47 @@ void	FlagsParser::_parseBloom(Scene& scene)
 		{
 			throw std::runtime_error("Invalid value for --bloom. Use true, false, 1, or 0.");
 		}
+	}
+}
+
+void	FlagsParser::_parseDenoise(Scene& scene)
+{
+	auto it = this->_findFlag("--denoise");
+	if (it != this->_args.end())
+	{
+		if (it + 1 == this->_args.end() || (it + 1)->rfind("-", 0) == 0)
+		{
+			scene.setDenoise(true);
+		}
+		else
+		{
+			bool denoise;
+
+			if (!parseOptionalBoolean(*(it + 1), denoise))
+			{
+				throw std::runtime_error("Invalid value for --denoise. Use true, false, 1, or 0.");
+			}
+			scene.setDenoise(denoise);
+		}
+	}
+
+	it = this->_findFlag("--no-denoise");
+	if (it != this->_args.end())
+	{
+		scene.setDenoise(false);
+	}
+}
+
+void	FlagsParser::_parseDenoiseOutput(Scene& scene)
+{
+	auto it = this->_findFlag("--denoise-output");
+	if (it != this->_args.end())
+	{
+		if (it + 1 == this->_args.end())
+		{
+			throw std::runtime_error("--denoise-output requires a path.");
+		}
+		scene.setDenoiseOutputFileName(*(it + 1));
 	}
 }
 

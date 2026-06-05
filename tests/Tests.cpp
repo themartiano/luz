@@ -1,5 +1,6 @@
 #include "AABB.hpp"
 #include "Color.hpp"
+#include "Denoise/NonLocalMeans.hpp"
 #include "FlagsParser.hpp"
 #include "Image.hpp"
 #include "Materials/Lambertian.hpp"
@@ -26,6 +27,7 @@
 #include <fstream>
 #include <iostream>
 #include <iterator>
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -185,6 +187,31 @@ namespace
 		requireNear(pixel.getBlue(), 0.0, "Tone mapping black changed blue value.");
 	}
 
+	void	testNonLocalMeansReducesImpulseAndPreservesEdge(void)
+	{
+		Image image(7, 5);
+		image.initialize();
+
+		for (std::size_t y = 0; y < image.getHeight(); y++)
+		{
+			for (std::size_t x = 0; x < image.getWidth(); x++)
+			{
+				image.setPixel(x, y, x < 3 ? Color(0.0, 0.0, 0.0) : Color(1.0, 1.0, 1.0));
+			}
+		}
+		image.setPixel(1, 2, Color(1.0, 1.0, 1.0));
+
+		Denoise::NonLocalMeansSettings settings;
+		settings.searchRadius = 2;
+		settings.patchRadius = 1;
+		settings.strength = 0.3;
+		Denoise::apply(image, settings);
+
+		require(image.getPixel(1, 2).getRed() < 0.75, "Denoise did not reduce an isolated impulse.");
+		require(image.getPixel(2, 2).getRed() < 0.25, "Denoise blurred too much color across the dark side of an edge.");
+		require(image.getPixel(3, 2).getRed() > 0.75, "Denoise blurred too much color across the bright side of an edge.");
+	}
+
 	void	testTerminalFilePath(void)
 	{
 		require(
@@ -332,6 +359,30 @@ namespace
 		std::filesystem::remove(scenePath);
 	}
 
+	void	testSceneFileDenoiseOutputName(void)
+	{
+		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_scene_denoise_output_test.luz";
+		const std::filesystem::path outputPath = std::filesystem::temp_directory_path() / "luz_custom_denoised.tiff";
+		{
+			std::ofstream stream(scenePath);
+			stream
+				<< "[settings]\n"
+				<< "resolution=2,2\n"
+				<< "denoise=1\n"
+				<< "denoiseoutputfilename=" << outputPath.string() << "\n\n";
+		}
+
+		Scene scene;
+		SceneFile::read(scene, scenePath.string());
+		require(scene.getDenoise(), "Scene denoise setting was not applied.");
+		require(
+			scene.getDenoiseOutputFileName() == outputPath.string(),
+			"Scene denoise output setting was not applied."
+		);
+
+		std::filesystem::remove(scenePath);
+	}
+
 	void	requireSceneFileSettingThrows(const std::string& settingLine, const std::string& message)
 	{
 		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_invalid_setting_test.luz";
@@ -364,6 +415,8 @@ namespace
 		requireSceneFileSettingThrows("maxlightbounces=-1", "Scene file accepted negative max light bounces.");
 		requireSceneFileSettingThrows("gamma=2", "Scene file accepted non-binary gamma.");
 		requireSceneFileSettingThrows("bloom=2", "Scene file accepted non-binary bloom.");
+		requireSceneFileSettingThrows("denoise=2", "Scene file accepted non-binary denoise.");
+		requireSceneFileSettingThrows("denoiseoutputfilename=", "Scene file accepted empty denoise output name.");
 		requireSceneFileSettingThrows("sky=wat", "Scene file accepted unknown sky setting.");
 		requireSceneFileSettingThrows("atmosphere=0,1,2,3,4,0,1,0", "Scene file accepted zero atmosphere samples.");
 	}
@@ -928,12 +981,46 @@ namespace
 		}, message);
 	}
 
+	std::unique_ptr<Scene>	parseFlags(std::vector<std::string> arguments)
+	{
+		std::vector<char*> argv;
+		argv.push_back(const_cast<char*>("Luz"));
+		for (std::string& argument : arguments)
+		{
+			argv.push_back(argument.data());
+		}
+
+		auto scene = std::make_unique<Scene>();
+		FlagsParser(static_cast<int>(argv.size()), argv.data()).parse(*scene);
+		return (scene);
+	}
+
+	void	testFlagsParseDenoiseOptions(void)
+	{
+		std::unique_ptr<Scene> enabledScene = parseFlags({"--denoise"});
+		require(enabledScene->getDenoise(), "Bare --denoise did not enable denoising.");
+
+		std::unique_ptr<Scene> falseScene = parseFlags({"--denoise", "false"});
+		require(!falseScene->getDenoise(), "--denoise false did not disable denoising.");
+
+		std::unique_ptr<Scene> disabledScene = parseFlags({"--denoise", "--no-denoise"});
+		require(!disabledScene->getDenoise(), "--no-denoise did not override --denoise.");
+
+		std::unique_ptr<Scene> outputScene = parseFlags({"--denoise-output", "custom_denoised.tiff"});
+		require(
+			outputScene->getDenoiseOutputFileName() == "custom_denoised.tiff",
+			"--denoise-output was not parsed."
+		);
+	}
+
 	void	testFlagsRejectInvalidValues(void)
 	{
 		requireFlagParseThrows({"--samples", "0"}, "CLI accepted zero samples.");
 		requireFlagParseThrows({"--maxLightBounces", "-1"}, "CLI accepted negative max light bounces.");
 		requireFlagParseThrows({"--resolution", "-1x100"}, "CLI accepted negative width.");
 		requireFlagParseThrows({"--threads", "0"}, "CLI accepted zero threads.");
+		requireFlagParseThrows({"--denoise", "maybe"}, "CLI accepted invalid denoise value.");
+		requireFlagParseThrows({"--denoise-output"}, "CLI accepted missing denoise output path.");
 	}
 
 	void	testSettersRejectInvalidValues(void)
@@ -986,6 +1073,33 @@ namespace
 		}
 	}
 
+	void	testTinyDenoisedRenderProducesCompanionImage(void)
+	{
+		setRandomSeed(42);
+
+		Scene scene;
+		scene.getImage()->setWidth(2);
+		scene.getImage()->setHeight(2);
+		scene.getImage()->initialize();
+		scene.setSampleCount(1);
+		scene.setMaxLightBounces(1);
+		scene.setGammaCorrected(false);
+		scene.setToneMapped(false);
+		scene.setBloom(false);
+		scene.setDenoise(true);
+		scene.setRenderSky(SKY_NONE);
+		scene.setBackgroundColor(Color(0.1, 0.2, 0.3));
+		scene.setRenderingThreads(1);
+		scene.addCamera(Camera(Vector3(0.0, 0.0, 1.0), Vector3(0.0, 0.0, -1.0), 45, 0.0, 1.0));
+
+		require(Renderer::render(scene), "Tiny denoised render failed.");
+		require(scene.hasDenoisedImage(), "Denoised render did not create a companion image.");
+		require(scene.getDenoisedImage()->getWidth() == scene.getImage()->getWidth(), "Denoised image width is wrong.");
+		require(scene.getDenoisedImage()->getHeight() == scene.getImage()->getHeight(), "Denoised image height is wrong.");
+		requireNear(scene.getImage()->getPixel(0, 0).getRed(), 0.1, "Original render image was changed by denoising.");
+		requireNear(scene.getDenoisedImage()->getPixel(0, 0).getRed(), 0.1, "Denoised companion image value is wrong.");
+	}
+
 	void	testZeroFocusDistanceRender(void)
 	{
 		setRandomSeed(42);
@@ -1024,11 +1138,13 @@ int	main(void)
 	{
 		testColorMath();
 		testToneMappingBlackPixel();
+		testNonLocalMeansReducesImpulseAndPreservesEdge();
 		testTerminalFilePath();
 		testNonSquareBMP();
 		testNonSquareTIFF();
 		testSceneFileOutputName();
 		testSceneFileTiffOutputName();
+		testSceneFileDenoiseOutputName();
 		testSceneFileRejectsInvalidSettings();
 		testSceneFileBackgroundSetting();
 		testSceneFileLegacyCameraPreservesDecimalFOV();
@@ -1048,9 +1164,11 @@ int	main(void)
 		testRectangleRandomSamplesSupportedAxes();
 		testCubeBoundingBoxAndSetters();
 		testHittablePDFAveragesMultipleLights();
+		testFlagsParseDenoiseOptions();
 		testFlagsRejectInvalidValues();
 		testSettersRejectInvalidValues();
 		testTinyRender();
+		testTinyDenoisedRenderProducesCompanionImage();
 		testZeroFocusDistanceRender();
 	}
 	catch (const std::exception& exception)

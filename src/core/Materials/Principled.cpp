@@ -39,7 +39,7 @@ Principled::Principled(Color color, double metallic, double roughness)
 
 bool	Principled::scatter(Ray& ray, HitRecord& hitRecord, ScatterRecord& scatterRecord)
 {
-	const Vector3	normalizedDirection = Utilities::normalize(ray.getDirection());
+	const Vector3&	normalizedDirection = ray.getDirection();
 	const double	cosTheta = std::max(0.0, Utilities::dot(normalizedDirection * -1.0, hitRecord.normal));
 	const double	dielectricF0 = 0.04;
 	const double	metalF0 = clamp01(maxChannel(this->_color));
@@ -71,7 +71,7 @@ bool	Principled::scatter(Ray& ray, HitRecord& hitRecord, ScatterRecord& scatterR
 
 double	Principled::scatteringPDF(Ray& ray, HitRecord& hitRecord)
 {
-	double cosine = Utilities::dot(hitRecord.normal, Utilities::normalize(ray.getDirection()));
+	double cosine = Utilities::dot(hitRecord.normal, ray.getDirection());
 
 	return (cosine < 0.0 ? 0.0 : cosine / D_PI);
 }

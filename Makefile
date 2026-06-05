@@ -1,7 +1,7 @@
 #~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#
 #                                                                           #
 #   Makefile                                                                #
-#    by Brhaka                                                              #
+#    by Martiano                                                              #
 #                                                                           #
 #    Options: (make OPTION)                                                 #
 #     debug -> Compiles with "-g" flag                                      #

@@ -55,6 +55,15 @@ class	Scene
 		std::size_t	getRenderingThreads(void) const;
 		void		setBloom(bool bloom);
 		bool		getBloom(void) const;
+		void		setDenoise(bool denoise);
+		bool		getDenoise(void) const;
+		void		setDenoisedImage(std::unique_ptr<Image> denoisedImage);
+		std::unique_ptr<Image>&	getDenoisedImage(void);
+		const std::unique_ptr<Image>&	getDenoisedImage(void) const;
+		bool		hasDenoisedImage(void) const;
+		void		clearDenoisedImage(void);
+		void		setDenoiseOutputFileName(std::string denoiseOutputFileName);
+		std::string	getDenoiseOutputFileName(void) const;
 
 
 	private:
@@ -82,4 +91,7 @@ class	Scene
 		bool					_benchmarkMode;
 		std::size_t				_renderingThreads;
 		bool					_bloom;
+		bool					_denoise;
+		std::unique_ptr<Image>	_denoisedImage;
+		std::string				_denoiseOutputFileName;
 };

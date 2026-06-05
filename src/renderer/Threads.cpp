@@ -4,6 +4,7 @@
 #include "Utilities.hpp"
 #include "Clock.hpp"
 #include "Blur/Gaussian.hpp"
+#include "Denoise/NonLocalMeans.hpp"
 #include "Random.hpp"
 #include <thread>
 #include <future>
@@ -13,6 +14,33 @@
 #include <atomic>
 #include <chrono>
 
+namespace
+{
+	void	applyBloom(Image& image)
+	{
+		auto brightnessImage = image.extractBrightness();
+
+		Gaussian::blur(*brightnessImage, *brightnessImage, 5, 1.0);
+		image += *brightnessImage;
+	}
+
+	void	applyPostProcessing(Scene& scene, Image& image)
+	{
+		if (scene.getBloom())
+		{
+			applyBloom(image);
+		}
+		if (scene.getToneMapped())
+		{
+			image.toneMap();
+		}
+		if (scene.getGammaCorrected())
+		{
+			image.gammaCorrect();
+		}
+	}
+}
+
 void	Renderer::internal::_manageThreads(Scene& scene)
 {
 	const std::size_t	height = scene.getImage()->getHeight();
@@ -21,6 +49,8 @@ void	Renderer::internal::_manageThreads(Scene& scene)
 	const std::size_t	threadCount = std::max<std::size_t>(1, scene.getRenderingThreads());
 	const std::size_t	blockSize = 16;
 	const RenderCamera	renderCamera = _prepareRenderCamera(scene);
+
+	scene.clearDenoisedImage();
 
 	std::atomic<std::size_t> nextRenderPixel(0);
 	std::atomic<std::size_t> completedRenderPixels(0);
@@ -62,8 +92,8 @@ void	Renderer::internal::_manageThreads(Scene& scene)
 						{
 							scene.setPixelRenderTime(x, y, pixelClock.elapsedUS());
 						}
-						completedRenderPixels.fetch_add(1);
 					}
+					completedRenderPixels.fetch_add(stopIndex - startIndex);
 				}
 			}
 		));
@@ -106,29 +136,15 @@ void	Renderer::internal::_manageThreads(Scene& scene)
 		future.get();
 	}
 
-	// Applies bloom
-	if (scene.getBloom())
+	if (scene.getDenoise())
 	{
-		auto brightnessImage = scene.getImage()->extractBrightness();
-
-		// Blurs the brightness image
-		Gaussian::blur(*brightnessImage, *brightnessImage, 5, 1.0);
-
-		// Adds the blurred brightness image to the original image
-		*scene.getImage() += *brightnessImage;
+		auto denoisedImage = std::make_unique<Image>(*scene.getImage());
+		Denoise::apply(*denoisedImage);
+		applyPostProcessing(scene, *denoisedImage);
+		scene.setDenoisedImage(std::move(denoisedImage));
 	}
 
-	// Applies tone mapping
-	if (scene.getToneMapped())
-	{
-		scene.getImage()->toneMap();
-	}
-
-	// Applies gamma correction
-	if (scene.getGammaCorrected())
-	{
-		scene.getImage()->gammaCorrect();
-	}
+	applyPostProcessing(scene, *scene.getImage());
 }
 
 // Renders the pixel color at X, Y

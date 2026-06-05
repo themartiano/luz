@@ -27,7 +27,7 @@ Metal::Metal(Color color, double reflectionFuzziness)
 
 bool	Metal::scatter(Ray& ray, HitRecord& hitRecord, ScatterRecord& scatterRecord)
 {
-	Vector3	reflected = Utilities::reflect(Utilities::normalize(ray.getDirection()), hitRecord.normal);
+	Vector3	reflected = Utilities::reflect(ray.getDirection(), hitRecord.normal);
 
 	scatterRecord.specularRay = Ray(hitRecord.position, reflected + this->_reflectionFuzziness * randomEngine.pointInsideUnitSphere());
 	scatterRecord.attenuation = this->_color;
