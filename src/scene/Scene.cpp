@@ -11,6 +11,7 @@
 #include <utility>
 #include <algorithm>
 #include <stdexcept>
+#include <cmath>
 
 /*
 	Constructors & Destructor
@@ -22,6 +23,10 @@ Scene::Scene(void)
 	this->_image = std::make_unique<Image>(D_WIDTH, D_HEIGHT);
 
 	this->_sampleCount = D_SAMPLE_COUNT;
+	this->_adaptiveSampling = false;
+	this->_adaptiveMinSamples = D_ADAPTIVE_MIN_SAMPLES;
+	this->_adaptiveCheckInterval = D_ADAPTIVE_CHECK_INTERVAL;
+	this->_adaptiveThreshold = D_ADAPTIVE_THRESHOLD;
 	this->_maxLightBounces = D_MAX_LIGHT_BOUNCES;
 	this->_gammaCorrected = true;
 	this->_toneMapped = true;
@@ -77,6 +82,58 @@ void	Scene::setSampleCount(const int sampleCount)
 		throw std::invalid_argument("Sample count must be positive.");
 	}
 	this->_sampleCount = sampleCount;
+}
+
+bool	Scene::getAdaptiveSampling(void) const
+{
+	return (this->_adaptiveSampling);
+}
+
+void	Scene::setAdaptiveSampling(bool adaptiveSampling)
+{
+	this->_adaptiveSampling = adaptiveSampling;
+}
+
+int	Scene::getAdaptiveMinSamples(void) const
+{
+	return (this->_adaptiveMinSamples);
+}
+
+void	Scene::setAdaptiveMinSamples(int adaptiveMinSamples)
+{
+	if (adaptiveMinSamples <= 0)
+	{
+		throw std::invalid_argument("Adaptive minimum samples must be positive.");
+	}
+	this->_adaptiveMinSamples = adaptiveMinSamples;
+}
+
+int	Scene::getAdaptiveCheckInterval(void) const
+{
+	return (this->_adaptiveCheckInterval);
+}
+
+void	Scene::setAdaptiveCheckInterval(int adaptiveCheckInterval)
+{
+	if (adaptiveCheckInterval <= 0)
+	{
+		throw std::invalid_argument("Adaptive check interval must be positive.");
+	}
+	this->_adaptiveCheckInterval = adaptiveCheckInterval;
+}
+
+double	Scene::getAdaptiveThreshold(void) const
+{
+	return (this->_adaptiveThreshold);
+}
+
+void	Scene::setAdaptiveThreshold(double adaptiveThreshold)
+{
+	if (!std::isfinite(adaptiveThreshold) || adaptiveThreshold <= 0.0)
+	{
+		throw std::invalid_argument("Adaptive threshold must be positive.");
+	}
+	this->_adaptiveThreshold = adaptiveThreshold;
 }
 
 // Returns the current Maximum Bounces of Light

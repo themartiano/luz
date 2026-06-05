@@ -357,6 +357,29 @@ namespace
 		std::filesystem::remove(scenePath);
 	}
 
+	void	testSceneFileAdaptiveSettings(void)
+	{
+		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_scene_adaptive_test.luz";
+		{
+			std::ofstream stream(scenePath);
+			stream
+				<< "[settings]\n"
+				<< "adaptive=1\n"
+				<< "adaptiveminsamples=32\n"
+				<< "adaptivethreshold=0.015\n"
+				<< "adaptivecheckinterval=8\n\n";
+		}
+
+		Scene scene;
+		SceneFile::read(scene, scenePath.string());
+		require(scene.getAdaptiveSampling(), "Scene adaptive setting was not applied.");
+		require(scene.getAdaptiveMinSamples() == 32, "Scene adaptive minimum samples setting was not applied.");
+		requireNear(scene.getAdaptiveThreshold(), 0.015, "Scene adaptive threshold setting was not applied.");
+		require(scene.getAdaptiveCheckInterval() == 8, "Scene adaptive check interval setting was not applied.");
+
+		std::filesystem::remove(scenePath);
+	}
+
 	void	requireSceneFileSettingThrows(const std::string& settingLine, const std::string& message)
 	{
 		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_invalid_setting_test.luz";
@@ -386,6 +409,10 @@ namespace
 	{
 		requireSceneFileSettingThrows("resolution=0,10", "Scene file accepted zero width.");
 		requireSceneFileSettingThrows("samples=0", "Scene file accepted zero samples.");
+		requireSceneFileSettingThrows("adaptive=2", "Scene file accepted non-binary adaptive setting.");
+		requireSceneFileSettingThrows("adaptiveminsamples=0", "Scene file accepted zero adaptive minimum samples.");
+		requireSceneFileSettingThrows("adaptivethreshold=0", "Scene file accepted zero adaptive threshold.");
+		requireSceneFileSettingThrows("adaptivecheckinterval=0", "Scene file accepted zero adaptive check interval.");
 		requireSceneFileSettingThrows("maxlightbounces=-1", "Scene file accepted negative max light bounces.");
 		requireSceneFileSettingThrows("gamma=2", "Scene file accepted non-binary gamma.");
 		requireSceneFileSettingThrows("bloom=2", "Scene file accepted non-binary bloom.");
@@ -1002,9 +1029,36 @@ namespace
 		require(fileOverrideScene->getDenoise(), "--denoise did not override scene file denoise setting.");
 	}
 
+	void	testFlagsParseAdaptiveOptions(void)
+	{
+		std::unique_ptr<Scene> enabledScene = parseFlags({"--adaptive"});
+		require(enabledScene->getAdaptiveSampling(), "Bare --adaptive did not enable adaptive sampling.");
+
+		std::unique_ptr<Scene> falseScene = parseFlags({"--adaptive", "false"});
+		require(!falseScene->getAdaptiveSampling(), "--adaptive false did not disable adaptive sampling.");
+
+		std::unique_ptr<Scene> disabledScene = parseFlags({"--adaptive", "--no-adaptive"});
+		require(!disabledScene->getAdaptiveSampling(), "--no-adaptive did not override --adaptive.");
+
+		std::unique_ptr<Scene> tunedScene = parseFlags({
+			"--adaptive",
+			"--adaptive-min-samples", "24",
+			"--adaptive-threshold", "0.03",
+			"--adaptive-check-interval", "6"
+		});
+		require(tunedScene->getAdaptiveSampling(), "Adaptive sampling was not enabled.");
+		require(tunedScene->getAdaptiveMinSamples() == 24, "--adaptive-min-samples was not parsed.");
+		requireNear(tunedScene->getAdaptiveThreshold(), 0.03, "--adaptive-threshold was not parsed.");
+		require(tunedScene->getAdaptiveCheckInterval() == 6, "--adaptive-check-interval was not parsed.");
+	}
+
 	void	testFlagsRejectInvalidValues(void)
 	{
 		requireFlagParseThrows({"--samples", "0"}, "CLI accepted zero samples.");
+		requireFlagParseThrows({"--adaptive", "maybe"}, "CLI accepted invalid adaptive value.");
+		requireFlagParseThrows({"--adaptive-min-samples", "0"}, "CLI accepted zero adaptive minimum samples.");
+		requireFlagParseThrows({"--adaptive-threshold", "0"}, "CLI accepted zero adaptive threshold.");
+		requireFlagParseThrows({"--adaptive-check-interval", "0"}, "CLI accepted zero adaptive check interval.");
 		requireFlagParseThrows({"--maxLightBounces", "-1"}, "CLI accepted negative max light bounces.");
 		requireFlagParseThrows({"--resolution", "-1x100"}, "CLI accepted negative width.");
 		requireFlagParseThrows({"--threads", "0"}, "CLI accepted zero threads.");
@@ -1018,6 +1072,9 @@ namespace
 		Image image;
 
 		requireThrows([&]() { scene.setSampleCount(0); }, "Scene accepted zero samples.");
+		requireThrows([&]() { scene.setAdaptiveMinSamples(0); }, "Scene accepted zero adaptive minimum samples.");
+		requireThrows([&]() { scene.setAdaptiveThreshold(0.0); }, "Scene accepted zero adaptive threshold.");
+		requireThrows([&]() { scene.setAdaptiveCheckInterval(0); }, "Scene accepted zero adaptive check interval.");
 		requireThrows([&]() { scene.setMaxLightBounces(-1); }, "Scene accepted negative max light bounces.");
 		requireThrows([&]() { scene.setRenderingThreads(0); }, "Scene accepted zero rendering threads.");
 		requireThrows([&]() { image.setWidth(0); }, "Image accepted zero width.");
@@ -1060,6 +1117,69 @@ namespace
 				require(std::isfinite(pixel.getBlue()), "Tiny render produced non-finite blue value.");
 			}
 		}
+	}
+
+	void	testTinyAdaptiveRender(void)
+	{
+		setRandomSeed(42);
+
+		Scene scene;
+		scene.getImage()->setWidth(2);
+		scene.getImage()->setHeight(2);
+		scene.getImage()->initialize();
+		scene.setSampleCount(4);
+		scene.setAdaptiveSampling(true);
+		scene.setAdaptiveMinSamples(2);
+		scene.setAdaptiveThreshold(0.5);
+		scene.setAdaptiveCheckInterval(1);
+		scene.setMaxLightBounces(1);
+		scene.setGammaCorrected(false);
+		scene.setToneMapped(false);
+		scene.setBloom(false);
+		scene.setRenderSky(SKY_NONE);
+		scene.setBackgroundColor(Color(0.1, 0.2, 0.3));
+		scene.setRenderingThreads(1);
+		scene.addCamera(Camera(Vector3(0.0, 0.0, 1.0), Vector3(0.0, 0.0, -1.0), 45, 0.0, 1.0));
+
+		require(Renderer::render(scene), "Tiny adaptive render failed.");
+		for (std::size_t y = 0; y < scene.getImage()->getHeight(); y++)
+		{
+			for (std::size_t x = 0; x < scene.getImage()->getWidth(); x++)
+			{
+				const Color pixel = scene.getImage()->getPixel(x, y);
+				require(std::isfinite(pixel.getRed()), "Tiny adaptive render produced non-finite red value.");
+				requireNear(pixel.getRed(), 0.1, "Tiny adaptive render changed stable background red.");
+			}
+		}
+	}
+
+	void	testTinyAdaptiveDenoisedRender(void)
+	{
+		setRandomSeed(42);
+
+		Scene scene;
+		scene.getImage()->setWidth(2);
+		scene.getImage()->setHeight(2);
+		scene.getImage()->initialize();
+		scene.setSampleCount(4);
+		scene.setAdaptiveSampling(true);
+		scene.setAdaptiveMinSamples(2);
+		scene.setAdaptiveThreshold(0.5);
+		scene.setAdaptiveCheckInterval(1);
+		scene.setMaxLightBounces(1);
+		scene.setGammaCorrected(false);
+		scene.setToneMapped(false);
+		scene.setBloom(false);
+		scene.setDenoise(true);
+		scene.setRenderSky(SKY_NONE);
+		scene.setBackgroundColor(Color(0.1, 0.2, 0.3));
+		scene.setRenderingThreads(1);
+		scene.addCamera(Camera(Vector3(0.0, 0.0, 1.0), Vector3(0.0, 0.0, -1.0), 45, 0.0, 1.0));
+
+		require(Renderer::render(scene), "Tiny adaptive denoised render failed.");
+		require(scene.hasDenoisedImage(), "Adaptive denoised render did not create a companion image.");
+		const Color denoisedPixel = scene.getDenoisedImage()->getPixel(0, 0);
+		require(std::isfinite(denoisedPixel.getRed()), "Adaptive denoised companion red value is non-finite.");
 	}
 
 	void	testTinyDenoisedRenderProducesCompanionImage(void)
@@ -1135,6 +1255,7 @@ int	main(void)
 		testSceneFileOutputName();
 		testSceneFileTiffOutputName();
 		testSceneFileDenoiseOutputName();
+		testSceneFileAdaptiveSettings();
 		testSceneFileRejectsInvalidSettings();
 		testSceneFileBackgroundSetting();
 		testSceneFileLegacyCameraPreservesDecimalFOV();
@@ -1155,9 +1276,12 @@ int	main(void)
 		testCubeBoundingBoxAndSetters();
 		testHittablePDFAveragesMultipleLights();
 		testFlagsParseDenoiseOptions();
+		testFlagsParseAdaptiveOptions();
 		testFlagsRejectInvalidValues();
 		testSettersRejectInvalidValues();
 		testTinyRender();
+		testTinyAdaptiveRender();
+		testTinyAdaptiveDenoisedRender();
 		testTinyDenoisedRenderProducesCompanionImage();
 		testZeroFocusDistanceRender();
 	}

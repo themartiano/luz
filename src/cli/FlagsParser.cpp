@@ -40,6 +40,10 @@ void	FlagsParser::parse(Scene& scene)
 	this->_parseFile(scene);
 	this->_parseBenchmark(scene);
 	this->_parseSamples(scene);
+	this->_parseAdaptiveSampling(scene);
+	this->_parseAdaptiveMinSamples(scene);
+	this->_parseAdaptiveThreshold(scene);
+	this->_parseAdaptiveCheckInterval(scene);
 	this->_parseMaxLightBounces(scene);
 	this->_parseResolution(scene);
 	this->_parseDetach();
@@ -63,6 +67,11 @@ void	FlagsParser::_parseHelp(void)
 			<< "  -f, --file PATH             Load a .luz scene file\n"
 			<< "  -r, --resolution WxH        Override render resolution\n"
 			<< "  -s, --samples N             Override samples per pixel\n"
+			<< "  --adaptive [true|false]     Enable adaptive per-pixel sampling\n"
+			<< "  --no-adaptive               Disable adaptive sampling\n"
+			<< "  --adaptive-min-samples N    Minimum samples before adaptive stopping\n"
+			<< "  --adaptive-threshold F      Relative adaptive noise threshold\n"
+			<< "  --adaptive-check-interval N Adaptive convergence check interval\n"
 			<< "  -mlb, --maxLightBounces N   Override maximum light bounces\n"
 			<< "  -t, --threads N             Render with N worker threads\n"
 			<< "  --seed N                    Seed random sampling\n"
@@ -169,6 +178,74 @@ void	FlagsParser::_parseSamples(Scene& scene)
 			throw std::runtime_error("--samples requires a value.");
 		}
 		scene.setSampleCount(std::stoi(*(it + 1)));
+	}
+}
+
+void	FlagsParser::_parseAdaptiveSampling(Scene& scene)
+{
+	for (auto it = this->_args.begin(); it != this->_args.end(); it++)
+	{
+		if (*it == "--adaptive")
+		{
+			if (it + 1 == this->_args.end() || (it + 1)->rfind("-", 0) == 0)
+			{
+				scene.setAdaptiveSampling(true);
+			}
+			else
+			{
+				bool adaptiveSampling;
+
+				if (!parseOptionalBoolean(*(it + 1), adaptiveSampling))
+				{
+					throw std::runtime_error("Invalid value for --adaptive. Use true, false, 1, or 0.");
+				}
+				scene.setAdaptiveSampling(adaptiveSampling);
+				it++;
+			}
+		}
+		else if (*it == "--no-adaptive")
+		{
+			scene.setAdaptiveSampling(false);
+		}
+	}
+}
+
+void	FlagsParser::_parseAdaptiveMinSamples(Scene& scene)
+{
+	auto it = this->_findFlag("--adaptive-min-samples");
+	if (it != this->_args.end())
+	{
+		if (it + 1 == this->_args.end())
+		{
+			throw std::runtime_error("--adaptive-min-samples requires a value.");
+		}
+		scene.setAdaptiveMinSamples(std::stoi(*(it + 1)));
+	}
+}
+
+void	FlagsParser::_parseAdaptiveThreshold(Scene& scene)
+{
+	auto it = this->_findFlag("--adaptive-threshold");
+	if (it != this->_args.end())
+	{
+		if (it + 1 == this->_args.end())
+		{
+			throw std::runtime_error("--adaptive-threshold requires a value.");
+		}
+		scene.setAdaptiveThreshold(std::stod(*(it + 1)));
+	}
+}
+
+void	FlagsParser::_parseAdaptiveCheckInterval(Scene& scene)
+{
+	auto it = this->_findFlag("--adaptive-check-interval");
+	if (it != this->_args.end())
+	{
+		if (it + 1 == this->_args.end())
+		{
+			throw std::runtime_error("--adaptive-check-interval requires a value.");
+		}
+		scene.setAdaptiveCheckInterval(std::stoi(*(it + 1)));
 	}
 }
 

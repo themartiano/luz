@@ -20,7 +20,15 @@ bool	Renderer::render(Scene& scene)
 	{
 		std::cout << CLR_YELLOW << "Rendering with:" << CLR_RESET << std::endl;
 		std::cout << CLR_GREEN << scene.getRenderingThreads() << CLR_BLUE << " threads;" << CLR_RESET << std::endl;
-		std::cout << CLR_GREEN << scene.getSampleCount() << CLR_BLUE << " samples per pixel;" << CLR_RESET << std::endl;
+		std::cout << CLR_GREEN << scene.getSampleCount() << CLR_BLUE << " max samples per pixel;" << CLR_RESET << std::endl;
+		if (scene.getAdaptiveSampling())
+		{
+			std::cout
+				<< CLR_GREEN << "adaptive" << CLR_BLUE << " sampling; "
+				<< CLR_GREEN << scene.getAdaptiveMinSamples() << CLR_BLUE << " min spp; "
+				<< CLR_GREEN << scene.getAdaptiveThreshold() << CLR_BLUE << " threshold;"
+				<< CLR_RESET << std::endl;
+		}
 		std::cout << CLR_GREEN << scene.getImage()->getWidth() << CLR_BLUE << " x " << CLR_GREEN << scene.getImage()->getHeight() << CLR_RESET << std::endl;
 	}
 
