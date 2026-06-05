@@ -19,7 +19,8 @@ void	SceneFile::read(Scene& scene, std::string fileName)
 	}
 
 	const std::filesystem::path scenePath(fileName);
-	const std::filesystem::path baseDirectory = scenePath.parent_path();
+	internal::SceneFileContext context;
+	context.baseDirectory = scenePath.parent_path();
 
 	std::string line;
 	do
@@ -37,9 +38,17 @@ void	SceneFile::read(Scene& scene, std::string fileName)
 		{
 			internal::_readSettingsSection(scene, stream);
 		}
+		else if (lowerLine.rfind("[materials]", 0) != std::string::npos)
+		{
+			internal::_readNamedMaterialsSection(stream, context);
+		}
+		else if (lowerLine.rfind("[meshes]", 0) != std::string::npos)
+		{
+			internal::_readNamedMeshesSection(stream, context);
+		}
 		else if (lowerLine.rfind("[scene]", 0) != std::string::npos)
 		{
-			internal::_readSceneSection(scene, stream, baseDirectory);
+			internal::_readSceneSection(scene, stream, context);
 		}
 		else
 		{

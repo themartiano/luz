@@ -51,6 +51,54 @@ lambertian=(0.8,0.2,0.2)
 }
 ```
 
+The parser also supports named blocks in `[materials]`, `[meshes]`, and `[scene]`.
+This is the preferred target for exporters because it keeps Blender-like object,
+material, mesh, camera, and light structure visible in the `.luz` file.
+
+```text
+[materials]
+material brushed_metal {
+type=principled
+base_color=(0.75,0.72,0.68)
+metallic=1
+roughness=0.18
+}
+
+[meshes]
+mesh helmet_mesh {
+file=assets/objects/blender_mandalorian.obj
+}
+
+[scene]
+camera main {
+position=(6.2,3.8,8.2)
+direction=(-6.2,-1.54,-8.2)
+fov=46
+aperture=0.04
+focusDistance=10.5
+}
+object helmet {
+mesh=helmet_mesh
+position=(0,0,0)
+rotation=(0,0,0)
+scale=(1,1,1)
+material=brushed_metal
+}
+area_light key {
+position=(-2.5,11.0,1.5)
+normal=(0,-1,0)
+size=(10,8)
+color=(1.0,0.86,0.62)
+intensity=3.5
+}
+point_light fill {
+position=(3,4,5)
+radius=0.1
+color=(0.45,0.55,1.0)
+intensity=1.0
+}
+```
+
 ## Objects
 
 | Object | Format |
@@ -84,6 +132,58 @@ Each material block must define exactly one material:
 | Emissive | `emissive=(r,g,b),lightIntensity` |
 
 Color channels are floating point values. The renderer normally expects values in the `0.0` to `1.0` range, although emissive intensity is separate.
+
+Named material blocks can use the direct material lines above, or property syntax:
+
+```text
+material glass {
+type=dielectric
+color=(1.0,1.0,1.0)
+}
+
+material principled_export {
+type=principled
+base_color=(0.8,0.2,0.1)
+metallic=0
+roughness=0.5
+emission=(1.0,0.6,0.3)
+emissionStrength=0
+}
+```
+
+`type=principled` is an approximation for Blender exporter output. Emissive
+principled materials become `emissive`, metallic materials become `metal`,
+transmissive or alpha-blended materials become `dielectric`, and the rest become
+`lambertian`.
+
+## Named Meshes, Objects, And Lights
+
+Named meshes bind a mesh name to an OBJ file:
+
+```text
+[meshes]
+mesh suzanne {
+file=assets/objects/blender_monkey.obj
+}
+```
+
+Named object blocks can reference `mesh=NAME` or provide `file=PATH` directly.
+OBJ vertices are transformed with `scale`, then `rotation` in degrees around
+X/Y/Z, then `position`.
+
+```text
+object suzanne {
+mesh=suzanne
+position=(0,1,0)
+rotation=(0,45,0)
+scale=(1,1,1)
+material=matte_red
+}
+```
+
+`area_light` creates an emissive rectangle and supports arbitrary normals.
+`point_light` and `sphere_light` create small emissive spheres. These lights are
+still sampled through Luz's emissive-hittable lighting path.
 
 ## Minimal Example
 

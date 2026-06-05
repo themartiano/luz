@@ -4,6 +4,49 @@
 #include "Materials/Lambertian.hpp"
 #include "Random.hpp"
 #include <cmath>
+#include <algorithm>
+
+namespace
+{
+	bool	buildRectangleBasis(const Vector3& orientation, Vector3& normal, Vector3& widthAxis, Vector3& heightAxis)
+	{
+		if (Utilities::vectorLengthSquared(orientation) <= 0.0)
+		{
+			return (false);
+		}
+
+		normal = Utilities::normalize(orientation);
+
+		if (std::fabs(normal.getY()) > 0.999)
+		{
+			widthAxis = Vector3(1.0, 0.0, 0.0);
+			heightAxis = Vector3(0.0, 0.0, 1.0);
+			return (true);
+		}
+		if (std::fabs(normal.getZ()) > 0.999)
+		{
+			widthAxis = Vector3(1.0, 0.0, 0.0);
+			heightAxis = Vector3(0.0, 1.0, 0.0);
+			return (true);
+		}
+		if (std::fabs(normal.getX()) > 0.999)
+		{
+			widthAxis = Vector3(0.0, 0.0, 1.0);
+			heightAxis = Vector3(0.0, 1.0, 0.0);
+			return (true);
+		}
+
+		Vector3 helper(0.0, 1.0, 0.0);
+		if (std::fabs(Utilities::dot(helper, normal)) > 0.9)
+		{
+			helper = Vector3(1.0, 0.0, 0.0);
+		}
+		widthAxis = Utilities::normalize(Utilities::cross(helper, normal));
+		heightAxis = Utilities::normalize(Utilities::cross(normal, widthAxis));
+
+		return (true);
+	}
+}
 
 /*
 	Constructors
@@ -68,8 +111,17 @@ void	Rectangle::setHeight(double height)
 // Calculates if the Rectangle is hit by 'ray', is closer than 't_max' and farther than T_MIN
 bool	Rectangle::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) const
 {
-	double a = Utilities::dot(ray.getOrigin() - this->_transform.getPosition(), this->_transform.getOrientation());
-	double b = Utilities::dot(ray.getDirection(), this->_transform.getOrientation());
+	Vector3 normal;
+	Vector3 widthAxis;
+	Vector3 heightAxis;
+
+	if (!buildRectangleBasis(this->_transform.getOrientation(), normal, widthAxis, heightAxis))
+	{
+		return (false);
+	}
+
+	double a = Utilities::dot(ray.getOrigin() - this->_transform.getPosition(), normal);
+	double b = Utilities::dot(ray.getDirection(), normal);
 	if (b == 0.0 || (a < 0.0 && b < 0.0) || (a > 0.0 && b > 0.0))
 	{
 		return (false);
@@ -82,30 +134,15 @@ bool	Rectangle::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) 
 	}
 
 	Vector3 d = ray.pointAtRay(t) - this->_transform.getPosition();
-	if (fabs(this->_transform.getOrientation().getY()) > 0.0)
+	const double widthDistance = Utilities::dot(d, widthAxis);
+	const double heightDistance = Utilities::dot(d, heightAxis);
+	if (std::fabs(widthDistance) > (this->_width / 2.0) || std::fabs(heightDistance) > (this->_height / 2.0))
 	{
-		if (fabs(d.getX()) > (this->_width / 2.0) || fabs(d.getZ()) > (this->_height / 2.0))
-		{
-			return (false);
-		}
-	}
-	else if (fabs(this->_transform.getOrientation().getZ()) > 0.0)
-	{
-		if (fabs(d.getX()) > (this->_width / 2.0) || fabs(d.getY()) > (this->_height / 2.0))
-		{
-			return (false);
-		}
-	}
-	else if (fabs(this->_transform.getOrientation().getX()) > 0.0)
-	{
-		if (fabs(d.getZ()) > (this->_width / 2.0) || fabs(d.getY()) > (this->_height / 2.0))
-		{
-			return (false);
-		}
+		return (false);
 	}
 
 	hitRecord.t0 = t;
-	hitRecord.normal = this->_transform.getOrientation();
+	hitRecord.normal = normal;
 	hitRecord.material = this->_material;
 	hitRecord.position = ray.pointAtRay(t);
 
@@ -116,11 +153,18 @@ bool	Rectangle::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) 
 bool	Rectangle::createBoundingBox(AABB& outputBoundingBox) const
 {
 	const Vector3 position = this->_transform.getPosition();
-	const Vector3 orientation = this->_transform.getOrientation();
+	Vector3 normal;
+	Vector3 widthAxis;
+	Vector3 heightAxis;
 	const double halfWidth = this->_width / 2.0;
 	const double halfHeight = this->_height / 2.0;
 
-	if (fabs(orientation.getY()) > 0.0)
+	if (!buildRectangleBasis(this->_transform.getOrientation(), normal, widthAxis, heightAxis))
+	{
+		return (false);
+	}
+
+	if (std::fabs(normal.getY()) > 0.999)
 	{
 		outputBoundingBox = AABB(
 			Vector3(position.getX() - halfWidth, position.getY() - T_MIN, position.getZ() - halfHeight),
@@ -128,7 +172,7 @@ bool	Rectangle::createBoundingBox(AABB& outputBoundingBox) const
 		);
 		return (true);
 	}
-	if (fabs(orientation.getZ()) > 0.0)
+	if (std::fabs(normal.getZ()) > 0.999)
 	{
 		outputBoundingBox = AABB(
 			Vector3(position.getX() - halfWidth, position.getY() - halfHeight, position.getZ() - T_MIN),
@@ -136,7 +180,7 @@ bool	Rectangle::createBoundingBox(AABB& outputBoundingBox) const
 		);
 		return (true);
 	}
-	if (fabs(orientation.getX()) > 0.0)
+	if (std::fabs(normal.getX()) > 0.999)
 	{
 		outputBoundingBox = AABB(
 			Vector3(position.getX() - T_MIN, position.getY() - halfHeight, position.getZ() - halfWidth),
@@ -145,7 +189,25 @@ bool	Rectangle::createBoundingBox(AABB& outputBoundingBox) const
 		return (true);
 	}
 
-	return (false);
+	const Vector3 corner0 = position + (widthAxis * halfWidth) + (heightAxis * halfHeight);
+	const Vector3 corner1 = position + (widthAxis * halfWidth) - (heightAxis * halfHeight);
+	const Vector3 corner2 = position - (widthAxis * halfWidth) + (heightAxis * halfHeight);
+	const Vector3 corner3 = position - (widthAxis * halfWidth) - (heightAxis * halfHeight);
+
+	Vector3 minimum(
+		std::min(std::min(corner0.getX(), corner1.getX()), std::min(corner2.getX(), corner3.getX())) - T_MIN,
+		std::min(std::min(corner0.getY(), corner1.getY()), std::min(corner2.getY(), corner3.getY())) - T_MIN,
+		std::min(std::min(corner0.getZ(), corner1.getZ()), std::min(corner2.getZ(), corner3.getZ())) - T_MIN
+	);
+	Vector3 maximum(
+		std::max(std::max(corner0.getX(), corner1.getX()), std::max(corner2.getX(), corner3.getX())) + T_MIN,
+		std::max(std::max(corner0.getY(), corner1.getY()), std::max(corner2.getY(), corner3.getY())) + T_MIN,
+		std::max(std::max(corner0.getZ(), corner1.getZ()), std::max(corner2.getZ(), corner3.getZ())) + T_MIN
+	);
+
+	outputBoundingBox = AABB(minimum, maximum);
+
+	return (true);
 }
 
 double  Rectangle::pdfValue(const Vector3& origin, const Vector3& vec) const
@@ -167,27 +229,18 @@ double  Rectangle::pdfValue(const Vector3& origin, const Vector3& vec) const
 // Returns a random point inside the rectangle's area
 Vector3 Rectangle::random(const Vector3& origin) const
 {
-	Vector3 randomPointInsideRectangle(0.0, 0.0, 0.0);
+	Vector3 normal;
+	Vector3 widthAxis;
+	Vector3 heightAxis;
 
-	double x = this->_transform.getPosition().getX();
-	double y = this->_transform.getPosition().getY();
-	double z = this->_transform.getPosition().getZ();
+	if (!buildRectangleBasis(this->_transform.getOrientation(), normal, widthAxis, heightAxis))
+	{
+		return (Vector3(0.0, 0.0, 0.0));
+	}
 
-	double halfWidth = this->_width / 2.0;
-	double halfHeight = this->_height / 2.0;
-
-	if (fabs(this->_transform.getOrientation().getY()) > 0.0)
-	{
-		randomPointInsideRectangle = Vector3(randomEngine.doubleFloat(x - halfWidth, x + halfWidth), y, randomEngine.doubleFloat(z - halfHeight, z + halfHeight));
-	}
-	else if (fabs(this->_transform.getOrientation().getZ()) > 0.0)
-	{
-		randomPointInsideRectangle = Vector3(randomEngine.doubleFloat(x - halfWidth, x + halfWidth), randomEngine.doubleFloat(y - halfHeight, y + halfHeight), z);
-	}
-	else if (fabs(this->_transform.getOrientation().getX()) > 0.0)
-	{
-		randomPointInsideRectangle = Vector3(x, randomEngine.doubleFloat(y - halfHeight, y + halfHeight), randomEngine.doubleFloat(z - halfWidth, z + halfWidth));
-	}
+	const Vector3 randomPointInsideRectangle = this->_transform.getPosition()
+		+ (widthAxis * randomEngine.doubleFloat(-(this->_width / 2.0), this->_width / 2.0))
+		+ (heightAxis * randomEngine.doubleFloat(-(this->_height / 2.0), this->_height / 2.0));
 
 	return (Utilities::normalize(randomPointInsideRectangle - origin));
 }

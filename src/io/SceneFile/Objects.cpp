@@ -7,47 +7,361 @@
 #include "Hittables/Triangle.hpp"
 #include "Hittables/Mesh.hpp"
 #include "OBJReader.hpp"
+#include "Materials/Emissive.hpp"
+#include "Materials/Lambertian.hpp"
 #include <fstream>
 #include <filesystem>
 #include <stdexcept>
+#include <memory>
+#include <utility>
+#include <cstdio>
 
-static std::string	resolveAssetPath(const std::filesystem::path& baseDirectory, const std::string& assetPath)
+namespace
 {
-	const std::filesystem::path path(assetPath);
-
-	if (path.is_absolute())
+	bool	splitAssignment(const std::string& line, std::string& key, std::string& value)
 	{
-		return (path.string());
+		const std::size_t separator = line.find('=');
+
+		if (separator == std::string::npos || separator == 0 || separator == line.length() - 1)
+		{
+			return (false);
+		}
+		key = SceneFile::internal::_lowerCopy(SceneFile::internal::_trim(line.substr(0, separator)));
+		value = SceneFile::internal::_trim(line.substr(separator + 1));
+
+		return (true);
 	}
 
-	const std::filesystem::path sceneRelativePath = baseDirectory / path;
-	if (!baseDirectory.empty() && std::filesystem::exists(sceneRelativePath))
+	std::shared_ptr<Material>	findNamedMaterial(const SceneFile::internal::SceneFileContext& context, const std::string& materialName)
 	{
-		return (sceneRelativePath.string());
+		const auto materialIt = context.materials.find(materialName);
+
+		if (materialIt == context.materials.end())
+		{
+			throw std::runtime_error("Unknown material name: " + materialName);
+		}
+
+		return (materialIt->second);
 	}
 
-	if (std::filesystem::exists(path))
+	std::string	findNamedMeshPath(const SceneFile::internal::SceneFileContext& context, const std::string& meshName)
 	{
-		return (path.string());
+		const auto meshIt = context.meshes.find(meshName);
+
+		if (meshIt == context.meshes.end())
+		{
+			throw std::runtime_error("Unknown mesh name: " + meshName);
+		}
+
+		return (meshIt->second);
 	}
 
-	const std::filesystem::path assetsPath = std::filesystem::path("assets/objects") / path;
-	if (std::filesystem::exists(assetsPath))
+	std::pair<double, double>	parseVector2Value(const std::string& value, const std::string& label)
 	{
-		return (assetsPath.string());
+		double x;
+		double y;
+
+		if (sscanf(SceneFile::internal::_trim(value).c_str(), "(%lf,%lf)", &x, &y) != 2)
+		{
+			throw std::runtime_error("Invalid " + label + " value. Use " + label + "=(x,y).");
+		}
+
+		return (std::make_pair(x, y));
 	}
 
-	const std::filesystem::path objectsPath = std::filesystem::path("objects") / path;
-	if (std::filesystem::exists(objectsPath))
+	struct ObjectBlock
 	{
-		return (objectsPath.string());
+		std::string	meshName;
+		std::string	fileName;
+		Vector3	position = Vector3(0.0, 0.0, 0.0);
+		Vector3	rotation = Vector3(0.0, 0.0, 0.0);
+		Vector3	scale = Vector3(1.0, 1.0, 1.0);
+		std::shared_ptr<Material>	material = std::make_shared<Lambertian>(Color(0.6, 0.6, 0.6));
+	};
+
+	struct AreaLightBlock
+	{
+		Vector3	position = Vector3(0.0, 0.0, 0.0);
+		Vector3	normal = Vector3(0.0, -1.0, 0.0);
+		double	width = 1.0;
+		double	height = 1.0;
+		Color	color = Color(1.0, 1.0, 1.0);
+		double	intensity = 1.0;
+	};
+
+	struct SphereLightBlock
+	{
+		Vector3	position = Vector3(0.0, 0.0, 0.0);
+		double	radius = 0.1;
+		Color	color = Color(1.0, 1.0, 1.0);
+		double	intensity = 1.0;
+	};
+
+	void	addObjectBlock(Scene& scene, std::ifstream& stream, const SceneFile::internal::SceneFileContext& context, const std::string& objectName)
+	{
+		std::string line;
+		ObjectBlock object;
+
+		do
+		{
+			getline(stream, line);
+			const std::string blockLine = SceneFile::internal::_trim(line);
+
+			if (blockLine.empty() || blockLine.at(0) == '#')
+			{
+				continue;
+			}
+			if (blockLine == "}")
+			{
+				if (!object.meshName.empty() && !object.fileName.empty())
+				{
+					throw std::runtime_error("Object block '" + objectName + "' defines both mesh and file.");
+				}
+				if (object.meshName.empty() && object.fileName.empty())
+				{
+					throw std::runtime_error("Object block '" + objectName + "' ended before mesh or file was defined.");
+				}
+
+				const std::string objectFileName = !object.fileName.empty()
+					? SceneFile::internal::_resolveAssetPath(context.baseDirectory, object.fileName)
+					: findNamedMeshPath(context, object.meshName);
+
+				scene.addHittable(std::make_shared<Mesh>(readObj(
+					objectFileName,
+					object.position,
+					object.rotation,
+					object.scale,
+					object.material
+				)));
+				return;
+			}
+
+			std::string key;
+			std::string value;
+			if (!splitAssignment(blockLine, key, value))
+			{
+				throw std::runtime_error("Invalid object property: " + blockLine);
+			}
+
+			if (key == "mesh")
+			{
+				object.meshName = value;
+			}
+			else if (key == "file" || key == "path")
+			{
+				object.fileName = value;
+			}
+			else if (key == "position")
+			{
+				object.position = SceneFile::internal::_parseVector3Value(value, key);
+			}
+			else if (key == "rotation")
+			{
+				object.rotation = SceneFile::internal::_parseVector3Value(value, key);
+			}
+			else if (key == "scale")
+			{
+				object.scale = SceneFile::internal::_parseVector3Value(value, key);
+			}
+			else if (key == "material")
+			{
+				object.material = findNamedMaterial(context, value);
+			}
+			else
+			{
+				throw std::runtime_error("Unknown object property: " + blockLine);
+			}
+		} while (!stream.eof());
+
+		throw std::runtime_error("Object block '" + objectName + "' is missing a closing }.");
 	}
 
-	return (sceneRelativePath.string());
+	void	addAreaLightBlock(Scene& scene, std::ifstream& stream, const std::string& lightName)
+	{
+		std::string line;
+		AreaLightBlock light;
+
+		do
+		{
+			getline(stream, line);
+			const std::string blockLine = SceneFile::internal::_trim(line);
+
+			if (blockLine.empty() || blockLine.at(0) == '#')
+			{
+				continue;
+			}
+			if (blockLine == "}")
+			{
+				if (light.width <= 0.0 || light.height <= 0.0)
+				{
+					throw std::runtime_error("Area light '" + lightName + "' size must be positive.");
+				}
+				if (Utilities::vectorLengthSquared(light.normal) <= 0.0)
+				{
+					throw std::runtime_error("Area light '" + lightName + "' normal must be non-zero.");
+				}
+
+				scene.addHittable(std::make_shared<Rectangle>(
+					Transform(light.position, light.normal, Vector3(1.0, 1.0, 1.0)),
+					light.width,
+					light.height,
+					std::make_shared<Emissive>(light.color, light.intensity)
+				));
+				return;
+			}
+
+			std::string key;
+			std::string value;
+			if (!splitAssignment(blockLine, key, value))
+			{
+				throw std::runtime_error("Invalid area light property: " + blockLine);
+			}
+
+			if (key == "position")
+			{
+				light.position = SceneFile::internal::_parseVector3Value(value, key);
+			}
+			else if (key == "normal" || key == "direction")
+			{
+				light.normal = SceneFile::internal::_parseVector3Value(value, key);
+			}
+			else if (key == "size")
+			{
+				const std::pair<double, double> size = parseVector2Value(value, key);
+				light.width = size.first;
+				light.height = size.second;
+			}
+			else if (key == "width")
+			{
+				light.width = std::stod(value);
+			}
+			else if (key == "height")
+			{
+				light.height = std::stod(value);
+			}
+			else if (key == "color")
+			{
+				light.color = SceneFile::internal::_parseColorValue(value, key);
+			}
+			else if (key == "intensity")
+			{
+				light.intensity = std::stod(value);
+			}
+			else
+			{
+				throw std::runtime_error("Unknown area light property: " + blockLine);
+			}
+		} while (!stream.eof());
+
+		throw std::runtime_error("Area light '" + lightName + "' is missing a closing }.");
+	}
+
+	void	addSphereLightBlock(Scene& scene, std::ifstream& stream, const std::string& lightName)
+	{
+		std::string line;
+		SphereLightBlock light;
+
+		do
+		{
+			getline(stream, line);
+			const std::string blockLine = SceneFile::internal::_trim(line);
+
+			if (blockLine.empty() || blockLine.at(0) == '#')
+			{
+				continue;
+			}
+			if (blockLine == "}")
+			{
+				if (light.radius <= 0.0)
+				{
+					throw std::runtime_error("Sphere light '" + lightName + "' radius must be positive.");
+				}
+
+				scene.addHittable(std::make_shared<Sphere>(
+					light.position,
+					light.radius,
+					std::make_shared<Emissive>(light.color, light.intensity)
+				));
+				return;
+			}
+
+			std::string key;
+			std::string value;
+			if (!splitAssignment(blockLine, key, value))
+			{
+				throw std::runtime_error("Invalid sphere light property: " + blockLine);
+			}
+
+			if (key == "position")
+			{
+				light.position = SceneFile::internal::_parseVector3Value(value, key);
+			}
+			else if (key == "radius")
+			{
+				light.radius = std::stod(value);
+			}
+			else if (key == "color")
+			{
+				light.color = SceneFile::internal::_parseColorValue(value, key);
+			}
+			else if (key == "intensity")
+			{
+				light.intensity = std::stod(value);
+			}
+			else
+			{
+				throw std::runtime_error("Unknown sphere light property: " + blockLine);
+			}
+		} while (!stream.eof());
+
+		throw std::runtime_error("Sphere light '" + lightName + "' is missing a closing }.");
+	}
+
+	bool	addSceneObjectOrLightBlock(Scene& scene, std::ifstream& stream, const SceneFile::internal::SceneFileContext& context, const std::string& line)
+	{
+		std::string blockName;
+
+		if (SceneFile::internal::_parseNamedBlockHeader(line, "object", blockName))
+		{
+			addObjectBlock(scene, stream, context, blockName);
+			return (true);
+		}
+		if (SceneFile::internal::_parseNamedBlockHeader(line, "area_light", blockName))
+		{
+			addAreaLightBlock(scene, stream, blockName);
+			return (true);
+		}
+		if (
+			SceneFile::internal::_parseNamedBlockHeader(line, "sphere_light", blockName)
+			|| SceneFile::internal::_parseNamedBlockHeader(line, "point_light", blockName)
+		)
+		{
+			addSphereLightBlock(scene, stream, blockName);
+			return (true);
+		}
+
+		const std::string lowerLine = SceneFile::internal::_lowerCopy(SceneFile::internal::_trim(line));
+		if (
+			lowerLine.rfind("object ", 0) == 0
+			|| lowerLine.rfind("area_light ", 0) == 0
+			|| lowerLine.rfind("sphere_light ", 0) == 0
+			|| lowerLine.rfind("point_light ", 0) == 0
+		)
+		{
+			throw std::runtime_error("Invalid scene block header: " + line);
+		}
+
+		return (false);
+	}
+}
+
+bool	SceneFile::internal::_readSceneObjectOrLightBlock(Scene& scene, std::ifstream& stream, const SceneFile::internal::SceneFileContext& context, const std::string& line)
+{
+	return (addSceneObjectOrLightBlock(scene, stream, context, line));
 }
 
 // Parses the 'objects' sub-section of a Scene file
-void	SceneFile::internal::_readObjectsSubSection(Scene& scene, std::ifstream& stream, const std::filesystem::path& baseDirectory)
+void	SceneFile::internal::_readObjectsSubSection(Scene& scene, std::ifstream& stream, const SceneFile::internal::SceneFileContext& context)
 {
 	std::string line;
 	bool closed = false;
@@ -64,6 +378,10 @@ void	SceneFile::internal::_readObjectsSubSection(Scene& scene, std::ifstream& st
 		{
 			closed = true;
 			break;
+		}
+		if (addSceneObjectOrLightBlock(scene, stream, context, line))
+		{
+			continue;
 		}
 		std::string lowerLine = line;
 		Utilities::toLower(lowerLine);
@@ -171,7 +489,7 @@ void	SceneFile::internal::_readObjectsSubSection(Scene& scene, std::ifstream& st
 			if (sscanf(strObjFileName.c_str(), "%1023[^,],(%lf,%lf,%lf),material[", objFileName, &pX, &pY, &pZ) == 4)
 			{
 				scene.addHittable(std::make_shared<Mesh>(readObj(
-					resolveAssetPath(baseDirectory, objFileName),
+					_resolveAssetPath(context.baseDirectory, objFileName),
 					Vector3(pX, pY, pZ),
 					internal::_readMaterialSubSection(stream)
 				)));
@@ -181,7 +499,7 @@ void	SceneFile::internal::_readObjectsSubSection(Scene& scene, std::ifstream& st
 
 			if (!strObjFileName.empty())
 			{
-				scene.addHittable(std::make_shared<Mesh>(readObj(resolveAssetPath(baseDirectory, strObjFileName))));
+				scene.addHittable(std::make_shared<Mesh>(readObj(_resolveAssetPath(context.baseDirectory, strObjFileName))));
 
 				continue;
 			}

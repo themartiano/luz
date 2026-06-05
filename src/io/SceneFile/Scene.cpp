@@ -3,8 +3,81 @@
 #include <fstream>
 #include <stdexcept>
 
+namespace
+{
+	bool	splitAssignment(const std::string& line, std::string& key, std::string& value)
+	{
+		const std::size_t separator = line.find('=');
+
+		if (separator == std::string::npos || separator == 0 || separator == line.length() - 1)
+		{
+			return (false);
+		}
+		key = SceneFile::internal::_lowerCopy(SceneFile::internal::_trim(line.substr(0, separator)));
+		value = SceneFile::internal::_trim(line.substr(separator + 1));
+
+		return (true);
+	}
+
+	void	addCameraBlock(Scene& scene, std::ifstream& stream, const std::string& cameraName)
+	{
+		std::string line;
+		Camera camera;
+
+		do
+		{
+			getline(stream, line);
+			const std::string blockLine = SceneFile::internal::_trim(line);
+
+			if (blockLine.empty() || blockLine.at(0) == '#')
+			{
+				continue;
+			}
+			if (blockLine == "}")
+			{
+				scene.addCamera(camera);
+				return;
+			}
+
+			std::string key;
+			std::string value;
+			if (!splitAssignment(blockLine, key, value))
+			{
+				throw std::runtime_error("Invalid camera property: " + blockLine);
+			}
+
+			if (key == "position")
+			{
+				camera.setPosition(SceneFile::internal::_parseVector3Value(value, key));
+			}
+			else if (key == "direction")
+			{
+				camera.setDirection(SceneFile::internal::_parseVector3Value(value, key));
+			}
+			else if (key == "fov")
+			{
+				camera.setFOV(std::stod(value));
+			}
+			else if (key == "aperture")
+			{
+				camera.setAperture(std::stod(value));
+			}
+			else if (key == "focusdistance" || key == "focus_distance")
+			{
+				camera.setFocusDistance(std::stod(value));
+			}
+			else
+			{
+				throw std::runtime_error("Unknown camera property: " + blockLine);
+			}
+		} while (!stream.eof());
+
+		throw std::runtime_error("Camera block '" + cameraName + "' is missing a closing }.");
+	}
+}
+
 // Parses the [scene] section of a Scene file
-void	SceneFile::internal::_readSceneSection(Scene& scene, std::ifstream& stream, const std::filesystem::path& baseDirectory)
+void	SceneFile::internal::_readSceneSection(Scene& scene, std::ifstream& stream, const SceneFile::internal::SceneFileContext& context)
 {
 	std::string line;
 	do
@@ -44,9 +117,23 @@ void	SceneFile::internal::_readSceneSection(Scene& scene, std::ifstream& stream,
 				throw std::runtime_error("Invalid camera line: " + line);
 			}
 		}
+		else if (lowerLine.rfind("camera ", 0) != std::string::npos)
+		{
+			std::string cameraName;
+
+			if (!_parseNamedBlockHeader(line, "camera", cameraName))
+			{
+				throw std::runtime_error("Invalid camera block header: " + line);
+			}
+			addCameraBlock(scene, stream, cameraName);
+		}
 		else if (lowerLine.rfind("objects{", 0) != std::string::npos)
 		{
-			internal::_readObjectsSubSection(scene, stream, baseDirectory);
+			internal::_readObjectsSubSection(scene, stream, context);
+		}
+		else if (_readSceneObjectOrLightBlock(scene, stream, context, line))
+		{
+			continue;
 		}
 		else
 		{

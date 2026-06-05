@@ -388,6 +388,87 @@ namespace
 		std::filesystem::remove(objectPath);
 	}
 
+	void	testSceneFileLoadsNamedBlocks(void)
+	{
+		const std::filesystem::path directory = std::filesystem::temp_directory_path();
+		const std::filesystem::path scenePath = directory / "luz_named_blocks_test.luz";
+		const std::filesystem::path objectPath = directory / "luz_named_blocks_test.obj";
+		{
+			std::ofstream objectStream(objectPath);
+			objectStream
+				<< "v 0.0 0.0 0.0\n"
+				<< "v 1.0 0.0 0.0\n"
+				<< "v 0.0 1.0 0.0\n"
+				<< "f 1 2 3\n";
+		}
+		{
+			std::ofstream sceneStream(scenePath);
+			sceneStream
+				<< "[settings]\n"
+				<< "resolution=2,2\n\n"
+				<< "[materials]\n"
+				<< "material shiny {\n"
+				<< "type=principled\n"
+				<< "base_color=(0.9,0.8,0.7)\n"
+				<< "metallic=1\n"
+				<< "roughness=0.2\n"
+				<< "}\n\n"
+				<< "[meshes]\n"
+				<< "mesh triangle_mesh {\n"
+				<< "file=" << objectPath.filename().string() << "\n"
+				<< "}\n\n"
+				<< "[scene]\n"
+				<< "camera main {\n"
+				<< "position=(0,0,5)\n"
+				<< "direction=(0,0,-1)\n"
+				<< "fov=45\n"
+				<< "aperture=0\n"
+				<< "focusDistance=5\n"
+				<< "}\n"
+				<< "object triangle {\n"
+				<< "mesh=triangle_mesh\n"
+				<< "position=(1,2,3)\n"
+				<< "rotation=(0,0,90)\n"
+				<< "scale=(2,1,1)\n"
+				<< "material=shiny\n"
+				<< "}\n"
+				<< "area_light key {\n"
+				<< "position=(0,4,0)\n"
+				<< "normal=(0,-1,0)\n"
+				<< "size=(2,3)\n"
+				<< "color=(1,1,1)\n"
+				<< "intensity=4\n"
+				<< "}\n"
+				<< "point_light fill {\n"
+				<< "position=(2,2,2)\n"
+				<< "radius=0.25\n"
+				<< "color=(0.5,0.6,1.0)\n"
+				<< "intensity=1.5\n"
+				<< "}\n";
+		}
+
+		Scene scene;
+		SceneFile::read(scene, scenePath.string());
+
+		require(scene.hasCamera(), "Named-block scene did not load a camera.");
+		require(scene.getHittables().size() == 3, "Named-block scene did not load object and lights.");
+		require(scene.getHittables()[0]->getMaterial()->getType() == METAL, "Principled material did not map to metal.");
+		require(scene.getHittables()[1]->getMaterial()->getType() == EMISSIVE, "Area light did not create an emissive hittable.");
+		require(scene.getHittables()[2]->getMaterial()->getType() == EMISSIVE, "Point light did not create an emissive hittable.");
+
+		scene.updateLights();
+		require(scene.getLights().size() == 2, "Named-block lights were not registered as lights.");
+
+		AABB boundingBox;
+		require(scene.getHittables()[0]->createBoundingBox(boundingBox), "Named-block object did not create a bounding box.");
+		require(boundingBox.getMinimum().getX() > -0.01 && boundingBox.getMinimum().getX() < 0.01, "Named-block object rotation X minimum is wrong.");
+		require(boundingBox.getMaximum().getY() > 3.99 && boundingBox.getMaximum().getY() < 4.01, "Named-block object rotation Y maximum is wrong.");
+		require(boundingBox.getMinimum().getZ() > 2.99 && boundingBox.getMinimum().getZ() < 3.0, "Named-block object Z offset is wrong.");
+
+		std::filesystem::remove(scenePath);
+		std::filesystem::remove(objectPath);
+	}
+
 	void	testSceneFileRejectsInvalidMaterial(void)
 	{
 		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_invalid_material_test.luz";
@@ -676,6 +757,7 @@ int	main(void)
 		testSceneFileRejectsInvalidSettings();
 		testSceneFileLoadsRelativeObject();
 		testSceneFileLoadsTransformedObject();
+		testSceneFileLoadsNamedBlocks();
 		testSceneFileRejectsInvalidMaterial();
 		testBVHReturnsClosestHit();
 		testTinyTriangleHitAndNormal();

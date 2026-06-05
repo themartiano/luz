@@ -5,3 +5,4 @@
 
 Mesh	readObj(std::string fileName);
 Mesh	readObj(std::string fileName, Vector3 positionOffset, std::shared_ptr<Material> material);
+Mesh	readObj(std::string fileName, Vector3 positionOffset, Vector3 rotationDegrees, Vector3 scale, std::shared_ptr<Material> material);
