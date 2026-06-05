@@ -7,7 +7,9 @@
 #include "SceneFile/SceneFile.hpp"
 #include "Hittables/BVHNode.hpp"
 #include "Hittables/Sphere.hpp"
+#include "Hittables/Triangle.hpp"
 #include "Random.hpp"
+#include "Utilities.hpp"
 
 #include <cmath>
 #include <cstdint>
@@ -417,6 +419,24 @@ namespace
 		requireNear(hitRecord.t0, 1.5, "BVH did not return the closest hit.");
 	}
 
+	void	testTinyTriangleHitAndNormal(void)
+	{
+		auto material = std::make_shared<Lambertian>(Color(0.8, 0.8, 0.8));
+		Triangle triangle(
+			Vector3(0.0, 0.0, -1.0),
+			Vector3(0.0001, 0.0, -1.0),
+			Vector3(0.0, 0.0001, -1.0),
+			material
+		);
+		Ray ray(Vector3(0.000025, 0.000025, 0.0), Vector3(0.0, 0.0, -1.0));
+		HitRecord hitRecord;
+
+		require(triangle.hit(ray, hitRecord, 0.001, 100.0), "Tiny valid triangle was rejected.");
+		requireNear(hitRecord.t0, 1.0, "Tiny triangle returned the wrong hit distance.");
+		requireNear(Utilities::vectorLength(hitRecord.normal), 1.0, "Triangle hit normal was not normalized.");
+		require(hitRecord.normal.getZ() > 0.0, "Triangle hit normal was not oriented against the ray.");
+	}
+
 	void	requireFlagParseThrows(std::vector<std::string> arguments, const std::string& message)
 	{
 		std::vector<char*> argv;
@@ -507,6 +527,7 @@ int	main(void)
 		testSceneFileLoadsTransformedObject();
 		testSceneFileRejectsInvalidMaterial();
 		testBVHReturnsClosestHit();
+		testTinyTriangleHitAndNormal();
 		testFlagsRejectInvalidValues();
 		testSettersRejectInvalidValues();
 		testTinyRender();

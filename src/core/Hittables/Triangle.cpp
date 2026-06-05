@@ -4,6 +4,12 @@
 #include "Materials/Lambertian.hpp"
 #include <cmath>
 
+namespace
+{
+	const double	TRIANGLE_DETERMINANT_EPSILON = 1e-12;
+	const double	TRIANGLE_NORMAL_LENGTH_EPSILON_SQUARED = 1e-24;
+}
+
 /*
 	Constructors
 */
@@ -61,11 +67,19 @@ bool	Triangle::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) c
 {
 	Vector3 v1 = this->_vertex1 - this->_vertex0;
 	Vector3 v2 = this->_vertex2 - this->_vertex0;
+	Vector3 n = Utilities::cross(v1, v2);
+	const double normalLengthSquared = Utilities::vectorLengthSquared(n);
+
+	if (normalLengthSquared <= TRIANGLE_NORMAL_LENGTH_EPSILON_SQUARED)
+	{
+		return (false);
+	}
+
 	Vector3 p = Utilities::cross(ray.getDirection(), v2);
 	double  det = Utilities::dot(v1, p);
 
-	// If det is near 0, they're parallel. If it's negative, the triangle is backfacing the camera.
-	if (fabs(det) < t_min)
+	// det is an area-scaled value, not a ray distance, so it needs its own epsilon.
+	if (fabs(det) < TRIANGLE_DETERMINANT_EPSILON)
 	{
 		return (false);
 	}
@@ -91,12 +105,11 @@ bool	Triangle::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) c
 	}
 
 	hitRecord.t0 = t;
-	Vector3 n = Utilities::cross(v1, v2);
 	if (Utilities::dot(n, ray.getDirection()) > 0.0)
 	{
 		n = n * -1.0;
 	}
-	hitRecord.normal = n;
+	hitRecord.normal = Utilities::normalize(n);
 	hitRecord.material = this->_material;
 	hitRecord.position = ray.pointAtRay(hitRecord.t0);
 

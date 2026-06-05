@@ -21,6 +21,11 @@
 
 static void	parseObjFile(Mesh& mesh, std::ifstream& stream, Vector3 positionOffset, std::shared_ptr<Material> material);
 
+namespace
+{
+	const double	DEGENERATE_TRIANGLE_EPSILON_SQUARED = 1e-24;
+}
+
 // Calls the actual 'readObj' function with a zeroed offset position
 Mesh	readObj(std::string fileName)
 {
@@ -55,6 +60,7 @@ static void	parseObjFile(Mesh& mesh, std::ifstream& stream, Vector3 positionOffs
 	std::string line;
 	std::vector<Vector3> vertices;
 	std::vector<std::shared_ptr<Hittable>> triangles;
+	std::size_t skippedDegenerateTriangles = 0;
 
 	do
 	{
@@ -101,16 +107,36 @@ static void	parseObjFile(Mesh& mesh, std::ifstream& stream, Vector3 positionOffs
 			newPos = line.find_first_of(' ', oldPos);
 			positions[2] = std::stoi(line.substr(oldPos, newPos - oldPos));
 
+			Vector3 vertex0 = vertices[positions[0] - 1] + positionOffset;
+			Vector3 vertex1 = vertices[positions[1] - 1] + positionOffset;
+			Vector3 vertex2 = vertices[positions[2] - 1] + positionOffset;
+			Vector3 normal = Utilities::cross(vertex1 - vertex0, vertex2 - vertex0);
+
+			if (Utilities::vectorLengthSquared(normal) <= DEGENERATE_TRIANGLE_EPSILON_SQUARED)
+			{
+				skippedDegenerateTriangles++;
+				continue;
+			}
+
 			triangles.push_back(std::make_shared<Triangle>(
-				vertices[positions[0] - 1] + positionOffset,
-				vertices[positions[1] - 1] + positionOffset,
-				vertices[positions[2] - 1] + positionOffset,
+				vertex0,
+				vertex1,
+				vertex2,
 				//Material(Color(Random::doubleFloat(), Random::doubleFloat(), Random::doubleFloat()), 1.0, 0.0, 0.5, 0.0, false, false, 0.0)
 				//std::make_shared<Dielectric>(Color(0.8, 0.8, 0.8))
 				material
 			));
 		}
 	} while (!stream.eof());
+
+	if (skippedDegenerateTriangles > 0)
+	{
+		std::cout
+			<< CLR_YELLOW << "Skipped " << CLR_WHITE << skippedDegenerateTriangles
+			<< CLR_YELLOW << " degenerate OBJ triangle"
+			<< (skippedDegenerateTriangles == 1 ? "" : "s")
+			<< "." << CLR_RESET << std::endl;
+	}
 
 	mesh = Mesh(Vector3(), material, BVHNode(triangles));
 }
