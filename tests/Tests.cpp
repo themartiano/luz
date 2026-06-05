@@ -185,6 +185,32 @@ namespace
 		requireNear(pixel.getBlue(), 0.0, "Tone mapping black changed blue value.");
 	}
 
+	void	testTerminalFilePath(void)
+	{
+		require(
+			Utilities::terminalFilePath("named_blocks.bmp") == "./named_blocks.bmp",
+			"Terminal file path did not prefix bare relative output."
+		);
+		require(
+			Utilities::terminalFilePath("exports/render.bmp") == "./exports/render.bmp",
+			"Terminal file path did not prefix nested relative output."
+		);
+		require(
+			Utilities::terminalFilePath("./named_blocks.bmp") == "./named_blocks.bmp",
+			"Terminal file path changed an explicit current-directory path."
+		);
+		require(
+			Utilities::terminalFilePath("../named_blocks.bmp") == "../named_blocks.bmp",
+			"Terminal file path changed a parent-directory path."
+		);
+
+		const std::string absolutePath = (std::filesystem::temp_directory_path() / "named_blocks.bmp").string();
+		require(
+			Utilities::terminalFilePath(absolutePath) == absolutePath,
+			"Terminal file path changed an absolute path."
+		);
+	}
+
 	void	testNonSquareBMP(void)
 	{
 		const std::filesystem::path outputPath = std::filesystem::temp_directory_path() / "luz_test_non_square";
@@ -998,6 +1024,7 @@ int	main(void)
 	{
 		testColorMath();
 		testToneMappingBlackPixel();
+		testTerminalFilePath();
 		testNonSquareBMP();
 		testNonSquareTIFF();
 		testSceneFileOutputName();

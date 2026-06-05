@@ -3,6 +3,7 @@
 #include "Defaults.hpp"
 #include <cmath>
 #include <algorithm>
+#include <filesystem>
 
 // Returns "s" if 'number' differs from 1
 std::string	Utilities::pluralOrSingular(int number)
@@ -106,6 +107,23 @@ bool	Utilities::stringEndsWith(std::string str, std::string ending)
 	}
 
 	return (false);
+}
+
+std::string	Utilities::terminalFilePath(const std::string& filePath)
+{
+	if (
+		filePath.empty()
+		|| !std::filesystem::path(filePath).is_relative()
+		|| filePath.rfind("./", 0) == 0
+		|| filePath.rfind(".\\", 0) == 0
+		|| filePath.rfind("../", 0) == 0
+		|| filePath.rfind("..\\", 0) == 0
+	)
+	{
+		return (filePath);
+	}
+
+	return ("./" + filePath);
 }
 
 // Returns the luminance of the color 'color'
