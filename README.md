@@ -40,7 +40,7 @@ Run the test suite:
 make test
 ```
 
-Run the deterministic benchmark scene:
+Run the deterministic default benchmark scene:
 
 ```sh
 ./Luz --benchmark --seed 424242424 --threads 1
@@ -70,6 +70,8 @@ make benchmark-score RESULTS=after.csv
 Each case score is the median kilo-samples per minute for that case.
 The overall score uses the geometric mean of per-case scores, so running the score command on `before.csv` and `after.csv`
 gives comparable scores when the benchmark settings are the same.
+The default benchmark matrix covers Cornell-style lighting, many objects, mesh BVH traversal, diffuse scattering,
+post-processing, atmosphere, mixed light types, emissive geometry, primitives/materials, volumes, and OBJ meshes.
 
 ## CMake
 
@@ -97,7 +99,7 @@ Usage: ./Luz [options]
   --bloom true|false          Toggle bloom
   --render-times              Write renderTime.bmp
   --benchmark                 Run the built-in benchmark scene
-  --benchmark-case NAME       Benchmark case: default, many-objects, mesh-bvh, diffuse, postprocess, atmosphere
+  --benchmark-case NAME       Benchmark case: default, many-objects, mesh-bvh, diffuse, postprocess, atmosphere, lights, emissive-geometry, primitives-materials, volumes, obj-mesh
 ```
 
 ## Scene Files

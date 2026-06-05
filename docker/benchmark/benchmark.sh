@@ -9,7 +9,7 @@ repeat=${BENCH_REPEAT:-20}
 warmup=${BENCH_WARMUP:-2}
 seed=${BENCH_SEED:-424242424}
 threads=${BENCH_THREADS:-1}
-cases=${BENCH_CASES:-${BENCH_CASE:-default many-objects mesh-bvh diffuse postprocess atmosphere}}
+cases=${BENCH_CASES:-${BENCH_CASE:-default many-objects mesh-bvh diffuse postprocess atmosphere lights emissive-geometry primitives-materials volumes obj-mesh}}
 global_width=${BENCH_WIDTH:-}
 global_height=${BENCH_HEIGHT:-}
 global_samples=${BENCH_SAMPLES:-}
@@ -65,6 +65,21 @@ case_defaults()
 			;;
 		atmosphere)
 			echo "${global_width:-160},${global_height:-160},${global_samples:-6},${global_bounces:-3},${global_gamma:-true},${global_tonemapping:-true},${global_bloom:-false}"
+			;;
+		lights)
+			echo "${global_width:-180},${global_height:-180},${global_samples:-24},${global_bounces:-6},${global_gamma:-true},${global_tonemapping:-true},${global_bloom:-false}"
+			;;
+		emissive-geometry)
+			echo "${global_width:-180},${global_height:-180},${global_samples:-18},${global_bounces:-5},${global_gamma:-true},${global_tonemapping:-true},${global_bloom:-true}"
+			;;
+		primitives-materials)
+			echo "${global_width:-180},${global_height:-180},${global_samples:-24},${global_bounces:-7},${global_gamma:-true},${global_tonemapping:-true},${global_bloom:-false}"
+			;;
+		volumes)
+			echo "${global_width:-160},${global_height:-160},${global_samples:-18},${global_bounces:-8},${global_gamma:-true},${global_tonemapping:-true},${global_bloom:-false}"
+			;;
+		obj-mesh)
+			echo "${global_width:-160},${global_height:-160},${global_samples:-16},${global_bounces:-6},${global_gamma:-true},${global_tonemapping:-true},${global_bloom:-false}"
 			;;
 		*)
 			echo "Unknown benchmark case: $benchmark_case" >&2
