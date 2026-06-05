@@ -6,9 +6,15 @@
 #include <cmath>
 #include <memory>
 #include <vector>
+#include <algorithm>
 
 namespace
 {
+	constexpr int		RUSSIAN_ROULETTE_START_BOUNCE = 3;
+	constexpr double	PATH_THROUGHPUT_EPSILON = 1e-6;
+	constexpr double	RUSSIAN_ROULETTE_MIN_SURVIVAL = 0.05;
+	constexpr double	RUSSIAN_ROULETTE_MAX_SURVIVAL = 0.95;
+
 	double	scatterPDFValue(const ScatterRecord& scatterRecord, const Vector3& direction)
 	{
 		switch (scatterRecord.pdfType)
@@ -73,6 +79,39 @@ namespace
 
 		return (color);
 	}
+
+	double	maxChannel(const Color& color)
+	{
+		return (std::max(color.getRed(), std::max(color.getGreen(), color.getBlue())));
+	}
+
+	bool	isTerminatedThroughput(const Color& throughput)
+	{
+		const double throughputMax = maxChannel(throughput);
+
+		return (!std::isfinite(throughputMax) || throughputMax <= PATH_THROUGHPUT_EPSILON);
+	}
+
+	bool	applyRussianRoulette(Color& throughput, int bounces)
+	{
+		if (bounces < RUSSIAN_ROULETTE_START_BOUNCE)
+		{
+			return (true);
+		}
+
+		double survivalProbability = maxChannel(throughput);
+		survivalProbability = std::max(
+			RUSSIAN_ROULETTE_MIN_SURVIVAL,
+			std::min(RUSSIAN_ROULETTE_MAX_SURVIVAL, survivalProbability)
+		);
+		if (randomEngine.doubleFloat() > survivalProbability)
+		{
+			return (false);
+		}
+		throughput /= survivalProbability;
+
+		return (true);
+	}
 }
 
 Color	Renderer::internal::_calculatePixelColor(Scene& scene, const RenderCamera& renderCamera, std::size_t x, std::size_t y)
@@ -131,11 +170,19 @@ Color	Renderer::internal::_calculateLightRaysColor(const Ray& ray, Scene& scene)
 		if (scatterRecord.isSpecular)
 		{
 			throughput = clampRayColor(throughput * scatterRecord.attenuation);
+			if (isTerminatedThroughput(throughput) || !applyRussianRoulette(throughput, bounces))
+			{
+				return (accumulatedColor);
+			}
 			currentRay = scatterRecord.specularRay;
 			continue;
 		}
 
 		accumulatedColor += throughput * emitted;
+		if (isTerminatedThroughput(throughput * scatterRecord.attenuation))
+		{
+			return (accumulatedColor);
+		}
 
 		double	pdfValue;
 		Ray		scattered;
@@ -171,6 +218,10 @@ Color	Renderer::internal::_calculateLightRaysColor(const Ray& ray, Scene& scene)
 			hitRecord.material->scatteringPDF(scattered, hitRecord) /
 			pdfValue
 		);
+		if (isTerminatedThroughput(throughput) || !applyRussianRoulette(throughput, bounces))
+		{
+			return (accumulatedColor);
+		}
 		currentRay = scattered;
 	}
 
