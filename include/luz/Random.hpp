@@ -30,6 +30,7 @@ class Random
 
 void	setRandomSeed(int_fast32_t seed);
 bool	hasRandomSeed(void);
+int_fast32_t	randomSeedValue(void);
 int_fast32_t	randomSeedForThread(std::size_t threadIndex);
 
 extern thread_local Random randomEngine;

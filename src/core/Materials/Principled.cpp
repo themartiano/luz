@@ -1,6 +1,6 @@
 #include "Materials/Principled.hpp"
 #include "Defaults.hpp"
-#include "Random.hpp"
+#include "Sampler.hpp"
 #include "Utilities.hpp"
 #include <algorithm>
 #include <cmath>
@@ -49,13 +49,13 @@ bool	Principled::scatter(Ray& ray, HitRecord& hitRecord, ScatterRecord& scatterR
 	specularChance += (1.0 - this->_roughness) * (0.25 + 0.25 * this->_metallic);
 	specularChance = std::max(0.04, std::min(0.95, specularChance));
 
-	if (randomEngine.doubleFloat() < specularChance)
+	if (Sampler::sample1D(Sampler::DIM_MATERIAL_DECISION) < specularChance)
 	{
 		const double	fuzz = this->_roughness * this->_roughness;
 		const Vector3	reflected = Utilities::reflect(normalizedDirection, hitRecord.normal);
 		const Color	specularColor = mixColor(Color(1.0, 1.0, 1.0), this->_color, this->_metallic);
 
-		scatterRecord.specularRay = Ray(hitRecord.position, reflected + fuzz * randomEngine.pointInsideUnitSphere());
+		scatterRecord.specularRay = Ray(hitRecord.position, reflected + fuzz * Sampler::unitBall(Sampler::DIM_MATERIAL_FUZZ));
 		scatterRecord.attenuation = specularColor;
 		scatterRecord.isSpecular = true;
 		scatterRecord.pdfType = SCATTER_PDF_NONE;

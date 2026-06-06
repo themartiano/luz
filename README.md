@@ -113,15 +113,16 @@ Usage: ./Luz [options]
 ## Adaptive Sampling
 
 `--adaptive` treats `--samples` as the maximum samples per pixel. Each pixel
-renders at least `--adaptive-min-samples`, then periodically estimates luminance
-variance and stops early when the 95% confidence interval is below
-`--adaptive-threshold` of the current mean luminance.
+uses a progressive per-pixel sample sequence, renders at least
+`--adaptive-min-samples`, then periodically checks luminance and RGB confidence
+intervals. Very dark pixels use a conservative minimum before they can stop, so
+rare light contributions are less likely to be mistaken for converged black.
 
 Lower thresholds keep more detail and cost more time. For final renders, start
 with a high max sample count and tune with values like:
 
 ```sh
-./Luz --file exports/stormtroopers.luz --samples 2048 --adaptive --adaptive-min-samples 128 --adaptive-threshold 0.01 --denoise
+./Luz --file exports/stormtroopers.luz --samples 4096 --adaptive --adaptive-min-samples 512 --adaptive-check-interval 64 --adaptive-threshold 0.005 --denoise
 ```
 
 ## Denoising

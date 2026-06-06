@@ -3,7 +3,7 @@
 #include "Materials/Isotropic.hpp"
 #include "Defaults.hpp"
 #include "Utilities.hpp"
-#include "Random.hpp"
+#include "Sampler.hpp"
 #include <cmath>
 
 /*
@@ -72,7 +72,7 @@ bool	ConstantVolume::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_
 
 	double rayLength = Utilities::vectorLength(ray.getDirection());
 	double distanceInsideBoundary = (hitRecord2.t0 - hitRecord1.t0) * rayLength;
-	double hitDistance = this->_negativeInverseDensity * log(randomEngine.doubleFloat());
+	double hitDistance = this->_negativeInverseDensity * log(std::max(Sampler::sample1D(Sampler::DIM_VOLUME_DISTANCE), 1e-12));
 
 	if (hitDistance > distanceInsideBoundary)
 	{

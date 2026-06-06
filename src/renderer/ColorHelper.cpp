@@ -2,11 +2,12 @@
 #include "Utilities.hpp"
 #include "Defaults.hpp"
 #include "SkyTypes.hpp"
-#include "Random.hpp"
+#include "Sampler.hpp"
 #include <cmath>
 #include <memory>
 #include <vector>
 #include <algorithm>
+#include <cstdint>
 
 namespace
 {
@@ -37,9 +38,9 @@ namespace
 		switch (scatterRecord.pdfType)
 		{
 			case SCATTER_PDF_COSINE:
-				return (scatterRecord.cosineBasis.local(randomEngine.cosineDirection()));
+				return (scatterRecord.cosineBasis.local(Sampler::cosineHemisphere(Sampler::DIM_BSDF_DIRECTION)));
 			case SCATTER_PDF_SPHERE:
-				return (randomEngine.pointInsideUnitSphere());
+				return (Sampler::sphereDirection(Sampler::DIM_BSDF_DIRECTION));
 			default:
 				return (Vector3(0.0, 0.0, 0.0));
 		}
@@ -69,7 +70,10 @@ namespace
 			return (lights[0]->random(origin));
 		}
 
-		const unsigned int randomIndex = randomEngine.integer(0, lights.size() - 1);
+		const std::size_t randomIndex = std::min<std::size_t>(
+			static_cast<std::size_t>(Sampler::sample1D(Sampler::DIM_LIGHT_SELECTION) * lights.size()),
+			lights.size() - 1
+		);
 
 		return (lights[randomIndex]->random(origin));
 	}
@@ -114,7 +118,7 @@ namespace
 			RUSSIAN_ROULETTE_MIN_SURVIVAL,
 			std::min(RUSSIAN_ROULETTE_MAX_SURVIVAL, survivalProbability)
 		);
-		if (randomEngine.doubleFloat() > survivalProbability)
+		if (Sampler::sample1D(Sampler::DIM_RUSSIAN_ROULETTE) > survivalProbability)
 		{
 			return (false);
 		}
@@ -256,6 +260,7 @@ namespace
 
 		for (int bounces = 0; bounces <= maxLightBounces; bounces++)
 		{
+			Sampler::setBounce(static_cast<std::uint32_t>(bounces));
 			HitRecord	hitRecord;
 			if (!Renderer::internal::_checkHits(scene, currentRay, hitRecord))
 			{
@@ -314,7 +319,7 @@ namespace
 			if (lightCount > 0)
 			{
 				Vector3 scatteredDirection;
-				if (randomEngine.doubleFloat() < 0.5)
+				if (Sampler::sample1D(Sampler::DIM_LIGHT_STRATEGY) < 0.5)
 				{
 					scatteredDirection = lightPDFGenerate(lights, hitRecord.position);
 				}

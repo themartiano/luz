@@ -1,6 +1,6 @@
 #include "RendererInternal.hpp"
 #include "Defaults.hpp"
-#include "Random.hpp"
+#include "Sampler.hpp"
 #include "Utilities.hpp"
 #include <cmath>
 
@@ -70,13 +70,14 @@ Renderer::internal::RenderCamera	Renderer::internal::_prepareRenderCamera(Scene&
 // Generates a ray for the pixels 'x', 'y'
 Ray	Renderer::internal::_generateRay(const RenderCamera& renderCamera, std::size_t x, std::size_t y)
 {
-	double xU = double(x + randomEngine.doubleFloat()) * renderCamera.inverseWidthMinusOne;
-	double yV = double(y + randomEngine.doubleFloat()) * renderCamera.inverseHeightMinusOne;
+	const Sampler::Sample2D cameraSample = Sampler::sample2D(Sampler::DIM_CAMERA);
+	double xU = double(static_cast<double>(x) + cameraSample.x) * renderCamera.inverseWidthMinusOne;
+	double yV = double(static_cast<double>(y) + cameraSample.y) * renderCamera.inverseHeightMinusOne;
 
 	Vector3	offset(0.0, 0.0, 0.0);
 	if (renderCamera.lensRadius > 0.0)
 	{
-		Vector3	rd = randomEngine.pointInsideUnitDisk() * renderCamera.lensRadius;
+		Vector3	rd = Sampler::unitDisk(Sampler::DIM_LENS) * renderCamera.lensRadius;
 		offset = renderCamera.u * rd.getX() + renderCamera.v * rd.getY();
 	}
 

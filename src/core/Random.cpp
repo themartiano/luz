@@ -119,6 +119,11 @@ bool	hasRandomSeed(void)
 	return (g_hasRandomSeed.load());
 }
 
+int_fast32_t	randomSeedValue(void)
+{
+	return (g_randomSeed.load());
+}
+
 int_fast32_t	randomSeedForThread(std::size_t threadIndex)
 {
 	constexpr int_fast32_t goldenRatioBits = 0x1f123bb5;

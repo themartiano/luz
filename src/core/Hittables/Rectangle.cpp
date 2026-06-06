@@ -2,7 +2,7 @@
 #include "Defaults.hpp"
 #include "Utilities.hpp"
 #include "Materials/Lambertian.hpp"
-#include "Random.hpp"
+#include "Sampler.hpp"
 #include <cmath>
 #include <algorithm>
 
@@ -238,9 +238,10 @@ Vector3 Rectangle::random(const Vector3& origin) const
 		return (Vector3(0.0, 0.0, 0.0));
 	}
 
+	const Sampler::Sample2D sample = Sampler::sample2D(Sampler::DIM_LIGHT_SURFACE_POINT);
 	const Vector3 randomPointInsideRectangle = this->_transform.getPosition()
-		+ (widthAxis * randomEngine.doubleFloat(-(this->_width / 2.0), this->_width / 2.0))
-		+ (heightAxis * randomEngine.doubleFloat(-(this->_height / 2.0), this->_height / 2.0));
+		+ (widthAxis * ((sample.x - 0.5) * this->_width))
+		+ (heightAxis * ((sample.y - 0.5) * this->_height));
 
 	return (Utilities::normalize(randomPointInsideRectangle - origin));
 }
