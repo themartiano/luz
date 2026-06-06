@@ -2,7 +2,7 @@
 #include "Utilities.hpp"
 #include "Defaults.hpp"
 #include "Materials/Lambertian.hpp"
-#include "Random.hpp"
+#include "Sampler.hpp"
 #include <algorithm>
 #include <cmath>
 
@@ -254,8 +254,9 @@ double	Triangle::pdfValue(const Vector3& origin, const Vector3& vec) const
 
 Vector3	Triangle::random(const Vector3& origin) const
 {
-	double u = randomEngine.doubleFloat();
-	double v = randomEngine.doubleFloat();
+	Sampler::Sample2D sample = Sampler::sample2D(Sampler::DIM_LIGHT_SURFACE_POINT);
+	double u = sample.x;
+	double v = sample.y;
 
 	if (u + v > 1.0)
 	{

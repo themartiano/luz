@@ -3,7 +3,7 @@
 #include "Defaults.hpp"
 #include "ONB.hpp"
 #include "Materials/Lambertian.hpp"
-#include "Random.hpp"
+#include "Sampler.hpp"
 #include <cmath>
 
 /*
@@ -150,11 +150,10 @@ Vector3	PerlinSphere::random(const Vector3& origin) const
 
 Vector3 PerlinSphere::randomToSphere(double distanceSquared) const
 {
-	double rand1 = randomEngine.doubleFloat();
-	double rand2 = randomEngine.doubleFloat();
-	double z = 1.0 + rand2 * (sqrt(1.0 - this->_radius * this->_radius / distanceSquared) - 1.0);
+	const Sampler::Sample2D sample = Sampler::sample2D(Sampler::DIM_LIGHT_SURFACE_POINT);
+	double z = 1.0 + sample.y * (sqrt(1.0 - this->_radius * this->_radius / distanceSquared) - 1.0);
 
-	double phi = 2.0 * D_PI * rand1;
+	double phi = 2.0 * D_PI * sample.x;
 	double x = cos(phi) * sqrt(1.0 - z * z);
 	double y = sin(phi) * sqrt(1.0 - z * z);
 

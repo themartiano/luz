@@ -1,8 +1,8 @@
 #include "Hittables/Mesh.hpp"
 #include "Utilities.hpp"
 #include "Materials/Lambertian.hpp"
-#include "Random.hpp"
 #include "Defaults.hpp"
+#include "Sampler.hpp"
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -395,7 +395,7 @@ Vector3	Mesh::random(const Vector3& origin) const
 		return (Hittable::random(origin));
 	}
 
-	const double targetArea = randomEngine.doubleFloat() * this->_totalArea;
+	const double targetArea = Sampler::sample1D(Sampler::DIM_LIGHT_SURFACE_SELECTION) * this->_totalArea;
 	const auto areaIt = std::lower_bound(
 		this->_triangleAreaPrefixSums.begin(),
 		this->_triangleAreaPrefixSums.end(),

@@ -6,6 +6,7 @@
 #include "Blur/Gaussian.hpp"
 #include "Denoise/NFOR.hpp"
 #include "Random.hpp"
+#include "Sampler.hpp"
 #include <thread>
 #include <future>
 #include <vector>
@@ -13,14 +14,42 @@
 #include <algorithm>
 #include <atomic>
 #include <chrono>
+#include <cstdint>
+#include <limits>
 
 namespace
 {
+	double	sampleLuminance(Color color);
+
 	struct	DenoiseHalfAccumulator
 	{
 		Color	colorSum;
 		Denoise::FeatureVector	featureSum;
 		unsigned int	count = 0;
+	};
+
+	struct	AdaptiveAccumulator
+	{
+		Color	colorSum;
+		Color	colorSquareSum;
+		double	luminanceSum = 0.0;
+		double	luminanceSquareSum = 0.0;
+		double	maxLuminance = 0.0;
+
+		void	add(Color color)
+		{
+			const double luminance = sampleLuminance(color);
+
+			this->colorSum += color;
+			this->colorSquareSum += Color(
+				color.getRed() * color.getRed(),
+				color.getGreen() * color.getGreen(),
+				color.getBlue() * color.getBlue()
+			);
+			this->luminanceSum += luminance;
+			this->luminanceSquareSum += luminance * luminance;
+			this->maxLuminance = std::max(this->maxLuminance, luminance);
+		}
 	};
 
 	void	applyBloom(Image& image)
@@ -96,11 +125,54 @@ namespace
 		return (luminance);
 	}
 
+	double	sampleMeanVariance(double sum, double squareSum, unsigned int count)
+	{
+		if (count <= 1)
+		{
+			return (0.0);
+		}
+
+		const double n = static_cast<double>(count);
+		const double variance = (squareSum - (sum * sum / n)) / (n - 1.0);
+
+		return (std::max(0.0, variance / n));
+	}
+
+	double	confidenceInterval95(double sum, double squareSum, unsigned int count)
+	{
+		const double meanVariance = sampleMeanVariance(sum, squareSum, count);
+
+		if (!std::isfinite(meanVariance))
+		{
+			return (std::numeric_limits<double>::infinity());
+		}
+		return (1.96 * std::sqrt(meanVariance));
+	}
+
+	bool	channelConverged(double mean, double confidenceInterval, double threshold)
+	{
+		constexpr double DISPLAY_ERROR_FLOOR = 0.02;
+		const double target = threshold * std::max(std::fabs(mean), DISPLAY_ERROR_FLOOR);
+
+		return (confidenceInterval <= target);
+	}
+
+	unsigned int	darkMinimumSamples(const Scene& scene)
+	{
+		const unsigned int maxSamples = static_cast<unsigned int>(scene.getSampleCount());
+		const unsigned int minSamples = static_cast<unsigned int>(
+			std::min(scene.getAdaptiveMinSamples(), scene.getSampleCount())
+		);
+		const unsigned int checkInterval = static_cast<unsigned int>(scene.getAdaptiveCheckInterval());
+		const unsigned int darkMin = std::max(256u, minSamples + (3u * checkInterval));
+
+		return (std::min(maxSamples, std::max(minSamples, darkMin)));
+	}
+
 	bool	adaptiveSampleConverged(
 		const Scene& scene,
 		unsigned int samplesUsed,
-		double luminanceSum,
-		double luminanceSquareSum
+		const AdaptiveAccumulator& accumulator
 	)
 	{
 		const unsigned int maxSamples = static_cast<unsigned int>(scene.getSampleCount());
@@ -129,18 +201,44 @@ namespace
 		}
 
 		const double n = static_cast<double>(samplesUsed);
-		const double mean = luminanceSum / n;
-		const double variance = (luminanceSquareSum - (luminanceSum * luminanceSum / n)) / (n - 1.0);
-		if (!std::isfinite(variance) || variance <= 0.0)
+		const double luminanceMean = accumulator.luminanceSum / n;
+		const double threshold = scene.getAdaptiveThreshold();
+
+		if (
+			accumulator.maxLuminance < 0.02
+			&& samplesUsed < darkMinimumSamples(scene)
+		)
 		{
-			return (true);
+			return (false);
 		}
 
-		const double standardError = std::sqrt(variance / n);
-		const double confidenceInterval = 1.96 * standardError;
-		const double target = scene.getAdaptiveThreshold() * std::max(std::fabs(mean), 1e-6);
+		const double luminanceCI = confidenceInterval95(
+			accumulator.luminanceSum,
+			accumulator.luminanceSquareSum,
+			samplesUsed
+		);
+		const double redCI = confidenceInterval95(
+			accumulator.colorSum.getRed(),
+			accumulator.colorSquareSum.getRed(),
+			samplesUsed
+		);
+		const double greenCI = confidenceInterval95(
+			accumulator.colorSum.getGreen(),
+			accumulator.colorSquareSum.getGreen(),
+			samplesUsed
+		);
+		const double blueCI = confidenceInterval95(
+			accumulator.colorSum.getBlue(),
+			accumulator.colorSquareSum.getBlue(),
+			samplesUsed
+		);
 
-		return (confidenceInterval <= target);
+		return (
+			channelConverged(luminanceMean, luminanceCI, threshold)
+			&& channelConverged(accumulator.colorSum.getRed() / n, redCI, threshold)
+			&& channelConverged(accumulator.colorSum.getGreen() / n, greenCI, threshold)
+			&& channelConverged(accumulator.colorSum.getBlue() / n, blueCI, threshold)
+		);
 	}
 
 	void	addDenoiseFeatureSample(
@@ -177,19 +275,6 @@ namespace
 			result[i] = sum[i] / static_cast<double>(count);
 		}
 		return (result);
-	}
-
-	double	sampleMeanVariance(double sum, double squareSum, unsigned int count)
-	{
-		if (count <= 1)
-		{
-			return (0.0);
-		}
-
-		const double n = static_cast<double>(count);
-		const double variance = (squareSum - (sum * sum / n)) / (n - 1.0);
-
-		return (std::max(0.0, variance / n));
 	}
 
 	double	colorVariance(Color sum, Color squareSum, unsigned int count)
@@ -265,7 +350,11 @@ void	Renderer::internal::_manageThreads(Scene& scene)
 	const std::size_t	threadCount = std::max<std::size_t>(1, scene.getRenderingThreads());
 	const std::size_t	blockSize = 16;
 	const RenderCamera	renderCamera = _prepareRenderCamera(scene);
+	const std::uint32_t	renderSeed = hasRandomSeed()
+		? static_cast<std::uint32_t>(randomSeedValue())
+		: randomEngine.integer();
 
+	Sampler::setRenderSeed(renderSeed);
 	scene.clearDenoisedImage();
 	if (scene.getDenoise())
 	{
@@ -415,23 +504,21 @@ unsigned int	Renderer::internal::_threadRender(Scene& scene, const RenderCamera&
 	if (denoiseBuffers == nullptr)
 	{
 		Color pixelColor(0.0, 0.0, 0.0);
-		double luminanceSum = 0.0;
-		double luminanceSquareSum = 0.0;
+		AdaptiveAccumulator adaptiveAccumulator;
 		unsigned int samplesUsed = 0;
 
 		for (unsigned int samples = 0; samples < sampleCount; samples++)
 		{
+			Sampler::beginPixelSample(x, y, samples);
 			const Color sampleColor = cleanColor(_calculatePixelColor(scene, renderCamera, x, y));
+			Sampler::endPixelSample();
 
 			pixelColor += sampleColor;
 			samplesUsed = samples + 1;
 			if (adaptiveSampling)
 			{
-				const double luminance = sampleLuminance(sampleColor);
-
-				luminanceSum += luminance;
-				luminanceSquareSum += luminance * luminance;
-				if (adaptiveSampleConverged(scene, samplesUsed, luminanceSum, luminanceSquareSum))
+				adaptiveAccumulator.add(sampleColor);
+				if (adaptiveSampleConverged(scene, samplesUsed, adaptiveAccumulator))
 				{
 					break;
 				}
@@ -444,8 +531,7 @@ unsigned int	Renderer::internal::_threadRender(Scene& scene, const RenderCamera&
 
 	Color pixelColor(0.0, 0.0, 0.0);
 	Color pixelColorSquare(0.0, 0.0, 0.0);
-	double luminanceSum = 0.0;
-	double luminanceSquareSum = 0.0;
+	AdaptiveAccumulator adaptiveAccumulator;
 	Denoise::FeatureVector featureSum;
 	Denoise::FeatureVector featureSquareSum;
 	DenoiseHalfAccumulator halfA;
@@ -454,8 +540,12 @@ unsigned int	Renderer::internal::_threadRender(Scene& scene, const RenderCamera&
 
 	for (unsigned int samples = 0; samples < sampleCount; samples++)
 	{
+		const unsigned int halfIndex = samples % 2;
+
+		Sampler::beginPixelSample(x, y, samples, halfIndex + 1);
 		RenderSample sample = _calculatePixelSample(scene, renderCamera, x, y);
-		DenoiseHalfAccumulator& half = (samples % 2 == 0) ? halfA : halfB;
+		Sampler::endPixelSample();
+		DenoiseHalfAccumulator& half = (halfIndex == 0) ? halfA : halfB;
 		Color sampleColor = cleanColor(sample.color);
 
 		half.colorSum += sampleColor;
@@ -470,11 +560,8 @@ unsigned int	Renderer::internal::_threadRender(Scene& scene, const RenderCamera&
 		samplesUsed = samples + 1;
 		if (adaptiveSampling)
 		{
-			const double luminance = sampleLuminance(sampleColor);
-
-			luminanceSum += luminance;
-			luminanceSquareSum += luminance * luminance;
-			if (adaptiveSampleConverged(scene, samplesUsed, luminanceSum, luminanceSquareSum))
+			adaptiveAccumulator.add(sampleColor);
+			if (adaptiveSampleConverged(scene, samplesUsed, adaptiveAccumulator))
 			{
 				break;
 			}

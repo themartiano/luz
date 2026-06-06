@@ -1,7 +1,7 @@
 #include "RendererInternal.hpp"
 #include "Utilities.hpp"
 #include "Defaults.hpp"
-#include "Random.hpp"
+#include "Sampler.hpp"
 
 // Computes the atmosphere color
 Color	Renderer::internal::_computeAtmosphereColor(Scene& scene, Ray& ray)
@@ -20,10 +20,11 @@ Color	Renderer::internal::_computeAtmosphereColor(Scene& scene, Ray& ray)
 
 	Color atmosphereColor = scene.getAtmosphere().computeIncidentLight(atmosphereRay, atmosphereHitRecord, t_max);
 
-	double random = randomEngine.doubleFloat(0.0, 1.0);
+	double random = Sampler::sample1D(Sampler::DIM_ATMOSPHERE);
 	if (random >= 0.9996)
 	{
-		double diff = randomEngine.doubleFloat(scene.getAtmosphere().getStarsBrightness() - 0.2, scene.getAtmosphere().getStarsBrightness() + 0.2) - ((atmosphereColor.getRed() + atmosphereColor.getGreen() + atmosphereColor.getBlue()) / 3.0);
+		double starSample = Sampler::sample1D(Sampler::DIM_ATMOSPHERE + 1);
+		double diff = (scene.getAtmosphere().getStarsBrightness() - 0.2 + (0.4 * starSample)) - ((atmosphereColor.getRed() + atmosphereColor.getGreen() + atmosphereColor.getBlue()) / 3.0);
 		if (diff < 0.0)
 		{
 			diff = 0.0;
