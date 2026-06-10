@@ -1,8 +1,9 @@
 # Luz
 
-Luz is a hand-written C++20 path tracer built with only the C++ standard library.
+Luz is a hand-written C++20 path tracer built from scratch with ZERO third-party libraries.
 
 ![Cornell Box render](docs/images/cornell-box.jpg)
+![Cornell Box render](docs/images/stormtroopers.jpg)
 
 ## Features
 
