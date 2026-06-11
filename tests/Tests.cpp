@@ -564,6 +564,11 @@ namespace
 				<< "color=(1,1,1)\n"
 				<< "intensity=4\n"
 				<< "}\n"
+				<< "directional_light sun {\n"
+				<< "direction=(0,-1,0)\n"
+				<< "color=(1,0.95,0.8)\n"
+				<< "intensity=2\n"
+				<< "}\n"
 				<< "point_light fill {\n"
 				<< "position=(2,2,2)\n"
 				<< "radius=0.25\n"
@@ -577,13 +582,14 @@ namespace
 
 		require(scene.hasCamera(), "Named-block scene did not load a camera.");
 		requireNear(scene.getActiveCamera().getUpDirection().getY(), 1.0, "Named-block camera up vector was not parsed.");
-		require(scene.getHittables().size() == 3, "Named-block scene did not load object and lights.");
+		require(scene.getHittables().size() == 4, "Named-block scene did not load object and lights.");
 		require(scene.getHittables()[0]->getMaterial()->getType() == METAL, "Principled material did not map to metal.");
 		require(scene.getHittables()[1]->getMaterial()->getType() == EMISSIVE, "Area light did not create an emissive hittable.");
-		require(scene.getHittables()[2]->getMaterial()->getType() == EMISSIVE, "Point light did not create an emissive hittable.");
+		require(scene.getHittables()[2]->getMaterial()->getType() == EMISSIVE, "Directional light did not create an emissive hittable.");
+		require(scene.getHittables()[3]->getMaterial()->getType() == EMISSIVE, "Point light did not create an emissive hittable.");
 
 		scene.updateLights();
-		require(scene.getLights().size() == 2, "Named-block lights were not registered as lights.");
+		require(scene.getLights().size() == 3, "Named-block lights were not registered as lights.");
 
 		AABB boundingBox;
 		require(scene.getHittables()[0]->createBoundingBox(boundingBox), "Named-block object did not create a bounding box.");
@@ -619,6 +625,8 @@ namespace
 				<< "base_color=(0.8,0.8,0.75)\n"
 				<< "metallic=0\n"
 				<< "roughness=0.35\n"
+				<< "emission=(0,0,0)\n"
+				<< "emissionStrength=1\n"
 				<< "}\n\n"
 				<< "[meshes]\n"
 				<< "mesh triangle_mesh {\n"

@@ -135,6 +135,11 @@ size=(10,8)
 color=(1.0,0.86,0.62)
 intensity=3.5
 }
+directional_light sun {
+direction=(0,-1,0)
+color=(1.0,0.95,0.8)
+intensity=1.0
+}
 point_light fill {
 position=(3,4,5)
 radius=0.1
@@ -226,8 +231,10 @@ material=matte_red
 ```
 
 `area_light` creates an emissive rectangle and supports arbitrary normals.
-`point_light` and `sphere_light` create small emissive spheres. These lights are
-still sampled through Luz's emissive-hittable lighting path.
+`directional_light` creates an infinite light whose `direction` is the direction
+light travels, suitable for sun lights. `point_light` and `sphere_light` create
+small emissive spheres. These lights are still sampled through Luz's
+emissive-hittable lighting path.
 
 ## Minimal Example
 

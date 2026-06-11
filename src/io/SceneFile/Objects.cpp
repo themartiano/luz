@@ -4,6 +4,7 @@
 #include "Hittables/Cube.hpp"
 #include "Hittables/Plane.hpp"
 #include "Hittables/Rectangle.hpp"
+#include "Hittables/DirectionalLight.hpp"
 #include "Hittables/Triangle.hpp"
 #include "Hittables/Mesh.hpp"
 #include "OBJReader.hpp"
@@ -290,6 +291,13 @@ namespace
 		double	intensity = 1.0;
 	};
 
+	struct DirectionalLightBlock
+	{
+		Vector3	direction = Vector3(0.0, -1.0, 0.0);
+		Color	color = Color(1.0, 1.0, 1.0);
+		double	intensity = 1.0;
+	};
+
 	void	addObjectBlock(Scene& scene, std::ifstream& stream, SceneFile::internal::SceneFileContext& context, const std::string& objectName)
 	{
 		std::string line;
@@ -511,6 +519,62 @@ namespace
 		throw std::runtime_error("Sphere light '" + lightName + "' is missing a closing }.");
 	}
 
+	void	addDirectionalLightBlock(Scene& scene, std::ifstream& stream, const std::string& lightName)
+	{
+		std::string line;
+		DirectionalLightBlock light;
+
+		do
+		{
+			getline(stream, line);
+			const std::string blockLine = SceneFile::internal::_trim(line);
+
+			if (blockLine.empty() || blockLine.at(0) == '#')
+			{
+				continue;
+			}
+			if (blockLine == "}")
+			{
+				if (Utilities::vectorLengthSquared(light.direction) <= 0.0)
+				{
+					throw std::runtime_error("Directional light '" + lightName + "' direction must be non-zero.");
+				}
+
+				scene.addHittable(std::make_shared<DirectionalLight>(
+					light.direction,
+					std::make_shared<Emissive>(light.color, light.intensity)
+				));
+				return;
+			}
+
+			std::string key;
+			std::string value;
+			if (!splitAssignment(blockLine, key, value))
+			{
+				throw std::runtime_error("Invalid directional light property: " + blockLine);
+			}
+
+			if (key == "direction")
+			{
+				light.direction = SceneFile::internal::_parseVector3Value(value, key);
+			}
+			else if (key == "color")
+			{
+				light.color = SceneFile::internal::_parseColorValue(value, key);
+			}
+			else if (key == "intensity")
+			{
+				light.intensity = std::stod(value);
+			}
+			else
+			{
+				throw std::runtime_error("Unknown directional light property: " + blockLine);
+			}
+		} while (!stream.eof());
+
+		throw std::runtime_error("Directional light '" + lightName + "' is missing a closing }.");
+	}
+
 	bool	addSceneObjectOrLightBlock(Scene& scene, std::ifstream& stream, SceneFile::internal::SceneFileContext& context, const std::string& line)
 	{
 		std::string blockName;
@@ -523,6 +587,11 @@ namespace
 		if (SceneFile::internal::_parseNamedBlockHeader(line, "area_light", blockName))
 		{
 			addAreaLightBlock(scene, stream, blockName);
+			return (true);
+		}
+		if (SceneFile::internal::_parseNamedBlockHeader(line, "directional_light", blockName))
+		{
+			addDirectionalLightBlock(scene, stream, blockName);
 			return (true);
 		}
 		if (
@@ -538,6 +607,7 @@ namespace
 		if (
 			lowerLine.rfind("object ", 0) == 0
 			|| lowerLine.rfind("area_light ", 0) == 0
+			|| lowerLine.rfind("directional_light ", 0) == 0
 			|| lowerLine.rfind("sphere_light ", 0) == 0
 			|| lowerLine.rfind("point_light ", 0) == 0
 		)

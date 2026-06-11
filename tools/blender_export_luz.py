@@ -13,6 +13,7 @@ import math
 import os
 import re
 import sys
+import time
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -21,6 +22,10 @@ try:
 	from mathutils import Vector
 except ImportError as error:
 	raise SystemExit("This exporter must be run inside Blender with --python.") from error
+
+
+SAMPLE_TEXTURE_COLORS = True
+TEXTURE_SAMPLE_SIZE = 64
 
 
 @dataclass
@@ -61,13 +66,14 @@ class LuzCamera:
 class LuzLight:
 	kind: str
 	name: str
-	position: Vector
 	color: tuple[float, float, float]
 	intensity: float
+	position: Vector | None = None
 	normal: Vector | None = None
 	width: float = 1.0
 	height: float = 1.0
 	radius: float = 0.1
+	atmosphere_angle: float | None = None
 
 
 class Bounds:
@@ -118,10 +124,13 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 	parser.add_argument("--render-output", help="Luz render output filename. .bmp is appended by Luz when omitted.")
 	parser.add_argument("--global-scale", type=float, default=1.0, help="Scale all exported positions and mesh vertices.")
 	parser.add_argument("--light-power-scale", type=float, default=0.01, help="Multiplier from Blender light energy to Luz intensity.")
-	parser.add_argument("--sun-distance", type=float, default=100.0, help="Distance used when approximating sun lights.")
-	parser.add_argument("--sun-size", type=float, default=40.0, help="Area size used when approximating sun lights.")
+	parser.add_argument("--sun-power-scale", type=float, default=1.0, help="Multiplier from Blender sun energy to Luz intensity.")
 	parser.add_argument("--camera-aperture", type=float, help="Override Luz camera lens diameter in world units.")
 	parser.add_argument("--default-focus-distance", type=float, default=10.0, help="Fallback focus distance in Blender units.")
+	parser.add_argument("--no-texture-colors", action="store_false", dest="sample_texture_colors", help="Skip image texture color approximation.")
+	parser.add_argument("--texture-sample-size", type=int, default=64, help="Temporary texture thumbnail size used for image color averaging. Defaults to 64.")
+	parser.add_argument("--profile", action="store_true", help="Print per-stage exporter progress and timings.")
+	parser.set_defaults(sample_texture_colors=True)
 	return parser.parse_args(argv)
 
 
@@ -156,6 +165,11 @@ def fmt_vector(value: Vector) -> str:
 
 def fmt_color(value: tuple[float, float, float]) -> str:
 	return f"({fmt_float(value[0])},{fmt_float(value[1])},{fmt_float(value[2])})"
+
+
+def log_profile(args: argparse.Namespace, message: str) -> None:
+	if args.profile:
+		print(f"[luz-export] {message}", flush=True)
 
 
 def blender_point_to_luz(point: Vector, global_scale: float) -> Vector:
@@ -205,31 +219,60 @@ def blend_scalar(first: float, second: float, factor: float) -> float:
 	return first * (1.0 - factor) + second * factor
 
 
-def average_image_color(image: object | None) -> tuple[float, float, float] | None:
-	if image is None:
-		return None
+def color_has_energy(color: tuple[float, float, float]) -> bool:
+	return max(color[0], color[1], color[2]) > 0.0
+
+
+def average_image_pixels(image: object) -> tuple[float, float, float] | None:
 	try:
-		pixels = image.pixels
+		pixels = image.pixels[:]
 		pixel_count = int(len(pixels) / 4)
-	except (AttributeError, TypeError, ValueError):
+	except (AttributeError, TypeError, ValueError, RuntimeError):
 		return None
 	if pixel_count <= 0:
 		return None
 
-	step = max(int(pixel_count / 1024), 1)
 	red = 0.0
 	green = 0.0
 	blue = 0.0
-	samples = 0
-	for pixel_index in range(0, pixel_count, step):
-		offset = pixel_index * 4
+	for offset in range(0, pixel_count * 4, 4):
 		red += float(pixels[offset])
 		green += float(pixels[offset + 1])
 		blue += float(pixels[offset + 2])
-		samples += 1
-	if samples == 0:
+	return (red / pixel_count, green / pixel_count, blue / pixel_count)
+
+
+def average_image_color(image: object | None) -> tuple[float, float, float] | None:
+	if image is None:
 		return None
-	return (red / samples, green / samples, blue / samples)
+	try:
+		width = int(image.size[0])
+		height = int(image.size[1])
+	except (AttributeError, TypeError, ValueError):
+		return None
+	if width <= 0 or height <= 0:
+		return None
+
+	sample_size = max(int(TEXTURE_SAMPLE_SIZE), 1)
+	if width <= sample_size and height <= sample_size:
+		return average_image_pixels(image)
+
+	scale = min(sample_size / width, sample_size / height)
+	sample_width = max(int(width * scale), 1)
+	sample_height = max(int(height * scale), 1)
+	sampled_image = None
+	try:
+		sampled_image = image.copy()
+		sampled_image.scale(sample_width, sample_height)
+		return average_image_pixels(sampled_image)
+	except Exception:
+		return None
+	finally:
+		if sampled_image is not None:
+			try:
+				bpy.data.images.remove(sampled_image)
+			except Exception:
+				pass
 
 
 def node_socket(node: object, name: str) -> object | None:
@@ -258,16 +301,18 @@ def resolve_output_value(output_socket: object, fallback: object, visited: set[o
 		return socket_default(node.outputs.get("Color"), socket_default(output_socket, fallback))  # type: ignore[attr-defined]
 	if node_type == "VALUE":
 		return socket_default(node.outputs.get("Value"), socket_default(output_socket, fallback))  # type: ignore[attr-defined]
-	if node_type == "TEX_IMAGE" and output_name == "Color":
+	if node_type in {"TEX_IMAGE", "TEX_ENVIRONMENT"} and output_name == "Color":
+		if not SAMPLE_TEXTURE_COLORS:
+			return socket_default(output_socket, fallback)
 		return average_image_color(getattr(node, "image", None)) or socket_default(output_socket, fallback)
 	if node_type == "VALTORGB" and output_name == "Color":
-		factor = scalar_from_value(resolve_socket_value(node_socket(node, "Fac"), 0.5, visited, depth + 1), 0.5)
+		factor = scalar_from_value(resolve_socket_value(node_socket(node, "Fac") or node_socket(node, "Factor"), 0.5, visited, depth + 1), 0.5)
 		try:
 			return node.color_ramp.evaluate(max(0.0, min(1.0, factor)))
 		except Exception:
 			return socket_default(output_socket, fallback)
 	if node_type in {"MIX_RGB", "MIX"} and output_name in {"Color", "Result"}:
-		factor = scalar_from_value(resolve_socket_value(node_socket(node, "Fac"), 0.5, visited, depth + 1), 0.5)
+		factor = scalar_from_value(resolve_socket_value(node_socket(node, "Fac") or node_socket(node, "Factor"), 0.5, visited, depth + 1), 0.5)
 		color_a = color_from_value(
 			resolve_socket_value(node_socket(node, "Color1") or node_socket(node, "A"), fallback, visited, depth + 1),
 			color_from_value(fallback, (0.0, 0.0, 0.0)),
@@ -356,7 +401,7 @@ def emission_from_node(node: object, visited: set[object]) -> tuple[tuple[float,
 	if node.type == "EMISSION":
 		color = color_from_value(socket_default_value(node, ("Color",), (1.0, 1.0, 1.0)), (1.0, 1.0, 1.0))
 		strength = scalar_from_value(socket_default_value(node, ("Strength",), 1.0), 1.0)
-		if strength > 0.0:
+		if strength > 0.0 and color_has_energy(color):
 			return (color, strength)
 		return None
 
@@ -366,7 +411,7 @@ def emission_from_node(node: object, visited: set[object]) -> tuple[tuple[float,
 			(1.0, 1.0, 1.0),
 		)
 		strength = scalar_from_value(socket_default_value(node, ("Emission Strength",), 0.0), 0.0)
-		if strength > 0.0:
+		if strength > 0.0 and color_has_energy(color):
 			return (color, strength)
 
 	for socket in node.inputs:
@@ -448,7 +493,7 @@ def blend_material_values(
 def linked_shader_nodes(node: object) -> list[object]:
 	nodes: list[object] = []
 	for socket in getattr(node, "inputs", []):
-		if socket.name == "Fac":
+		if socket.name in {"Fac", "Factor"}:
 			continue
 		for link in socket.links:
 			nodes.append(link.from_node)
@@ -522,7 +567,7 @@ def material_values_from_shader_node(
 	if node_type == "MIX_SHADER":
 		nodes = linked_shader_nodes(node)
 		if len(nodes) >= 2:
-			factor = scalar_from_value(socket_default_value(node, ("Fac",), 0.5), 0.5)
+			factor = scalar_from_value(socket_default_value(node, ("Fac", "Factor"), 0.5), 0.5)
 			first = material_values_from_shader_node(nodes[0], defaults, visited.copy())
 			second = material_values_from_shader_node(nodes[1], defaults, visited.copy())
 			return blend_material_values(first, second, factor)
@@ -616,6 +661,9 @@ def export_material(material: object | None, used_names: set[str], registry: dic
 		if emission:
 			emission_color = emission[0]
 			emission_strength = emission[1]
+
+	if not color_has_energy(emission_color):
+		emission_strength = 0.0
 
 	registry[key] = LuzMaterial(
 		name=name,
@@ -732,11 +780,16 @@ def export_meshes(
 	meshes: list[LuzMesh] = []
 	used_mesh_names: set[str] = set()
 	used_object_names: set[str] = set()
+	mesh_objects = [
+		object_
+		for object_ in bpy.context.scene.objects
+		if object_.type == "MESH" and should_export_object(object_, args)
+	]
+	log_profile(args, f"Exporting {len(mesh_objects)} mesh object(s)")
 
-	for object_ in bpy.context.scene.objects:
-		if object_.type != "MESH" or not should_export_object(object_, args):
-			continue
-
+	for object_index, object_ in enumerate(mesh_objects, start=1):
+		object_start = time.perf_counter()
+		log_profile(args, f"[{object_index}/{len(mesh_objects)}] Evaluating mesh object '{object_.name}'")
 		evaluated_object, mesh = evaluated_mesh_for_object(object_, depsgraph)
 		try:
 			if hasattr(mesh, "calc_normals_split"):
@@ -748,15 +801,36 @@ def export_meshes(
 			except Exception:
 				normal_matrix = world_matrix.to_3x3()
 			object_triangles_by_material: dict[int, list[ObjTriangle]] = {}
+			luz_vertices: dict[int, Vector] = {}
+			luz_normals: dict[int, Vector] = {}
+			log_profile(
+				args,
+				f"[{object_index}/{len(mesh_objects)}] '{object_.name}' has "
+				f"{len(mesh.vertices)} vertex/vertices and {len(mesh.loop_triangles)} triangle(s)",
+			)
+
+			def luz_vertex_for(vertex_index: int) -> Vector:
+				luz_vertex = luz_vertices.get(vertex_index)
+				if luz_vertex is None:
+					blender_world = world_matrix @ mesh.vertices[vertex_index].co
+					luz_vertex = blender_point_to_luz(blender_world, args.global_scale)
+					luz_vertices[vertex_index] = luz_vertex
+					bounds.include(luz_vertex)
+				return luz_vertex
+
+			def luz_normal_for(loop_index: int) -> Vector:
+				luz_normal = luz_normals.get(loop_index)
+				if luz_normal is None:
+					luz_normal = loop_normal(mesh, loop_index, normal_matrix)
+					luz_normals[loop_index] = luz_normal
+				return luz_normal
 
 			for loop_triangle in mesh.loop_triangles:
 				material_index = loop_triangle.material_index
 				triangle_corners: list[ObjCorner] = []
 				for loop_index, vertex_index in zip(loop_triangle.loops, loop_triangle.vertices):
-					blender_world = world_matrix @ mesh.vertices[vertex_index].co
-					luz_vertex = blender_point_to_luz(blender_world, args.global_scale)
-					luz_normal = loop_normal(mesh, loop_index, normal_matrix)
-					bounds.include(luz_vertex)
+					luz_vertex = luz_vertex_for(vertex_index)
+					luz_normal = luz_normal_for(loop_index)
 					triangle_corners.append((luz_vertex, luz_normal))
 				object_triangles_by_material.setdefault(material_index, []).append(
 					(triangle_corners[0], triangle_corners[1], triangle_corners[2])
@@ -767,6 +841,13 @@ def export_meshes(
 					continue
 
 				material = material_for_slot(object_, material_index)
+				material_label = getattr(material, "name_full", "default material") if material else "default material"
+				material_start = time.perf_counter()
+				log_profile(
+					args,
+					f"[{object_index}/{len(mesh_objects)}] Resolving material '{material_label}' "
+					f"for {len(triangles)} triangle(s)",
+				)
 				material_name = export_material(material, used_material_names, materials)
 				mesh_base = slugify(f"{object_.name}_{material_name}", "mesh")
 				mesh_name = unique_name(mesh_base, used_mesh_names)
@@ -774,7 +855,13 @@ def export_meshes(
 				mesh_path = mesh_dir / f"{mesh_name}.obj"
 				scene_file_path = Path(os.path.relpath(mesh_path, output_path.parent)).as_posix()
 
+				log_profile(args, f"[{object_index}/{len(mesh_objects)}] Writing {mesh_path.name}")
 				write_obj(mesh_path, triangles)
+				log_profile(
+					args,
+					f"[{object_index}/{len(mesh_objects)}] Wrote {mesh_path.name} "
+					f"in {time.perf_counter() - material_start:.2f}s",
+				)
 				meshes.append(
 					LuzMesh(
 						name=mesh_name,
@@ -787,6 +874,7 @@ def export_meshes(
 				)
 		finally:
 			release_evaluated_mesh(evaluated_object)
+		log_profile(args, f"[{object_index}/{len(mesh_objects)}] Finished '{object_.name}' in {time.perf_counter() - object_start:.2f}s")
 
 	return meshes
 
@@ -844,21 +932,40 @@ def light_color(light_data: object) -> tuple[float, float, float]:
 	return color_from_value(getattr(light_data, "color", (1.0, 1.0, 1.0)), (1.0, 1.0, 1.0))
 
 
+def atmosphere_angle_from_sun_direction(direction: Vector) -> float | None:
+	scene_to_sun = -direction
+	projected = Vector((0.0, scene_to_sun.y, scene_to_sun.z))
+	if projected.length == 0.0:
+		return None
+	projected.normalize()
+	return math.atan2(-projected.z, projected.y) / math.pi
+
+
 def export_lights(args: argparse.Namespace, bounds: Bounds) -> list[LuzLight]:
 	lights: list[LuzLight] = []
 	used_names: set[str] = set()
 	center = bounds.center()
+	light_objects = [
+		object_
+		for object_ in bpy.context.scene.objects
+		if object_.type == "LIGHT" and should_export_object(object_, args)
+	]
+	log_profile(args, f"Exporting {len(light_objects)} light object(s)")
 
-	for object_ in bpy.context.scene.objects:
-		if object_.type != "LIGHT" or not should_export_object(object_, args):
-			continue
-
+	for object_ in light_objects:
 		data = object_.data
 		name = unique_name(slugify(object_.name, "light"), used_names)
 		position = blender_point_to_luz(object_.matrix_world.translation, args.global_scale)
 		direction = blender_vector_to_luz(object_.matrix_world.to_quaternion() @ Vector((0.0, 0.0, -1.0)))
 		color = light_color(data)
-		intensity = max(float(getattr(data, "energy", 1.0)) * args.light_power_scale, 0.0)
+		energy = float(getattr(data, "energy", 1.0))
+		intensity_scale = args.sun_power_scale if data.type == "SUN" else args.light_power_scale
+		intensity = max(energy * intensity_scale, 0.0)
+		log_profile(
+			args,
+			f"Light '{object_.name}' type={data.type} energy={fmt_float(energy)} "
+			f"intensity={fmt_float(intensity)} direction={fmt_vector(direction)}",
+		)
 
 		if data.type == "AREA":
 			width = float(getattr(data, "size", 1.0)) * args.global_scale
@@ -878,18 +985,14 @@ def export_lights(args: argparse.Namespace, bounds: Bounds) -> list[LuzLight]:
 				)
 			)
 		elif data.type == "SUN":
-			sun_distance = args.sun_distance * args.global_scale
-			sun_size = args.sun_size * args.global_scale
 			lights.append(
 				LuzLight(
-					kind="area_light",
+					kind="directional_light",
 					name=name,
-					position=center - (direction * sun_distance),
 					normal=direction,
-					width=max(sun_size, 1e-6),
-					height=max(sun_size, 1e-6),
 					color=color,
 					intensity=intensity,
+					atmosphere_angle=atmosphere_angle_from_sun_direction(direction),
 				)
 			)
 		else:
@@ -906,6 +1009,82 @@ def export_lights(args: argparse.Namespace, bounds: Bounds) -> list[LuzLight]:
 			)
 
 	return lights
+
+
+def mix_shader_uses_camera_ray_factor(node: object) -> bool:
+	factor_socket = node_socket(node, "Fac") or node_socket(node, "Factor")
+	try:
+		links = factor_socket.links if factor_socket is not None else []
+	except AttributeError:
+		return False
+	for link in links:
+		from_node = getattr(link, "from_node", None)
+		from_socket = getattr(link, "from_socket", None)
+		if getattr(from_node, "type", "") == "LIGHT_PATH" and getattr(from_socket, "name", "") == "Is Camera Ray":
+			return True
+	return False
+
+
+def multiply_color(color: tuple[float, float, float], strength: float) -> tuple[float, float, float]:
+	return (
+		max(color[0] * strength, 0.0),
+		max(color[1] * strength, 0.0),
+		max(color[2] * strength, 0.0),
+	)
+
+
+def add_color(first: tuple[float, float, float], second: tuple[float, float, float]) -> tuple[float, float, float]:
+	return (
+		max(first[0] + second[0], 0.0),
+		max(first[1] + second[1], 0.0),
+		max(first[2] + second[2], 0.0),
+	)
+
+
+def world_color_from_shader_node(
+	node: object | None,
+	default_color: tuple[float, float, float],
+	camera_ray: bool,
+	visited: set[object] | None = None,
+) -> tuple[float, float, float]:
+	if node is None:
+		return default_color
+	if visited is None:
+		visited = set()
+	if node in visited:
+		return default_color
+	visited.add(node)
+
+	node_type = getattr(node, "type", "")
+	if node_type == "BACKGROUND":
+		color = color_from_value(socket_default_value(node, ("Color",), default_color), default_color)
+		strength = scalar_from_value(socket_default_value(node, ("Strength",), 1.0), 1.0)
+		return multiply_color(color, strength)
+
+	if node_type == "EMISSION":
+		color = color_from_value(socket_default_value(node, ("Color",), default_color), default_color)
+		strength = scalar_from_value(socket_default_value(node, ("Strength",), 1.0), 1.0)
+		return multiply_color(color, strength)
+
+	if node_type == "MIX_SHADER":
+		nodes = linked_shader_nodes(node)
+		if len(nodes) >= 2:
+			if mix_shader_uses_camera_ray_factor(node):
+				branch = nodes[1] if camera_ray else nodes[0]
+				return world_color_from_shader_node(branch, default_color, camera_ray, visited.copy())
+			factor = scalar_from_value(socket_default_value(node, ("Fac", "Factor"), 0.5), 0.5)
+			first = world_color_from_shader_node(nodes[0], default_color, camera_ray, visited.copy())
+			second = world_color_from_shader_node(nodes[1], default_color, camera_ray, visited.copy())
+			return blend_color(first, second, max(0.0, min(1.0, factor)))
+
+	if node_type == "ADD_SHADER":
+		nodes = linked_shader_nodes(node)
+		if len(nodes) >= 2:
+			first = world_color_from_shader_node(nodes[0], default_color, camera_ray, visited.copy())
+			second = world_color_from_shader_node(nodes[1], default_color, camera_ray, visited.copy())
+			return add_color(first, second)
+
+	return default_color
 
 
 def world_surface_node(world: object) -> object | None:
@@ -928,14 +1107,8 @@ def export_world_background() -> tuple[float, float, float]:
 
 	default_color = color_from_value(getattr(world, "color", default_color), default_color)
 	background_node = world_surface_node(world)
-	if background_node and background_node.type == "BACKGROUND":
-		color = color_from_value(socket_default_value(background_node, ("Color",), default_color), default_color)
-		strength = scalar_from_value(socket_default_value(background_node, ("Strength",), 1.0), 1.0)
-		return (
-			max(color[0] * strength, 0.0),
-			max(color[1] * strength, 0.0),
-			max(color[2] * strength, 0.0),
-		)
+	if background_node:
+		return world_color_from_shader_node(background_node, default_color, True)
 	return default_color
 
 
@@ -969,6 +1142,13 @@ def scene_bounces(args: argparse.Namespace) -> int:
 	return 8
 
 
+def exported_atmosphere_angle(lights: list[LuzLight]) -> float:
+	for light in lights:
+		if light.atmosphere_angle is not None:
+			return light.atmosphere_angle
+	return -0.4
+
+
 def write_luz_scene(
 	args: argparse.Namespace,
 	output_path: Path,
@@ -994,6 +1174,15 @@ def write_luz_scene(
 			"gamma=1",
 			"bloom=1",
 			f"sky={sky}",
+		]
+	)
+	if sky == "atmosphere":
+		lines.append(
+			f"atmosphere={fmt_float(exported_atmosphere_angle(lights))},"
+			"6360000,6420000,7994,1200,16,8,0.5"
+		)
+	lines.extend(
+		[
 			f"background={fmt_color(background_color)}",
 			f"outputfilename={render_output}",
 			"",
@@ -1061,9 +1250,9 @@ def write_luz_scene(
 	for light in lights:
 		if light.kind == "area_light":
 			lines.extend(
-				[
-					f"area_light {light.name} {{",
-					f"position={fmt_vector(light.position)}",
+					[
+						f"area_light {light.name} {{",
+						f"position={fmt_vector(light.position or Vector((0.0, 0.0, 0.0)))}",
 					f"normal={fmt_vector(light.normal or Vector((0.0, -1.0, 0.0)))}",
 					f"size=({fmt_float(light.width)},{fmt_float(light.height)})",
 					f"color={fmt_color(light.color)}",
@@ -1071,11 +1260,21 @@ def write_luz_scene(
 					"}",
 				]
 			)
-		else:
+		elif light.kind == "directional_light":
 			lines.extend(
 				[
-					f"point_light {light.name} {{",
-					f"position={fmt_vector(light.position)}",
+					f"directional_light {light.name} {{",
+					f"direction={fmt_vector(light.normal or Vector((0.0, -1.0, 0.0)))}",
+					f"color={fmt_color(light.color)}",
+					f"intensity={fmt_float(light.intensity)}",
+					"}",
+				]
+			)
+		else:
+			lines.extend(
+					[
+						f"point_light {light.name} {{",
+						f"position={fmt_vector(light.position or Vector((0.0, 0.0, 0.0)))}",
 					f"radius={fmt_float(light.radius)}",
 					f"color={fmt_color(light.color)}",
 					f"intensity={fmt_float(light.intensity)}",
@@ -1088,8 +1287,13 @@ def write_luz_scene(
 
 
 def main() -> None:
+	global SAMPLE_TEXTURE_COLORS, TEXTURE_SAMPLE_SIZE
+	start_time = time.perf_counter()
 	args = parse_args(sys.argv)
+	SAMPLE_TEXTURE_COLORS = args.sample_texture_colors
+	TEXTURE_SAMPLE_SIZE = max(int(args.texture_sample_size), 1)
 	if args.blend:
+		log_profile(args, f"Opening blend file {args.blend}")
 		bpy.ops.wm.open_mainfile(filepath=args.blend)
 
 	output_path = Path(args.output).expanduser().resolve()
@@ -1100,16 +1304,21 @@ def main() -> None:
 	materials: dict[str, LuzMaterial] = {}
 	used_material_names: set[str] = set()
 	bounds = Bounds()
+	log_profile(args, "Starting mesh export")
 	meshes = export_meshes(args, output_path, mesh_dir, materials, used_material_names, bounds)
+	log_profile(args, "Exporting camera")
 	camera = export_camera(args, bounds)
 	lights = export_lights(args, bounds)
 	background_color = export_world_background()
+	log_profile(args, f"World camera background={fmt_color(background_color)}")
+	log_profile(args, f"Writing Luz scene {output_path}")
 	write_luz_scene(args, output_path, materials, meshes, camera, lights, background_color)
 
 	triangle_count = sum(mesh.triangle_count for mesh in meshes)
 	print(
 		f"Exported {len(meshes)} mesh group(s), {triangle_count} triangle(s), "
-		f"{len(materials)} material(s), and {len(lights)} light(s) to {output_path}"
+		f"{len(materials)} material(s), and {len(lights)} light(s) to {output_path} "
+		f"in {time.perf_counter() - start_time:.2f}s"
 	)
 
 
