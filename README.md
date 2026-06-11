@@ -2,8 +2,8 @@
 
 Luz is a hand-written C++20 path tracer built from scratch with ZERO third-party libraries.
 
-<img src="./docs/images/cornell-box.jpg" width="80%" />
-<img src="./docs/images/stormtroopers.jpg" width="80%" />
+<img src="./docs/images/stormtroopers.jpg" />
+<img src="./docs/images/bust-statue.jpg" />
 
 ## Features
 
@@ -205,8 +205,8 @@ docker/            Benchmark container
 
 ## Showcase
 
+<img src="./docs/images/cornell-box.jpg" />
 <img src="./docs/images/glass-monkey.jpg" />
-
 <img src="./docs/images/atmosphere-from-space.jpg" />
 
 ## Attribution
