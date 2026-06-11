@@ -8,15 +8,19 @@ Luz is a hand-written C++20 path tracer built from scratch with ZERO third-party
 ## Features
 
 - Monte Carlo path tracing
-- Multithreaded rendering
+- Multithreaded CPU rendering
+- Adaptive sampling
+- Denoiser (NFOR-style)
 - Spheres, planes, rectangles, triangles, cubes, volumes, and OBJ meshes
 - Lambertian, metal, dielectric, emissive, and isotropic materials
+- Area, point, sphere and directional lights
 - Custom `.luz` scene files
-- OBJ mesh loading
+- .blend to .luz converter
+- Fully customizable render parameters via CLI or scene file
 - Importance sampling with PDFs
 - BVH acceleration, including packed mesh BVHs with binned SAH construction and near-first traversal
-- Atmospheric scattering
-- Depth of field, antialiasing, adaptive sampling, tone mapping, gamma correction, bloom, and NFOR-style denoising
+- Atmospheric simulation w/ scattering
+- Depth of field, antialiasing, tone mapping, gamma correction, and bloom
 - BMP and TIFF output
 - Deterministic benchmark harness with render, denoise, post-process, and score breakdowns
 
@@ -31,7 +35,7 @@ make
 Render the bundled demo scene:
 
 ```sh
-./Luz --file examples/scenes/demo.luz --samples 8 --resolution 300x300 --threads 4
+./Luz --file examples/scenes/demo.luz --samples 50 --resolution 300x300
 ```
 
 The default output is `render.bmp`. Scene files can set `outputfilename=...`, and the CLI can override common render settings.
@@ -87,19 +91,6 @@ gives comparable scores when the benchmark settings are the same.
 The default benchmark matrix covers Cornell-style lighting, many objects, mesh BVH traversal, diffuse scattering,
 post-processing, atmosphere, mixed light types, emissive geometry, primitives/materials, volumes, OBJ meshes,
 and representative stormtrooper scene cases.
-
-## Acceleration
-
-Luz uses a top-level BVH over scene objects and packed triangle BVHs inside mesh
-objects. Mesh BVHs are built with a binned surface-area heuristic split, falling
-back to median splitting when the SAH partition is invalid. Traversal uses
-cached bounding boxes, near-first ordering, cached inverse ray directions, and
-specialized `hitAny` paths for shadow/occlusion rays. These optimizations are
-generic: they operate on geometry, bounding boxes, rays, and material sampling,
-not on specific benchmark scenes.
-
-For regression checks, `tools/bmp_metrics.py` compares two BMP images
-pixel-by-pixel and reports MAE, RMSE, PSNR, and max channel error.
 
 ## CMake
 
@@ -217,6 +208,11 @@ docker/            Benchmark container
 <img src="./docs/images/glass-monkey.jpg" />
 
 <img src="./docs/images/atmosphere-from-space.jpg" />
+
+## Attribution
+
+Stormtrooper Scene by @[ScottGraham](https://blendswap.com/profile/120125) on [BlendSwap](https://blendswap.com/blend/13953).
+Bust Statue by @[geoffreymarchal](https://blendswap.com/profile/180520) on [BlendSwap](https://blendswap.com/blend/21704).
 
 ## License
 
