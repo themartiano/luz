@@ -1,6 +1,6 @@
 # Contributing to Luz
 
-Thanks for taking the time to improve Luz. This project is a hand-written C++20
+Thanks for taking the time to improve Luz. This project is a C++20
 path tracer with no third-party runtime dependencies, so contributions should
 keep the codebase straightforward, portable, and measurable.
 
@@ -15,7 +15,7 @@ make
 Render the bundled demo scene:
 
 ```sh
-./Luz --file examples/scenes/demo.luz --samples 8 --resolution 300x300 --threads 4
+./Luz --file examples/scenes/demo.luz --samples 50 --resolution 300x300
 ```
 
 Run the test suite:
@@ -71,7 +71,7 @@ For memory-safety work, parser changes, or low-level geometry changes, also run:
 
 ```sh
 make sanitizer
-./Luz --file examples/scenes/demo.luz --samples 8 --resolution 300x300 --threads 4
+./Luz --file examples/scenes/demo.luz --samples 10 --resolution 300x300
 ```
 
 If you use CMake locally, verify both build and tests:
@@ -88,7 +88,7 @@ in your verification notes. Keep sample counts and resolutions low enough for
 reviewers to reproduce quickly, for example:
 
 ```sh
-./Luz --file examples/scenes/cornell.luz --samples 16 --resolution 320x320 --threads 4 --seed 424242424
+./Luz --file examples/scenes/cornell.luz --samples 16 --resolution 320x320 --seed 424242424
 ```
 
 Use `tools/bmp_metrics.py` when comparing BMP output against an expected image:
@@ -137,4 +137,8 @@ Before submitting, make sure the pull request includes:
 - Screenshots or rendered BMP comparisons for visual changes.
 - Benchmark output for performance-sensitive changes.
 - Documentation updates for any CLI, scene-file, exporter, or workflow change.
+
+## AI and Vibe Coding
+
+The use of AI is strongly encouraged. As with manual software development, it's important to make sure the architecture is properly designed and the software behaves as expected, quality images and good performance. Code should be well implemented and have consistent style + formatting, which will most likely be handled by your coding agent.
 
