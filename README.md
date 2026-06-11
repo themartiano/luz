@@ -8,6 +8,7 @@ Luz is a hand-written C++20 path tracer built from scratch with ZERO third-party
 ## Features
 
 - Monte Carlo path tracing
+- Global illumination
 - Multithreaded CPU rendering
 - Adaptive sampling
 - Denoiser (NFOR-style)
@@ -209,9 +210,14 @@ docker/            Benchmark container
 <img src="./docs/images/glass-monkey.jpg" />
 <img src="./docs/images/atmosphere-from-space.jpg" />
 
+## Personal Note
+
+Special thanks to the [Ray Tracing in One Weekend](https://github.com/RayTracing/raytracing.github.io) book series. It was a great source of inspiration and information during a big part of the development of Luz, specially since those were times before AI.
+
 ## Attribution
 
 Stormtrooper Scene by @[ScottGraham](https://blendswap.com/profile/120125) on [BlendSwap](https://blendswap.com/blend/13953).
+
 Bust Statue by @[geoffreymarchal](https://blendswap.com/profile/180520) on [BlendSwap](https://blendswap.com/blend/21704).
 
 ## License
