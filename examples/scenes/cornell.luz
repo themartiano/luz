@@ -8,33 +8,50 @@ distanceblueness=0
 #outputfilename=cornellBox
 
 [scene]
-camera=(0,0,390),(0,0,-1),65,0,200
+camera=(0,275,-1075),(0,0,1),39.31,0,20
 objects{
-# Ceiling
-rectangle=(0,250,-250),(0,-1,0),500,500,material[
-lambertian=(1.0,1.0,1.0)
-]
-# Light (Top)
-rectangle=(0,250,-125),(0,-1,0),125,125,material[
-emissive=(1.0,1.0,0.63),5
-]
-# Back Wall
-rectangle=(0,0,-250),(0,0,1),500,500,material[
-lambertian=(1.0,1.0,1.0)
-]
 # Floor
-rectangle=(0,-250,-250),(0,1,0),500,500,material[
+rectangle=(0,0,0),(0,1,0),550,560,material[
 lambertian=(1.0,1.0,1.0)
 ]
+
+# Ceiling
+rectangle=(0,550,0),(0,-1,0),550,560,material[
+lambertian=(1.0,1.0,1.0)
+]
+
+# Light
+rectangle=(0,550,0),(0,-1,0),130,105,material[
+emissive=(1.0,0.84,0.43),29.73
+]
+
+# Back Wall
+rectangle=(0,275,280),(0,0,-1),550,550,material[
+lambertian=(1.0,1.0,1.0)
+]
+
 # Right Wall
-rectangle=(250,0,-250),(-1,0,0),500,500,material[
+rectangle=(-275,275,0),(1,0,0),560,550,material[
 lambertian=(0.0,1.0,0.0)
 ]
+
 # Left Wall
-rectangle=(-250,0,-250),(1,0,0),500,500,material[
+rectangle=(275,275,0),(-1,0,0),560,550,material[
 lambertian=(1.0,0.0,0.0)
 ]
-sphere=(50,-175,-95),75,material[
+
+# Silver sphere
+sphere=(225,50,230),50,material[
+metal=(0.8,0.8,0.8),0.0
+]
+
+# Glass sphere
+sphere=(0,150,180),100,material[
 dielectric=(1.0,1.0,1.0)
+]
+
+# Gold sphere
+sphere=(-225,50,230),50,material[
+metal=(1.0,0.843,0.0),0.0
 ]
 }
