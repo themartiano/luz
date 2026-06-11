@@ -37,11 +37,25 @@ bool	Renderer::render(Scene& scene)
 
 	internal::_manageThreads(scene);
 
+	const double totalMS = clock.elapsedMS();
+	SceneRenderStats stats = scene.getRenderStats();
+	stats.totalMS = totalMS;
+	scene.setRenderStats(stats);
+
 	if (!scene.getBenchmarkMode())
 	{
-		std::cout << CLR_GREEN_BRIGHT << "Render done! " << CLR_BLUE_BRIGHT << "(Duration: " << CLR_WHITE << clock.elapsedS() << "s" << CLR_BLUE_BRIGHT << ")\n\n" << CLR_RESET;
+		std::cout << CLR_GREEN_BRIGHT << "Render done! " << CLR_BLUE_BRIGHT << "(Duration: " << CLR_WHITE << totalMS / 1000.0 << "s" << CLR_BLUE_BRIGHT << ")\n\n" << CLR_RESET;
 	} else {
-		std::cout << clock.elapsedMS() << std::endl;
+		std::cout
+			<< "stats"
+			<< " rendered_samples=" << stats.renderedSamples
+			<< " avg_spp=" << stats.averageSamplesPerPixel
+			<< " render_ms=" << stats.renderMS
+			<< " denoise_ms=" << stats.denoiseMS
+			<< " postprocess_ms=" << stats.postProcessMS
+			<< " total_ms=" << stats.totalMS
+			<< std::endl;
+		std::cout << totalMS << std::endl;
 	}
 
 	return (true);

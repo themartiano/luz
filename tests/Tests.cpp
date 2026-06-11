@@ -996,6 +996,29 @@ namespace
 		return (scene);
 	}
 
+	void	testFlagsParseBenchmarkFileOptions(void)
+	{
+		std::unique_ptr<Scene> bounceScene = parseFlags({"--max-light-bounces", "5"});
+		require(bounceScene->getMaxLightBounces() == 5, "--max-light-bounces was not parsed.");
+
+		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_cli_file_benchmark_test.luz";
+		std::ofstream sceneFile(scenePath);
+
+		sceneFile
+			<< "[settings]\n"
+			<< "resolution=3,2\n"
+			<< "samples=7\n"
+			<< "maxlightbounces=4\n\n";
+		sceneFile.close();
+
+		std::unique_ptr<Scene> fileBenchmarkScene = parseFlags({"--file", scenePath.string(), "--benchmark"});
+		require(fileBenchmarkScene->getBenchmarkMode(), "--benchmark did not enable benchmark mode for a file scene.");
+		require(fileBenchmarkScene->getSampleCount() == 7, "--benchmark replaced the loaded file scene samples.");
+		require(fileBenchmarkScene->getMaxLightBounces() == 4, "--benchmark replaced the loaded file scene bounces.");
+		require(fileBenchmarkScene->getImage()->getWidth() == 3, "--benchmark replaced the loaded file scene width.");
+		require(fileBenchmarkScene->getImage()->getHeight() == 2, "--benchmark replaced the loaded file scene height.");
+	}
+
 	void	testFlagsParseDenoiseOptions(void)
 	{
 		std::unique_ptr<Scene> enabledScene = parseFlags({"--denoise"});
@@ -1014,6 +1037,16 @@ namespace
 		require(
 			outputScene->getDenoiseOutputFileName() == "custom_denoised.tiff",
 			"--denoise-output was not parsed."
+		);
+		std::unique_ptr<Scene> rawOutputScene = parseFlags({"--output", "custom_render.tiff"});
+		require(
+			rawOutputScene->getDefaultRenderOutputFileName() == "custom_render.tiff",
+			"--output was not parsed."
+		);
+		std::unique_ptr<Scene> shortOutputScene = parseFlags({"-o", "short_render.bmp"});
+		require(
+			shortOutputScene->getDefaultRenderOutputFileName() == "short_render.bmp",
+			"-o was not parsed."
 		);
 
 		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_cli_denoise_override_test.luz";
@@ -1063,6 +1096,7 @@ namespace
 		requireFlagParseThrows({"--resolution", "-1x100"}, "CLI accepted negative width.");
 		requireFlagParseThrows({"--threads", "0"}, "CLI accepted zero threads.");
 		requireFlagParseThrows({"--denoise", "maybe"}, "CLI accepted invalid denoise value.");
+		requireFlagParseThrows({"--output"}, "CLI accepted missing output path.");
 		requireFlagParseThrows({"--denoise-output"}, "CLI accepted missing denoise output path.");
 	}
 
@@ -1276,6 +1310,7 @@ int	main(void)
 		testCubeBoundingBoxAndSetters();
 		testHittablePDFAveragesMultipleLights();
 		testFlagsParseDenoiseOptions();
+		testFlagsParseBenchmarkFileOptions();
 		testFlagsParseAdaptiveOptions();
 		testFlagsRejectInvalidValues();
 		testSettersRejectInvalidValues();

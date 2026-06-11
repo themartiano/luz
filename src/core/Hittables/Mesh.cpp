@@ -15,6 +15,30 @@ namespace
 {
 	constexpr std::size_t	MESH_BVH_LEAF_SIZE = 8;
 	constexpr std::size_t	MESH_BVH_STACK_SIZE = 128;
+	constexpr std::size_t	MESH_BVH_SAH_BINS = 12;
+	constexpr double			MESH_BVH_CENTROID_EPSILON = 1e-12;
+
+	struct	TraversalNode
+	{
+		std::size_t	index;
+		double		near;
+	};
+
+	struct	BinnedSplit
+	{
+		bool		found = false;
+		int			axis = 0;
+		std::size_t	splitBin = 0;
+		double		centroidMin = 0.0;
+		double		binScale = 0.0;
+	};
+
+	struct	Bin
+	{
+		AABB		boundingBox;
+		std::size_t	count = 0;
+		bool		hasBox = false;
+	};
 
 	double	boxMinimumAxis(const AABB& box, int axis)
 	{
@@ -40,6 +64,66 @@ namespace
 				std::max(first.getMaximum().getZ(), second.getMaximum().getZ())
 			)
 		));
+	}
+
+	void	addBoxToBin(Bin& bin, const AABB& box)
+	{
+		bin.boundingBox = bin.hasBox ? mergeBoxes(bin.boundingBox, box) : box;
+		bin.count++;
+		bin.hasBox = true;
+	}
+
+	void	mergeBin(Bin& target, const Bin& source)
+	{
+		if (!source.hasBox)
+		{
+			return;
+		}
+		target.boundingBox = target.hasBox
+			? mergeBoxes(target.boundingBox, source.boundingBox)
+			: source.boundingBox;
+		target.count += source.count;
+		target.hasBox = true;
+	}
+
+	double	boxSurfaceArea(const AABB& box)
+	{
+		const Vector3 extent = box.getMaximum() - box.getMinimum();
+		const double x = std::max(0.0, extent.getX());
+		const double y = std::max(0.0, extent.getY());
+		const double z = std::max(0.0, extent.getZ());
+
+		return (2.0 * ((x * y) + (x * z) + (y * z)));
+	}
+
+	bool	boxHitDistance(const AABB& box, Ray& ray, double tMax, double& tNear)
+	{
+		double tMin = T_MIN;
+		const Vector3& minimum = box.getMinimum();
+		const Vector3& maximum = box.getMaximum();
+		const Vector3& origin = ray.getOrigin();
+		const Vector3& inverseDirection = ray.getInverseDirection();
+
+		for (int axis = 0; axis < 3; axis++)
+		{
+			const double invD = inverseDirection[axis];
+			double t0 = (minimum[axis] - origin[axis]) * invD;
+			double t1 = (maximum[axis] - origin[axis]) * invD;
+			if (invD < 0.0)
+			{
+				std::swap(t0, t1);
+			}
+
+			tMin = t0 > tMin ? t0 : tMin;
+			tMax = t1 < tMax ? t1 : tMax;
+			if (tMax <= tMin)
+			{
+				return (false);
+			}
+		}
+
+		tNear = tMin;
+		return (true);
 	}
 
 	AABB	boundingBoxForRange(
@@ -76,6 +160,108 @@ namespace
 			return (1);
 		}
 		return (2);
+	}
+
+	std::size_t	binForCentroid(double centroid, double minimum, double scale)
+	{
+		std::size_t bin = static_cast<std::size_t>((centroid - minimum) * scale);
+
+		if (bin >= MESH_BVH_SAH_BINS)
+		{
+			bin = MESH_BVH_SAH_BINS - 1;
+		}
+		return (bin);
+	}
+
+	BinnedSplit	findBinnedSAHSplit(
+		const std::vector<AABB>& boxes,
+		const std::vector<Vector3>& centroids,
+		const std::vector<std::size_t>& indices,
+		std::size_t start,
+		std::size_t end
+	)
+	{
+		const std::size_t triangleCount = end - start;
+		const std::size_t minimumSideCount = std::max<std::size_t>(1, triangleCount / 16);
+		BinnedSplit bestSplit;
+		double bestCost = std::numeric_limits<double>::infinity();
+
+		for (int axis = 0; axis < 3; axis++)
+		{
+			double centroidMin = std::numeric_limits<double>::infinity();
+			double centroidMax = -std::numeric_limits<double>::infinity();
+
+			for (std::size_t i = start; i < end; i++)
+			{
+				const double centroid = centroids[indices[i]][axis];
+				centroidMin = std::min(centroidMin, centroid);
+				centroidMax = std::max(centroidMax, centroid);
+			}
+			const double centroidExtent = centroidMax - centroidMin;
+			if (centroidExtent <= MESH_BVH_CENTROID_EPSILON)
+			{
+				continue;
+			}
+
+			const double binScale = static_cast<double>(MESH_BVH_SAH_BINS) / centroidExtent;
+			std::array<Bin, MESH_BVH_SAH_BINS> bins;
+			for (std::size_t i = start; i < end; i++)
+			{
+				const std::size_t triangleIndex = indices[i];
+				const std::size_t bin = binForCentroid(centroids[triangleIndex][axis], centroidMin, binScale);
+
+				addBoxToBin(bins[bin], boxes[triangleIndex]);
+			}
+
+			std::array<Bin, MESH_BVH_SAH_BINS> leftBins;
+			std::array<Bin, MESH_BVH_SAH_BINS> rightBins;
+			Bin runningLeft;
+			Bin runningRight;
+
+			for (std::size_t i = 0; i < MESH_BVH_SAH_BINS; i++)
+			{
+				mergeBin(runningLeft, bins[i]);
+				leftBins[i] = runningLeft;
+			}
+			for (std::size_t i = MESH_BVH_SAH_BINS; i > 0; i--)
+			{
+				const std::size_t binIndex = i - 1;
+
+				mergeBin(runningRight, bins[binIndex]);
+				rightBins[binIndex] = runningRight;
+			}
+
+			for (std::size_t splitBin = 0; splitBin + 1 < MESH_BVH_SAH_BINS; splitBin++)
+			{
+				const Bin& left = leftBins[splitBin];
+				const Bin& right = rightBins[splitBin + 1];
+
+				if (
+					!left.hasBox
+					|| !right.hasBox
+					|| left.count < minimumSideCount
+					|| right.count < minimumSideCount
+				)
+				{
+					continue;
+				}
+
+				const double cost =
+					(boxSurfaceArea(left.boundingBox) * static_cast<double>(left.count))
+					+ (boxSurfaceArea(right.boundingBox) * static_cast<double>(right.count));
+				if (cost < bestCost)
+				{
+					bestCost = cost;
+					bestSplit.found = true;
+					bestSplit.axis = axis;
+					bestSplit.splitBin = splitBin;
+					bestSplit.centroidMin = centroidMin;
+					bestSplit.binScale = binScale;
+				}
+			}
+		}
+
+		return (bestSplit);
 	}
 }
 
@@ -230,26 +416,56 @@ std::size_t	Mesh::_buildPackedBVHNode(std::size_t start, std::size_t end)
 		return (nodeIndex);
 	}
 
-	const int axis = largestExtentAxis(nodeBox);
-	const std::size_t mid = start + triangleCount / 2;
-
-	std::nth_element(
-		this->_triangleIndices.begin() + start,
-		this->_triangleIndices.begin() + mid,
-		this->_triangleIndices.begin() + end,
-		[this, axis](std::size_t first, std::size_t second)
-		{
-			const double firstCentroid = this->_triangleCentroids[first][axis];
-			const double secondCentroid = this->_triangleCentroids[second][axis];
-
-			if (firstCentroid == secondCentroid)
-			{
-				return (boxMinimumAxis(this->_triangleBoundingBoxes[first], axis)
-					< boxMinimumAxis(this->_triangleBoundingBoxes[second], axis));
-			}
-			return (firstCentroid < secondCentroid);
-		}
+	const BinnedSplit split = findBinnedSAHSplit(
+		this->_triangleBoundingBoxes,
+		this->_triangleCentroids,
+		this->_triangleIndices,
+		start,
+		end
 	);
+	std::size_t mid = start;
+	if (split.found)
+	{
+		auto splitIt = std::partition(
+			this->_triangleIndices.begin() + start,
+			this->_triangleIndices.begin() + end,
+			[this, split](std::size_t triangleIndex)
+			{
+				const std::size_t bin = binForCentroid(
+					this->_triangleCentroids[triangleIndex][split.axis],
+					split.centroidMin,
+					split.binScale
+				);
+
+				return (bin <= split.splitBin);
+			}
+		);
+		mid = static_cast<std::size_t>(splitIt - this->_triangleIndices.begin());
+	}
+
+	if (mid == start || mid == end)
+	{
+		const int axis = largestExtentAxis(nodeBox);
+
+		mid = start + triangleCount / 2;
+		std::nth_element(
+			this->_triangleIndices.begin() + start,
+			this->_triangleIndices.begin() + mid,
+			this->_triangleIndices.begin() + end,
+			[this, axis](std::size_t first, std::size_t second)
+			{
+				const double firstCentroid = this->_triangleCentroids[first][axis];
+				const double secondCentroid = this->_triangleCentroids[second][axis];
+
+				if (firstCentroid == secondCentroid)
+				{
+					return (boxMinimumAxis(this->_triangleBoundingBoxes[first], axis)
+						< boxMinimumAxis(this->_triangleBoundingBoxes[second], axis));
+				}
+				return (firstCentroid < secondCentroid);
+			}
+		);
+	}
 
 	this->_packedBVHNodes[nodeIndex].left = this->_buildPackedBVHNode(start, mid);
 	this->_packedBVHNodes[nodeIndex].right = this->_buildPackedBVHNode(mid, end);
@@ -306,29 +522,35 @@ bool	Mesh::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) const
 		return (false);
 	}
 
-	std::array<std::size_t, MESH_BVH_STACK_SIZE> stack;
+	double rootNear = 0.0;
+
+	if (!boxHitDistance(this->_packedBVHNodes[0].boundingBox, ray, t_max, rootNear))
+	{
+		return (false);
+	}
+
+	std::array<TraversalNode, MESH_BVH_STACK_SIZE> stack;
 	std::size_t stackSize = 0;
 	bool hitAnything = false;
 	double closestHit = t_max;
+	HitRecord triangleHitRecord;
 
-	stack[stackSize++] = 0;
+	stack[stackSize++] = {0, rootNear};
 	while (stackSize > 0)
 	{
-		const std::size_t nodeIndex = stack[--stackSize];
-		const PackedBVHNode& node = this->_packedBVHNodes[nodeIndex];
-		HitRecord boundingHitRecord;
-
-		if (!node.boundingBox.hit(ray, boundingHitRecord, closestHit))
+		const TraversalNode stackNode = stack[--stackSize];
+		if (stackNode.near >= closestHit)
 		{
 			continue;
 		}
+		const std::size_t nodeIndex = stackNode.index;
+		const PackedBVHNode& node = this->_packedBVHNodes[nodeIndex];
 
 		if (node.isLeaf)
 		{
 			for (std::size_t i = node.start; i < node.start + node.count; i++)
 			{
 				const Triangle& triangle = this->_triangles[this->_triangleIndices[i]];
-				HitRecord triangleHitRecord;
 
 				if (triangle.hit(ray, triangleHitRecord, t_min, closestHit))
 				{
@@ -340,11 +562,112 @@ bool	Mesh::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) const
 			continue;
 		}
 
-		stack[stackSize++] = node.left;
-		stack[stackSize++] = node.right;
+		const PackedBVHNode& leftNode = this->_packedBVHNodes[node.left];
+		const PackedBVHNode& rightNode = this->_packedBVHNodes[node.right];
+		double leftNear = 0.0;
+		double rightNear = 0.0;
+		const bool hitLeft = boxHitDistance(leftNode.boundingBox, ray, closestHit, leftNear);
+		const bool hitRight = boxHitDistance(rightNode.boundingBox, ray, closestHit, rightNear);
+
+		if (hitLeft && hitRight)
+		{
+			if (leftNear < rightNear)
+			{
+				stack[stackSize++] = {node.right, rightNear};
+				stack[stackSize++] = {node.left, leftNear};
+			}
+			else
+			{
+				stack[stackSize++] = {node.left, leftNear};
+				stack[stackSize++] = {node.right, rightNear};
+			}
+		}
+		else if (hitLeft)
+		{
+			stack[stackSize++] = {node.left, leftNear};
+		}
+		else if (hitRight)
+		{
+			stack[stackSize++] = {node.right, rightNear};
+		}
 	}
 
 	return (hitAnything);
+}
+
+bool	Mesh::hitAny(Ray& ray, double t_min, double t_max) const
+{
+	if (!this->_usesPackedTriangles)
+	{
+		return (this->_legacyBVH.hitAny(ray, t_min, t_max));
+	}
+	if (this->_packedBVHNodes.empty())
+	{
+		return (false);
+	}
+
+	double rootNear = 0.0;
+
+	if (!boxHitDistance(this->_packedBVHNodes[0].boundingBox, ray, t_max, rootNear))
+	{
+		return (false);
+	}
+
+	std::array<TraversalNode, MESH_BVH_STACK_SIZE> stack;
+	std::size_t stackSize = 0;
+
+	stack[stackSize++] = {0, rootNear};
+	while (stackSize > 0)
+	{
+		const TraversalNode stackNode = stack[--stackSize];
+		const std::size_t nodeIndex = stackNode.index;
+		const PackedBVHNode& node = this->_packedBVHNodes[nodeIndex];
+
+		if (node.isLeaf)
+		{
+			for (std::size_t i = node.start; i < node.start + node.count; i++)
+			{
+				const Triangle& triangle = this->_triangles[this->_triangleIndices[i]];
+
+				if (triangle.hitAny(ray, t_min, t_max))
+				{
+					return (true);
+				}
+			}
+			continue;
+		}
+
+		const PackedBVHNode& leftNode = this->_packedBVHNodes[node.left];
+		const PackedBVHNode& rightNode = this->_packedBVHNodes[node.right];
+		double leftNear = 0.0;
+		double rightNear = 0.0;
+		const bool hitLeft = boxHitDistance(leftNode.boundingBox, ray, t_max, leftNear);
+		const bool hitRight = boxHitDistance(rightNode.boundingBox, ray, t_max, rightNear);
+
+		if (hitLeft && hitRight)
+		{
+			if (leftNear < rightNear)
+			{
+				stack[stackSize++] = {node.right, rightNear};
+				stack[stackSize++] = {node.left, leftNear};
+			}
+			else
+			{
+				stack[stackSize++] = {node.left, leftNear};
+				stack[stackSize++] = {node.right, rightNear};
+			}
+		}
+		else if (hitLeft)
+		{
+			stack[stackSize++] = {node.left, leftNear};
+		}
+		else if (hitRight)
+		{
+			stack[stackSize++] = {node.right, rightNear};
+		}
+	}
+
+	return (false);
 }
 
 // Returns the AABB / bounding box for this Mesh's BVH
@@ -412,4 +735,66 @@ Vector3	Mesh::random(const Vector3& origin) const
 	}
 
 	return (this->_legacyTriangles[randomIndex]->random(origin));
+}
+
+bool	Mesh::sampleLight(const Vector3& origin, HittableLightSample& sample) const
+{
+	sample = HittableLightSample();
+	if (this->_triangleAreaPrefixSums.empty() || this->_totalArea <= 0.0)
+	{
+		return (false);
+	}
+
+	const double targetArea = Sampler::sample1D(Sampler::DIM_LIGHT_SURFACE_SELECTION) * this->_totalArea;
+	const auto areaIt = std::lower_bound(
+		this->_triangleAreaPrefixSums.begin(),
+		this->_triangleAreaPrefixSums.end(),
+		targetArea
+	);
+	const std::size_t randomIndex = std::min<std::size_t>(
+		static_cast<std::size_t>(areaIt - this->_triangleAreaPrefixSums.begin()),
+		this->_triangleAreaPrefixSums.size() - 1
+	);
+	const double previousArea = randomIndex == 0
+		? 0.0
+		: this->_triangleAreaPrefixSums[randomIndex - 1];
+	const double selectedArea = this->_triangleAreaPrefixSums[randomIndex] - previousArea;
+	if (selectedArea <= 0.0)
+	{
+		return (false);
+	}
+
+	bool sampled = false;
+	if (this->_usesPackedTriangles)
+	{
+		sampled = this->_triangles[randomIndex].sampleLight(origin, sample);
+	}
+	else
+	{
+		sampled = this->_legacyTriangles[randomIndex]->sampleLight(origin, sample);
+	}
+	if (!sampled || !sample.valid)
+	{
+		sample = HittableLightSample();
+		return (false);
+	}
+
+	sample.pdf *= selectedArea / this->_totalArea;
+	sample.valid = std::isfinite(sample.pdf) && sample.pdf > 0.0;
+	return (sample.valid);
+}
+
+double	Mesh::lightSelectionWeight(void) const
+{
+	if (!this->_material)
+	{
+		return (0.0);
+	}
+
+	const double luminance = Utilities::luminance(this->_material->emitted());
+	if (this->_totalArea <= 0.0 || !std::isfinite(luminance) || luminance <= 0.0)
+	{
+		return (0.0);
+	}
+	return (this->_totalArea * luminance);
 }

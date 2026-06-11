@@ -17,6 +17,11 @@ class   Ray
 			this->setDirection(direction);
 		}
 
+		static Ray	fromNormalizedDirection(const Vector3& origin, const Vector3& direction)
+		{
+			return (Ray(origin, direction, DirectionIsNormalized()));
+		}
+
 		Vector3 pointAtRay(double t) const
 		{
 			return (this->_origin + (this->_direction * t));
@@ -33,6 +38,12 @@ class   Ray
 		}
 
 	private:
+		struct	DirectionIsNormalized {};
+
+		Ray(const Vector3& origin, const Vector3& direction, DirectionIsNormalized)
+			: _origin(origin), _direction(direction), _inverseDirection(_inverse(_direction))
+		{}
+
 		Vector3 _origin;
 		Vector3 _direction;
 		Vector3 _inverseDirection;

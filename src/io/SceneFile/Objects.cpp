@@ -188,6 +188,11 @@ namespace
 				return (this->hittable()->hit(ray, hitRecord, t_min, t_max));
 			}
 
+			bool	hitAny(Ray& ray, double t_min, double t_max) const override
+			{
+				return (this->hittable()->hitAny(ray, t_min, t_max));
+			}
+
 			bool	createBoundingBox(AABB& outputBoundingBox) const override
 			{
 				return (this->hittable()->createBoundingBox(outputBoundingBox));
@@ -208,8 +213,18 @@ namespace
 				return (this->hittable()->random(origin));
 			}
 
+			bool	sampleLight(const Vector3& origin, HittableLightSample& sample) const override
+			{
+				return (this->hittable()->sampleLight(origin, sample));
+			}
+
+			double	lightSelectionWeight(void) const override
+			{
+				return (this->hittable()->lightSelectionWeight());
+			}
+
 		private:
-			std::shared_ptr<Hittable>	hittable(void) const
+			const std::shared_ptr<Hittable>&	hittable(void) const
 			{
 				std::call_once(this->_loadOnce, [this] {
 					this->_hittable = this->_future.get();

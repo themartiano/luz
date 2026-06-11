@@ -149,6 +149,39 @@ bool	Rectangle::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) 
 	return (true);
 }
 
+bool	Rectangle::hitAny(Ray& ray, double t_min, double t_max) const
+{
+	Vector3 normal;
+	Vector3 widthAxis;
+	Vector3 heightAxis;
+
+	if (!buildRectangleBasis(this->_transform.getOrientation(), normal, widthAxis, heightAxis))
+	{
+		return (false);
+	}
+
+	double a = Utilities::dot(ray.getOrigin() - this->_transform.getPosition(), normal);
+	double b = Utilities::dot(ray.getDirection(), normal);
+	if (b == 0.0 || (a < 0.0 && b < 0.0) || (a > 0.0 && b > 0.0))
+	{
+		return (false);
+	}
+
+	double t = -a / b;
+	if (t > t_max || t < t_min)
+	{
+		return (false);
+	}
+
+	Vector3 d = ray.pointAtRay(t) - this->_transform.getPosition();
+	const double widthDistance = Utilities::dot(d, widthAxis);
+	const double heightDistance = Utilities::dot(d, heightAxis);
+	return (
+		std::fabs(widthDistance) <= (this->_width / 2.0)
+		&& std::fabs(heightDistance) <= (this->_height / 2.0)
+	);
+}
+
 // Creates an AABB / bounding box for this Rectangle
 bool	Rectangle::createBoundingBox(AABB& outputBoundingBox) const
 {
@@ -244,4 +277,60 @@ Vector3 Rectangle::random(const Vector3& origin) const
 		+ (heightAxis * ((sample.y - 0.5) * this->_height));
 
 	return (Utilities::normalize(randomPointInsideRectangle - origin));
+}
+
+bool	Rectangle::sampleLight(const Vector3& origin, HittableLightSample& sample) const
+{
+	Vector3 normal;
+	Vector3 widthAxis;
+	Vector3 heightAxis;
+
+	sample = HittableLightSample();
+	if (!buildRectangleBasis(this->_transform.getOrientation(), normal, widthAxis, heightAxis))
+	{
+		return (false);
+	}
+
+	const Sampler::Sample2D surfaceSample = Sampler::sample2D(Sampler::DIM_LIGHT_SURFACE_POINT);
+	const Vector3 randomPointInsideRectangle = this->_transform.getPosition()
+		+ (widthAxis * ((surfaceSample.x - 0.5) * this->_width))
+		+ (heightAxis * ((surfaceSample.y - 0.5) * this->_height));
+	const Vector3 direction = randomPointInsideRectangle - origin;
+	const double distanceSquared = Utilities::vectorLengthSquared(direction);
+	if (!std::isfinite(distanceSquared) || distanceSquared <= 0.0)
+	{
+		return (false);
+	}
+
+	const double distance = std::sqrt(distanceSquared);
+	sample.direction = direction / distance;
+
+	const double area = this->_height * this->_width;
+	const double cosine = std::fabs(Utilities::dot(sample.direction, normal));
+	if (area <= 0.0 || cosine <= 0.0)
+	{
+		return (false);
+	}
+
+	sample.pdf = distanceSquared / (cosine * area);
+	sample.tMax = distance;
+	sample.material = this->_material;
+	sample.valid = std::isfinite(sample.pdf) && sample.pdf > 0.0;
+	return (sample.valid);
+}
+
+double	Rectangle::lightSelectionWeight(void) const
+{
+	if (!this->_material)
+	{
+		return (0.0);
+	}
+
+	const double area = this->_width * this->_height;
+	const double luminance = Utilities::luminance(this->_material->emitted());
+	if (area <= 0.0 || !std::isfinite(luminance) || luminance <= 0.0)
+	{
+		return (0.0);
+	}
+	return (area * luminance);
 }

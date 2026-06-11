@@ -100,6 +100,29 @@ bool	Sphere::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) con
 	return (true);
 }
 
+bool	Sphere::hitAny(Ray& ray, double t_min, double t_max) const
+{
+	Vector3 oc = ray.getOrigin() - this->_position;
+	double a = Utilities::dot(ray.getDirection(), ray.getDirection());
+	double b = Utilities::dot(oc, ray.getDirection());
+	double c = Utilities::dot(oc, oc) - (this->_radius * this->_radius);
+	double discriminant = (b * b) - (a * c);
+
+	if (discriminant < 0.0)
+	{
+		return (false);
+	}
+
+	double sqrtd = sqrt(discriminant);
+	double root = (-b - sqrtd) / a;
+	if (root >= t_min && root <= t_max)
+	{
+		return (true);
+	}
+	root = (-b + sqrtd) / a;
+	return (root >= t_min && root <= t_max);
+}
+
 // Creates an AABB / bounding box for this Sphere
 bool	Sphere::createBoundingBox(AABB& outputBoundingBox) const
 {
@@ -146,4 +169,77 @@ Vector3 Sphere::randomToSphere(double distanceSquared) const
 	double y = sin(phi) * sqrt(1.0 - z * z);
 
 	return (Vector3(x, y, z));
+}
+
+bool	Sphere::sampleLight(const Vector3& origin, HittableLightSample& sample) const
+{
+	sample = HittableLightSample();
+
+	const double distanceSquared = Utilities::vectorLengthSquared(this->_position - origin);
+	if (
+		this->_radius <= 0.0
+		|| !std::isfinite(distanceSquared)
+		|| distanceSquared <= this->_radius * this->_radius
+	)
+	{
+		return (false);
+	}
+
+	sample.direction = this->random(origin);
+	const double directionLengthSquared = Utilities::vectorLengthSquared(sample.direction);
+	if (!std::isfinite(directionLengthSquared) || directionLengthSquared <= 0.0)
+	{
+		return (false);
+	}
+	sample.direction /= std::sqrt(directionLengthSquared);
+
+	Vector3 oc = origin - this->_position;
+	const double a = Utilities::vectorLengthSquared(sample.direction);
+	const double b = Utilities::dot(oc, sample.direction);
+	const double c = Utilities::vectorLengthSquared(oc) - (this->_radius * this->_radius);
+	const double discriminant = (b * b) - (a * c);
+	if (discriminant < 0.0)
+	{
+		return (false);
+	}
+
+	const double sqrtd = std::sqrt(discriminant);
+	double root = (-b - sqrtd) / a;
+	if (root < T_MIN || root > T_MAX)
+	{
+		root = (-b + sqrtd) / a;
+	}
+	if (root < T_MIN || root > T_MAX)
+	{
+		return (false);
+	}
+
+	const double cosThetaMax = std::sqrt(1.0 - this->_radius * this->_radius / distanceSquared);
+	const double solidAngle = 2.0 * D_PI * (1.0 - cosThetaMax);
+	if (solidAngle <= 0.0 || !std::isfinite(solidAngle))
+	{
+		return (false);
+	}
+
+	sample.pdf = 1.0 / solidAngle;
+	sample.tMax = root;
+	sample.material = this->_material;
+	sample.valid = std::isfinite(sample.pdf) && sample.pdf > 0.0 && sample.tMax > T_MIN;
+	return (sample.valid);
+}
+
+double	Sphere::lightSelectionWeight(void) const
+{
+	if (!this->_material)
+	{
+		return (0.0);
+	}
+
+	const double area = 4.0 * D_PI * this->_radius * this->_radius;
+	const double luminance = Utilities::luminance(this->_material->emitted());
+	if (area <= 0.0 || !std::isfinite(luminance) || luminance <= 0.0)
+	{
+		return (0.0);
+	}
+	return (area * luminance);
 }

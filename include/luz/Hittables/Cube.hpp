@@ -18,6 +18,7 @@ class   Cube : public Hittable
 		void	setHeight(double height);
 		void	setDepth(double depth);
 		virtual bool	hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) const override;
+		virtual bool	hitAny(Ray& ray, double t_min, double t_max) const override;
 		virtual bool	createBoundingBox(AABB& outputBoundingBox) const override;
 
 	private:

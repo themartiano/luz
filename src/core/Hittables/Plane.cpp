@@ -72,6 +72,20 @@ bool	Plane::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) cons
 	return (true);
 }
 
+bool	Plane::hitAny(Ray& ray, double t_min, double t_max) const
+{
+	Vector3 position(0.0, this->_y, 0.0);
+
+	double d = Utilities::dot(ray.getDirection(), this->_orientation);
+	if (d == 0.0)
+	{
+		return (false);
+	}
+
+	double t = Utilities::dot(position - ray.getOrigin(), this->_orientation) / d;
+	return (t >= t_min && t <= t_max);
+}
+
 // Won't create an AABB / bounding box because planes can't have them since they're infinite. Returns false
 bool	Plane::createBoundingBox(AABB& boundingBox) const
 {

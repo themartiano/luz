@@ -20,6 +20,7 @@ namespace
 		std::uint32_t	sampleIndex = 0;
 		std::uint32_t	stream = 0;
 		std::uint32_t	bounce = 0;
+		std::uint64_t	baseKey = 0;
 	};
 
 	std::atomic<std::uint32_t>	g_renderSeed(0x9e3779b9u);
@@ -69,11 +70,8 @@ namespace
 
 	std::uint64_t	contextKey(std::uint32_t dimension)
 	{
-		std::uint64_t key = g_renderSeed.load();
+		std::uint64_t key = g_context.baseKey;
 
-		key ^= (static_cast<std::uint64_t>(g_context.x) + 1ull) * 0xbf58476d1ce4e5b9ull;
-		key ^= (static_cast<std::uint64_t>(g_context.y) + 1ull) * 0x94d049bb133111ebull;
-		key ^= (static_cast<std::uint64_t>(g_context.stream) + 1ull) * 0xda942042e4dd58b5ull;
 		key ^= (static_cast<std::uint64_t>(dimension) + 1ull) * 0x9e3779b97f4a7c15ull;
 		return (key);
 	}
@@ -136,6 +134,10 @@ void	Sampler::beginPixelSample(std::size_t x, std::size_t y, std::uint32_t sampl
 	g_context.sampleIndex = sampleIndex;
 	g_context.stream = stream;
 	g_context.bounce = 0;
+	g_context.baseKey = g_renderSeed.load();
+	g_context.baseKey ^= (static_cast<std::uint64_t>(x) + 1ull) * 0xbf58476d1ce4e5b9ull;
+	g_context.baseKey ^= (static_cast<std::uint64_t>(y) + 1ull) * 0x94d049bb133111ebull;
+	g_context.baseKey ^= (static_cast<std::uint64_t>(stream) + 1ull) * 0xda942042e4dd58b5ull;
 }
 
 void	Sampler::setBounce(std::uint32_t bounce)

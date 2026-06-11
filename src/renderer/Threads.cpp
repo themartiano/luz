@@ -241,6 +241,14 @@ namespace
 		);
 	}
 
+	bool	adaptiveSamplingCanStop(const Scene& scene)
+	{
+		return (
+			scene.getAdaptiveSampling()
+			&& scene.getAdaptiveMinSamples() < scene.getSampleCount()
+		);
+	}
+
 	void	addDenoiseFeatureSample(
 		DenoiseHalfAccumulator& half,
 		Denoise::FeatureVector& featureSum,
@@ -353,8 +361,10 @@ void	Renderer::internal::_manageThreads(Scene& scene)
 	const std::uint32_t	renderSeed = hasRandomSeed()
 		? static_cast<std::uint32_t>(randomSeedValue())
 		: randomEngine.integer();
+	SceneRenderStats	stats;
 
 	Sampler::setRenderSeed(renderSeed);
+	scene.resetRenderStats();
 	scene.clearDenoisedImage();
 	if (scene.getDenoise())
 	{
@@ -370,6 +380,9 @@ void	Renderer::internal::_manageThreads(Scene& scene)
 	std::atomic<std::size_t> completedRenderSamples(0);
 	std::vector<std::future<void>> futureVector;
 	futureVector.reserve(threadCount);
+
+	Clock renderClock;
+	renderClock.start();
 
 	// Creates threads.
 	for (std::size_t i = 0; i < threadCount; i++)
@@ -452,6 +465,14 @@ void	Renderer::internal::_manageThreads(Scene& scene)
 		future.get();
 	}
 
+	stats.renderMS = renderClock.elapsedMS();
+	stats.renderedSamples = completedRenderSamples.load();
+	if (pixelTotal > 0)
+	{
+		stats.averageSamplesPerPixel = static_cast<double>(stats.renderedSamples)
+			/ static_cast<double>(pixelTotal);
+	}
+
 	if (!scene.getBenchmarkMode())
 	{
 		printRenderProgress(100);
@@ -471,18 +492,24 @@ void	Renderer::internal::_manageThreads(Scene& scene)
 	if (scene.getDenoise() && scene.getDenoiseBuffers() != nullptr)
 	{
 		Denoise::NFORSettings nforSettings;
+		Clock denoiseClock;
 
 		nforSettings.threadCount = scene.getRenderingThreads();
 		if (!scene.getBenchmarkMode())
 		{
 			nforSettings.progressCallback = printDenoiseProgress;
 		}
+		denoiseClock.start();
 		auto denoisedImage = Denoise::applyNFOR(*scene.getDenoiseBuffers(), nforSettings);
+		stats.denoiseMS = denoiseClock.elapsedMS();
 		if (!scene.getBenchmarkMode())
 		{
 			std::cout << std::endl;
 		}
+		Clock postProcessClock;
+		postProcessClock.start();
 		applyPostProcessing(scene, *denoisedImage);
+		stats.postProcessMS += postProcessClock.elapsedMS();
 		scene.setDenoisedImage(std::move(denoisedImage));
 		scene.clearDenoiseBuffers();
 	}
@@ -491,14 +518,18 @@ void	Renderer::internal::_manageThreads(Scene& scene)
 		printSkippingDenoising();
 	}
 
+	Clock postProcessClock;
+	postProcessClock.start();
 	applyPostProcessing(scene, *scene.getImage());
+	stats.postProcessMS += postProcessClock.elapsedMS();
+	scene.setRenderStats(stats);
 }
 
 // Renders the pixel color at X, Y
 unsigned int	Renderer::internal::_threadRender(Scene& scene, const RenderCamera& renderCamera, std::size_t x, std::size_t y)
 {
 	const unsigned int	sampleCount = static_cast<unsigned int>(scene.getSampleCount());
-	const bool			adaptiveSampling = scene.getAdaptiveSampling();
+	const bool			adaptiveSampling = adaptiveSamplingCanStop(scene);
 	Denoise::NFORBuffers* denoiseBuffers = scene.getDenoiseBuffers();
 
 	if (denoiseBuffers == nullptr)

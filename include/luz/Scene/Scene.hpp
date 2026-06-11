@@ -6,8 +6,19 @@
 #include "SkyTypes.hpp"
 #include "Image.hpp"
 #include "Denoise/NFOR.hpp"
+#include <cstddef>
 #include <vector>
 #include <memory>
+
+struct	SceneRenderStats
+{
+	std::size_t	renderedSamples = 0;
+	double		averageSamplesPerPixel = 0.0;
+	double		renderMS = 0.0;
+	double		denoiseMS = 0.0;
+	double		postProcessMS = 0.0;
+	double		totalMS = 0.0;
+};
 
 class	Scene
 {
@@ -48,6 +59,8 @@ class	Scene
 		void		setDefaultRenderOutputFileName(std::string defaultRenderOutputFileName);
 		void		updateLights(void);
 		const std::vector<std::shared_ptr<Hittable>>& getLights(void) const;
+		const std::vector<double>&	getLightSelectionCumulativeWeights(void) const;
+		double		getLightSelectionTotalWeight(void) const;
 		void		updateAccelerationStructure(void);
 		const std::shared_ptr<Hittable>&	getAccelerationStructure(void) const;
 		const std::vector<std::shared_ptr<Hittable>>&	getUnacceleratedHittables(void) const;
@@ -77,6 +90,9 @@ class	Scene
 		Denoise::NFORBuffers*	getDenoiseBuffers(void);
 		const Denoise::NFORBuffers*	getDenoiseBuffers(void) const;
 		void		clearDenoiseBuffers(void);
+		void		resetRenderStats(void);
+		void		setRenderStats(SceneRenderStats renderStats);
+		const SceneRenderStats&	getRenderStats(void) const;
 
 
 	private:
@@ -100,6 +116,8 @@ class	Scene
 		size_t					_activeCamera;
 		std::vector<std::shared_ptr<Hittable>>	_hittables;
 		std::vector<std::shared_ptr<Hittable>>	_lights;
+		std::vector<double>		_lightSelectionCumulativeWeights;
+		double					_lightSelectionTotalWeight;
 		std::shared_ptr<Hittable>	_accelerationStructure;
 		std::vector<std::shared_ptr<Hittable>>	_unacceleratedHittables;
 		bool					_storePixelRenderTimes;
@@ -112,4 +130,5 @@ class	Scene
 		std::unique_ptr<Image>	_denoisedImage;
 		std::string				_denoiseOutputFileName;
 		std::unique_ptr<Denoise::NFORBuffers>	_denoiseBuffers;
+		SceneRenderStats		_renderStats;
 };

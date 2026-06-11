@@ -52,6 +52,7 @@ void	FlagsParser::parse(Scene& scene)
 	this->_parseToneMapping(scene);
 	this->_parseBloom(scene);
 	this->_parseDenoise(scene);
+	this->_parseOutput(scene);
 	this->_parseDenoiseOutput(scene);
 	this->_parseRenderTimes(scene);
 }
@@ -73,6 +74,7 @@ void	FlagsParser::_parseHelp(void)
 			<< "  --adaptive-threshold F      Relative adaptive noise threshold\n"
 			<< "  --adaptive-check-interval N Adaptive convergence check interval\n"
 			<< "  -mlb, --maxLightBounces N   Override maximum light bounces\n"
+			<< "      --max-light-bounces N   Alias for --maxLightBounces\n"
 			<< "  -t, --threads N             Render with N worker threads\n"
 			<< "  --seed N                    Seed random sampling\n"
 			<< "  --gamma true|false          Toggle gamma correction\n"
@@ -80,6 +82,7 @@ void	FlagsParser::_parseHelp(void)
 			<< "  --bloom true|false          Toggle bloom\n"
 			<< "  --denoise [true|false]      Write a denoised companion render\n"
 			<< "  --no-denoise                Disable denoising\n"
+			<< "  -o, --output PATH           Override render output path\n"
 			<< "  --denoise-output PATH       Override denoised output path\n"
 			<< "  --render-times              Write renderTime.bmp\n"
 			<< "  --benchmark                 Run the built-in benchmark scene\n"
@@ -150,8 +153,12 @@ void	FlagsParser::_parseBenchmark(Scene& scene)
 			benchmarkCase = *(caseIt + 1);
 		}
 
-		scene.setIsFromFile(true); // We simulate that it read a scene file.
 		scene.setBenchmarkMode(true);
+		if (scene.getIsFromFile())
+		{
+			return;
+		}
+		scene.setIsFromFile(true); // We simulate that it read a scene file.
 
 		SceneHelpers::benchmark(scene, benchmarkCase);
 
@@ -251,7 +258,7 @@ void	FlagsParser::_parseAdaptiveCheckInterval(Scene& scene)
 
 void	FlagsParser::_parseMaxLightBounces(Scene& scene)
 {
-	auto it = this->_findFlag(_stringVec{"--maxLightBounces", "-mlb"});
+	auto it = this->_findFlag(_stringVec{"--maxLightBounces", "--max-light-bounces", "-mlb"});
 	if (it != this->_args.end())
 	{
 		if (it + 1 == this->_args.end())
@@ -439,6 +446,19 @@ void	FlagsParser::_parseDenoise(Scene& scene)
 		{
 			scene.setDenoise(false);
 		}
+	}
+}
+
+void	FlagsParser::_parseOutput(Scene& scene)
+{
+	auto it = this->_findFlag(_stringVec{"--output", "-o"});
+	if (it != this->_args.end())
+	{
+		if (it + 1 == this->_args.end())
+		{
+			throw std::runtime_error("--output requires a path.");
+		}
+		scene.setDefaultRenderOutputFileName(*(it + 1));
 	}
 }
 

@@ -13,6 +13,24 @@
 #include <stdexcept>
 #include <cmath>
 
+namespace
+{
+	double	sanitizedLightSelectionWeight(const std::shared_ptr<Hittable>& hittable)
+	{
+		if (!hittable)
+		{
+			return (0.0);
+		}
+
+		const double weight = hittable->lightSelectionWeight();
+		if (!std::isfinite(weight) || weight <= 0.0)
+		{
+			return (0.0);
+		}
+		return (weight);
+	}
+}
+
 /*
 	Constructors & Destructor
 */
@@ -39,6 +57,7 @@ Scene::Scene(void)
 	this->_defaultRenderOutputFileName = D_RENDER_FILE_NAME;
 
 	this->_activeCamera = 0;
+	this->_lightSelectionTotalWeight = 0.0;
 
 	this->_t_max = std::numeric_limits<double>::max();
 
@@ -49,6 +68,7 @@ Scene::Scene(void)
 	this->_bloom = true;
 	this->_denoise = false;
 	this->_denoiseOutputFileName = "";
+	this->resetRenderStats();
 }
 
 // Properly frees all allocated memory (destructor)
@@ -265,20 +285,40 @@ void	Scene::updateLights(void)
 {
 	std::vector<std::shared_ptr<Hittable>> lights;
 
+	this->_lightSelectionCumulativeWeights.clear();
+	this->_lightSelectionTotalWeight = 0.0;
 	for (std::shared_ptr<Hittable> hittable : this->_hittables)
 	{
-		if (hittable->getMaterial()->getType() == EMISSIVE)
+		const std::shared_ptr<Material> material = hittable ? hittable->getMaterial() : nullptr;
+
+		if (material && material->getType() == EMISSIVE)
 		{
 			lights.push_back(hittable);
+			this->_lightSelectionTotalWeight += sanitizedLightSelectionWeight(hittable);
+			this->_lightSelectionCumulativeWeights.push_back(this->_lightSelectionTotalWeight);
 		}
 	}
 
+	if (this->_lightSelectionTotalWeight <= 0.0)
+	{
+		this->_lightSelectionCumulativeWeights.clear();
+	}
 	this->_lights = lights;
 }
 
 const std::vector<std::shared_ptr<Hittable>>&	Scene::getLights(void) const
 {
 	return (this->_lights);
+}
+
+const std::vector<double>&	Scene::getLightSelectionCumulativeWeights(void) const
+{
+	return (this->_lightSelectionCumulativeWeights);
+}
+
+double	Scene::getLightSelectionTotalWeight(void) const
+{
+	return (this->_lightSelectionTotalWeight);
 }
 
 void	Scene::updateAccelerationStructure(void)
@@ -507,4 +547,19 @@ const Denoise::NFORBuffers*	Scene::getDenoiseBuffers(void) const
 void	Scene::clearDenoiseBuffers(void)
 {
 	this->_denoiseBuffers = nullptr;
+}
+
+void	Scene::resetRenderStats(void)
+{
+	this->_renderStats = SceneRenderStats();
+}
+
+void	Scene::setRenderStats(SceneRenderStats renderStats)
+{
+	this->_renderStats = renderStats;
+}
+
+const SceneRenderStats&	Scene::getRenderStats(void) const
+{
+	return (this->_renderStats);
 }

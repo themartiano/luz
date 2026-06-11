@@ -22,13 +22,13 @@ AABB::AABB(Vector3 minimum, Vector3 maximum)
 }
 
 // Returns the AABB's minimum value
-Vector3 AABB::getMinimum(void) const
+const Vector3& AABB::getMinimum(void) const
 {
 	return (this->_minimum);
 }
 
 // Returns the AABB's maximum value
-Vector3 AABB::getMaximum(void) const
+const Vector3& AABB::getMaximum(void) const
 {
 	return (this->_maximum);
 }
@@ -36,11 +36,14 @@ Vector3 AABB::getMaximum(void) const
 // Returns true if 'ray' intersects with the AABB
 bool	AABB::hit(Ray& ray, HitRecord& hitRecord, double t_max) const
 {
+	const Vector3& origin = ray.getOrigin();
+	const Vector3& inverseDirection = ray.getInverseDirection();
+
 	for (int a = 0; a < 3; a++)
 	{
-		double invD = ray.getInverseDirection()[a];
-		double t0 = (this->_minimum[a] - ray.getOrigin()[a]) * invD;
-		double t1 = (this->_maximum[a] - ray.getOrigin()[a]) * invD;
+		double invD = inverseDirection[a];
+		double t0 = (this->_minimum[a] - origin[a]) * invD;
+		double t1 = (this->_maximum[a] - origin[a]) * invD;
 		if (invD < 0.0)
 		{
 			std::swap(t0, t1);

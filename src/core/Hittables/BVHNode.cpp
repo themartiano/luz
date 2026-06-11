@@ -4,6 +4,65 @@
 #include "Materials/Lambertian.hpp"
 #include "Random.hpp"
 #include <algorithm>
+#include <array>
+
+namespace
+{
+	constexpr std::size_t	BVH_LEAF_CHILD_COUNT = 24;
+
+	struct	ChildTraversal
+	{
+		std::size_t	index;
+		double		near;
+	};
+
+	bool	boxHitDistance(const AABB& box, Ray& ray, double tMax, double& tNear)
+	{
+		double tMin = T_MIN;
+		const Vector3& minimum = box.getMinimum();
+		const Vector3& maximum = box.getMaximum();
+		const Vector3& origin = ray.getOrigin();
+		const Vector3& inverseDirection = ray.getInverseDirection();
+
+		for (int axis = 0; axis < 3; axis++)
+		{
+			const double invD = inverseDirection[axis];
+			double t0 = (minimum[axis] - origin[axis]) * invD;
+			double t1 = (maximum[axis] - origin[axis]) * invD;
+			if (invD < 0.0)
+			{
+				std::swap(t0, t1);
+			}
+
+			tMin = t0 > tMin ? t0 : tMin;
+			tMax = t1 < tMax ? t1 : tMax;
+			if (tMax <= tMin)
+			{
+				return (false);
+			}
+		}
+
+		tNear = tMin;
+		return (true);
+	}
+
+	void	insertNearFirst(
+		std::array<ChildTraversal, BVH_LEAF_CHILD_COUNT>& children,
+		std::size_t& count,
+		ChildTraversal child
+	)
+	{
+		std::size_t index = count;
+
+		while (index > 0 && children[index - 1].near > child.near)
+		{
+			children[index] = children[index - 1];
+			index--;
+		}
+		children[index] = child;
+		count++;
+	}
+}
 
 // Static function prototypes
 static bool	boxXCompare(const std::shared_ptr<Hittable>& hittable1, const std::shared_ptr<Hittable>& hittable2);
@@ -29,8 +88,7 @@ BVHNode::BVHNode(std::vector<std::shared_ptr<Hittable>>& hittables, size_t start
 	size_t	hittableCount = end - start;
 	this->_childs.reserve(hittableCount);
 
-	size_t	amount = 15; // Child count
-	if (hittableCount <= amount)
+	if (hittableCount <= BVH_LEAF_CHILD_COUNT)
 	{
 		for (size_t i = start; i < end; i++)
 		{
@@ -46,8 +104,8 @@ BVHNode::BVHNode(std::vector<std::shared_ptr<Hittable>>& hittables, size_t start
 		this->_childs.push_back(std::shared_ptr<Hittable>(new BVHNode(hittables, mid, end)));
 	}
 
-	std::vector<AABB>	aabbs;
-	aabbs.reserve(this->_childs.size());
+	this->_childBoundingBoxes.clear();
+	this->_childBoundingBoxes.reserve(this->_childs.size());
 
 	for (auto& child : this->_childs)
 	{
@@ -57,10 +115,10 @@ BVHNode::BVHNode(std::vector<std::shared_ptr<Hittable>>& hittables, size_t start
 			//std::cerr << "Error: BVHNode::BVHNode() - createBoundingBox() failed" << std::endl;
 			return;
 		}
-		aabbs.push_back(childBoundingBox);
+		this->_childBoundingBoxes.push_back(childBoundingBox);
 	}
 
-	this->_boundingBox = Utilities::mergeBoundingBoxes(aabbs);
+	this->_boundingBox = Utilities::mergeBoundingBoxes(this->_childBoundingBoxes);
 }
 
 // Comparator for the BVH box at the X axis
@@ -99,6 +157,10 @@ static bool	boxCompare(const std::shared_ptr<Hittable>& hittable1, const std::sh
 // Checks if the BVH Node is hit, then checks if the left or right nodes are hit
 bool	BVHNode::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) const
 {
+	if (this->_childBoundingBoxes.size() != this->_childs.size())
+	{
+		return (false);
+	}
 	if (!this->_boundingBox.hit(ray, hitRecord, t_max))
 	{
 		return (false);
@@ -115,10 +177,78 @@ bool	BVHNode::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) co
 		bool hitAnything = false;
 		double closestHit = t_max;
 
-		for (auto& child : this->_childs)
+		if (this->_childs.size() != 2 && this->_childs.size() <= 3)
 		{
+			for (const auto& child : this->_childs)
+			{
+				HitRecord childHitRecord;
+				if (child->hit(ray, childHitRecord, t_min, closestHit))
+				{
+					hitRecord = childHitRecord;
+					closestHit = childHitRecord.t0;
+					hitAnything = true;
+				}
+			}
+			return (hitAnything);
+		}
+
+		if (this->_childs.size() == 2)
+		{
+			double firstNear = 0.0;
+			double secondNear = 0.0;
+			const bool hitFirstBox = boxHitDistance(this->_childBoundingBoxes[0], ray, closestHit, firstNear);
+			const bool hitSecondBox = boxHitDistance(this->_childBoundingBoxes[1], ray, closestHit, secondNear);
+			std::size_t firstIndex = 0;
+			std::size_t secondIndex = 1;
+
+			if (hitFirstBox && hitSecondBox && secondNear < firstNear)
+			{
+				std::swap(firstNear, secondNear);
+				std::swap(firstIndex, secondIndex);
+			}
+			if ((firstIndex == 0 ? hitFirstBox : hitSecondBox))
+			{
+				HitRecord childHitRecord;
+				if (this->_childs[firstIndex]->hit(ray, childHitRecord, t_min, closestHit))
+				{
+					hitRecord = childHitRecord;
+					closestHit = childHitRecord.t0;
+					hitAnything = true;
+				}
+			}
+			if ((secondIndex == 0 ? hitFirstBox : hitSecondBox) && secondNear < closestHit)
+			{
+				HitRecord childHitRecord;
+				if (this->_childs[secondIndex]->hit(ray, childHitRecord, t_min, closestHit))
+				{
+					hitRecord = childHitRecord;
+					hitAnything = true;
+				}
+			}
+			return (hitAnything);
+		}
+
+		std::array<ChildTraversal, BVH_LEAF_CHILD_COUNT> orderedChildren;
+		std::size_t orderedCount = 0;
+
+		for (std::size_t i = 0; i < this->_childs.size(); i++)
+		{
+			double childNear = 0.0;
+			if (boxHitDistance(this->_childBoundingBoxes[i], ray, closestHit, childNear))
+			{
+				insertNearFirst(orderedChildren, orderedCount, {i, childNear});
+			}
+		}
+
+		for (std::size_t i = 0; i < orderedCount; i++)
+		{
+			const ChildTraversal& child = orderedChildren[i];
+			if (child.near >= closestHit)
+			{
+				continue;
+			}
 			HitRecord childHitRecord;
-			if (child->hit(ray, childHitRecord, t_min, closestHit))
+			if (this->_childs[child.index]->hit(ray, childHitRecord, t_min, closestHit))
 			{
 				hitRecord = childHitRecord;
 				closestHit = childHitRecord.t0;
@@ -128,6 +258,62 @@ bool	BVHNode::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) co
 
 		return (hitAnything);
 	}
+}
+
+bool	BVHNode::hitAny(Ray& ray, double t_min, double t_max) const
+{
+	HitRecord boundingHitRecord;
+
+	if (this->_childBoundingBoxes.size() != this->_childs.size())
+	{
+		return (false);
+	}
+	if (!this->_boundingBox.hit(ray, boundingHitRecord, t_max))
+	{
+		return (false);
+	}
+
+	if (RENDER_AABB)
+	{
+		return (true);
+	}
+
+	if (this->_childs.size() != 2 && this->_childs.size() <= 3)
+	{
+		for (const auto& child : this->_childs)
+		{
+			if (child->hitAny(ray, t_min, t_max))
+			{
+				return (true);
+			}
+		}
+		return (false);
+	}
+
+	if (this->_childs.size() == 2)
+	{
+		for (std::size_t i = 0; i < this->_childs.size(); i++)
+		{
+			double childNear = 0.0;
+			if (boxHitDistance(this->_childBoundingBoxes[i], ray, t_max, childNear)
+				&& this->_childs[i]->hitAny(ray, t_min, t_max))
+			{
+				return (true);
+			}
+		}
+		return (false);
+	}
+
+	for (std::size_t i = 0; i < this->_childs.size(); i++)
+	{
+		double childNear = 0.0;
+		if (boxHitDistance(this->_childBoundingBoxes[i], ray, t_max, childNear)
+			&& this->_childs[i]->hitAny(ray, t_min, t_max))
+		{
+			return (true);
+		}
+	}
+	return (false);
 }
 
 // Sets 'outputBoundingBox' to the BVH Node's '_boundingBox'

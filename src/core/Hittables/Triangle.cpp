@@ -161,7 +161,9 @@ bool	Triangle::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) c
 		return (false);
 	}
 
-	Vector3 p = Utilities::cross(ray.getDirection(), this->_edge2);
+	const Vector3& rayDirection = ray.getDirection();
+	const Vector3& rayOrigin = ray.getOrigin();
+	Vector3 p = Utilities::cross(rayDirection, this->_edge2);
 	double  det = Utilities::dot(this->_edge1, p);
 
 	// det is an area-scaled value, not a ray distance, so it needs its own epsilon.
@@ -170,21 +172,22 @@ bool	Triangle::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) c
 		return (false);
 	}
 
-	Vector3 tVec = ray.getOrigin() - this->_vertex0;
-	double u = Utilities::dot(tVec, p) / det;
+	const double invDet = 1.0 / det;
+	Vector3 tVec = rayOrigin - this->_vertex0;
+	double u = Utilities::dot(tVec, p) * invDet;
 	if (u < 0.0 || u > 1.0)
 	{
 		return (false);
 	}
 
 	Vector3 q = Utilities::cross(tVec, this->_edge1);
-	double v = Utilities::dot(ray.getDirection(), q) / det;
+	double v = Utilities::dot(rayDirection, q) * invDet;
 	if (v < 0.0 || u + v > 1.0)
 	{
 		return (false);
 	}
 
-	double t = Utilities::dot(this->_edge2, q) / det;
+	double t = Utilities::dot(this->_edge2, q) * invDet;
 	if (t > t_max || t < t_min)
 	{
 		return (false);
@@ -208,6 +211,41 @@ bool	Triangle::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) c
 	hitRecord.position = ray.pointAtRay(hitRecord.t0);
 
 	return (true);
+}
+
+bool	Triangle::hitAny(Ray& ray, double t_min, double t_max) const
+{
+	if (this->_isDegenerate)
+	{
+		return (false);
+	}
+
+	const Vector3& rayDirection = ray.getDirection();
+	const Vector3& rayOrigin = ray.getOrigin();
+	Vector3 p = Utilities::cross(rayDirection, this->_edge2);
+	double  det = Utilities::dot(this->_edge1, p);
+	if (fabs(det) < TRIANGLE_DETERMINANT_EPSILON)
+	{
+		return (false);
+	}
+
+	const double invDet = 1.0 / det;
+	Vector3 tVec = rayOrigin - this->_vertex0;
+	double u = Utilities::dot(tVec, p) * invDet;
+	if (u < 0.0 || u > 1.0)
+	{
+		return (false);
+	}
+
+	Vector3 q = Utilities::cross(tVec, this->_edge1);
+	double v = Utilities::dot(rayDirection, q) * invDet;
+	if (v < 0.0 || u + v > 1.0)
+	{
+		return (false);
+	}
+
+	double t = Utilities::dot(this->_edge2, q) * invDet;
+	return (t >= t_min && t <= t_max);
 }
 
 // Creates an AABB / bounding box for this Triangle
@@ -269,4 +307,62 @@ Vector3	Triangle::random(const Vector3& origin) const
 		+ ((this->_vertex2 - this->_vertex0) * v);
 
 	return (Utilities::normalize(randomPoint - origin));
+}
+
+bool	Triangle::sampleLight(const Vector3& origin, HittableLightSample& sample) const
+{
+	sample = HittableLightSample();
+	if (this->_isDegenerate || this->_area <= 0.0)
+	{
+		return (false);
+	}
+
+	Sampler::Sample2D surfaceSample = Sampler::sample2D(Sampler::DIM_LIGHT_SURFACE_POINT);
+	double u = surfaceSample.x;
+	double v = surfaceSample.y;
+	if (u + v > 1.0)
+	{
+		u = 1.0 - u;
+		v = 1.0 - v;
+	}
+
+	const Vector3 randomPoint = this->_vertex0
+		+ ((this->_vertex1 - this->_vertex0) * u)
+		+ ((this->_vertex2 - this->_vertex0) * v);
+	const Vector3 direction = randomPoint - origin;
+	const double distanceSquared = Utilities::vectorLengthSquared(direction);
+	if (!std::isfinite(distanceSquared) || distanceSquared <= 0.0)
+	{
+		return (false);
+	}
+
+	const double distance = std::sqrt(distanceSquared);
+	sample.direction = direction / distance;
+
+	const double cosine = std::fabs(Utilities::dot(sample.direction, this->_faceNormal));
+	if (cosine <= 0.0)
+	{
+		return (false);
+	}
+
+	sample.pdf = distanceSquared / (cosine * this->_area);
+	sample.tMax = distance;
+	sample.material = this->_material;
+	sample.valid = std::isfinite(sample.pdf) && sample.pdf > 0.0;
+	return (sample.valid);
+}
+
+double	Triangle::lightSelectionWeight(void) const
+{
+	if (!this->_material)
+	{
+		return (0.0);
+	}
+
+	const double luminance = Utilities::luminance(this->_material->emitted());
+	if (this->_area <= 0.0 || !std::isfinite(luminance) || luminance <= 0.0)
+	{
+		return (0.0);
+	}
+	return (this->_area * luminance);
 }

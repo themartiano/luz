@@ -36,6 +36,7 @@ class	FlagsParser
 		void	_parseToneMapping(Scene& scene);
 		void	_parseBloom(Scene& scene);
 		void	_parseDenoise(Scene& scene);
+		void	_parseOutput(Scene& scene);
 		void	_parseDenoiseOutput(Scene& scene);
 		void	_parseRenderTimes(Scene& scene);
 };

@@ -104,7 +104,7 @@ bool	Cube::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) const
 {
 	double currentClosestObject = t_max;
 	bool anyHit = false;
-	for (Rectangle rectangle : this->_faces)
+	for (const Rectangle& rectangle : this->_faces)
 	{
 		if (rectangle.hit(ray, hitRecord, t_min, currentClosestObject))
 		{
@@ -114,6 +114,18 @@ bool	Cube::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) const
 	}
 
 	return (anyHit);
+}
+
+bool	Cube::hitAny(Ray& ray, double t_min, double t_max) const
+{
+	for (const Rectangle& rectangle : this->_faces)
+	{
+		if (rectangle.hitAny(ray, t_min, t_max))
+		{
+			return (true);
+		}
+	}
+	return (false);
 }
 
 // Creates an AABB / bounding box for this Cube
