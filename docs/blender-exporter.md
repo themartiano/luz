@@ -12,6 +12,13 @@ From the repository root:
 "/Applications/Blender.app/Contents/MacOS/Blender" -b scene.blend --python tools/blender_export_luz.py -- --output exports/scene.luz
 ```
 
+If your user add-ons make startup noisy or slow, run Blender with factory startup
+settings:
+
+```sh
+"/Applications/Blender.app/Contents/MacOS/Blender" --factory-startup -b scene.blend --python tools/blender_export_luz.py -- --output exports/scene.luz
+```
+
 Then render with Luz:
 
 ```sh
@@ -38,7 +45,11 @@ The exporter also works without passing the `.blend` file before `--python`:
 --render-output PATH          Luz render output path.
 --global-scale N              Scale exported positions, meshes, and light sizes.
 --light-power-scale N         Convert Blender light energy to Luz intensity. Defaults to 0.01.
+--sun-power-scale N           Convert Blender sun energy to Luz intensity. Defaults to 1.0.
 --camera-aperture N           Override Luz camera aperture.
+--no-texture-colors           Skip image texture color approximation.
+--texture-sample-size N       Thumbnail size for image color averaging. Defaults to 64.
+--profile                     Print per-stage exporter progress and timings.
 ```
 
 ## What Gets Exported
@@ -49,8 +60,10 @@ The exporter also works without passing the `.blend` file before `--python`:
 - Blender's Z-up world is converted to Luz's Y-up world.
 - Evaluated Blender corner normals are exported as OBJ `vn` data so Luz can
   preserve smooth shading.
-- Blender World background color is exported as `sky=none` plus
-  `background=(R,G,B)` unless `--sky` overrides the sky mode.
+- Blender World camera background is exported as `sky=none` plus
+  `background=(R,G,B)` unless `--sky` overrides the sky mode. Light Path mixes
+  that separate camera rays from non-camera rays are handled for the camera
+  background only.
 - The active camera is exported as a Luz camera block.
 - Blender camera roll is preserved through the named camera `up` vector.
 - Invalid zero camera focus distances are replaced with a scene-based fallback;
@@ -59,7 +72,13 @@ The exporter also works without passing the `.blend` file before `--python`:
   `camera.lens / aperture_fstop`.
 - Area lights become `area_light` blocks.
 - Point and spot lights become small emissive `point_light` sphere blocks.
-- Sun lights are approximated as distant area lights.
+- Sun lights become `directional_light` blocks. They use
+  `--sun-power-scale`, not `--light-power-scale`, because Blender SUN energy is
+  directional rather than finite-area power.
+- When `--sky atmosphere` is used, the exporter writes an `atmosphere=` line
+  whose sun angle is derived from the first exported Blender SUN light. Luz's
+  atmosphere model only supports a vertical sun angle, so horizontal rotation is
+  discarded.
 - Emissive mesh materials stay as emissive mesh objects. Luz importance-samples
   emissive meshes directly.
 - Common Blender shader nodes connected to Material Output are mapped into
@@ -71,10 +90,10 @@ The exporter also works without passing the `.blend` file before `--python`:
 ## Current Limits
 
 - UVs, procedural textures, and full shader graphs are not exported. Image
-  texture colors are approximated by a sampled average.
+  texture colors are approximated by averaging a temporary thumbnail, controlled
+  by `--texture-sample-size`.
 - Per-face materials are preserved by splitting mesh objects into one OBJ per
   material slot.
 - Instancing is baked into separate OBJ files.
-- Spot and sun lights are approximations, not physically equivalent Blender
-  lights.
+- Spot lights are approximations, not physically equivalent Blender lights.
 - Animations are not exported.

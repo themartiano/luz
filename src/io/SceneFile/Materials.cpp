@@ -95,6 +95,15 @@ namespace
 		return (false);
 	}
 
+	bool	colorHasEnergy(const Color& color)
+	{
+		return (
+			color.getRed() > 0.0
+			|| color.getGreen() > 0.0
+			|| color.getBlue() > 0.0
+		);
+	}
+
 	void	parseMaterialProperty(MaterialBuilder& builder, const std::string& line)
 	{
 		std::string key;
@@ -171,12 +180,10 @@ namespace
 		std::string type = builder.type.empty() ? "lambertian" : builder.type;
 		if (type == "principled")
 		{
-			if (builder.emissionStrength > 0.0)
+			const Color emissionColor = builder.hasEmissionColor ? builder.emissionColor : builder.color;
+			if (builder.emissionStrength > 0.0 && colorHasEnergy(emissionColor))
 			{
-				return (std::make_shared<Emissive>(
-					builder.hasEmissionColor ? builder.emissionColor : builder.color,
-					builder.emissionStrength
-				));
+				return (std::make_shared<Emissive>(emissionColor, builder.emissionStrength));
 			}
 			if (builder.transmission > 0.0 || builder.alpha < 1.0)
 			{
