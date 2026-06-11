@@ -14,10 +14,11 @@ Luz is a hand-written C++20 path tracer built from scratch with ZERO third-party
 - Custom `.luz` scene files
 - OBJ mesh loading
 - Importance sampling with PDFs
-- BVH acceleration
+- BVH acceleration, including packed mesh BVHs with binned SAH construction and near-first traversal
 - Atmospheric scattering
 - Depth of field, antialiasing, adaptive sampling, tone mapping, gamma correction, bloom, and NFOR-style denoising
 - BMP and TIFF output
+- Deterministic benchmark harness with render, denoise, post-process, and score breakdowns
 
 ## Quick Start
 
@@ -41,10 +42,16 @@ Run the test suite:
 make test
 ```
 
-Run the deterministic default benchmark scene:
+Run the deterministic default benchmark case:
 
 ```sh
 ./Luz --benchmark --seed 424242424 --threads 1
+```
+
+Run a real scene in benchmark mode:
+
+```sh
+./Luz --file exports/stormtroopers.luz --resolution 320x180 --samples 128 --denoise --adaptive --max-light-bounces 5 --benchmark
 ```
 
 Run the containerized benchmark matrix and save raw results:
@@ -69,10 +76,30 @@ make benchmark-score RESULTS=after.csv
 ```
 
 Each case score is the median kilo-samples per minute for that case.
+Raw benchmark CSVs include elapsed time, render time, denoise time, post-process
+time, total samples rendered, average samples per pixel, actual score, and a
+render-only score. The compare script reports elapsed speedup, render-time
+speedup, score speedup, render-score speedup, and how much non-render work is in
+each case.
+
 The overall score uses the geometric mean of per-case scores, so running the score command on `before.csv` and `after.csv`
 gives comparable scores when the benchmark settings are the same.
 The default benchmark matrix covers Cornell-style lighting, many objects, mesh BVH traversal, diffuse scattering,
-post-processing, atmosphere, mixed light types, emissive geometry, primitives/materials, volumes, and OBJ meshes.
+post-processing, atmosphere, mixed light types, emissive geometry, primitives/materials, volumes, OBJ meshes,
+and representative stormtrooper scene cases.
+
+## Acceleration
+
+Luz uses a top-level BVH over scene objects and packed triangle BVHs inside mesh
+objects. Mesh BVHs are built with a binned surface-area heuristic split, falling
+back to median splitting when the SAH partition is invalid. Traversal uses
+cached bounding boxes, near-first ordering, cached inverse ray directions, and
+specialized `hitAny` paths for shadow/occlusion rays. These optimizations are
+generic: they operate on geometry, bounding boxes, rays, and material sampling,
+not on specific benchmark scenes.
+
+For regression checks, `tools/bmp_metrics.py` compares two BMP images
+pixel-by-pixel and reports MAE, RMSE, PSNR, and max channel error.
 
 ## CMake
 
@@ -98,6 +125,7 @@ Usage: ./Luz [options]
   --adaptive-threshold F      Relative adaptive noise threshold
   --adaptive-check-interval N Adaptive convergence check interval
   -mlb, --maxLightBounces N   Override maximum light bounces
+      --max-light-bounces N   Alias for --maxLightBounces
   -t, --threads N             Render with N worker threads
   --seed N                    Seed random sampling
   --gamma true|false          Toggle gamma correction
@@ -105,6 +133,7 @@ Usage: ./Luz [options]
   --bloom true|false          Toggle bloom
   --denoise [true|false]      Write a denoised companion render
   --no-denoise                Disable denoising
+  -o, --output PATH           Override render output path
   --denoise-output PATH       Override denoised output path
   --render-times              Write renderTime.bmp
   --benchmark                 Run the built-in benchmark scene
