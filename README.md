@@ -206,8 +206,7 @@ docker/            Benchmark container
 
 ## Showcase
 
-<img src="./docs/images/cornell-box.jpg" />
-<img src="./docs/images/glass-monkey.jpg" />
+<img src="./docs/images/cornell.jpg" />
 <img src="./docs/images/atmosphere-from-space.jpg" />
 
 ## Personal Note
