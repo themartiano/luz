@@ -1,0 +1,146 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Configure
+        run: >
+          cmake -S . -B build
+          -DCMAKE_BUILD_TYPE=Release
+          -DLUZ_NATIVE_OPTIMIZATIONS=OFF
+          -DLUZ_ENABLE_LTO=OFF
+
+      - name: Build
+        run: cmake --build build --config Release --target Luz --parallel
+
+      - name: Package
+        run: |
+          set -euo pipefail
+          arch="$(uname -m)"
+          package_dir="release/luz-${GITHUB_REF_NAME}-macos-${arch}"
+          mkdir -p "$package_dir"
+          cp build/Luz "$package_dir/"
+          cp LICENSE README.md "$package_dir/"
+          cp -R examples "$package_dir/"
+          tar -czf "${package_dir}.tar.gz" -C release "$(basename "$package_dir")"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-artifacts
+          path: release/*.tar.gz
+          if-no-files-found: error
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            mingw-w64-ucrt-x86_64-cmake
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-ninja
+
+      - name: Configure
+        shell: msys2 {0}
+        run: >
+          cmake -S . -B build -G Ninja
+          -DCMAKE_BUILD_TYPE=Release
+          -DLUZ_NATIVE_OPTIMIZATIONS=OFF
+          -DLUZ_ENABLE_LTO=OFF
+          -DCMAKE_EXE_LINKER_FLAGS="-static -static-libgcc -static-libstdc++"
+
+      - name: Build
+        shell: msys2 {0}
+        run: cmake --build build --config Release --target Luz --parallel
+
+      - name: Package
+        shell: pwsh
+        run: |
+          $packageDir = "release\luz-${env:GITHUB_REF_NAME}-windows-x64"
+          New-Item -ItemType Directory -Force -Path $packageDir | Out-Null
+          Copy-Item build\Luz.exe $packageDir\
+          Copy-Item LICENSE,README.md $packageDir\
+          Copy-Item examples $packageDir\examples -Recurse
+          Compress-Archive -Path $packageDir -DestinationPath "$packageDir.zip" -Force
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-artifacts
+          path: release/*.zip
+          if-no-files-found: error
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y cmake ninja-build g++
+
+      - name: Configure
+        run: >
+          cmake -S . -B build -G Ninja
+          -DCMAKE_BUILD_TYPE=Release
+          -DLUZ_NATIVE_OPTIMIZATIONS=OFF
+          -DLUZ_ENABLE_LTO=OFF
+
+      - name: Build
+        run: cmake --build build --config Release --target Luz --parallel
+
+      - name: Package
+        run: |
+          set -euo pipefail
+          arch="$(uname -m)"
+          package_dir="release/luz-${GITHUB_REF_NAME}-linux-${arch}"
+          mkdir -p "$package_dir"
+          cp build/Luz "$package_dir/"
+          cp LICENSE README.md "$package_dir/"
+          cp -R examples "$package_dir/"
+          tar -czf "${package_dir}.tar.gz" -C release "$(basename "$package_dir")"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-artifacts
+          path: release/*.tar.gz
+          if-no-files-found: error
+
+  release:
+    needs: [build-macos, build-windows, build-linux]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ github.ref_name }}
+          draft: true
+          generate_release_notes: true
+          files: artifacts/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
