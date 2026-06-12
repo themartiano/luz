@@ -1,6 +1,8 @@
 # Luz
 
-Luz is a hand-written C++20 path tracer built from scratch with ZERO third-party libraries.
+**Luz** is a C++20 Path Tracer developed from scratch with zero third-party dependencies.
+
+It supports Monte Carlo path tracing, global illumination, BVH acceleration, adaptive sampling, denoising, atmospheric scattering, custom scene files, and a Blender-to-Luz exporter.
 
 <img src="./docs/images/stormtroopers.jpg" />
 <img src="./docs/images/bust-statue.jpg" />
