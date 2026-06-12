@@ -15,7 +15,7 @@ Lambertian::Lambertian(Color color)
 bool	Lambertian::scatter(Ray& ray, HitRecord& hitRecord, ScatterRecord& scatterRecord)
 {
 	scatterRecord.isSpecular = false;
-	scatterRecord.attenuation = this->_color;
+	scatterRecord.attenuation = this->colorAt(hitRecord);
 	scatterRecord.pdfType = SCATTER_PDF_COSINE;
 	scatterRecord.cosineBasis = ONB(hitRecord.normal);
 

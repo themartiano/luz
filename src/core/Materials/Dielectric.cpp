@@ -25,7 +25,7 @@ bool	Dielectric::scatter(Ray& ray, HitRecord& hitRecord, ScatterRecord& scatterR
 {
 	scatterRecord.isSpecular = true;
 	scatterRecord.pdfType = SCATTER_PDF_NONE;
-	scatterRecord.attenuation = this->_color;
+	scatterRecord.attenuation = this->colorAt(hitRecord);
 
 	double	refractionRatio = this->_refractiveIndex;
 	const Vector3&	normalizedDirection = ray.getDirection();

@@ -39,6 +39,7 @@ class LuzMaterial:
 	transmission: float
 	emission_color: tuple[float, float, float]
 	emission_strength: float
+	texture_path: str | None = None
 
 
 @dataclass
@@ -115,6 +116,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 	parser.add_argument("--blend", help="Optional .blend file to open before exporting.")
 	parser.add_argument("-o", "--output", required=True, help="Output .luz scene file.")
 	parser.add_argument("--mesh-dir", default="meshes", help="OBJ output directory, relative to the .luz file by default.")
+	parser.add_argument("--texture-dir", default="textures", help="Texture output directory, relative to the .luz file by default.")
 	parser.add_argument("--selected-only", action="store_true", help="Export selected objects only.")
 	parser.add_argument("--include-hidden", action="store_true", help="Include objects hidden from render.")
 	parser.add_argument("--resolution", help="Override resolution as WIDTHxHEIGHT.")
@@ -129,6 +131,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 	parser.add_argument("--default-focus-distance", type=float, default=10.0, help="Fallback focus distance in Blender units.")
 	parser.add_argument("--no-texture-colors", action="store_false", dest="sample_texture_colors", help="Skip image texture color approximation.")
 	parser.add_argument("--texture-sample-size", type=int, default=64, help="Temporary texture thumbnail size used for image color averaging. Defaults to 64.")
+	parser.add_argument("--texture-max-size", type=int, default=1024, help="Maximum exported texture side length. Defaults to 1024.")
 	parser.add_argument("--profile", action="store_true", help="Print per-stage exporter progress and timings.")
 	parser.set_defaults(sample_texture_colors=True)
 	return parser.parse_args(argv)
@@ -275,6 +278,75 @@ def average_image_color(image: object | None) -> tuple[float, float, float] | No
 				pass
 
 
+def image_copy_scaled(image: object, max_size: int) -> object | None:
+	try:
+		width = int(image.size[0])
+		height = int(image.size[1])
+	except (AttributeError, TypeError, ValueError):
+		return None
+	if width <= 0 or height <= 0:
+		return None
+
+	max_size = max(int(max_size), 1)
+	if width <= max_size and height <= max_size:
+		return image
+
+	scale = min(max_size / width, max_size / height)
+	sample_width = max(int(width * scale), 1)
+	sample_height = max(int(height * scale), 1)
+	try:
+		sampled_image = image.copy()
+		sampled_image.scale(sample_width, sample_height)
+		return sampled_image
+	except Exception:
+		return None
+
+
+def write_image_as_ppm(image: object, texture_path: Path, max_size: int) -> bool:
+	sampled_image = image_copy_scaled(image, max_size)
+	if sampled_image is None:
+		return False
+
+	remove_sampled_image = sampled_image is not image
+	try:
+		width = int(sampled_image.size[0])
+		height = int(sampled_image.size[1])
+		pixels = sampled_image.pixels[:]
+	except (AttributeError, TypeError, ValueError, RuntimeError):
+		if remove_sampled_image:
+			try:
+				bpy.data.images.remove(sampled_image)
+			except Exception:
+				pass
+		return False
+
+	def channel_byte(value: float) -> int:
+		return max(0, min(255, int(float(value) * 255.0 + 0.5)))
+
+	texture_path.parent.mkdir(parents=True, exist_ok=True)
+	try:
+		with texture_path.open("wb") as stream:
+			stream.write(f"P6\n{width} {height}\n255\n".encode("ascii"))
+			for y in range(height - 1, -1, -1):
+				for x in range(width):
+					offset = (y * width + x) * 4
+					stream.write(bytes((
+						channel_byte(pixels[offset]),
+						channel_byte(pixels[offset + 1]),
+						channel_byte(pixels[offset + 2]),
+					)))
+	except OSError:
+		return False
+	finally:
+		if remove_sampled_image:
+			try:
+				bpy.data.images.remove(sampled_image)
+			except Exception:
+				pass
+
+	return True
+
+
 def node_socket(node: object, name: str) -> object | None:
 	try:
 		return node.inputs.get(name)  # type: ignore[attr-defined]
@@ -384,6 +456,39 @@ def socket_default_value(node: object, names: tuple[str, ...], fallback: object)
 	return fallback
 
 
+def texture_image_from_output(output_socket: object, visited: set[object], depth: int = 0) -> object | None:
+	node = getattr(output_socket, "node", None)
+	if node is None or node in visited or depth > 8:
+		return None
+	visited.add(node)
+
+	output_name = getattr(output_socket, "name", "")
+	node_type = getattr(node, "type", "")
+	if node_type in {"TEX_IMAGE", "TEX_ENVIRONMENT"} and output_name == "Color":
+		return getattr(node, "image", None)
+	if node_type in {"MIX_RGB", "MIX"} and output_name in {"Color", "Result"}:
+		return None
+	if node_type in {"RGB", "VALUE", "VALTORGB", "MATH"}:
+		return None
+	for socket in getattr(node, "inputs", []):
+		for link in getattr(socket, "links", []):
+			image = texture_image_from_output(link.from_socket, visited.copy(), depth + 1)
+			if image is not None:
+				return image
+	return None
+
+
+def texture_image_from_socket(socket: object | None) -> object | None:
+	if socket is None:
+		return None
+	try:
+		if not socket.links:
+			return None
+	except AttributeError:
+		return None
+	return texture_image_from_output(socket.links[0].from_socket, set())
+
+
 def find_principled_node(material: object) -> object | None:
 	if not material or not getattr(material, "use_nodes", False) or not getattr(material, "node_tree", None):
 		return None
@@ -426,12 +531,49 @@ def material_output_surface_node(material: object) -> object | None:
 	if not material or not getattr(material, "use_nodes", False) or not getattr(material, "node_tree", None):
 		return None
 
+	def surface_node_from_output(output_node: object) -> object | None:
+		surface = output_node.inputs.get("Surface")
+		if surface and surface.links:
+			return surface.links[0].from_node
+		return None
+
+	output_nodes: list[object] = []
 	for node in material.node_tree.nodes:
 		if node.type != "OUTPUT_MATERIAL":
 			continue
-		surface = node.inputs.get("Surface")
-		if surface and surface.links:
-			return surface.links[0].from_node
+		if surface_node_from_output(node) is not None:
+			output_nodes.append(node)
+	if not output_nodes:
+		return None
+
+	try:
+		render_engine = str(bpy.context.scene.render.engine).upper()
+	except AttributeError:
+		render_engine = ""
+	target = "CYCLES" if render_engine == "CYCLES" else "EEVEE" if "EEVEE" in render_engine else "ALL"
+
+	def node_target(node: object) -> str:
+		return str(getattr(node, "target", "ALL") or "ALL").upper()
+
+	def active_output(node: object) -> bool:
+		return bool(getattr(node, "is_active_output", False))
+
+	preference_groups = []
+	if target != "ALL":
+		preference_groups.append(lambda candidate: node_target(candidate) == target)
+	preference_groups.extend(
+		[
+			lambda candidate: node_target(candidate) == "ALL" and active_output(candidate),
+			lambda candidate: node_target(candidate) == "ALL",
+			active_output,
+			lambda candidate: True,
+		]
+	)
+
+	for matches in preference_groups:
+		for node in output_nodes:
+			if matches(node):
+				return surface_node_from_output(node)
 	return None
 
 
@@ -471,6 +613,31 @@ def material_defaults(
 		"emission_color": emission_color,
 		"emission_strength": emission_strength,
 	}
+
+
+def export_texture_image(
+	image: object,
+	material_name: str,
+	texture_dir: Path,
+	scene_texture_dir: Path,
+	used_texture_names: set[str],
+	exported_textures: dict[str, str],
+	args: argparse.Namespace,
+) -> str | None:
+	image_key = getattr(image, "name_full", None) or getattr(image, "name", None)
+	if image_key and image_key in exported_textures:
+		return exported_textures[image_key]
+
+	base_name = slugify(getattr(image, "name", material_name), "texture")
+	texture_name = unique_name(base_name, used_texture_names) + ".ppm"
+	texture_path = texture_dir / texture_name
+	scene_path = (scene_texture_dir / texture_name).as_posix()
+
+	if not write_image_as_ppm(image, texture_path, int(args.texture_max_size)):
+		return None
+	if image_key:
+		exported_textures[image_key] = scene_path
+	return scene_path
 
 
 def blend_material_values(
@@ -592,7 +759,41 @@ def material_values_from_shader_node(
 	return values
 
 
-def export_material(material: object | None, used_names: set[str], registry: dict[str, LuzMaterial]) -> str:
+def base_color_texture_from_shader_node(
+	node: object | None,
+	visited: set[object] | None = None,
+) -> object | None:
+	if node is None:
+		return None
+	if visited is None:
+		visited = set()
+	if node in visited:
+		return None
+	visited.add(node)
+
+	node_type = getattr(node, "type", "")
+	if node_type == "BSDF_PRINCIPLED":
+		return texture_image_from_socket(node_socket(node, "Base Color"))
+	if node_type in {"BSDF_DIFFUSE", "BSDF_GLOSSY", "BSDF_ANISOTROPIC"}:
+		return texture_image_from_socket(node_socket(node, "Color"))
+
+	for child in linked_shader_nodes(node):
+		image = base_color_texture_from_shader_node(child, visited.copy())
+		if image is not None:
+			return image
+	return None
+
+
+def export_material(
+	material: object | None,
+	used_names: set[str],
+	registry: dict[str, LuzMaterial],
+	texture_dir: Path,
+	scene_texture_dir: Path,
+	used_texture_names: set[str],
+	exported_textures: dict[str, str],
+	args: argparse.Namespace,
+) -> str:
 	key = material.name_full if material else "__luz_default_material__"
 	if key in registry:
 		return registry[key].name
@@ -606,6 +807,7 @@ def export_material(material: object | None, used_names: set[str], registry: dic
 	transmission = 0.0
 	emission_color = (1.0, 1.0, 1.0)
 	emission_strength = 0.0
+	texture_path: str | None = None
 
 	if material:
 		base_color = color_from_value(getattr(material, "diffuse_color", base_color), base_color)
@@ -614,29 +816,11 @@ def export_material(material: object | None, used_names: set[str], registry: dic
 		except (AttributeError, IndexError, TypeError, ValueError):
 			alpha = 1.0
 
-		principled = find_principled_node(material)
-		if principled:
-			base_color = color_from_value(node_input_value(principled, ("Base Color",), base_color), base_color)
-			metallic = scalar_from_value(node_input_value(principled, ("Metallic",), metallic), metallic)
-			roughness = scalar_from_value(node_input_value(principled, ("Roughness",), roughness), roughness)
-			alpha = scalar_from_value(node_input_value(principled, ("Alpha",), alpha), alpha)
-			transmission = scalar_from_value(
-				node_input_value(principled, ("Transmission Weight", "Transmission"), transmission),
-				transmission,
-			)
-			emission_color = color_from_value(
-				node_input_value(principled, ("Emission Color", "Emission"), emission_color),
-				emission_color,
-			)
-			emission_strength = scalar_from_value(
-				node_input_value(principled, ("Emission Strength",), emission_strength),
-				emission_strength,
-			)
-
 		surface_node = material_output_surface_node(material)
-		if surface_node:
+		shader_node = surface_node or find_principled_node(material)
+		if shader_node:
 			values = material_values_from_shader_node(
-				surface_node,
+				shader_node,
 				material_defaults(
 					material_type,
 					base_color,
@@ -657,11 +841,27 @@ def export_material(material: object | None, used_names: set[str], registry: dic
 			emission_color = values["emission_color"]  # type: ignore[assignment]
 			emission_strength = float(values["emission_strength"])
 
+			base_color_texture = base_color_texture_from_shader_node(shader_node)
+			if base_color_texture is not None and SAMPLE_TEXTURE_COLORS:
+				texture_path = export_texture_image(
+					base_color_texture,
+					name,
+					texture_dir,
+					scene_texture_dir,
+					used_texture_names,
+					exported_textures,
+					args,
+				)
+				if texture_path is not None:
+					base_color = (1.0, 1.0, 1.0)
+
 		emission = material_emission(material)
 		if emission:
 			emission_color = emission[0]
 			emission_strength = emission[1]
 
+	if texture_path is not None:
+		base_color = (1.0, 1.0, 1.0)
 	if not color_has_energy(emission_color):
 		emission_strength = 0.0
 
@@ -675,6 +875,7 @@ def export_material(material: object | None, used_names: set[str], registry: dic
 		transmission=transmission,
 		emission_color=emission_color,
 		emission_strength=emission_strength,
+		texture_path=texture_path,
 	)
 	return name
 
@@ -717,7 +918,19 @@ def loop_normal(mesh: object, loop_index: int, normal_matrix: object) -> Vector:
 	return blender_normal_to_luz(world_normal)
 
 
-ObjCorner = tuple[Vector, Vector]
+def loop_uv(mesh: object, loop_index: int) -> tuple[float, float]:
+	try:
+		uv_layer = mesh.uv_layers.active
+		if uv_layer is None:
+			return (0.0, 0.0)
+		uv = uv_layer.data[loop_index].uv
+		return (float(uv.x), float(uv.y))
+	except (AttributeError, IndexError, TypeError, ValueError):
+		return (0.0, 0.0)
+
+
+ObjUVKey = tuple[str, str]
+ObjCorner = tuple[Vector, Vector, tuple[float, float]]
 ObjTriangle = tuple[ObjCorner, ObjCorner, ObjCorner]
 ObjVectorKey = tuple[str, str, str]
 
@@ -738,19 +951,38 @@ def obj_index_for(vector: Vector, registry: dict[ObjVectorKey, int], values: lis
 	return index
 
 
+def obj_uv_key(uv: tuple[float, float]) -> ObjUVKey:
+	return (fmt_float(uv[0]), fmt_float(uv[1]))
+
+
+def obj_uv_index_for(uv: tuple[float, float], registry: dict[ObjUVKey, int], values: list[ObjUVKey]) -> int:
+	key = obj_uv_key(uv)
+	index = registry.get(key)
+	if index is not None:
+		return index
+
+	index = len(values) + 1
+	registry[key] = index
+	values.append(key)
+	return index
+
+
 def write_obj(mesh_path: Path, triangles: list[ObjTriangle]) -> None:
 	vertex_registry: dict[ObjVectorKey, int] = {}
+	uv_registry: dict[ObjUVKey, int] = {}
 	normal_registry: dict[ObjVectorKey, int] = {}
 	vertices: list[ObjVectorKey] = []
+	uvs: list[ObjUVKey] = []
 	normals: list[ObjVectorKey] = []
-	faces: list[tuple[tuple[int, int], tuple[int, int], tuple[int, int]]] = []
+	faces: list[tuple[tuple[int, int, int], tuple[int, int, int], tuple[int, int, int]]] = []
 
 	for triangle in triangles:
-		face: list[tuple[int, int]] = []
-		for vertex, normal in triangle:
+		face: list[tuple[int, int, int]] = []
+		for vertex, normal, uv in triangle:
 			vertex_index = obj_index_for(vertex, vertex_registry, vertices)
+			uv_index = obj_uv_index_for(uv, uv_registry, uvs)
 			normal_index = obj_index_for(normal, normal_registry, normals)
-			face.append((vertex_index, normal_index))
+			face.append((vertex_index, uv_index, normal_index))
 		faces.append((face[0], face[1], face[2]))
 
 	mesh_path.parent.mkdir(parents=True, exist_ok=True)
@@ -758,13 +990,15 @@ def write_obj(mesh_path: Path, triangles: list[ObjTriangle]) -> None:
 		stream.write("# Generated by tools/blender_export_luz.py\n")
 		for x, y, z in vertices:
 			stream.write(f"v {x} {y} {z}\n")
+		for u, v in uvs:
+			stream.write(f"vt {u} {v}\n")
 		for x, y, z in normals:
 			stream.write(f"vn {x} {y} {z}\n")
 		for face in faces:
 			stream.write(
-				f"f {face[0][0]}//{face[0][1]} "
-				f"{face[1][0]}//{face[1][1]} "
-				f"{face[2][0]}//{face[2][1]}\n"
+				f"f {face[0][0]}/{face[0][1]}/{face[0][2]} "
+				f"{face[1][0]}/{face[1][1]}/{face[1][2]} "
+				f"{face[2][0]}/{face[2][1]}/{face[2][2]}\n"
 			)
 
 
@@ -772,8 +1006,12 @@ def export_meshes(
 	args: argparse.Namespace,
 	output_path: Path,
 	mesh_dir: Path,
+	texture_dir: Path,
+	scene_texture_dir: Path,
 	materials: dict[str, LuzMaterial],
 	used_material_names: set[str],
+	used_texture_names: set[str],
+	exported_textures: dict[str, str],
 	bounds: Bounds,
 ) -> list[LuzMesh]:
 	depsgraph = bpy.context.evaluated_depsgraph_get()
@@ -803,6 +1041,7 @@ def export_meshes(
 			object_triangles_by_material: dict[int, list[ObjTriangle]] = {}
 			luz_vertices: dict[int, Vector] = {}
 			luz_normals: dict[int, Vector] = {}
+			luz_uvs: dict[int, tuple[float, float]] = {}
 			log_profile(
 				args,
 				f"[{object_index}/{len(mesh_objects)}] '{object_.name}' has "
@@ -825,13 +1064,21 @@ def export_meshes(
 					luz_normals[loop_index] = luz_normal
 				return luz_normal
 
+			def luz_uv_for(loop_index: int) -> tuple[float, float]:
+				luz_uv = luz_uvs.get(loop_index)
+				if luz_uv is None:
+					luz_uv = loop_uv(mesh, loop_index)
+					luz_uvs[loop_index] = luz_uv
+				return luz_uv
+
 			for loop_triangle in mesh.loop_triangles:
 				material_index = loop_triangle.material_index
 				triangle_corners: list[ObjCorner] = []
 				for loop_index, vertex_index in zip(loop_triangle.loops, loop_triangle.vertices):
 					luz_vertex = luz_vertex_for(vertex_index)
 					luz_normal = luz_normal_for(loop_index)
-					triangle_corners.append((luz_vertex, luz_normal))
+					luz_uv = luz_uv_for(loop_index)
+					triangle_corners.append((luz_vertex, luz_normal, luz_uv))
 				object_triangles_by_material.setdefault(material_index, []).append(
 					(triangle_corners[0], triangle_corners[1], triangle_corners[2])
 				)
@@ -848,7 +1095,16 @@ def export_meshes(
 					f"[{object_index}/{len(mesh_objects)}] Resolving material '{material_label}' "
 					f"for {len(triangles)} triangle(s)",
 				)
-				material_name = export_material(material, used_material_names, materials)
+				material_name = export_material(
+					material,
+					used_material_names,
+					materials,
+					texture_dir,
+					scene_texture_dir,
+					used_texture_names,
+					exported_textures,
+					args,
+				)
 				mesh_base = slugify(f"{object_.name}_{material_name}", "mesh")
 				mesh_name = unique_name(mesh_base, used_mesh_names)
 				object_name = unique_name(slugify(f"{object_.name}_{material_name}", "object"), used_object_names)
@@ -1203,9 +1459,11 @@ def write_luz_scene(
 					f"transmission={fmt_float(material.transmission)}",
 					f"emission={fmt_color(material.emission_color)}",
 					f"emissionStrength={fmt_float(material.emission_strength)}",
-					"}",
 				]
 			)
+			if material.texture_path:
+				lines.append(f"texture={material.texture_path}")
+			lines.append("}")
 		lines.append("")
 
 	if meshes:
@@ -1300,12 +1558,28 @@ def main() -> None:
 	mesh_dir = Path(args.mesh_dir).expanduser()
 	if not mesh_dir.is_absolute():
 		mesh_dir = output_path.parent / mesh_dir
+	texture_dir_arg = Path(args.texture_dir).expanduser()
+	texture_dir = texture_dir_arg if texture_dir_arg.is_absolute() else output_path.parent / texture_dir_arg
+	scene_texture_dir = texture_dir if texture_dir_arg.is_absolute() else texture_dir_arg
 
 	materials: dict[str, LuzMaterial] = {}
 	used_material_names: set[str] = set()
+	used_texture_names: set[str] = set()
+	exported_textures: dict[str, str] = {}
 	bounds = Bounds()
 	log_profile(args, "Starting mesh export")
-	meshes = export_meshes(args, output_path, mesh_dir, materials, used_material_names, bounds)
+	meshes = export_meshes(
+		args,
+		output_path,
+		mesh_dir,
+		texture_dir,
+		scene_texture_dir,
+		materials,
+		used_material_names,
+		used_texture_names,
+		exported_textures,
+		bounds,
+	)
 	log_profile(args, "Exporting camera")
 	camera = export_camera(args, bounds)
 	lights = export_lights(args, bounds)

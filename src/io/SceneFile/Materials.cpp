@@ -4,6 +4,7 @@
 #include "Materials/Dielectric.hpp"
 #include "Materials/Emissive.hpp"
 #include "Materials/Principled.hpp"
+#include "Texture.hpp"
 #include "Utilities.hpp"
 #include <fstream>
 #include <stdexcept>
@@ -24,6 +25,7 @@ namespace
 		double		alpha = 1.0;
 		double		intensity = 1.0;
 		double		emissionStrength = 0.0;
+		std::string	texturePath;
 		bool		hasProperties = false;
 		bool		hasEmissionColor = false;
 		std::shared_ptr<Material>	directMaterial = nullptr;
@@ -160,16 +162,39 @@ namespace
 		{
 			builder.emissionStrength = std::stod(value);
 		}
+		else if (key == "texture" || key == "basecolortexture" || key == "base_color_texture" || key == "albedo")
+		{
+			builder.texturePath = value;
+		}
 		else
 		{
 			throw std::runtime_error("Unknown material property: " + line);
 		}
 	}
 
-	std::shared_ptr<Material>	buildMaterial(const MaterialBuilder& builder, const std::string& blockDescription)
+	void	attachTexture(
+		std::shared_ptr<Material> material,
+		const MaterialBuilder& builder,
+		const std::filesystem::path& baseDirectory
+	)
+	{
+		if (!builder.texturePath.empty())
+		{
+			material->setTexture(std::make_shared<Texture>(
+				Texture::loadPPM(SceneFile::internal::_resolveAssetPath(baseDirectory, builder.texturePath))
+			));
+		}
+	}
+
+	std::shared_ptr<Material>	buildMaterial(
+		const MaterialBuilder& builder,
+		const std::string& blockDescription,
+		const std::filesystem::path& baseDirectory
+	)
 	{
 		if (builder.directMaterial)
 		{
+			attachTexture(builder.directMaterial, builder, baseDirectory);
 			return (builder.directMaterial);
 		}
 		if (!builder.hasProperties)
@@ -187,25 +212,37 @@ namespace
 			}
 			if (builder.transmission > 0.0 || builder.alpha < 1.0)
 			{
-				return (std::make_shared<Dielectric>(builder.color));
+				std::shared_ptr<Material> material = std::make_shared<Dielectric>(builder.color);
+				attachTexture(material, builder, baseDirectory);
+				return (material);
 			}
 			if (builder.metallic >= 0.5)
 			{
-				return (std::make_shared<Metal>(builder.color, builder.fuzz >= 0.0 ? builder.fuzz : builder.roughness));
+				std::shared_ptr<Material> material = std::make_shared<Metal>(builder.color, builder.fuzz >= 0.0 ? builder.fuzz : builder.roughness);
+				attachTexture(material, builder, baseDirectory);
+				return (material);
 			}
-			return (std::make_shared<Principled>(builder.color, builder.metallic, builder.roughness));
+			std::shared_ptr<Material> material = std::make_shared<Principled>(builder.color, builder.metallic, builder.roughness);
+			attachTexture(material, builder, baseDirectory);
+			return (material);
 		}
 		if (type == "lambertian")
 		{
-			return (std::make_shared<Lambertian>(builder.color));
+			std::shared_ptr<Material> material = std::make_shared<Lambertian>(builder.color);
+			attachTexture(material, builder, baseDirectory);
+			return (material);
 		}
 		if (type == "metal")
 		{
-			return (std::make_shared<Metal>(builder.color, builder.fuzz >= 0.0 ? builder.fuzz : builder.roughness));
+			std::shared_ptr<Material> material = std::make_shared<Metal>(builder.color, builder.fuzz >= 0.0 ? builder.fuzz : builder.roughness);
+			attachTexture(material, builder, baseDirectory);
+			return (material);
 		}
 		if (type == "dielectric")
 		{
-			return (std::make_shared<Dielectric>(builder.color));
+			std::shared_ptr<Material> material = std::make_shared<Dielectric>(builder.color);
+			attachTexture(material, builder, baseDirectory);
+			return (material);
 		}
 		if (type == "emissive")
 		{
@@ -218,7 +255,11 @@ namespace
 		throw std::runtime_error("Unknown material type: " + type);
 	}
 
-	std::shared_ptr<Material>	readBraceMaterialBlock(std::ifstream& stream, const std::string& blockDescription)
+	std::shared_ptr<Material>	readBraceMaterialBlock(
+		std::ifstream& stream,
+		const std::string& blockDescription,
+		const std::filesystem::path& baseDirectory
+	)
 	{
 		std::string line;
 		MaterialBuilder builder;
@@ -234,7 +275,7 @@ namespace
 			}
 			if (trimmedLine == "}")
 			{
-				return (buildMaterial(builder, blockDescription));
+				return (buildMaterial(builder, blockDescription, baseDirectory));
 			}
 
 			std::shared_ptr<Material> directMaterial;
@@ -322,6 +363,10 @@ void	SceneFile::internal::_readNamedMaterialsSection(std::ifstream& stream, Scen
 			throw std::runtime_error("Duplicate material name: " + materialName);
 		}
 
-		context.materials[materialName] = readBraceMaterialBlock(stream, "Material block '" + materialName + "'");
+		context.materials[materialName] = readBraceMaterialBlock(
+			stream,
+			"Material block '" + materialName + "'",
+			context.baseDirectory
+		);
 	} while (!stream.eof());
 }

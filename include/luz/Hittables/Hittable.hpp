@@ -15,6 +15,8 @@ struct	HitRecord
 	double		t1 = 0.0;
 	Vector3		position;
 	Vector3		normal;
+	double		u = 0.0;
+	double		v = 0.0;
 	std::shared_ptr<Material>	material = nullptr;
 };
 

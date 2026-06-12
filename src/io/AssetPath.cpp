@@ -7,6 +7,8 @@ namespace
 	{
 		return (std::vector<std::filesystem::path>{
 			path,
+			std::filesystem::path("textures") / path,
+			std::filesystem::path("assets/textures") / path,
 			std::filesystem::path("assets/objects") / path,
 			std::filesystem::path("objects") / path
 		});

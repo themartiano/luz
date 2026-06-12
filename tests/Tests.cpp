@@ -803,6 +803,75 @@ namespace
 		std::filesystem::remove(objectPath);
 	}
 
+	void	testSceneFileLoadsTexturedOBJUVs(void)
+	{
+		const std::filesystem::path directory = std::filesystem::temp_directory_path();
+		const std::filesystem::path scenePath = directory / "luz_texture_uv_test.luz";
+		const std::filesystem::path objectPath = directory / "luz_texture_uv_test.obj";
+		const std::filesystem::path texturePath = directory / "luz_texture_uv_test.ppm";
+		{
+			std::ofstream textureStream(texturePath);
+			textureStream
+				<< "P3\n"
+				<< "1 1\n"
+				<< "255\n"
+				<< "255 0 0\n";
+		}
+		{
+			std::ofstream objectStream(objectPath);
+			objectStream
+				<< "v 0.0 0.0 -1.0\n"
+				<< "v 1.0 0.0 -1.0\n"
+				<< "v 0.0 1.0 -1.0\n"
+				<< "vt 0.0 0.0\n"
+				<< "vt 1.0 0.0\n"
+				<< "vt 0.0 1.0\n"
+				<< "f 1/1 2/2 3/3\n";
+		}
+		{
+			std::ofstream sceneStream(scenePath);
+			sceneStream
+				<< "[settings]\n"
+				<< "resolution=2,2\n\n"
+				<< "[materials]\n"
+				<< "material textured {\n"
+				<< "type=lambertian\n"
+				<< "color=(1,1,1)\n"
+				<< "texture=" << texturePath.filename().string() << "\n"
+				<< "}\n\n"
+				<< "[meshes]\n"
+				<< "mesh triangle_mesh {\n"
+				<< "file=" << objectPath.filename().string() << "\n"
+				<< "}\n\n"
+				<< "[scene]\n"
+				<< "camera=(0,0,2),(0,0,-1),45,0,2\n"
+				<< "object triangle {\n"
+				<< "mesh=triangle_mesh\n"
+				<< "position=(0,0,0)\n"
+				<< "rotation=(0,0,0)\n"
+				<< "scale=(1,1,1)\n"
+				<< "material=textured\n"
+				<< "}\n";
+		}
+
+		Scene scene;
+		SceneFile::read(scene, scenePath.string());
+		Ray ray(Vector3(0.25, 0.25, 0.0), Vector3(0.0, 0.0, -1.0));
+		HitRecord hitRecord;
+
+		require(scene.getHittables()[0]->hit(ray, hitRecord, 0.001, 100.0), "Textured OBJ triangle was not hit.");
+		requireNear(hitRecord.u, 0.25, "OBJ reader did not interpolate texture coordinate U.");
+		requireNear(hitRecord.v, 0.25, "OBJ reader did not interpolate texture coordinate V.");
+		const Color texturedColor = hitRecord.material->colorAt(hitRecord);
+		requireNear(texturedColor.getRed(), 1.0, "Texture red channel was not sampled.");
+		requireNear(texturedColor.getGreen(), 0.0, "Texture green channel was not sampled.");
+		requireNear(texturedColor.getBlue(), 0.0, "Texture blue channel was not sampled.");
+
+		std::filesystem::remove(scenePath);
+		std::filesystem::remove(objectPath);
+		std::filesystem::remove(texturePath);
+	}
+
 	void	testMeshPDFAndRandomSampling(void)
 	{
 		setRandomSeed(123);
@@ -1311,6 +1380,7 @@ int	main(void)
 		testTrianglePDFAndRandomSampling();
 		testTriangleInterpolatesVertexNormals();
 		testOBJReaderLoadsVertexNormals();
+		testSceneFileLoadsTexturedOBJUVs();
 		testMeshPDFAndRandomSampling();
 		testAABBDefaultBounds();
 		testRectangleBoundingBoxes();

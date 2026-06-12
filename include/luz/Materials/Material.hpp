@@ -5,6 +5,7 @@
 #include "MaterialTypes.hpp"
 #include "ONB.hpp"
 #include "Hittables/Hittable.hpp"
+#include "Texture.hpp"
 #include <memory>
 
 struct	HitRecord;
@@ -33,6 +34,8 @@ class	Material
 		virtual ~Material(void) = default;
 		virtual Color	getColor(void) const;
 		virtual void	setColor(Color color);
+		virtual Color	colorAt(const HitRecord& hitRecord) const;
+		virtual void	setTexture(std::shared_ptr<Texture> texture);
 		virtual bool	scatter(Ray& ray, HitRecord& hitRecord, ScatterRecord& scatterRecord);
 		virtual Color	emitted(void);
 		virtual double	scatteringPDF(Ray& ray, HitRecord& hitRecord);
@@ -40,4 +43,5 @@ class	Material
 
 	protected:
 		Color	_color;
+		std::shared_ptr<Texture>	_texture;
 };

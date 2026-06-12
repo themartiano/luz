@@ -28,6 +28,20 @@ void	Material::setColor(Color color)
 	this->_color = color;
 }
 
+Color	Material::colorAt(const HitRecord& hitRecord) const
+{
+	if (this->_texture)
+	{
+		return (this->_color * this->_texture->sample(hitRecord.u, hitRecord.v));
+	}
+	return (this->_color);
+}
+
+void	Material::setTexture(std::shared_ptr<Texture> texture)
+{
+	this->_texture = texture;
+}
+
 bool	Material::scatter(Ray& ray, HitRecord& hitRecord, ScatterRecord& scatterRecord)
 {
 	return (false);

@@ -39,10 +39,11 @@ Principled::Principled(Color color, double metallic, double roughness)
 
 bool	Principled::scatter(Ray& ray, HitRecord& hitRecord, ScatterRecord& scatterRecord)
 {
+	const Color	baseColor = this->colorAt(hitRecord);
 	const Vector3&	normalizedDirection = ray.getDirection();
 	const double	cosTheta = std::max(0.0, Utilities::dot(normalizedDirection * -1.0, hitRecord.normal));
 	const double	dielectricF0 = 0.04;
-	const double	metalF0 = clamp01(maxChannel(this->_color));
+	const double	metalF0 = clamp01(maxChannel(baseColor));
 	const double	f0 = dielectricF0 * (1.0 - this->_metallic) + metalF0 * this->_metallic;
 	double	specularChance = f0 + (1.0 - f0) * std::pow(1.0 - cosTheta, 5.0);
 
@@ -53,7 +54,7 @@ bool	Principled::scatter(Ray& ray, HitRecord& hitRecord, ScatterRecord& scatterR
 	{
 		const double	fuzz = this->_roughness * this->_roughness;
 		const Vector3	reflected = Utilities::reflect(normalizedDirection, hitRecord.normal);
-		const Color	specularColor = mixColor(Color(1.0, 1.0, 1.0), this->_color, this->_metallic);
+		const Color	specularColor = mixColor(Color(1.0, 1.0, 1.0), baseColor, this->_metallic);
 
 		scatterRecord.specularRay = Ray(hitRecord.position, reflected + fuzz * Sampler::unitBall(Sampler::DIM_MATERIAL_FUZZ));
 		scatterRecord.attenuation = specularColor;
@@ -63,7 +64,7 @@ bool	Principled::scatter(Ray& ray, HitRecord& hitRecord, ScatterRecord& scatterR
 	}
 
 	scatterRecord.isSpecular = false;
-	scatterRecord.attenuation = this->_color * (1.0 - this->_metallic);
+	scatterRecord.attenuation = baseColor * (1.0 - this->_metallic);
 	scatterRecord.pdfType = SCATTER_PDF_COSINE;
 	scatterRecord.cosineBasis = ONB(hitRecord.normal);
 	return (true);

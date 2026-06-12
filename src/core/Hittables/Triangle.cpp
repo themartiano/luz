@@ -43,7 +43,11 @@ Triangle::Triangle(void)
 	this->_normal0 = Vector3();
 	this->_normal1 = Vector3();
 	this->_normal2 = Vector3();
+	this->_uv0 = Vector3();
+	this->_uv1 = Vector3();
+	this->_uv2 = Vector3();
 	this->_hasVertexNormals = false;
+	this->_hasTextureCoordinates = false;
 	this->_material = std::make_shared<Lambertian>(Color(0.6, 0.6, 0.6));
 	this->_updateCache();
 }
@@ -57,7 +61,11 @@ Triangle::Triangle(Vector3 vertex0, Vector3 vertex1, Vector3 vertex2, std::share
 	this->_normal0 = Vector3();
 	this->_normal1 = Vector3();
 	this->_normal2 = Vector3();
+	this->_uv0 = Vector3();
+	this->_uv1 = Vector3();
+	this->_uv2 = Vector3();
 	this->_hasVertexNormals = false;
+	this->_hasTextureCoordinates = false;
 	this->_material = material;
 	this->_updateCache();
 }
@@ -78,10 +86,14 @@ Triangle::Triangle(
 	this->_normal0 = normal0;
 	this->_normal1 = normal1;
 	this->_normal2 = normal2;
+	this->_uv0 = Vector3();
+	this->_uv1 = Vector3();
+	this->_uv2 = Vector3();
 	this->_hasVertexNormals =
 		Utilities::vectorLengthSquared(normal0) > TRIANGLE_NORMAL_LENGTH_EPSILON_SQUARED
 		&& Utilities::vectorLengthSquared(normal1) > TRIANGLE_NORMAL_LENGTH_EPSILON_SQUARED
 		&& Utilities::vectorLengthSquared(normal2) > TRIANGLE_NORMAL_LENGTH_EPSILON_SQUARED;
+	this->_hasTextureCoordinates = false;
 	this->_material = material;
 	this->_updateCache();
 }
@@ -139,6 +151,25 @@ void	Triangle::setVertex2(Vector3 vertex2)
 {
 	this->_vertex2 = vertex2;
 	this->_updateCache();
+}
+
+void	Triangle::setVertexNormals(Vector3 normal0, Vector3 normal1, Vector3 normal2)
+{
+	this->_normal0 = normal0;
+	this->_normal1 = normal1;
+	this->_normal2 = normal2;
+	this->_hasVertexNormals =
+		Utilities::vectorLengthSquared(normal0) > TRIANGLE_NORMAL_LENGTH_EPSILON_SQUARED
+		&& Utilities::vectorLengthSquared(normal1) > TRIANGLE_NORMAL_LENGTH_EPSILON_SQUARED
+		&& Utilities::vectorLengthSquared(normal2) > TRIANGLE_NORMAL_LENGTH_EPSILON_SQUARED;
+}
+
+void	Triangle::setTextureCoordinates(Vector3 uv0, Vector3 uv1, Vector3 uv2)
+{
+	this->_uv0 = uv0;
+	this->_uv1 = uv1;
+	this->_uv2 = uv2;
+	this->_hasTextureCoordinates = true;
 }
 
 // Returns the Triangle's material
@@ -205,6 +236,20 @@ bool	Triangle::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) c
 	else
 	{
 		hitRecord.normal = this->_faceNormal;
+	}
+	if (this->_hasTextureCoordinates)
+	{
+		const Vector3 interpolatedUV =
+			(this->_uv0 * (1.0 - u - v))
+			+ (this->_uv1 * u)
+			+ (this->_uv2 * v);
+		hitRecord.u = interpolatedUV.getX();
+		hitRecord.v = interpolatedUV.getY();
+	}
+	else
+	{
+		hitRecord.u = 0.0;
+		hitRecord.v = 0.0;
 	}
 	hitRecord.normal = orientAgainstRay(hitRecord.normal, ray);
 	hitRecord.material = this->_material;

@@ -30,7 +30,7 @@ bool	Metal::scatter(Ray& ray, HitRecord& hitRecord, ScatterRecord& scatterRecord
 	Vector3	reflected = Utilities::reflect(ray.getDirection(), hitRecord.normal);
 
 	scatterRecord.specularRay = Ray(hitRecord.position, reflected + this->_reflectionFuzziness * Sampler::unitBall(Sampler::DIM_MATERIAL_FUZZ));
-	scatterRecord.attenuation = this->_color;
+	scatterRecord.attenuation = this->colorAt(hitRecord);
 	scatterRecord.isSpecular = true;
 	scatterRecord.pdfType = SCATTER_PDF_NONE;
 

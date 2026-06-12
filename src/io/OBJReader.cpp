@@ -31,6 +31,7 @@ namespace
 	struct ObjFaceVertex
 	{
 		int	vertexIndex = -1;
+		int	textureIndex = -1;
 		int	normalIndex = -1;
 	};
 
@@ -172,6 +173,19 @@ namespace
 		return (Vector3(x, y, z));
 	}
 
+	Vector3	parseTextureValues(const std::string& value, const std::string& line)
+	{
+		double u;
+		double v;
+		std::istringstream lineStream(value);
+
+		if (!(lineStream >> u >> v))
+		{
+			throw std::runtime_error("Invalid OBJ texture coordinate line: " + line);
+		}
+		return (Vector3(u, v, 0.0));
+	}
+
 	int	resolveObjIndex(int index, std::size_t count, const std::string& token)
 	{
 		int resolvedIndex;
@@ -195,7 +209,12 @@ namespace
 		return (resolvedIndex);
 	}
 
-	ObjFaceVertex	parseFaceVertex(const std::string& token, std::size_t vertexCount, std::size_t normalCount)
+	ObjFaceVertex	parseFaceVertex(
+		const std::string& token,
+		std::size_t vertexCount,
+		std::size_t textureCount,
+		std::size_t normalCount
+	)
 	{
 		ObjFaceVertex faceVertex;
 		const std::size_t firstSlash = token.find('/');
@@ -207,6 +226,17 @@ namespace
 			throw std::runtime_error("OBJ face vertex is missing a position index: " + token);
 		}
 		faceVertex.vertexIndex = resolveObjIndex(std::stoi(vertexPart), vertexCount, token);
+		if (firstSlash != std::string::npos && firstSlash + 1 < token.length())
+		{
+			const std::size_t textureLength = secondSlash == std::string::npos
+				? std::string::npos
+				: secondSlash - firstSlash - 1;
+			const std::string texturePart = token.substr(firstSlash + 1, textureLength);
+			if (!texturePart.empty())
+			{
+				faceVertex.textureIndex = resolveObjIndex(std::stoi(texturePart), textureCount, token);
+			}
+		}
 		if (secondSlash != std::string::npos && secondSlash + 1 < token.length())
 		{
 			faceVertex.normalIndex = resolveObjIndex(std::stoi(token.substr(secondSlash + 1)), normalCount, token);
@@ -217,6 +247,7 @@ namespace
 
 	Triangle	buildTriangle(
 		const std::vector<Vector3>& vertices,
+		const std::vector<Vector3>& textureCoordinates,
 		const std::vector<Vector3>& normals,
 		const ObjFaceVertex& faceVertex0,
 		const ObjFaceVertex& faceVertex1,
@@ -228,21 +259,26 @@ namespace
 		const Vector3 vertex0 = transform.transformVertex(vertices.at(faceVertex0.vertexIndex));
 		const Vector3 vertex1 = transform.transformVertex(vertices.at(faceVertex1.vertexIndex));
 		const Vector3 vertex2 = transform.transformVertex(vertices.at(faceVertex2.vertexIndex));
+		Triangle triangle(vertex0, vertex1, vertex2, material);
 
 		if (faceVertex0.normalIndex >= 0 && faceVertex1.normalIndex >= 0 && faceVertex2.normalIndex >= 0)
 		{
-			return (Triangle(
-				vertex0,
-				vertex1,
-				vertex2,
+			triangle.setVertexNormals(
 				transform.transformNormal(normals.at(faceVertex0.normalIndex)),
 				transform.transformNormal(normals.at(faceVertex1.normalIndex)),
-				transform.transformNormal(normals.at(faceVertex2.normalIndex)),
-				material
-			));
+				transform.transformNormal(normals.at(faceVertex2.normalIndex))
+			);
+		}
+		if (faceVertex0.textureIndex >= 0 && faceVertex1.textureIndex >= 0 && faceVertex2.textureIndex >= 0)
+		{
+			triangle.setTextureCoordinates(
+				textureCoordinates.at(faceVertex0.textureIndex),
+				textureCoordinates.at(faceVertex1.textureIndex),
+				textureCoordinates.at(faceVertex2.textureIndex)
+			);
 		}
 
-		return (Triangle(vertex0, vertex1, vertex2, material));
+		return (triangle);
 	}
 
 	void	printMeshLoadProgress(const ObjLoadProgress& progress, bool rewriteLine)
@@ -371,6 +407,7 @@ std::size_t	parseObjFile(Mesh& mesh, std::ifstream& stream, const ObjTransform& 
 {
 	std::string line;
 	std::vector<Vector3> vertices;
+	std::vector<Vector3> textureCoordinates;
 	std::vector<Vector3> normals;
 	std::vector<Triangle> triangles;
 	std::size_t skippedDegenerateTriangles = 0;
@@ -388,6 +425,10 @@ std::size_t	parseObjFile(Mesh& mesh, std::ifstream& stream, const ObjTransform& 
 		{
 			vertices.push_back(parseVectorValues(line.substr(2), line));
 		}
+		else if (line.rfind("vt ", 0) == 0)
+		{
+			textureCoordinates.push_back(parseTextureValues(line.substr(3), line));
+		}
 		else if (line.rfind("vn ", 0) == 0)
 		{
 			normals.push_back(parseVectorValues(line.substr(3), line));
@@ -401,7 +442,7 @@ std::size_t	parseObjFile(Mesh& mesh, std::ifstream& stream, const ObjTransform& 
 			faceVertices.reserve(4);
 			while (lineStream >> token)
 			{
-				faceVertices.push_back(parseFaceVertex(token, vertices.size(), normals.size()));
+				faceVertices.push_back(parseFaceVertex(token, vertices.size(), textureCoordinates.size(), normals.size()));
 			}
 			if (faceVertices.size() < 3)
 			{
@@ -412,6 +453,7 @@ std::size_t	parseObjFile(Mesh& mesh, std::ifstream& stream, const ObjTransform& 
 			{
 				Triangle triangle = buildTriangle(
 					vertices,
+					textureCoordinates,
 					normals,
 					faceVertices.at(0),
 					faceVertices.at(index),

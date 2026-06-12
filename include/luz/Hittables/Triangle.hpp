@@ -23,6 +23,8 @@ class   Triangle : public Hittable
 		void			setVertex0(Vector3 vertex0);
 		void			setVertex1(Vector3 vertex1);
 		void			setVertex2(Vector3 vertex2);
+		void			setVertexNormals(Vector3 normal0, Vector3 normal1, Vector3 normal2);
+		void			setTextureCoordinates(Vector3 uv0, Vector3 uv1, Vector3 uv2);
 		virtual std::shared_ptr<Material> getMaterial(void) const override;
 		void			setMaterial(std::shared_ptr<Material> material);
 		virtual bool	hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) const override;
@@ -43,12 +45,16 @@ class   Triangle : public Hittable
 		Vector3	 _normal0;
 		Vector3	 _normal1;
 		Vector3	 _normal2;
+		Vector3	 _uv0;
+		Vector3	 _uv1;
+		Vector3	 _uv2;
 		Vector3	 _edge1;
 		Vector3	 _edge2;
 		Vector3	 _faceNormal;
 		AABB	 _boundingBox;
 		double	 _area;
 		bool	 _hasVertexNormals;
+		bool	 _hasTextureCoordinates;
 		bool	 _isDegenerate;
 		std::shared_ptr<Material>	_material;
 };

@@ -47,6 +47,8 @@ The exporter also works without passing the `.blend` file before `--python`:
 --light-power-scale N         Convert Blender light energy to Luz intensity. Defaults to 0.01.
 --sun-power-scale N           Convert Blender sun energy to Luz intensity. Defaults to 1.0.
 --camera-aperture N           Override Luz camera aperture.
+--texture-dir DIR             Texture output directory. Defaults to textures next to the .luz file.
+--texture-max-size N          Maximum exported texture width/height. Defaults to 1024.
 --no-texture-colors           Skip image texture color approximation.
 --texture-sample-size N       Thumbnail size for image color averaging. Defaults to 64.
 --profile                     Print per-stage exporter progress and timings.
@@ -60,6 +62,8 @@ The exporter also works without passing the `.blend` file before `--python`:
 - Blender's Z-up world is converted to Luz's Y-up world.
 - Evaluated Blender corner normals are exported as OBJ `vn` data so Luz can
   preserve smooth shading.
+- Active Blender UV coordinates are exported as OBJ `vt` data and used by Luz
+  when a material has a texture.
 - Blender World camera background is exported as `sky=none` plus
   `background=(R,G,B)` unless `--sky` overrides the sky mode. Light Path mixes
   that separate camera rays from non-camera rays are handled for the camera
@@ -84,14 +88,22 @@ The exporter also works without passing the `.blend` file before `--python`:
 - Common Blender shader nodes connected to Material Output are mapped into
   Luz material properties, including diffuse, glossy, glass, emission,
   Principled, mix, add, RGB/value, image average color, and color ramp values.
-- Blender material values are written as `type=principled` named materials for
+- Image textures connected directly to Principled BSDF Base Color or Diffuse
+  BSDF Color are exported as PPM textures, downscaled by `--texture-max-size`,
+  and referenced from the generated named material with `texture=...`.
+- When a material has multiple Material Output nodes, the exporter prefers the
+  output target that matches the scene render engine, such as Cycles or EEVEE.
+- Blender material values are written as named material property blocks for
   Luz's scene parser to approximate.
 
 ## Current Limits
 
-- UVs, procedural textures, and full shader graphs are not exported. Image
-  texture colors are approximated by averaging a temporary thumbnail, controlled
-  by `--texture-sample-size`.
+- Only direct image textures feeding the selected shader's base color are
+  exported as texture files. Procedural textures, normal maps, bump maps,
+  displacement, and full shader graphs are not exported as texture networks.
+- Image texture export uses Luz's built-in PPM texture loader. When no usable
+  Base Color image texture is found, image colors can still be approximated by
+  averaging a temporary thumbnail, controlled by `--texture-sample-size`.
 - Per-face materials are preserved by splitting mesh objects into one OBJ per
   material slot.
 - Instancing is baked into separate OBJ files.

@@ -193,12 +193,21 @@ color=(1.0,1.0,1.0)
 material principled_export {
 type=principled
 base_color=(0.8,0.2,0.1)
+texture=textures/albedo.ppm
 metallic=0
 roughness=0.5
 emission=(1.0,0.6,0.3)
 emissionStrength=0
 }
 ```
+
+Named material property blocks can attach an image texture with `texture=PATH`.
+Aliases are `baseColorTexture`, `base_color_texture`, and `albedo`. Texture
+paths are resolved like other assets: relative to the scene file, relative to
+the current working directory, then under common asset directories including
+`textures/` and `assets/textures/`. Luz currently loads PPM `P3` and `P6`
+texture files. Textures are sampled with OBJ UV coordinates and multiplied by
+the material's base color.
 
 `type=principled` is an approximation for Blender exporter output. Emissive
 principled materials become `emissive`, metallic materials become `metal`,
@@ -219,6 +228,8 @@ file=assets/objects/blender_monkey.obj
 Named object blocks can reference `mesh=NAME` or provide `file=PATH` directly.
 OBJ vertices are transformed with `scale`, then `rotation` in degrees around
 X/Y/Z, then `position`.
+OBJ `vn` normals are used for smooth shading. OBJ `vt` texture coordinates are
+used when the selected material has a texture.
 
 ```text
 object suzanne {

@@ -15,7 +15,7 @@ Isotropic::Isotropic(Color color)
 bool	Isotropic::scatter(Ray& ray, HitRecord& hitRecord, ScatterRecord& scatterRecord)
 {
 	scatterRecord.isSpecular = false;
-	scatterRecord.attenuation = this->_color;
+	scatterRecord.attenuation = this->colorAt(hitRecord);
 	scatterRecord.pdfType = SCATTER_PDF_SPHERE;
 
 	return (true);

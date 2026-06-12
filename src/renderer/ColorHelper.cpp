@@ -274,7 +274,7 @@ namespace
 		{
 			normal = Utilities::normalize(normal);
 		}
-		const Color albedo = hitRecord.material ? hitRecord.material->getColor() : Color(0.0, 0.0, 0.0);
+		const Color albedo = hitRecord.material ? hitRecord.material->colorAt(hitRecord) : Color(0.0, 0.0, 0.0);
 		const double materialType = hitRecord.material
 			? static_cast<double>(hitRecord.material->getType()) / static_cast<double>(PRINCIPLED)
 			: 0.0;
