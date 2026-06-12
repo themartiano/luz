@@ -1,6 +1,7 @@
 #include "Blur/Gaussian.hpp"
 #include <cstddef>
 #include <cmath>
+#include <numbers>
 #include <stdexcept>
 
 Gaussian::Kernel	Gaussian::createKernel(unsigned int diameter, double amount)
@@ -30,7 +31,7 @@ Gaussian::Kernel	Gaussian::createKernel(unsigned int diameter, double amount)
 		for (int y = -radius; y <= radius; y++)
 		{
 			r = sqrt(x * x + y * y);
-			kernel[static_cast<std::size_t>(x + radius)][static_cast<std::size_t>(y + radius)] = (exp(-(r * r) / s)) / (M_PI * s);
+			kernel[static_cast<std::size_t>(x + radius)][static_cast<std::size_t>(y + radius)] = (exp(-(r * r) / s)) / (std::numbers::pi * s);
 			sum += kernel[static_cast<std::size_t>(x + radius)][static_cast<std::size_t>(y + radius)];
 		}
 	}
