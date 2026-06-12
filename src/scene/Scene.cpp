@@ -48,6 +48,8 @@ Scene::Scene(void)
 	this->_maxLightBounces = D_MAX_LIGHT_BOUNCES;
 	this->_gammaCorrected = true;
 	this->_toneMapped = true;
+	this->_exposure = D_EXPOSURE;
+	this->_contrast = D_CONTRAST;
 	this->_skyline = 0.5;
 	this->_renderSky = SKY_ATMOSPHERE;
 	this->_distanceBlueness = true;
@@ -192,6 +194,34 @@ bool	Scene::getToneMapped(void) const
 void	Scene::setToneMapped(bool toneMapped)
 {
 	this->_toneMapped = toneMapped;
+}
+
+double	Scene::getExposure(void) const
+{
+	return (this->_exposure);
+}
+
+void	Scene::setExposure(double exposure)
+{
+	if (!std::isfinite(exposure) || !std::isfinite(std::pow(2.0, exposure)))
+	{
+		throw std::invalid_argument("Exposure must be finite.");
+	}
+	this->_exposure = exposure;
+}
+
+double	Scene::getContrast(void) const
+{
+	return (this->_contrast);
+}
+
+void	Scene::setContrast(double contrast)
+{
+	if (!std::isfinite(contrast) || contrast < 0.0)
+	{
+		throw std::invalid_argument("Contrast must be non-negative.");
+	}
+	this->_contrast = contrast;
 }
 
 // Returns Skyline (used on sky colors interpolation)

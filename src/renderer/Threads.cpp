@@ -54,14 +54,27 @@ namespace
 
 	void	applyBloom(Image& image)
 	{
-		auto brightnessImage = image.extractBrightness();
+		auto brightnessImage = image.extractBloom(D_BLOOM_THRESHOLD, D_BLOOM_SOFT_KNEE);
+		Image bloomImage(image.getWidth(), image.getHeight());
 
-		Gaussian::blur(*brightnessImage, *brightnessImage, 5, 1.0);
-		image += *brightnessImage;
+		bloomImage.initialize();
+		Gaussian::blur(*brightnessImage, bloomImage, 9, 2.0);
+		for (std::size_t y = 0; y < image.getHeight(); y++)
+		{
+			for (std::size_t x = 0; x < image.getWidth(); x++)
+			{
+				image.setPixel(
+					x,
+					y,
+					image.getPixel(x, y) + (bloomImage.getPixel(x, y) * D_BLOOM_INTENSITY)
+				);
+			}
+		}
 	}
 
 	void	applyPostProcessing(Scene& scene, Image& image)
 	{
+		image.applyExposure(scene.getExposure());
 		if (scene.getBloom())
 		{
 			applyBloom(image);
@@ -69,6 +82,10 @@ namespace
 		if (scene.getToneMapped())
 		{
 			image.toneMap();
+		}
+		if (scene.getContrast() != D_CONTRAST)
+		{
+			image.applyContrast(scene.getContrast());
 		}
 		if (scene.getGammaCorrected())
 		{

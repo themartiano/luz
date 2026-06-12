@@ -125,7 +125,8 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 	parser.add_argument("--sky", choices=("linear", "none", "atmosphere"), help="Override Luz sky mode.")
 	parser.add_argument("--render-output", help="Luz render output filename. .bmp is appended by Luz when omitted.")
 	parser.add_argument("--global-scale", type=float, default=1.0, help="Scale all exported positions and mesh vertices.")
-	parser.add_argument("--light-power-scale", type=float, default=0.01, help="Multiplier from Blender light energy to Luz intensity.")
+	parser.add_argument("--light-power-scale", type=float, default=1.0, help="Additional multiplier after Blender light energy is converted to Luz intensity.")
+	parser.add_argument("--min-point-light-radius", type=float, default=0.1, help="Minimum Blender-unit radius for point and spot lights. Use 0 for legacy tiny-light export. Defaults to 0.1.")
 	parser.add_argument("--sun-power-scale", type=float, default=1.0, help="Multiplier from Blender sun energy to Luz intensity.")
 	parser.add_argument("--camera-aperture", type=float, help="Override Luz camera lens diameter in world units.")
 	parser.add_argument("--default-focus-distance", type=float, default=10.0, help="Fallback focus distance in Blender units.")
@@ -134,7 +135,10 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 	parser.add_argument("--texture-max-size", type=int, default=1024, help="Maximum exported texture side length. Defaults to 1024.")
 	parser.add_argument("--profile", action="store_true", help="Print per-stage exporter progress and timings.")
 	parser.set_defaults(sample_texture_colors=True)
-	return parser.parse_args(argv)
+	args = parser.parse_args(argv)
+	if not math.isfinite(args.min_point_light_radius) or args.min_point_light_radius < 0.0:
+		parser.error("--min-point-light-radius must be a finite non-negative value.")
+	return args
 
 
 def slugify(value: str, fallback: str) -> str:
@@ -1188,6 +1192,16 @@ def light_color(light_data: object) -> tuple[float, float, float]:
 	return color_from_value(getattr(light_data, "color", (1.0, 1.0, 1.0)), (1.0, 1.0, 1.0))
 
 
+def blender_area_light_intensity(energy: float, width: float, height: float, scale: float) -> float:
+	area = max(width * height, 1e-12)
+	return max(energy * scale / (math.pi * area), 0.0)
+
+
+def blender_point_light_intensity(energy: float, radius: float, scale: float) -> float:
+	radius = max(radius, 1e-6)
+	return max(energy * scale / (4.0 * math.pi * math.pi * radius * radius), 0.0)
+
+
 def atmosphere_angle_from_sun_direction(direction: Vector) -> float | None:
 	scene_to_sun = -direction
 	projected = Vector((0.0, scene_to_sun.y, scene_to_sun.z))
@@ -1215,19 +1229,20 @@ def export_lights(args: argparse.Namespace, bounds: Bounds) -> list[LuzLight]:
 		direction = blender_vector_to_luz(object_.matrix_world.to_quaternion() @ Vector((0.0, 0.0, -1.0)))
 		color = light_color(data)
 		energy = float(getattr(data, "energy", 1.0))
-		intensity_scale = args.sun_power_scale if data.type == "SUN" else args.light_power_scale
-		intensity = max(energy * intensity_scale, 0.0)
-		log_profile(
-			args,
-			f"Light '{object_.name}' type={data.type} energy={fmt_float(energy)} "
-			f"intensity={fmt_float(intensity)} direction={fmt_vector(direction)}",
-		)
 
 		if data.type == "AREA":
-			width = float(getattr(data, "size", 1.0)) * args.global_scale
-			height = width
+			blender_width = float(getattr(data, "size", 1.0))
+			blender_height = blender_width
 			if getattr(data, "shape", "") in {"RECTANGLE", "ELLIPSE"}:
-				height = float(getattr(data, "size_y", width)) * args.global_scale
+				blender_height = float(getattr(data, "size_y", blender_width))
+			width = blender_width * args.global_scale
+			height = blender_height * args.global_scale
+			intensity = blender_area_light_intensity(energy, blender_width, blender_height, args.light_power_scale)
+			log_profile(
+				args,
+				f"Light '{object_.name}' type={data.type} energy={fmt_float(energy)} "
+				f"intensity={fmt_float(intensity)} direction={fmt_vector(direction)}",
+			)
 			lights.append(
 				LuzLight(
 					kind="area_light",
@@ -1241,6 +1256,12 @@ def export_lights(args: argparse.Namespace, bounds: Bounds) -> list[LuzLight]:
 				)
 			)
 		elif data.type == "SUN":
+			intensity = max(energy * args.sun_power_scale, 0.0)
+			log_profile(
+				args,
+				f"Light '{object_.name}' type={data.type} energy={fmt_float(energy)} "
+				f"intensity={fmt_float(intensity)} direction={fmt_vector(direction)}",
+			)
 			lights.append(
 				LuzLight(
 					kind="directional_light",
@@ -1252,7 +1273,18 @@ def export_lights(args: argparse.Namespace, bounds: Bounds) -> list[LuzLight]:
 				)
 			)
 		else:
-			radius = max(float(getattr(data, "shadow_soft_size", 0.1)) * args.global_scale, 1e-6)
+			blender_radius = max(
+				float(getattr(data, "shadow_soft_size", args.min_point_light_radius)),
+				args.min_point_light_radius,
+				1e-6,
+			)
+			radius = max(blender_radius * args.global_scale, 1e-6)
+			intensity = blender_point_light_intensity(energy, blender_radius, args.light_power_scale)
+			log_profile(
+				args,
+				f"Light '{object_.name}' type={data.type} energy={fmt_float(energy)} "
+				f"intensity={fmt_float(intensity)} direction={fmt_vector(direction)}",
+			)
 			lights.append(
 				LuzLight(
 					kind="point_light",
@@ -1536,6 +1568,7 @@ def write_luz_scene(
 					f"radius={fmt_float(light.radius)}",
 					f"color={fmt_color(light.color)}",
 					f"intensity={fmt_float(light.intensity)}",
+					"visible=0",
 					"}",
 				]
 			)

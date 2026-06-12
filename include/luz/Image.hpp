@@ -22,8 +22,11 @@ class	Image
 		void		initialize(void);
 		Color&		at(std::size_t index);
 		void		fill(Color color);
+		void		applyExposure(double exposure);
+		void		applyContrast(double contrast);
 		void		gammaCorrect(void);
 		void		toneMap(void);
+		std::unique_ptr<Image>	extractBloom(double threshold, double softKnee) const;
 		std::unique_ptr<Image>	extractBrightness(void) const;
 
 		Image&	operator+=(const Image& other);

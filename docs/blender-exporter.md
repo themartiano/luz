@@ -44,7 +44,8 @@ The exporter also works without passing the `.blend` file before `--python`:
 --sky linear|none|atmosphere  Override exported Luz sky mode.
 --render-output PATH          Luz render output path.
 --global-scale N              Scale exported positions, meshes, and light sizes.
---light-power-scale N         Convert Blender light energy to Luz intensity. Defaults to 0.01.
+--light-power-scale N         Extra multiplier after Blender lamp energy conversion. Defaults to 1.0.
+--min-point-light-radius N    Minimum Blender-unit radius for point/spot lights. Defaults to 0.1.
 --sun-power-scale N           Convert Blender sun energy to Luz intensity. Defaults to 1.0.
 --camera-aperture N           Override Luz camera aperture.
 --texture-dir DIR             Texture output directory. Defaults to textures next to the .luz file.
@@ -74,8 +75,18 @@ The exporter also works without passing the `.blend` file before `--python`:
   DOF aperture is disabled unless Blender provides a valid focus target/distance.
 - Blender f-stop DOF is converted to a Luz world-unit lens diameter from
   `camera.lens / aperture_fstop`.
-- Area lights become `area_light` blocks.
+- Area lights become `area_light` blocks. Blender's area-light energy is treated
+  as total emitted power and converted to Luz surface intensity with
+  `energy / (pi * width * height)`, then multiplied by `--light-power-scale`.
 - Point and spot lights become small emissive `point_light` sphere blocks.
+  Blender's point-light energy is treated as total emitted power and converted
+  to Luz sphere surface intensity with `energy / (4 * pi^2 * radius^2)`, then
+  multiplied by `--light-power-scale`. When Blender's light softness is zero,
+  `--min-point-light-radius` prevents near-zero export radii from producing
+  extreme surface intensity. Exported point and spot lights use `visible=0` so
+  their emissive sampling spheres do not render as visible bulbs. Use
+  `--min-point-light-radius 0` to preserve the old tiny-light intensity
+  conversion.
 - Sun lights become `directional_light` blocks. They use
   `--sun-power-scale`, not `--light-power-scale`, because Blender SUN energy is
   directional rather than finite-area power.

@@ -15,6 +15,7 @@
 #include "Hittables/Rectangle.hpp"
 #include "Hittables/Sphere.hpp"
 #include "Hittables/Triangle.hpp"
+#include "Blur/Gaussian.hpp"
 #include "Defaults.hpp"
 #include "Random.hpp"
 #include "Transform.hpp"
@@ -26,6 +27,7 @@
 #include <fstream>
 #include <iostream>
 #include <iterator>
+#include <limits>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -184,6 +186,88 @@ namespace
 		requireNear(pixel.getRed(), 0.0, "Tone mapping black changed red value.");
 		requireNear(pixel.getGreen(), 0.0, "Tone mapping black changed green value.");
 		requireNear(pixel.getBlue(), 0.0, "Tone mapping black changed blue value.");
+	}
+
+	void	testToneMappingCompressesHighlights(void)
+	{
+		Image image(1, 1);
+		image.initialize();
+		image.setPixel(0, 0, Color(4.0, 2.0, 1.0));
+
+		image.toneMap();
+		const Color pixel = image.getPixel(0, 0);
+
+		require(pixel.getRed() > pixel.getGreen(), "Tone mapping did not preserve channel order.");
+		require(pixel.getGreen() > pixel.getBlue(), "Tone mapping did not preserve highlight color.");
+		require(pixel.getRed() <= 1.0, "Tone mapping did not compress red highlight.");
+		require(pixel.getGreen() <= 1.0, "Tone mapping did not compress green highlight.");
+		require(pixel.getBlue() <= 1.0, "Tone mapping did not compress blue highlight.");
+		require(pixel.getRed() > 0.0, "Tone mapping crushed red highlight.");
+	}
+
+	void	testSRGBGammaCorrection(void)
+	{
+		Image image(1, 1);
+		image.initialize();
+		image.setPixel(0, 0, Color(0.0031308, 0.25, -1.0));
+
+		image.gammaCorrect();
+		const Color pixel = image.getPixel(0, 0);
+
+		requireNear(pixel.getRed(), 0.040449936, "sRGB gamma linear segment is wrong.");
+		requireNear(pixel.getGreen(), 0.5370987304831942, "sRGB gamma power segment is wrong.");
+		requireNear(pixel.getBlue(), 0.0, "sRGB gamma did not clamp negative values.");
+	}
+
+	void	testExposureAndContrast(void)
+	{
+		Image image(1, 1);
+		image.initialize();
+		image.setPixel(0, 0, Color(0.25, 0.5, 1.0));
+
+		image.applyExposure(1.0);
+		Color pixel = image.getPixel(0, 0);
+		requireNear(pixel.getRed(), 0.5, "Exposure did not double red channel.");
+		requireNear(pixel.getGreen(), 1.0, "Exposure did not double green channel.");
+		requireNear(pixel.getBlue(), 2.0, "Exposure did not double blue channel.");
+
+		image.setPixel(0, 0, Color(0.25, 0.5, 0.75));
+		image.applyContrast(2.0);
+		pixel = image.getPixel(0, 0);
+		requireNear(pixel.getRed(), 0.0, "Contrast lower endpoint is wrong.");
+		requireNear(pixel.getGreen(), 0.5, "Contrast pivot is wrong.");
+		requireNear(pixel.getBlue(), 1.0, "Contrast upper endpoint is wrong.");
+	}
+
+	void	testBloomExtractionPreservesHighlightColor(void)
+	{
+		Image image(2, 1);
+		image.initialize();
+		image.setPixel(0, 0, Color(4.0, 1.0, 0.0));
+		image.setPixel(1, 0, Color(0.1, 0.1, 0.1));
+
+		auto bloom = image.extractBloom(1.0, 0.0);
+		const Color highlight = bloom->getPixel(0, 0);
+		const Color dark = bloom->getPixel(1, 0);
+
+		require(highlight.getRed() > highlight.getGreen(), "Bloom extraction did not preserve highlight hue.");
+		requireNear(highlight.getBlue(), 0.0, "Bloom extraction added blue to a warm highlight.");
+		requireNear(dark.getRed(), 0.0, "Bloom extraction included sub-threshold red.");
+		requireNear(dark.getGreen(), 0.0, "Bloom extraction included sub-threshold green.");
+		requireNear(dark.getBlue(), 0.0, "Bloom extraction included sub-threshold blue.");
+	}
+
+	void	testGaussianBlurSupportsInPlaceSmallImages(void)
+	{
+		Image image(3, 3);
+		image.initialize();
+		image.setPixel(1, 1, Color(1.0, 1.0, 1.0));
+
+		Gaussian::blur(image, image, 3, 1.0);
+		const Color center = image.getPixel(1, 1);
+
+		require(std::isfinite(center.getRed()), "In-place Gaussian blur produced non-finite red.");
+		require(center.getRed() > 0.0, "In-place Gaussian blur lost the center sample.");
 	}
 
 	void	testTerminalFilePath(void)
@@ -380,6 +464,31 @@ namespace
 		std::filesystem::remove(scenePath);
 	}
 
+	void	testSceneFilePostProcessSettings(void)
+	{
+		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_scene_postprocess_test.luz";
+		{
+			std::ofstream stream(scenePath);
+			stream
+				<< "[settings]\n"
+				<< "gamma=0\n"
+				<< "tonemapping=0\n"
+				<< "bloom=0\n"
+				<< "exposure=1.5\n"
+				<< "contrast=1.25\n\n";
+		}
+
+		Scene scene;
+		SceneFile::read(scene, scenePath.string());
+		require(!scene.getGammaCorrected(), "Scene gamma setting was not applied.");
+		require(!scene.getToneMapped(), "Scene tonemapping setting was not applied.");
+		require(!scene.getBloom(), "Scene bloom setting was not applied.");
+		requireNear(scene.getExposure(), 1.5, "Scene exposure setting was not applied.");
+		requireNear(scene.getContrast(), 1.25, "Scene contrast setting was not applied.");
+
+		std::filesystem::remove(scenePath);
+	}
+
 	void	requireSceneFileSettingThrows(const std::string& settingLine, const std::string& message)
 	{
 		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_invalid_setting_test.luz";
@@ -415,7 +524,10 @@ namespace
 		requireSceneFileSettingThrows("adaptivecheckinterval=0", "Scene file accepted zero adaptive check interval.");
 		requireSceneFileSettingThrows("maxlightbounces=-1", "Scene file accepted negative max light bounces.");
 		requireSceneFileSettingThrows("gamma=2", "Scene file accepted non-binary gamma.");
+		requireSceneFileSettingThrows("tonemapping=2", "Scene file accepted non-binary tone mapping.");
 		requireSceneFileSettingThrows("bloom=2", "Scene file accepted non-binary bloom.");
+		requireSceneFileSettingThrows("exposure=nan", "Scene file accepted non-finite exposure.");
+		requireSceneFileSettingThrows("contrast=-1", "Scene file accepted negative contrast.");
 		requireSceneFileSettingThrows("denoise=2", "Scene file accepted non-binary denoise.");
 		requireSceneFileSettingThrows("denoiseoutputfilename=", "Scene file accepted empty denoise output name.");
 		requireSceneFileSettingThrows("sky=wat", "Scene file accepted unknown sky setting.");
@@ -466,10 +578,10 @@ namespace
 	void	testSceneFileLoadsRelativeObject(void)
 	{
 		Scene scene;
-		SceneFile::read(scene, "examples/scenes/demo.luz");
+		SceneFile::read(scene, "examples/scenes/blender_monkey.luz");
 
-		require(scene.hasCamera(), "Demo scene did not load a camera.");
-		require(!scene.getHittables().empty(), "Demo scene did not load any hittables.");
+		require(scene.hasCamera(), "Example scene did not load a camera.");
+		require(!scene.getHittables().empty(), "Example scene did not load any hittables.");
 	}
 
 	void	testSceneFileLoadsTransformedObject(void)
@@ -574,6 +686,7 @@ namespace
 				<< "radius=0.25\n"
 				<< "color=(0.5,0.6,1.0)\n"
 				<< "intensity=1.5\n"
+				<< "visible=0\n"
 				<< "}\n";
 		}
 
@@ -587,6 +700,14 @@ namespace
 		require(scene.getHittables()[1]->getMaterial()->getType() == EMISSIVE, "Area light did not create an emissive hittable.");
 		require(scene.getHittables()[2]->getMaterial()->getType() == EMISSIVE, "Directional light did not create an emissive hittable.");
 		require(scene.getHittables()[3]->getMaterial()->getType() == EMISSIVE, "Point light did not create an emissive hittable.");
+		auto pointLight = std::dynamic_pointer_cast<Sphere>(scene.getHittables()[3]);
+		require(pointLight != nullptr, "Point light did not create a sphere light.");
+		require(!pointLight->isVisible(), "Point light visible flag was not parsed.");
+		Ray pointLightRay(Vector3(2.0, 2.0, 3.0), Vector3(0.0, 0.0, -1.0));
+		HitRecord pointLightHit;
+		require(!pointLight->hit(pointLightRay, pointLightHit, 0.001, 100.0), "Invisible point light was visible to camera rays.");
+		HittableLightSample pointLightSample;
+		require(pointLight->sampleLight(Vector3(0.0, 0.0, 0.0), pointLightSample), "Invisible point light could not be sampled.");
 
 		scene.updateLights();
 		require(scene.getLights().size() == 3, "Named-block lights were not registered as lights.");
@@ -1096,6 +1217,23 @@ namespace
 		require(fileBenchmarkScene->getImage()->getHeight() == 2, "--benchmark replaced the loaded file scene height.");
 	}
 
+	void	testFlagsParsePostProcessOptions(void)
+	{
+		std::unique_ptr<Scene> scene = parseFlags({
+			"--gamma", "false",
+			"--tonemapping", "false",
+			"--bloom", "false",
+			"--exposure", "1.25",
+			"--contrast", "1.5"
+		});
+
+		require(!scene->getGammaCorrected(), "--gamma false was not parsed.");
+		require(!scene->getToneMapped(), "--tonemapping false was not parsed.");
+		require(!scene->getBloom(), "--bloom false was not parsed.");
+		requireNear(scene->getExposure(), 1.25, "--exposure was not parsed.");
+		requireNear(scene->getContrast(), 1.5, "--contrast was not parsed.");
+	}
+
 	void	testFlagsParseDenoiseOptions(void)
 	{
 		std::unique_ptr<Scene> enabledScene = parseFlags({"--denoise"});
@@ -1172,6 +1310,10 @@ namespace
 		requireFlagParseThrows({"--maxLightBounces", "-1"}, "CLI accepted negative max light bounces.");
 		requireFlagParseThrows({"--resolution", "-1x100"}, "CLI accepted negative width.");
 		requireFlagParseThrows({"--threads", "0"}, "CLI accepted zero threads.");
+		requireFlagParseThrows({"--exposure"}, "CLI accepted missing exposure.");
+		requireFlagParseThrows({"--exposure", "nan"}, "CLI accepted non-finite exposure.");
+		requireFlagParseThrows({"--contrast"}, "CLI accepted missing contrast.");
+		requireFlagParseThrows({"--contrast", "-1"}, "CLI accepted negative contrast.");
 		requireFlagParseThrows({"--denoise", "maybe"}, "CLI accepted invalid denoise value.");
 		requireFlagParseThrows({"--output"}, "CLI accepted missing output path.");
 		requireFlagParseThrows({"--denoise-output"}, "CLI accepted missing denoise output path.");
@@ -1188,6 +1330,9 @@ namespace
 		requireThrows([&]() { scene.setAdaptiveCheckInterval(0); }, "Scene accepted zero adaptive check interval.");
 		requireThrows([&]() { scene.setMaxLightBounces(-1); }, "Scene accepted negative max light bounces.");
 		requireThrows([&]() { scene.setRenderingThreads(0); }, "Scene accepted zero rendering threads.");
+		requireThrows([&]() { scene.setExposure(std::numeric_limits<double>::quiet_NaN()); }, "Scene accepted non-finite exposure.");
+		requireThrows([&]() { scene.setContrast(-1.0); }, "Scene accepted negative contrast.");
+		requireThrows([&]() { scene.setContrast(std::numeric_limits<double>::quiet_NaN()); }, "Scene accepted non-finite contrast.");
 		requireThrows([&]() { image.setWidth(0); }, "Image accepted zero width.");
 		requireThrows([&]() { image.setHeight(0); }, "Image accepted zero height.");
 		requireThrows([&]() { Atmosphere().setSamples(0); }, "Atmosphere accepted zero samples.");
@@ -1360,6 +1505,11 @@ int	main(void)
 	{
 		testColorMath();
 		testToneMappingBlackPixel();
+		testToneMappingCompressesHighlights();
+		testSRGBGammaCorrection();
+		testExposureAndContrast();
+		testBloomExtractionPreservesHighlightColor();
+		testGaussianBlurSupportsInPlaceSmallImages();
 		testTerminalFilePath();
 		testNonSquareBMP();
 		testNonSquareTIFF();
@@ -1367,6 +1517,7 @@ int	main(void)
 		testSceneFileTiffOutputName();
 		testSceneFileDenoiseOutputName();
 		testSceneFileAdaptiveSettings();
+		testSceneFilePostProcessSettings();
 		testSceneFileRejectsInvalidSettings();
 		testSceneFileBackgroundSetting();
 		testSceneFileLegacyCameraPreservesDecimalFOV();
@@ -1387,6 +1538,7 @@ int	main(void)
 		testRectangleRandomSamplesSupportedAxes();
 		testCubeBoundingBoxAndSetters();
 		testHittablePDFAveragesMultipleLights();
+		testFlagsParsePostProcessOptions();
 		testFlagsParseDenoiseOptions();
 		testFlagsParseBenchmarkFileOptions();
 		testFlagsParseAdaptiveOptions();

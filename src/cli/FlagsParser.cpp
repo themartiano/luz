@@ -51,6 +51,8 @@ void	FlagsParser::parse(Scene& scene)
 	this->_parseGamma(scene);
 	this->_parseToneMapping(scene);
 	this->_parseBloom(scene);
+	this->_parseExposure(scene);
+	this->_parseContrast(scene);
 	this->_parseDenoise(scene);
 	this->_parseOutput(scene);
 	this->_parseDenoiseOutput(scene);
@@ -80,6 +82,8 @@ void	FlagsParser::_parseHelp(void)
 			<< "  --gamma true|false          Toggle gamma correction\n"
 			<< "  -tm, --tonemapping true|false  Toggle tone mapping\n"
 			<< "  --bloom true|false          Toggle bloom\n"
+			<< "  --exposure EV              Exposure compensation in stops\n"
+			<< "  --contrast F               Display contrast multiplier\n"
 			<< "  --denoise [true|false]      Write a denoised companion render\n"
 			<< "  --no-denoise                Disable denoising\n"
 			<< "  -o, --output PATH           Override render output path\n"
@@ -417,6 +421,32 @@ void	FlagsParser::_parseBloom(Scene& scene)
 		{
 			throw std::runtime_error("Invalid value for --bloom. Use true, false, 1, or 0.");
 		}
+	}
+}
+
+void	FlagsParser::_parseExposure(Scene& scene)
+{
+	auto it = this->_findFlag("--exposure");
+	if (it != this->_args.end())
+	{
+		if (it + 1 == this->_args.end())
+		{
+			throw std::runtime_error("--exposure requires a value.");
+		}
+		scene.setExposure(std::stod(*(it + 1)));
+	}
+}
+
+void	FlagsParser::_parseContrast(Scene& scene)
+{
+	auto it = this->_findFlag("--contrast");
+	if (it != this->_args.end())
+	{
+		if (it + 1 == this->_args.end())
+		{
+			throw std::runtime_error("--contrast requires a value.");
+		}
+		scene.setContrast(std::stod(*(it + 1)));
 	}
 }
 

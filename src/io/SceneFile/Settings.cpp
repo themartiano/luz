@@ -135,6 +135,20 @@ void	SceneFile::internal::_readSettingsSection(Scene& scene, std::ifstream& stre
 			requireBinarySetting(gammaCorrected, "gamma");
 			scene.setGammaCorrected(gammaCorrected);
 		}
+		else if (
+			lowerLine.rfind("tonemapping=", 0) != std::string::npos
+			|| lowerLine.rfind("tone_mapping=", 0) != std::string::npos
+		)
+		{
+			int toneMapped;
+
+			if (sscanf(lowerLine.c_str(), "%*[^=]=%d", &toneMapped) != 1)
+			{
+				throw std::runtime_error("Invalid tonemapping setting. Use tonemapping=0 or tonemapping=1.");
+			}
+			requireBinarySetting(toneMapped, "tonemapping");
+			scene.setToneMapped(toneMapped);
+		}
 		else if (lowerLine.rfind("bloom=", 0) != std::string::npos)
 		{
 			int useBloom;
@@ -145,6 +159,26 @@ void	SceneFile::internal::_readSettingsSection(Scene& scene, std::ifstream& stre
 			}
 			requireBinarySetting(useBloom, "bloom");
 			scene.setBloom(useBloom);
+		}
+		else if (lowerLine.rfind("exposure=", 0) != std::string::npos)
+		{
+			double exposure;
+
+			if (sscanf(lowerLine.c_str(), "exposure=%lf", &exposure) != 1)
+			{
+				throw std::runtime_error("Invalid exposure setting. Use exposure=F.");
+			}
+			scene.setExposure(exposure);
+		}
+		else if (lowerLine.rfind("contrast=", 0) != std::string::npos)
+		{
+			double contrast;
+
+			if (sscanf(lowerLine.c_str(), "contrast=%lf", &contrast) != 1)
+			{
+				throw std::runtime_error("Invalid contrast setting. Use contrast=F.");
+			}
+			scene.setContrast(contrast);
 		}
 		else if (lowerLine.rfind("denoise=", 0) != std::string::npos)
 		{
