@@ -27,6 +27,12 @@ It supports Monte Carlo path tracing, global illumination, BVH acceleration, ada
 - BMP and TIFF output
 - Deterministic benchmark harness with render, denoise, post-process, and score breakdowns
 
+## Requirements
+
+- C++20 compiler
+- Make or CMake 3.16+
+- Python 3, only for optional tools/scripts
+
 ## Quick Start
 
 Build with the Makefile:
@@ -49,51 +55,18 @@ Run the test suite:
 make test
 ```
 
-Run the deterministic default benchmark case:
+## Benchmarking
 
-```sh
-./Luz --benchmark --seed 424242424 --threads 1
-```
+Luz includes deterministic benchmarks for render, denoise, post-process, and
+overall score comparisons.
 
-Run a real scene in benchmark mode:
-
-```sh
-./Luz --file exports/stormtroopers.luz --resolution 320x180 --samples 128 --denoise --adaptive --max-light-bounces 5 --benchmark
-```
-
-Run the containerized benchmark matrix and save raw results:
-
-```sh
+```bash
 make benchmark BENCH_CPUS=1 BENCH_THREADS=1 > before.csv
-```
-
-The benchmark score is printed to stderr at the end of the run, so redirecting stdout still writes a clean raw CSV.
-
-After an optimization, run it again and compare medians:
-
-```sh
 make benchmark BENCH_CPUS=1 BENCH_THREADS=1 > after.csv
 make benchmark-compare BEFORE=before.csv AFTER=after.csv
 ```
 
-Score benchmark results:
-
-```sh
-make benchmark-score RESULTS=after.csv
-```
-
-Each case score is the median kilo-samples per minute for that case.
-Raw benchmark CSVs include elapsed time, render time, denoise time, post-process
-time, total samples rendered, average samples per pixel, actual score, and a
-render-only score. The compare script reports elapsed speedup, render-time
-speedup, score speedup, render-score speedup, and how much non-render work is in
-each case.
-
-The overall score uses the geometric mean of per-case scores, so running the score command on `before.csv` and `after.csv`
-gives comparable scores when the benchmark settings are the same.
-The default benchmark matrix covers Cornell-style lighting, many objects, mesh BVH traversal, diffuse scattering,
-post-processing, atmosphere, mixed light types, emissive geometry, primitives/materials, volumes, OBJ meshes,
-and representative stormtrooper scene cases.
+For details, see [`docs/benchmarks.md`](docs/benchmarks.md).
 
 ## CMake
 
@@ -104,6 +77,23 @@ cmake -S . -B build
 cmake --build build
 ctest --test-dir build
 ```
+
+## Platform Support
+
+Supported platforms:
+
+- macOS
+- Linux
+- Windows
+
+On macOS and Linux, the Makefile is the primary path. On Windows, use CMake with
+MSVC or the MinGW-based Makefile target:
+
+```sh
+make windows
+```
+
+WSL is also supported as a Linux build environment.
 
 ## Build Optimizations
 
