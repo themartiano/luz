@@ -289,6 +289,7 @@ namespace
 		double	radius = 0.1;
 		Color	color = Color(1.0, 1.0, 1.0);
 		double	intensity = 1.0;
+		bool	visible = true;
 	};
 
 	struct DirectionalLightBlock
@@ -482,7 +483,8 @@ namespace
 				scene.addHittable(std::make_shared<Sphere>(
 					light.position,
 					light.radius,
-					std::make_shared<Emissive>(light.color, light.intensity)
+					std::make_shared<Emissive>(light.color, light.intensity),
+					light.visible
 				));
 				return;
 			}
@@ -509,6 +511,16 @@ namespace
 			else if (key == "intensity")
 			{
 				light.intensity = std::stod(value);
+			}
+			else if (key == "visible")
+			{
+				int visible;
+
+				if (sscanf(value.c_str(), "%d", &visible) != 1 || (visible != 0 && visible != 1))
+				{
+					throw std::runtime_error("Sphere light '" + lightName + "' visible must be 0 or 1.");
+				}
+				light.visible = visible != 0;
 			}
 			else
 			{

@@ -34,8 +34,11 @@ The parser is intentionally strict: unknown lines and malformed values throw an 
 | `adaptivecheckinterval` | `adaptivecheckinterval=N` | Sample interval between adaptive convergence checks. Alias: `adaptive_check_interval`. |
 | `maxlightbounces` | `maxlightbounces=N` | Maximum recursive light bounces. |
 | `gamma` | `gamma=0` or `gamma=1` | Enables gamma correction when set to `1`. |
+| `tonemapping` | `tonemapping=0` or `tonemapping=1` | Enables filmic tone mapping when set to `1`. Alias: `tone_mapping`. |
 | `bloom` | `bloom=0` or `bloom=1` | Enables bloom when set to `1`. |
-| `denoise` | `denoise=0` or `denoise=1` | Writes a denoised companion image using the NFOR feature-buffer denoiser before bloom, tone mapping, and gamma correction. |
+| `exposure` | `exposure=F` | Exposure compensation in stops. `1.0` doubles light before bloom and tone mapping; `-1.0` halves it. |
+| `contrast` | `contrast=F` | Display contrast multiplier applied after tone mapping and before gamma correction. `1.0` keeps contrast unchanged. |
+| `denoise` | `denoise=0` or `denoise=1` | Writes a denoised companion image using the NFOR feature-buffer denoiser before exposure, bloom, tone mapping, contrast, and gamma correction. |
 | `denoiseoutputfilename` | `denoiseoutputfilename=PATH` | Optional denoised companion output path. Defaults to `outputfilename` with `_denoised` before the extension. Aliases: `denoiseoutput`, `denoise_output`. |
 | `outputfilename` | `outputfilename=PATH` | `.bmp` is appended if no `.bmp` suffix is present. |
 | `sky` | `sky=none`, `sky=linear`, or `sky=atmosphere` | Selects background rendering. |
@@ -145,6 +148,7 @@ position=(3,4,5)
 radius=0.1
 color=(0.45,0.55,1.0)
 intensity=1.0
+visible=0
 }
 ```
 
@@ -244,8 +248,10 @@ material=matte_red
 `area_light` creates an emissive rectangle and supports arbitrary normals.
 `directional_light` creates an infinite light whose `direction` is the direction
 light travels, suitable for sun lights. `point_light` and `sphere_light` create
-small emissive spheres. These lights are still sampled through Luz's
-emissive-hittable lighting path.
+emissive spheres. These lights are still sampled through Luz's emissive-hittable
+lighting path. Sphere and point lights also accept `visible=0` to hide the light
+surface from camera and shadow rays while keeping it available for direct-light
+sampling.
 
 ## Minimal Example
 

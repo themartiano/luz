@@ -35,6 +35,8 @@ class	FlagsParser
 		void	_parseGamma(Scene& scene);
 		void	_parseToneMapping(Scene& scene);
 		void	_parseBloom(Scene& scene);
+		void	_parseExposure(Scene& scene);
+		void	_parseContrast(Scene& scene);
 		void	_parseDenoise(Scene& scene);
 		void	_parseOutput(Scene& scene);
 		void	_parseDenoiseOutput(Scene& scene);

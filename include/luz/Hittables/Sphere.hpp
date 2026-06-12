@@ -10,10 +10,13 @@ class	Sphere : public Hittable
 	public:
 		Sphere(void);
 		Sphere(Vector3 position, double radius, std::shared_ptr<Material> material);
+		Sphere(Vector3 position, double radius, std::shared_ptr<Material> material, bool visible);
 		Vector3				getPosition(void) const;
 		void				setPosition(Vector3 position);
 		double				getRadius(void) const;
 		void				setRadius(double radius);
+		bool				isVisible(void) const;
+		void				setVisible(bool visible);
 		virtual std::shared_ptr<Material>	getMaterial(void) const override;
 		void				setMaterial(std::shared_ptr<Material> material);
 		virtual bool		hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) const override;
@@ -29,4 +32,5 @@ class	Sphere : public Hittable
 		Vector3		_position;
 		std::shared_ptr<Material>	_material;
 		double		_radius;
+		bool		_visible;
 };

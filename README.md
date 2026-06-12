@@ -21,7 +21,7 @@ Luz is a hand-written C++20 path tracer built from scratch with ZERO third-party
 - Importance sampling with PDFs
 - BVH acceleration, including packed mesh BVHs with binned SAH construction and near-first traversal
 - Atmospheric simulation w/ scattering
-- Depth of field, antialiasing, tone mapping, gamma correction, and bloom
+- Depth of field, antialiasing, exposure, contrast, tone mapping, gamma correction, and bloom
 - BMP and TIFF output
 - Deterministic benchmark harness with render, denoise, post-process, and score breakdowns
 
@@ -33,10 +33,10 @@ Build with the Makefile:
 make
 ```
 
-Render the bundled demo scene:
+Render a bundled example scene:
 
 ```sh
-./Luz --file examples/scenes/demo.luz --samples 50 --resolution 300x300
+./Luz --file examples/scenes/blender_monkey.luz --samples 50 --resolution 300x300
 ```
 
 The default output is `render.bmp`. Scene files can set `outputfilename=...`, and the CLI can override common render settings.
@@ -123,6 +123,8 @@ Usage: ./Luz [options]
   --gamma true|false          Toggle gamma correction
   -tm, --tonemapping true|false  Toggle tone mapping
   --bloom true|false          Toggle bloom
+  --exposure EV              Exposure compensation in stops
+  --contrast F               Display contrast multiplier
   --denoise [true|false]      Write a denoised companion render
   --no-denoise                Disable denoising
   -o, --output PATH           Override render output path
@@ -165,7 +167,7 @@ misleading because each local filter window covers too much of the image.
 
 Example scenes live in `examples/scenes/`. Mesh assets live in `assets/objects/`. The scene-file format is documented in [`docs/scene-files.md`](docs/scene-files.md).
 
-Object paths in `.luz` files are resolved relative to the scene file first, then relative to the current working directory, then under `assets/objects/`. This means `examples/scenes/demo.luz` can reference `../../assets/objects/pyramid.obj` and still run from the repository root.
+Object paths in `.luz` files are resolved relative to the scene file first, then relative to the current working directory, then under `assets/objects/`. This means `examples/scenes/blender_monkey.luz` can reference `../../assets/objects/blender_monkey.obj` and still run from the repository root.
 
 OBJ meshes can also be offset and assigned a scene material:
 

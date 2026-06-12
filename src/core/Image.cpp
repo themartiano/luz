@@ -3,8 +3,62 @@
 #include "ImageFiles/BMP.hpp"
 #include "ImageFiles/TIFF.hpp"
 #include "Utilities.hpp"
+#include <algorithm>
 #include <cmath>
 #include <stdexcept>
+
+namespace
+{
+	double	clampUnit(double value)
+	{
+		if (!std::isfinite(value) || value <= 0.0)
+		{
+			return (0.0);
+		}
+		if (value >= 1.0)
+		{
+			return (1.0);
+		}
+		return (value);
+	}
+
+	double	clampNonNegative(double value)
+	{
+		if (!std::isfinite(value) || value <= 0.0)
+		{
+			return (0.0);
+		}
+		return (value);
+	}
+
+	Color	sanitizeLinear(Color color)
+	{
+		return (Color(
+			clampNonNegative(color.getRed()),
+			clampNonNegative(color.getGreen()),
+			clampNonNegative(color.getBlue())
+		));
+	}
+
+	double	linearToSRGB(double value)
+	{
+		value = clampUnit(value);
+		if (value <= 0.0031308)
+		{
+			return (12.92 * value);
+		}
+		return ((1.055 * std::pow(value, 1.0 / 2.4)) - 0.055);
+	}
+
+	Color	scaleColor(Color color, double scale)
+	{
+		return (Color(
+			color.getRed() * scale,
+			color.getGreen() * scale,
+			color.getBlue() * scale
+		));
+	}
+}
 
 Image::Image(void)
 {
@@ -159,18 +213,55 @@ void	Image::fill(Color color)
 	}
 }
 
+void	Image::applyExposure(double exposure)
+{
+	if (!std::isfinite(exposure))
+	{
+		throw std::invalid_argument("Exposure must be finite.");
+	}
+
+	const double exposureScale = std::pow(2.0, exposure);
+	if (!std::isfinite(exposureScale))
+	{
+		throw std::invalid_argument("Exposure scale must be finite.");
+	}
+
+	for (std::size_t i = 0; i < this->_pixels.getCapacity(); i++)
+	{
+		this->_pixels[i] = scaleColor(sanitizeLinear(this->_pixels[i]), exposureScale);
+	}
+}
+
+void	Image::applyContrast(double contrast)
+{
+	if (!std::isfinite(contrast) || contrast < 0.0)
+	{
+		throw std::invalid_argument("Contrast must be non-negative.");
+	}
+
+	constexpr double pivot = 0.5;
+	for (std::size_t i = 0; i < this->_pixels.getCapacity(); i++)
+	{
+		Color& pixel = this->_pixels[i];
+
+		pixel = Color(
+			clampUnit(((pixel.getRed() - pivot) * contrast) + pivot),
+			clampUnit(((pixel.getGreen() - pivot) * contrast) + pivot),
+			clampUnit(((pixel.getBlue() - pivot) * contrast) + pivot)
+		);
+	}
+}
+
 void	Image::gammaCorrect(void)
 {
 	for (std::size_t i = 0; i < this->_pixels.getCapacity(); i++)
 	{
 		Color& pixel = this->_pixels[i];
 
-		// sRGB EOTF-1
-		// https://www.khronos.org/registry/DataFormat/specs/1.3/dataformat.1.3.html#TRANSFER_SRGB_INVEOTF
 		pixel = Color(
-			1.055 * std::pow(pixel.getRed(), 1.0 / 2.4) - 0.055,
-			1.055 * std::pow(pixel.getGreen(), 1.0 / 2.4) - 0.055,
-			1.055 * std::pow(pixel.getBlue(), 1.0 / 2.4) - 0.055
+			linearToSRGB(pixel.getRed()),
+			linearToSRGB(pixel.getGreen()),
+			linearToSRGB(pixel.getBlue())
 		);
 	}
 }
@@ -181,12 +272,21 @@ void	Image::toneMap(void)
 	{
 		Color& pixel = this->_pixels[i];
 
-		pixel = Utilities::reinhardJodie(pixel);
+		pixel = Utilities::filmicToneMap(sanitizeLinear(pixel));
 	}
 }
 
-std::unique_ptr<Image>	Image::extractBrightness(void) const
+std::unique_ptr<Image>	Image::extractBloom(double threshold, double softKnee) const
 {
+	if (!std::isfinite(threshold) || threshold < 0.0)
+	{
+		throw std::invalid_argument("Bloom threshold must be non-negative.");
+	}
+	if (!std::isfinite(softKnee) || softKnee < 0.0)
+	{
+		throw std::invalid_argument("Bloom soft knee must be non-negative.");
+	}
+
 	std::unique_ptr<Image> brightnessImage = std::make_unique<Image>(this->getWidth(), this->getHeight());
 	brightnessImage->initialize();
 
@@ -194,13 +294,26 @@ std::unique_ptr<Image>	Image::extractBrightness(void) const
 	{
 		for (std::size_t x = 0; x < brightnessImage->getWidth(); x++)
 		{
-			double brightness = Utilities::luminance(this->getPixel(x, y));
+			const Color pixel = sanitizeLinear(this->getPixel(x, y));
+			const double luminance = Utilities::luminance(pixel);
+			double contribution = std::max(luminance - threshold, 0.0);
 
-			brightness = brightness >= 1.0 ? brightness : 0.0; // 1.0 Threshold
+			if (softKnee > 0.0)
+			{
+				const double knee = threshold * softKnee;
+				const double soft = std::clamp(luminance - threshold + knee, 0.0, 2.0 * knee);
+				contribution = std::max(contribution, (soft * soft) / ((4.0 * knee) + 0.00001));
+			}
 
-			brightnessImage->setPixel(x, y, Color(brightness, brightness, brightness));
+			const double weight = luminance > 0.0 ? contribution / luminance : 0.0;
+			brightnessImage->setPixel(x, y, scaleColor(pixel, weight));
 		}
 	}
 
 	return (brightnessImage);
+}
+
+std::unique_ptr<Image>	Image::extractBrightness(void) const
+{
+	return (this->extractBloom(D_BLOOM_THRESHOLD, 0.0));
 }

@@ -16,6 +16,7 @@ Sphere::Sphere(void)
 	this->_position = Vector3();
 	this->_material = std::make_shared<Lambertian>(Color(0.6, 0.6, 0.6));
 	this->_radius = 1.0;
+	this->_visible = true;
 }
 
 // Constructs the Sphere with custom values
@@ -24,6 +25,15 @@ Sphere::Sphere(Vector3 position, double radius, std::shared_ptr<Material> materi
 	this->_position = position;
 	this->_radius = radius;
 	this->_material = material;
+	this->_visible = true;
+}
+
+Sphere::Sphere(Vector3 position, double radius, std::shared_ptr<Material> material, bool visible)
+{
+	this->_position = position;
+	this->_radius = radius;
+	this->_material = material;
+	this->_visible = visible;
 }
 
 // Returns the Sphere's position
@@ -50,6 +60,16 @@ void	Sphere::setRadius(double radius)
 	this->_radius = radius;
 }
 
+bool	Sphere::isVisible(void) const
+{
+	return (this->_visible);
+}
+
+void	Sphere::setVisible(bool visible)
+{
+	this->_visible = visible;
+}
+
 // Returns the Sphere's material
 std::shared_ptr<Material>	Sphere::getMaterial(void) const
 {
@@ -65,6 +85,11 @@ void	Sphere::setMaterial(std::shared_ptr<Material> material)
 // Calculates if the Sphere is hit by 'ray', is closer than 't_max' and farther than T_MIN
 bool	Sphere::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) const
 {
+	if (!this->_visible)
+	{
+		return (false);
+	}
+
 	Vector3 oc = ray.getOrigin() - this->_position;
 	double a = Utilities::dot(ray.getDirection(), ray.getDirection());
 	double b = Utilities::dot(oc, ray.getDirection());
@@ -102,6 +127,11 @@ bool	Sphere::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) con
 
 bool	Sphere::hitAny(Ray& ray, double t_min, double t_max) const
 {
+	if (!this->_visible)
+	{
+		return (false);
+	}
+
 	Vector3 oc = ray.getOrigin() - this->_position;
 	double a = Utilities::dot(ray.getDirection(), ray.getDirection());
 	double b = Utilities::dot(oc, ray.getDirection());
