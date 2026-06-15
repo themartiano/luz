@@ -4,6 +4,8 @@
 
 It supports Monte Carlo path tracing, global illumination, BVH acceleration, adaptive sampling, denoising, atmospheric scattering, custom scene files, and a Blender-to-Luz exporter.
 
+https://github.com/user-attachments/assets/7dc03485-9418-47af-a7e7-c4c4c53b6b70
+
 <img src="./docs/images/stormtroopers.jpg" />
 <img src="./docs/images/bust-statue.jpg" />
 
