@@ -6,7 +6,6 @@ It supports Monte Carlo path tracing, global illumination, BVH acceleration, ada
 
 https://github.com/user-attachments/assets/7dc03485-9418-47af-a7e7-c4c4c53b6b70
 
-<img src="./docs/images/stormtroopers.jpg" />
 <img src="./docs/images/bust-statue.jpg" />
 
 ## Features
@@ -228,6 +227,7 @@ docker/            Benchmark container
 
 ## Showcase
 
+<img src="./docs/images/stormtroopers.jpg" />
 <img src="./docs/images/cornell.jpg" />
 <img src="./docs/images/atmosphere-from-space.jpg" />
 
