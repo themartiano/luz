@@ -60,7 +60,7 @@ bool Hittable::sampleLight(const Vector3& origin, HittableLightSample& sample) c
 
 double Hittable::lightSelectionWeight(void) const
 {
-	const std::shared_ptr<Material> material = this->getMaterial();
+	Material* material = this->getMaterial();
 	if (!material)
 	{
 		return (0.0);

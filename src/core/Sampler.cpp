@@ -105,8 +105,8 @@ namespace
 	Sampler::Sample2D	fallback2D(void)
 	{
 		return (Sampler::Sample2D{
-			randomEngine.doubleFloat(),
-			randomEngine.doubleFloat()
+			static_cast<float>(randomEngine.doubleFloat()),
+			static_cast<float>(randomEngine.doubleFloat())
 		});
 	}
 
@@ -187,8 +187,8 @@ Sampler::Sample2D	Sampler::sample2D(std::uint32_t dimension)
 	if (!usesProgressiveSequence(dimension))
 	{
 		return (Sample2D{
-			hashedSample(dimensionKey, 0),
-			hashedSample(dimensionKey, 1)
+			static_cast<float>(hashedSample(dimensionKey, 0)),
+			static_cast<float>(hashedSample(dimensionKey, 1))
 		});
 	}
 	const std::uint64_t key = contextKey(dimensionKey);
@@ -199,17 +199,17 @@ Sampler::Sample2D	Sampler::sample2D(std::uint32_t dimension)
 	const double sample = static_cast<double>(g_context.sampleIndex) + 1.0;
 
 	return (Sample2D{
-		fract(0.5 + sample * stepX + shiftX),
-		fract(0.5 + sample * stepY + shiftY)
+		static_cast<float>(fract(0.5 + sample * stepX + shiftX)),
+		static_cast<float>(fract(0.5 + sample * stepY + shiftY))
 	});
 }
 
 Vector3	Sampler::cosineHemisphere(std::uint32_t dimension)
 {
 	const Sample2D sample = sample2D(dimension);
-	const double phi = 2.0 * D_PI * sample.x;
-	const double r = std::sqrt(sample.y);
-	const double z = std::sqrt(std::max(0.0, 1.0 - sample.y));
+	const float phi = static_cast<float>(2.0 * D_PI) * sample.x;
+	const float r = std::sqrt(sample.y);
+	const float z = std::sqrt(std::max(0.0f, 1.0f - sample.y));
 
 	return (Vector3(r * std::cos(phi), r * std::sin(phi), z));
 }
@@ -217,9 +217,9 @@ Vector3	Sampler::cosineHemisphere(std::uint32_t dimension)
 Vector3	Sampler::sphereDirection(std::uint32_t dimension)
 {
 	const Sample2D sample = sample2D(dimension);
-	const double z = 1.0 - (2.0 * sample.y);
-	const double r = std::sqrt(std::max(0.0, 1.0 - z * z));
-	const double phi = 2.0 * D_PI * sample.x;
+	const float z = 1.0f - (2.0f * sample.y);
+	const float r = std::sqrt(std::max(0.0f, 1.0f - z * z));
+	const float phi = static_cast<float>(2.0 * D_PI) * sample.x;
 
 	return (Vector3(r * std::cos(phi), r * std::sin(phi), z));
 }
@@ -227,7 +227,7 @@ Vector3	Sampler::sphereDirection(std::uint32_t dimension)
 Vector3	Sampler::unitBall(std::uint32_t dimension)
 {
 	const Vector3 direction = sphereDirection(dimension);
-	const double radius = std::cbrt(sample1D(dimension + AUXILIARY_DIMENSION_OFFSET));
+	const float radius = std::cbrt(static_cast<float>(sample1D(dimension + AUXILIARY_DIMENSION_OFFSET)));
 
 	return (direction * radius);
 }
@@ -235,25 +235,25 @@ Vector3	Sampler::unitBall(std::uint32_t dimension)
 Vector3	Sampler::unitDisk(std::uint32_t dimension)
 {
 	const Sample2D sample = sample2D(dimension);
-	const double sx = (2.0 * sample.x) - 1.0;
-	const double sy = (2.0 * sample.y) - 1.0;
+	const float sx = (2.0f * sample.x) - 1.0f;
+	const float sy = (2.0f * sample.y) - 1.0f;
 
-	if (sx == 0.0 && sy == 0.0)
+	if (sx == 0.0f && sy == 0.0f)
 	{
 		return (Vector3(0.0, 0.0, 0.0));
 	}
 
-	double radius;
-	double theta;
+	float radius;
+	float theta;
 	if (std::fabs(sx) > std::fabs(sy))
 	{
 		radius = sx;
-		theta = (D_PI / 4.0) * (sy / sx);
+		theta = (static_cast<float>(D_PI) / 4.0f) * (sy / sx);
 	}
 	else
 	{
 		radius = sy;
-		theta = (D_PI / 2.0) - ((D_PI / 4.0) * (sx / sy));
+		theta = (static_cast<float>(D_PI) / 2.0f) - ((static_cast<float>(D_PI) / 4.0f) * (sx / sy));
 	}
 
 	return (Vector3(radius * std::cos(theta), radius * std::sin(theta), 0.0));

@@ -17,7 +17,7 @@ struct	HitRecord
 	Vector3		normal;
 	double		u = 0.0;
 	double		v = 0.0;
-	std::shared_ptr<Material>	material = nullptr;
+	Material*	material = nullptr;
 };
 
 struct	HittableLightSample
@@ -25,7 +25,7 @@ struct	HittableLightSample
 	Vector3		direction;
 	double		pdf = 0.0;
 	double		tMax = 0.0;
-	std::shared_ptr<Material>	material = nullptr;
+	Material*	material = nullptr;
 	bool		valid = false;
 };
 
@@ -36,7 +36,7 @@ class   Hittable
 		virtual bool		hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) const = 0;
 		virtual bool		hitAny(Ray& ray, double t_min, double t_max) const;
 		virtual bool		createBoundingBox(AABB& outputBoundingBox) const = 0;
-		virtual std::shared_ptr<Material>	getMaterial(void) const = 0;
+		virtual Material*	getMaterial(void) const = 0;
 		virtual double pdfValue(const Vector3& origin, const Vector3& vec) const;
 		virtual Vector3 random(const Vector3& origin) const;
 		virtual bool sampleLight(const Vector3& origin, HittableLightSample& sample) const;

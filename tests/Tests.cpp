@@ -1068,6 +1068,19 @@ namespace
 		requireVectorNear(boundingBox.getMaximum(), Vector3(0.0, 0.0, 0.0), "Default AABB maximum");
 	}
 
+	void	testAABBHandlesAxisParallelBoundaryRays(void)
+	{
+		const AABB boundingBox(Vector3(0.0, 0.0, -2.0), Vector3(1.0, 1.0, -1.0));
+		HitRecord hitRecord;
+		Ray boundaryRay(Vector3(0.0, 0.5, 0.0), Vector3(0.0, 0.0, -1.0));
+		Ray outsideRay(Vector3(2.0, 0.5, 0.0), Vector3(0.0, 0.0, -1.0));
+		Ray zeroDirectionRay(Vector3(0.5, 0.5, -1.5), Vector3(0.0, 0.0, 0.0));
+
+		require(boundingBox.hit(boundaryRay, hitRecord, 100.0), "Axis-parallel boundary ray missed the AABB.");
+		require(!boundingBox.hit(outsideRay, hitRecord, 100.0), "Axis-parallel outside ray hit the AABB.");
+		require(!boundingBox.hit(zeroDirectionRay, hitRecord, 100.0), "Zero-direction ray hit the AABB.");
+	}
+
 	void	testRectangleBoundingBoxes(void)
 	{
 		auto material = std::make_shared<Lambertian>(Color(0.8, 0.8, 0.8));
@@ -1568,6 +1581,7 @@ int	main(void)
 		testSceneFileLoadsTexturedOBJUVs();
 		testMeshPDFAndRandomSampling();
 		testAABBDefaultBounds();
+		testAABBHandlesAxisParallelBoundaryRays();
 		testRectangleBoundingBoxes();
 		testRectangleRandomSamplesSupportedAxes();
 		testCubeBoundingBoxAndSetters();

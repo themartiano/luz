@@ -31,9 +31,9 @@ ConstantVolume::ConstantVolume(std::shared_ptr<Hittable> boundary, std::shared_p
 }
 
 // Returns the ConstantVolume's material
-std::shared_ptr<Material>	ConstantVolume::getMaterial(void) const
+Material*	ConstantVolume::getMaterial(void) const
 {
-	return (this->_phaseFunction);
+	return (this->_phaseFunction.get());
 }
 
 // Calculates if the ConstantVolume is hit by 'ray', is closer than 't_max' and farther than T_MIN
@@ -82,7 +82,7 @@ bool	ConstantVolume::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_
 	hitRecord.t0 = hitRecord1.t0 + hitDistance / rayLength;
 	hitRecord.position = ray.pointAtRay(hitRecord.t0);
 	hitRecord.normal = Vector3(1.0, 0.0, 0.0); // Arbitrary
-	hitRecord.material = this->_phaseFunction;
+	hitRecord.material = this->_phaseFunction.get();
 
 	return (true);
 }
