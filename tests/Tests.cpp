@@ -682,6 +682,24 @@ namespace
 		std::filesystem::remove(scenePath);
 	}
 
+	void	testSceneFileUsesSceneDefaults(void)
+	{
+		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_scene_defaults_test.luz";
+		{
+			std::ofstream stream(scenePath);
+			stream
+				<< "[settings]\n"
+				<< "resolution=2,2\n\n";
+		}
+
+		Scene scene;
+		SceneFile::read(scene, scenePath.string());
+		require(scene.getAdaptiveSampling(), "Scene file did not keep default adaptive sampling.");
+		require(scene.getDenoise(), "Scene file did not keep default denoising.");
+
+		std::filesystem::remove(scenePath);
+	}
+
 	void	testSceneFileAdaptiveSettings(void)
 	{
 		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_scene_adaptive_test.luz";
@@ -1509,6 +1527,39 @@ namespace
 		require(fileBenchmarkScene->getMaxLightBounces() == 4, "--benchmark replaced the loaded file scene bounces.");
 		require(fileBenchmarkScene->getImage()->getWidth() == 3, "--benchmark replaced the loaded file scene width.");
 		require(fileBenchmarkScene->getImage()->getHeight() == 2, "--benchmark replaced the loaded file scene height.");
+
+		std::filesystem::remove(scenePath);
+	}
+
+	void	testFlagsParsePositionalSceneFile(void)
+	{
+		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_cli_positional_file_test.luz";
+		std::ofstream sceneFile(scenePath);
+
+		sceneFile
+			<< "[settings]\n"
+			<< "resolution=3,2\n"
+			<< "samples=7\n"
+			<< "maxlightbounces=4\n\n";
+		sceneFile.close();
+
+		std::unique_ptr<Scene> scene = parseFlags({scenePath.string()});
+		require(scene->getIsFromFile(), "Positional scene path was not loaded.");
+		require(scene->getSampleCount() == 7, "Positional scene path did not load scene samples.");
+		require(scene->getMaxLightBounces() == 4, "Positional scene path did not load scene bounces.");
+		require(scene->getImage()->getWidth() == 3, "Positional scene path did not load scene width.");
+		require(scene->getImage()->getHeight() == 2, "Positional scene path did not load scene height.");
+
+		std::unique_ptr<Scene> overrideScene = parseFlags({
+			scenePath.string(),
+			"--samples", "9",
+			"--resolution", "4x5"
+		});
+		require(overrideScene->getSampleCount() == 9, "CLI samples did not override positional scene file.");
+		require(overrideScene->getImage()->getWidth() == 4, "CLI width did not override positional scene file.");
+		require(overrideScene->getImage()->getHeight() == 5, "CLI height did not override positional scene file.");
+
+		std::filesystem::remove(scenePath);
 	}
 
 	void	testFlagsParsePostProcessOptions(void)
@@ -1659,6 +1710,14 @@ namespace
 		requireThrows([&]() { Atmosphere().setLightSamples(0); }, "Atmosphere accepted zero light samples.");
 	}
 
+	void	testSceneDefaultsEnableAdaptiveAndDenoise(void)
+	{
+		Scene scene;
+
+		require(scene.getAdaptiveSampling(), "Adaptive sampling is not enabled by default.");
+		require(scene.getDenoise(), "Denoising is not enabled by default.");
+	}
+
 	void	testTinyRender(void)
 	{
 		setRandomSeed(42);
@@ -1668,10 +1727,12 @@ namespace
 		scene.getImage()->setHeight(3);
 		scene.getImage()->initialize();
 		scene.setSampleCount(1);
+		scene.setAdaptiveSampling(false);
 		scene.setMaxLightBounces(1);
 		scene.setGammaCorrected(false);
 		scene.setToneMapped(false);
 		scene.setBloom(false);
+		scene.setDenoise(false);
 		scene.setRenderSky(SKY_NONE);
 		scene.setBackgroundColor(Color(0.1, 0.2, 0.3));
 		scene.setRenderingThreads(1);
@@ -1712,6 +1773,7 @@ namespace
 		scene.setGammaCorrected(false);
 		scene.setToneMapped(false);
 		scene.setBloom(false);
+		scene.setDenoise(false);
 		scene.setRenderSky(SKY_NONE);
 		scene.setBackgroundColor(Color(0.1, 0.2, 0.3));
 		scene.setRenderingThreads(1);
@@ -1767,6 +1829,7 @@ namespace
 		scene.getImage()->setHeight(2);
 		scene.getImage()->initialize();
 		scene.setSampleCount(1);
+		scene.setAdaptiveSampling(false);
 		scene.setMaxLightBounces(1);
 		scene.setGammaCorrected(false);
 		scene.setToneMapped(false);
@@ -1796,10 +1859,12 @@ namespace
 		scene.getImage()->setHeight(2);
 		scene.getImage()->initialize();
 		scene.setSampleCount(1);
+		scene.setAdaptiveSampling(false);
 		scene.setMaxLightBounces(1);
 		scene.setGammaCorrected(false);
 		scene.setToneMapped(false);
 		scene.setBloom(false);
+		scene.setDenoise(false);
 		scene.setRenderSky(SKY_NONE);
 		scene.setBackgroundColor(Color(0.1, 0.2, 0.3));
 		scene.setRenderingThreads(1);
@@ -1838,6 +1903,7 @@ int	main(void)
 		testSceneFileTiffOutputName();
 		testSceneFilePNGOutputSettings();
 		testSceneFileDenoiseOutputName();
+		testSceneFileUsesSceneDefaults();
 		testSceneFileAdaptiveSettings();
 		testSceneFilePostProcessSettings();
 		testSceneFileRejectsInvalidSettings();
@@ -1865,9 +1931,11 @@ int	main(void)
 		testFlagsParseDenoiseOptions();
 		testFlagsParsePNGOutput();
 		testFlagsParseBenchmarkFileOptions();
+		testFlagsParsePositionalSceneFile();
 		testFlagsParseAdaptiveOptions();
 		testFlagsRejectInvalidValues();
 		testSettersRejectInvalidValues();
+		testSceneDefaultsEnableAdaptiveAndDenoise();
 		testTinyRender();
 		testTinyAdaptiveRender();
 		testTinyAdaptiveDenoisedRender();
