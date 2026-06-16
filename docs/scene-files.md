@@ -161,6 +161,14 @@ direction=(0,-1,0)
 color=(1.0,0.95,0.8)
 intensity=1.0
 }
+volume room_fog {
+shape=box
+position=(0,2.5,2.8)
+size=(8,5,9)
+density=0.05
+color=(0.72,0.78,0.9)
+anisotropy=0.55
+}
 point_light fill {
 position=(3,4,5)
 radius=0.1
@@ -181,8 +189,38 @@ visible=0
 | Cube | `cube=(x,y,z),(ox,oy,oz),width,height,depth,material[` |
 | OBJ mesh | `obj=path/to/file.obj` |
 | Transformed OBJ mesh | `obj=path/to/file.obj,(x,y,z),material[` |
+| Volume block | `volume name { ... }` |
 
 Objects except plain `obj=path/to/file.obj` must be followed by a material block and a closing `]`. Plain OBJ meshes use the default material.
+
+### Volumes
+
+Volume blocks create constant-density participating media bounded by an internal
+sphere or box. They are intended for fog, mist, smoke, colored glass interiors,
+and visible light shafts. The boundary is not rendered as a surface unless you
+also add a normal object using the same shape.
+
+| Volume Property | Format | Notes |
+| --- | --- | --- |
+| `shape` | `shape=box` or `shape=sphere` | Defaults to `box`. Alias: `type`. |
+| `position` | `position=(x,y,z)` | Center of the volume. Alias: `center`. |
+| `size` | `size=(width,height,depth)` | Box dimensions. Alias: `dimensions`; `width`, `height`, and `depth` are also accepted. |
+| `radius` | `radius=R` | Sphere radius. |
+| `density` | `density=F` | Extinction density. Higher values create thicker fog. Aliases: `extinction`, `sigma_t`. |
+| `color` | `color=(r,g,b)` | Scattering albedo/tint when no named phase material is used. Aliases: `albedo`, `scattering_color`. |
+| `anisotropy` | `anisotropy=G` | Henyey-Greenstein phase parameter in `[-0.99,0.99]`. Positive values create forward-scattering godrays; `0` uses isotropic scattering. Alias: `g`. |
+| `material` | `material=name` | Optional named phase material from `[materials]`. |
+
+```text
+volume sun_mist {
+shape=sphere
+position=(0,2,2)
+radius=8
+density=0.035
+color=(0.85,0.9,1.0)
+anisotropy=0.65
+}
+```
 
 OBJ paths are resolved in this order:
 
@@ -201,6 +239,8 @@ Each material block must define exactly one material:
 | Metal | `metal=(r,g,b),reflectionFuzziness` |
 | Dielectric | `dielectric=(r,g,b)` |
 | Emissive | `emissive=(r,g,b),lightIntensity` |
+| Isotropic phase | `isotropic=(r,g,b)` |
+| Henyey-Greenstein phase | `henyey_greenstein=(r,g,b),anisotropy` |
 
 Color channels are floating point values. The renderer normally expects values in the `0.0` to `1.0` range, although emissive intensity is separate.
 
@@ -221,6 +261,11 @@ roughness=0.5
 emission=(1.0,0.6,0.3)
 emissionStrength=0
 }
+material warm_fog {
+type=phase
+color=(1.0,0.86,0.68)
+anisotropy=0.6
+}
 ```
 
 Named material property blocks can attach an image texture with `texture=PATH`.
@@ -235,6 +280,10 @@ the material's base color.
 principled materials become `emissive`, metallic materials become `metal`,
 transmissive or alpha-blended materials become `dielectric`, and the rest use
 Luz's rough plastic/specular `principled` approximation.
+
+`type=isotropic` and `type=phase`/`type=henyey_greenstein` are intended for
+volume blocks. A positive Henyey-Greenstein anisotropy favors forward scattering,
+which is the useful control for fog shafts and godrays.
 
 ## Named Meshes, Objects, And Lights
 

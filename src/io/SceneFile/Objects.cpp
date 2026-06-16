@@ -5,12 +5,16 @@
 #include "Hittables/Plane.hpp"
 #include "Hittables/Rectangle.hpp"
 #include "Hittables/DirectionalLight.hpp"
+#include "Hittables/ConstantVolume.hpp"
 #include "Hittables/Triangle.hpp"
 #include "Hittables/Mesh.hpp"
 #include "OBJReader.hpp"
 #include "Materials/Emissive.hpp"
 #include "Materials/Lambertian.hpp"
+#include "Materials/Isotropic.hpp"
+#include "Materials/HenyeyGreenstein.hpp"
 #include <algorithm>
+#include <cmath>
 #include <condition_variable>
 #include <exception>
 #include <fstream>
@@ -298,6 +302,71 @@ namespace
 		Color	color = Color(1.0, 1.0, 1.0);
 		double	intensity = 1.0;
 	};
+
+	struct VolumeBlock
+	{
+		std::string	shape = "box";
+		Vector3	position = Vector3(0.0, 0.0, 0.0);
+		Vector3	size = Vector3(1.0, 1.0, 1.0);
+		double	radius = 1.0;
+		double	density = 0.1;
+		Color	color = Color(0.72, 0.78, 0.86);
+		double	anisotropy = 0.0;
+		std::shared_ptr<Material>	material = nullptr;
+	};
+
+	void	requirePositiveFinite(double value, const std::string& description)
+	{
+		if (!std::isfinite(value) || value <= 0.0)
+		{
+			throw std::runtime_error(description + " must be finite and positive.");
+		}
+	}
+
+	void	requireVolumeSize(const Vector3& size, const std::string& volumeName)
+	{
+		requirePositiveFinite(size.getX(), "Volume '" + volumeName + "' width");
+		requirePositiveFinite(size.getY(), "Volume '" + volumeName + "' height");
+		requirePositiveFinite(size.getZ(), "Volume '" + volumeName + "' depth");
+	}
+
+	std::shared_ptr<Material>	buildVolumePhaseFunction(const VolumeBlock& volume)
+	{
+		if (volume.material)
+		{
+			return (volume.material);
+		}
+		if (std::fabs(volume.anisotropy) <= 1e-12)
+		{
+			return (std::make_shared<Isotropic>(volume.color));
+		}
+		return (std::make_shared<HenyeyGreenstein>(volume.color, volume.anisotropy));
+	}
+
+	std::shared_ptr<Hittable>	buildVolumeBoundary(const VolumeBlock& volume, const std::string& volumeName)
+	{
+		const std::string shape = SceneFile::internal::_lowerCopy(volume.shape);
+		const auto boundaryMaterial = std::make_shared<Lambertian>(Color(0.0, 0.0, 0.0));
+
+		if (shape == "sphere")
+		{
+			requirePositiveFinite(volume.radius, "Volume '" + volumeName + "' radius");
+			return (std::make_shared<Sphere>(volume.position, volume.radius, boundaryMaterial));
+		}
+		if (shape == "box" || shape == "cube")
+		{
+			requireVolumeSize(volume.size, volumeName);
+			return (std::make_shared<Cube>(
+				Transform(volume.position, Vector3(0.0, 0.0, -1.0), Vector3(1.0, 1.0, 1.0)),
+				volume.size.getX(),
+				volume.size.getY(),
+				volume.size.getZ(),
+				boundaryMaterial
+			));
+		}
+
+		throw std::runtime_error("Unknown volume shape: " + volume.shape);
+	}
 
 	void	addObjectBlock(Scene& scene, std::ifstream& stream, SceneFile::internal::SceneFileContext& context, const std::string& objectName)
 	{
@@ -587,6 +656,91 @@ namespace
 		throw std::runtime_error("Directional light '" + lightName + "' is missing a closing }.");
 	}
 
+	void	addVolumeBlock(Scene& scene, std::ifstream& stream, SceneFile::internal::SceneFileContext& context, const std::string& volumeName)
+	{
+		std::string line;
+		VolumeBlock volume;
+
+		do
+		{
+			getline(stream, line);
+			const std::string blockLine = SceneFile::internal::_trim(line);
+
+			if (blockLine.empty() || blockLine.at(0) == '#')
+			{
+				continue;
+			}
+			if (blockLine == "}")
+			{
+				requirePositiveFinite(volume.density, "Volume '" + volumeName + "' density");
+				scene.addHittable(std::make_shared<ConstantVolume>(
+					buildVolumeBoundary(volume, volumeName),
+					buildVolumePhaseFunction(volume),
+					volume.density
+				));
+				return;
+			}
+
+			std::string key;
+			std::string value;
+			if (!splitAssignment(blockLine, key, value))
+			{
+				throw std::runtime_error("Invalid volume property: " + blockLine);
+			}
+
+			if (key == "shape" || key == "type")
+			{
+				volume.shape = SceneFile::internal::_lowerCopy(value);
+			}
+			else if (key == "position" || key == "center")
+			{
+				volume.position = SceneFile::internal::_parseVector3Value(value, key);
+			}
+			else if (key == "size" || key == "dimensions")
+			{
+				volume.size = SceneFile::internal::_parseVector3Value(value, key);
+			}
+			else if (key == "width")
+			{
+				volume.size.setX(std::stod(value));
+			}
+			else if (key == "height")
+			{
+				volume.size.setY(std::stod(value));
+			}
+			else if (key == "depth")
+			{
+				volume.size.setZ(std::stod(value));
+			}
+			else if (key == "radius")
+			{
+				volume.radius = std::stod(value);
+			}
+			else if (key == "density" || key == "extinction" || key == "sigma_t")
+			{
+				volume.density = std::stod(value);
+			}
+			else if (key == "color" || key == "albedo" || key == "scatteringcolor" || key == "scattering_color")
+			{
+				volume.color = SceneFile::internal::_parseColorValue(value, key);
+			}
+			else if (key == "anisotropy" || key == "g")
+			{
+				volume.anisotropy = std::stod(value);
+			}
+			else if (key == "material")
+			{
+				volume.material = findNamedMaterial(context, value);
+			}
+			else
+			{
+				throw std::runtime_error("Unknown volume property: " + blockLine);
+			}
+		} while (!stream.eof());
+
+		throw std::runtime_error("Volume '" + volumeName + "' is missing a closing }.");
+	}
+
 	bool	addSceneObjectOrLightBlock(Scene& scene, std::ifstream& stream, SceneFile::internal::SceneFileContext& context, const std::string& line)
 	{
 		std::string blockName;
@@ -606,6 +760,11 @@ namespace
 			addDirectionalLightBlock(scene, stream, blockName);
 			return (true);
 		}
+		if (SceneFile::internal::_parseNamedBlockHeader(line, "volume", blockName))
+		{
+			addVolumeBlock(scene, stream, context, blockName);
+			return (true);
+		}
 		if (
 			SceneFile::internal::_parseNamedBlockHeader(line, "sphere_light", blockName)
 			|| SceneFile::internal::_parseNamedBlockHeader(line, "point_light", blockName)
@@ -620,6 +779,7 @@ namespace
 			lowerLine.rfind("object ", 0) == 0
 			|| lowerLine.rfind("area_light ", 0) == 0
 			|| lowerLine.rfind("directional_light ", 0) == 0
+			|| lowerLine.rfind("volume ", 0) == 0
 			|| lowerLine.rfind("sphere_light ", 0) == 0
 			|| lowerLine.rfind("point_light ", 0) == 0
 		)
