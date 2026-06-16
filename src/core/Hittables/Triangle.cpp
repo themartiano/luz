@@ -173,9 +173,9 @@ void	Triangle::setTextureCoordinates(Vector3 uv0, Vector3 uv1, Vector3 uv2)
 }
 
 // Returns the Triangle's material
-std::shared_ptr<Material>	Triangle::getMaterial(void) const
+Material*	Triangle::getMaterial(void) const
 {
-	return (this->_material);
+	return (this->_material.get());
 }
 
 // Sets the Triangle's Material
@@ -252,7 +252,7 @@ bool	Triangle::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) c
 		hitRecord.v = 0.0;
 	}
 	hitRecord.normal = orientAgainstRay(hitRecord.normal, ray);
-	hitRecord.material = this->_material;
+	hitRecord.material = this->_material.get();
 	hitRecord.position = ray.pointAtRay(hitRecord.t0);
 
 	return (true);
@@ -392,7 +392,7 @@ bool	Triangle::sampleLight(const Vector3& origin, HittableLightSample& sample) c
 
 	sample.pdf = distanceSquared / (cosine * this->_area);
 	sample.tMax = distance;
-	sample.material = this->_material;
+	sample.material = this->_material.get();
 	sample.valid = std::isfinite(sample.pdf) && sample.pdf > 0.0;
 	return (sample.valid);
 }

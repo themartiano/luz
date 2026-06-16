@@ -22,11 +22,24 @@ namespace
 		const Vector3& minimum = box.getMinimum();
 		const Vector3& maximum = box.getMaximum();
 		const Vector3& origin = ray.getOrigin();
+		const Vector3& direction = ray.getDirection();
 		const Vector3& inverseDirection = ray.getInverseDirection();
 
+		if (direction[0] == 0.0 && direction[1] == 0.0 && direction[2] == 0.0)
+		{
+			return (false);
+		}
 		for (int axis = 0; axis < 3; axis++)
 		{
 			const double invD = inverseDirection[axis];
+			if (invD == 0.0)
+			{
+				if (origin[axis] < minimum[axis] || origin[axis] > maximum[axis])
+				{
+					return (false);
+				}
+				continue;
+			}
 			double t0 = (minimum[axis] - origin[axis]) * invD;
 			double t1 = (maximum[axis] - origin[axis]) * invD;
 			if (invD < 0.0)
@@ -61,6 +74,13 @@ namespace
 		}
 		children[index] = child;
 		count++;
+	}
+
+	Material*	debugBoundingBoxMaterial(void)
+	{
+		static Lambertian material;
+
+		return (&material);
 	}
 }
 
@@ -168,7 +188,7 @@ bool	BVHNode::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) co
 
 	if (RENDER_AABB)
 	{
-		hitRecord.material = std::make_shared<Lambertian>();
+		hitRecord.material = debugBoundingBoxMaterial();
 
 		return (true);
 	}
@@ -324,7 +344,7 @@ bool	BVHNode::createBoundingBox(AABB& outputBoundingBox) const
 }
 
 // Returns an empty Material (this function only exists because it must be implemented since the Hittable class has it)
-std::shared_ptr<Material>	BVHNode::getMaterial(void) const
+Material*	BVHNode::getMaterial(void) const
 {
-	return (std::make_shared<Lambertian>());
+	return (debugBoundingBoxMaterial());
 }

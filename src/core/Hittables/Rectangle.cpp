@@ -85,9 +85,9 @@ void	Rectangle::setTransform(Transform transform)
 }
 
 // Returns the Rectangle's material
-std::shared_ptr<Material>	Rectangle::getMaterial(void) const
+Material*	Rectangle::getMaterial(void) const
 {
-	return (this->_material);
+	return (this->_material.get());
 }
 
 // Sets the Rectangle's Material
@@ -143,7 +143,7 @@ bool	Rectangle::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) 
 
 	hitRecord.t0 = t;
 	hitRecord.normal = normal;
-	hitRecord.material = this->_material;
+	hitRecord.material = this->_material.get();
 	hitRecord.position = ray.pointAtRay(t);
 
 	return (true);
@@ -314,7 +314,7 @@ bool	Rectangle::sampleLight(const Vector3& origin, HittableLightSample& sample) 
 
 	sample.pdf = distanceSquared / (cosine * area);
 	sample.tMax = distance;
-	sample.material = this->_material;
+	sample.material = this->_material.get();
 	sample.valid = std::isfinite(sample.pdf) && sample.pdf > 0.0;
 	return (sample.valid);
 }

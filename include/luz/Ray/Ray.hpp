@@ -55,12 +55,30 @@ class   Ray
 				(direction[1] * direction[1]) +
 				(direction[2] * direction[2])
 			);
+			if (!std::isfinite(length) || length <= 0.0)
+			{
+				return (Vector3(0.0, 0.0, 0.0));
+			}
 
 			return (direction / length);
 		}
 
+		static double	_inverseComponent(double component)
+		{
+			if (component == 0.0 || !std::isfinite(component))
+			{
+				return (0.0);
+			}
+			const double inverse = 1.0 / component;
+			return (std::isfinite(inverse) ? inverse : 0.0);
+		}
+
 		static Vector3	_inverse(const Vector3& direction)
 		{
-			return (Vector3(1.0 / direction[0], 1.0 / direction[1], 1.0 / direction[2]));
+			return (Vector3(
+				_inverseComponent(direction[0]),
+				_inverseComponent(direction[1]),
+				_inverseComponent(direction[2])
+			));
 		}
 };

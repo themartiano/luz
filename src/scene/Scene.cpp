@@ -319,7 +319,7 @@ void	Scene::updateLights(void)
 	this->_lightSelectionTotalWeight = 0.0;
 	for (std::shared_ptr<Hittable> hittable : this->_hittables)
 	{
-		const std::shared_ptr<Material> material = hittable ? hittable->getMaterial() : nullptr;
+		Material* material = hittable ? hittable->getMaterial() : nullptr;
 
 		if (material && material->getType() == EMISSIVE)
 		{

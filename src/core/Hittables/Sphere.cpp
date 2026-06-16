@@ -4,6 +4,7 @@
 #include "ONB.hpp"
 #include "Materials/Lambertian.hpp"
 #include "Sampler.hpp"
+#include <algorithm>
 #include <cmath>
 
 /*
@@ -71,9 +72,9 @@ void	Sphere::setVisible(bool visible)
 }
 
 // Returns the Sphere's material
-std::shared_ptr<Material>	Sphere::getMaterial(void) const
+Material*	Sphere::getMaterial(void) const
 {
-	return (this->_material);
+	return (this->_material.get());
 }
 
 // Sets the Sphere's material
@@ -120,7 +121,7 @@ bool	Sphere::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) con
 		n = n * -1.0;
 	}
 	hitRecord.normal = n;
-	hitRecord.material = this->_material;
+	hitRecord.material = this->_material.get();
 
 	return (true);
 }
@@ -192,11 +193,13 @@ Vector3	Sphere::random(const Vector3& origin) const
 Vector3 Sphere::randomToSphere(double distanceSquared) const
 {
 	const Sampler::Sample2D sample = Sampler::sample2D(Sampler::DIM_LIGHT_SURFACE_POINT);
-	double z = 1.0 + sample.y * (sqrt(1.0 - this->_radius * this->_radius / distanceSquared) - 1.0);
+	const float radiusRatioSquared = static_cast<float>(this->_radius * this->_radius / distanceSquared);
+	const float z = 1.0f + sample.y * (std::sqrt(std::max(0.0f, 1.0f - radiusRatioSquared)) - 1.0f);
 
-	double phi = 2.0 * D_PI * sample.x;
-	double x = cos(phi) * sqrt(1.0 - z * z);
-	double y = sin(phi) * sqrt(1.0 - z * z);
+	const float phi = static_cast<float>(2.0 * D_PI) * sample.x;
+	const float radius = std::sqrt(std::max(0.0f, 1.0f - z * z));
+	const float x = std::cos(phi) * radius;
+	const float y = std::sin(phi) * radius;
 
 	return (Vector3(x, y, z));
 }
@@ -253,7 +256,7 @@ bool	Sphere::sampleLight(const Vector3& origin, HittableLightSample& sample) con
 
 	sample.pdf = 1.0 / solidAngle;
 	sample.tMax = root;
-	sample.material = this->_material;
+	sample.material = this->_material.get();
 	sample.valid = std::isfinite(sample.pdf) && sample.pdf > 0.0 && sample.tMax > T_MIN;
 	return (sample.valid);
 }
