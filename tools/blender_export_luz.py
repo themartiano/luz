@@ -12,6 +12,7 @@ import argparse
 import math
 import os
 import re
+import shutil
 import sys
 import time
 from dataclasses import dataclass
@@ -77,6 +78,13 @@ class LuzLight:
 	atmosphere_angle: float | None = None
 
 
+@dataclass
+class LuzEnvironment:
+	path: str
+	strength: float
+	rotation: float = 0.0
+
+
 class Bounds:
 	def __init__(self) -> None:
 		self.minimum: Vector | None = None
@@ -122,7 +130,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 	parser.add_argument("--resolution", help="Override resolution as WIDTHxHEIGHT.")
 	parser.add_argument("--samples", type=int, help="Override Luz samples per pixel.")
 	parser.add_argument("--max-light-bounces", type=int, help="Override Luz max light bounces.")
-	parser.add_argument("--sky", choices=("linear", "none", "atmosphere"), help="Override Luz sky mode.")
+	parser.add_argument("--sky", choices=("linear", "none", "atmosphere", "environment"), help="Override Luz sky mode.")
 	parser.add_argument("--render-output", help="Luz render output filename. .bmp is appended by Luz when omitted.")
 	parser.add_argument("--global-scale", type=float, default=1.0, help="Scale all exported positions and mesh vertices.")
 	parser.add_argument("--light-power-scale", type=float, default=1.0, help="Additional multiplier after Blender light energy is converted to Luz intensity.")
@@ -641,6 +649,55 @@ def export_texture_image(
 		return None
 	if image_key:
 		exported_textures[image_key] = scene_path
+	return scene_path
+
+
+def image_source_path(image: object) -> Path | None:
+	raw_path = getattr(image, "filepath", None) or getattr(image, "filepath_raw", None)
+	if not raw_path:
+		return None
+	try:
+		absolute_path = Path(bpy.path.abspath(raw_path)).expanduser()
+	except Exception:
+		return None
+	if not absolute_path.exists() or not absolute_path.is_file():
+		return None
+	return absolute_path
+
+
+def export_environment_image(
+	image: object,
+	texture_dir: Path,
+	scene_texture_dir: Path,
+	used_texture_names: set[str],
+	exported_textures: dict[str, str],
+	args: argparse.Namespace,
+) -> str | None:
+	image_key = "environment::" + str(getattr(image, "name_full", None) or getattr(image, "name", "environment"))
+	if image_key in exported_textures:
+		return exported_textures[image_key]
+
+	source_path = image_source_path(image)
+	if source_path is not None and source_path.suffix.lower() in {".hdr", ".pic"}:
+		base_name = slugify(source_path.stem, "environment")
+		texture_name = unique_name(base_name, used_texture_names) + source_path.suffix.lower()
+		texture_path = texture_dir / texture_name
+		scene_path = (scene_texture_dir / texture_name).as_posix()
+		texture_path.parent.mkdir(parents=True, exist_ok=True)
+		try:
+			shutil.copyfile(source_path, texture_path)
+		except OSError:
+			return None
+		exported_textures[image_key] = scene_path
+		return scene_path
+
+	base_name = slugify(getattr(image, "name", "environment"), "environment")
+	texture_name = unique_name(base_name, used_texture_names) + ".ppm"
+	texture_path = texture_dir / texture_name
+	scene_path = (scene_texture_dir / texture_name).as_posix()
+	if not write_image_as_ppm(image, texture_path, int(args.texture_max_size)):
+		return None
+	exported_textures[image_key] = scene_path
 	return scene_path
 
 
@@ -1329,6 +1386,45 @@ def add_color(first: tuple[float, float, float], second: tuple[float, float, flo
 	)
 
 
+def world_environment_from_shader_node(
+	node: object | None,
+	camera_ray: bool,
+	visited: set[object] | None = None,
+) -> tuple[object, float] | None:
+	if node is None:
+		return None
+	if visited is None:
+		visited = set()
+	if node in visited:
+		return None
+	visited.add(node)
+
+	node_type = getattr(node, "type", "")
+	if node_type in {"BACKGROUND", "EMISSION"}:
+		image = texture_image_from_socket(node_socket(node, "Color"))
+		if image is None:
+			return None
+		strength = scalar_from_value(socket_default_value(node, ("Strength",), 1.0), 1.0)
+		return (image, max(strength, 0.0))
+
+	if node_type == "MIX_SHADER":
+		nodes = linked_shader_nodes(node)
+		if len(nodes) >= 2:
+			if mix_shader_uses_camera_ray_factor(node):
+				branch = nodes[1] if camera_ray else nodes[0]
+				return world_environment_from_shader_node(branch, camera_ray, visited.copy())
+			first = world_environment_from_shader_node(nodes[0], camera_ray, visited.copy())
+			if first is not None:
+				return first
+			return world_environment_from_shader_node(nodes[1], camera_ray, visited.copy())
+
+	for child in linked_shader_nodes(node):
+		environment = world_environment_from_shader_node(child, camera_ray, visited.copy())
+		if environment is not None:
+			return environment
+	return None
+
+
 def world_color_from_shader_node(
 	node: object | None,
 	default_color: tuple[float, float, float],
@@ -1400,6 +1496,33 @@ def export_world_background() -> tuple[float, float, float]:
 	return default_color
 
 
+def export_world_environment(
+	args: argparse.Namespace,
+	texture_dir: Path,
+	scene_texture_dir: Path,
+	used_texture_names: set[str],
+	exported_textures: dict[str, str],
+) -> LuzEnvironment | None:
+	world = bpy.context.scene.world
+	background_node = world_surface_node(world)
+	environment = world_environment_from_shader_node(background_node, True)
+	if environment is None:
+		return None
+
+	image, strength = environment
+	path = export_environment_image(
+		image,
+		texture_dir,
+		scene_texture_dir,
+		used_texture_names,
+		exported_textures,
+		args,
+	)
+	if path is None:
+		return None
+	return LuzEnvironment(path=path, strength=strength)
+
+
 def scene_resolution(args: argparse.Namespace) -> tuple[int, int]:
 	if args.resolution:
 		parts = args.resolution.lower().split("x")
@@ -1445,12 +1568,13 @@ def write_luz_scene(
 	camera: LuzCamera,
 	lights: list[LuzLight],
 	background_color: tuple[float, float, float],
+	environment: LuzEnvironment | None,
 ) -> None:
 	width, height = scene_resolution(args)
 	render_output = args.render_output
 	if not render_output:
 		render_output = str(output_path.with_suffix("")) + "_render"
-	sky = args.sky or "none"
+	sky = args.sky or ("environment" if environment is not None else "none")
 
 	lines: list[str] = []
 	lines.extend(
@@ -1468,6 +1592,12 @@ def write_luz_scene(
 		lines.append(
 			f"atmosphere={fmt_float(exported_atmosphere_angle(lights))},"
 			"6360000,6420000,7994,1200,16,8,0.5"
+		)
+	if sky == "environment" and environment is not None:
+		lines.append(
+			f"environment={environment.path},"
+			f"{fmt_float(environment.strength)},"
+			f"{fmt_float(environment.rotation)}"
 		)
 	lines.extend(
 		[
@@ -1618,8 +1748,17 @@ def main() -> None:
 	lights = export_lights(args, bounds)
 	background_color = export_world_background()
 	log_profile(args, f"World camera background={fmt_color(background_color)}")
+	environment = export_world_environment(
+		args,
+		texture_dir,
+		scene_texture_dir,
+		used_texture_names,
+		exported_textures,
+	)
+	if environment is not None:
+		log_profile(args, f"World environment={environment.path}")
 	log_profile(args, f"Writing Luz scene {output_path}")
-	write_luz_scene(args, output_path, materials, meshes, camera, lights, background_color)
+	write_luz_scene(args, output_path, materials, meshes, camera, lights, background_color, environment)
 
 	triangle_count = sum(mesh.triangle_count for mesh in meshes)
 	print(

@@ -196,6 +196,48 @@ namespace
 		return (!std::isfinite(throughputMax) || throughputMax <= PATH_THROUGHPUT_EPSILON);
 	}
 
+	bool	hasEnvironmentLight(Scene& scene)
+	{
+		return (
+			scene.getRenderSky() == SKY_ENVIRONMENT
+			&& scene.hasEnvironmentMap()
+			&& scene.getEnvironmentStrength() > 0.0
+		);
+	}
+
+	Color	sampleSceneSky(Scene& scene, Ray& ray)
+	{
+		switch(scene.getRenderSky())
+		{
+			case (SKY_ATMOSPHERE):
+				return (Renderer::internal::_computeAtmosphereColor(scene, ray));
+			case (SKY_LINEAR):
+				return (Renderer::internal::_calculateSkyInterpolation(scene, ray));
+			case (SKY_ENVIRONMENT):
+				if (scene.hasEnvironmentMap())
+				{
+					return (
+						scene.getEnvironmentMap()->sampleDirection(
+							ray.getDirection(),
+							scene.getEnvironmentRotation()
+						) * scene.getEnvironmentStrength()
+					);
+				}
+				return (scene.getBackgroundColor());
+			default:
+				return (scene.getBackgroundColor());
+		}
+	}
+
+	double	environmentPDF(Scene& scene, const Vector3& direction)
+	{
+		if (!hasEnvironmentLight(scene))
+		{
+			return (0.0);
+		}
+		return (scene.getEnvironmentMap()->pdf(direction, scene.getEnvironmentRotation()));
+	}
+
 	bool	applyRussianRoulette(Color& throughput, int bounces)
 	{
 		if (bounces < RUSSIAN_ROULETTE_START_BOUNCE)
@@ -240,12 +282,13 @@ namespace
 	Denoise::FeatureVector	primaryMissFeatures(
 		Scene& scene,
 		const Renderer::internal::RenderCamera& renderCamera,
+		Ray& ray,
 		std::size_t x,
 		std::size_t y
 	)
 	{
 		Denoise::FeatureVector features;
-		const Color background = scene.getBackgroundColor();
+		const Color background = sampleSceneSky(scene, ray);
 
 		setPrimaryCoordinates(features, renderCamera, x, y);
 		features[2] = 0.0;
@@ -320,6 +363,44 @@ namespace
 		}
 
 		return (false);
+	}
+
+	LightSample	sampleEnvironmentLight(Scene& scene, const Vector3& origin)
+	{
+		LightSample sample;
+
+		if (!hasEnvironmentLight(scene))
+		{
+			return (sample);
+		}
+
+		const EnvironmentMap::Sample environmentSample = scene.getEnvironmentMap()->sample(
+			Sampler::sample1D(Sampler::DIM_ENVIRONMENT_SELECTION),
+			Sampler::sample2D(Sampler::DIM_ENVIRONMENT_POINT),
+			scene.getEnvironmentRotation()
+		);
+		if (!environmentSample.valid || environmentSample.pdf <= 0.0 || !std::isfinite(environmentSample.pdf))
+		{
+			return (sample);
+		}
+
+		sample.direction = environmentSample.direction;
+		sample.emitted = environmentSample.radiance * scene.getEnvironmentStrength();
+		sample.pdf = environmentSample.pdf;
+		sample.tMax = T_MAX;
+		if (maxChannel(sample.emitted) <= 0.0)
+		{
+			return (sample);
+		}
+
+		Ray shadowRay = Ray::fromNormalizedDirection(origin, sample.direction);
+		if (isShadowOccluded(scene, shadowRay, T_MAX))
+		{
+			return (sample);
+		}
+
+		sample.valid = true;
+		return (sample);
 	}
 
 	double	directLightSampleProbability(int bounces)
@@ -442,6 +523,47 @@ namespace
 		);
 	}
 
+	Color	estimateEnvironmentLighting(
+		Scene& scene,
+		HitRecord& hitRecord,
+		const ScatterRecord& scatterRecord,
+		int bounces
+	)
+	{
+		const double sampleProbability = directLightSampleProbability(bounces);
+		if (sampleProbability <= 0.0)
+		{
+			return (Color(0.0, 0.0, 0.0));
+		}
+		if (
+			sampleProbability < 1.0
+			&& Sampler::sample1D(Sampler::DIM_ENVIRONMENT_STRATEGY) >= sampleProbability
+		)
+		{
+			return (Color(0.0, 0.0, 0.0));
+		}
+
+		const LightSample lightSample = sampleEnvironmentLight(scene, hitRecord.position);
+		if (!lightSample.valid)
+		{
+			return (Color(0.0, 0.0, 0.0));
+		}
+
+		const double scatterSamplePDF = scatterPDFValue(scatterRecord, lightSample.direction);
+		if (scatterSamplePDF <= 0.0 || !std::isfinite(scatterSamplePDF))
+		{
+			return (Color(0.0, 0.0, 0.0));
+		}
+
+		const double misWeight = powerHeuristic(lightSample.pdf, scatterSamplePDF);
+
+		return (
+			scatterRecord.attenuation
+			* lightSample.emitted
+			* (scatterSamplePDF * misWeight / (lightSample.pdf * sampleProbability))
+		);
+	}
+
 	Color	calculateLightRaysColor(
 		const Ray& ray,
 		Scene& scene,
@@ -489,9 +611,9 @@ namespace
 	{
 		const int		maxLightBounces = scene.getMaxLightBounces();
 		const auto		skyType = scene.getRenderSky();
-		const Color		backgroundColor = scene.getBackgroundColor();
 		const auto&		lights = scene.getLights();
 		const auto		lightCount = lights.size();
+		const bool		environmentLight = hasEnvironmentLight(scene);
 		const LightDistribution lightDistribution = {
 			&scene.getLightSelectionCumulativeWeights(),
 			scene.getLightSelectionTotalWeight()
@@ -513,23 +635,19 @@ namespace
 			{
 				if (bounces == 0 && primaryFeatures != nullptr && renderCamera != nullptr)
 				{
-					*primaryFeatures = primaryMissFeatures(scene, *renderCamera, x, y);
+					*primaryFeatures = primaryMissFeatures(scene, *renderCamera, currentRay, x, y);
 				}
-				Color	skyColor;
-				switch(skyType)
+				const Color	skyColor = sampleSceneSky(scene, currentRay);
+				double skyMISWeight = 1.0;
+				if (skyType == SKY_ENVIRONMENT && bounces > 0 && !previousBounceSpecular && environmentLight)
 				{
-					case (SKY_ATMOSPHERE):
-						skyColor = Renderer::internal::_computeAtmosphereColor(scene, currentRay);
-						break;
-					case (SKY_LINEAR):
-						skyColor = Renderer::internal::_calculateSkyInterpolation(scene, currentRay);
-						break;
-					default:
-						skyColor = backgroundColor;
-						break;
+					skyMISWeight = powerHeuristic(
+						previousScatterPDF,
+						environmentPDF(scene, currentRay.getDirection())
+					);
 				}
 
-				return (accumulatedColor + clampRayColor(throughput * skyColor));
+				return (accumulatedColor + clampRayColor(throughput * skyColor * skyMISWeight));
 			}
 			if (bounces == 0 && primaryFeatures != nullptr && renderCamera != nullptr)
 			{
@@ -577,6 +695,17 @@ namespace
 						scene,
 						lights,
 						lightDistribution,
+						hitRecord,
+						scatterRecord,
+						bounces
+					)
+				);
+			}
+			if (environmentLight)
+			{
+				accumulatedColor += clampRayColor(
+					throughput * estimateEnvironmentLighting(
+						scene,
 						hitRecord,
 						scatterRecord,
 						bounces
