@@ -3,17 +3,10 @@ FROM ubuntu:24.04
 RUN apt-get update -y \
 	&& apt-get install -y --no-install-recommends make clang \
 	&& rm -rf /var/lib/apt/lists/*
-RUN mkdir /Luz
 
-# Copy source files
-COPY ./src /Luz/src
-COPY ./include /Luz/include
-COPY ./tests /Luz/tests
-COPY ./assets /Luz/assets
-COPY ./Makefile /Luz
+WORKDIR /luz
 
-# Copy scripts
-COPY ./docker/benchmark/benchmark.sh /
-RUN chmod +x /benchmark.sh
+COPY . .
+RUN chmod +x /luz/docker/benchmark/benchmark.sh
 
-CMD ["/benchmark.sh"]
+CMD ["/luz/docker/benchmark/benchmark.sh"]

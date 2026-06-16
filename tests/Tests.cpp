@@ -577,11 +577,45 @@ namespace
 
 	void	testSceneFileLoadsRelativeObject(void)
 	{
-		Scene scene;
-		SceneFile::read(scene, "examples/scenes/blender_monkey.luz");
+		const std::filesystem::path directory = std::filesystem::temp_directory_path();
+		const std::filesystem::path scenePath = directory / "luz_relative_object_test.luz";
+		const std::filesystem::path objectPath = directory / "luz_relative_object_test.obj";
+		{
+			std::ofstream objectStream(objectPath);
+			objectStream
+				<< "v 0.0 0.0 0.0\n"
+				<< "v 1.0 0.0 0.0\n"
+				<< "v 0.0 1.0 0.0\n"
+				<< "f 1 2 3\n";
+		}
+		{
+			std::ofstream sceneStream(scenePath);
+			sceneStream
+				<< "[meshes]\n"
+				<< "mesh triangle_mesh {\n"
+				<< "file=" << objectPath.filename().string() << "\n"
+				<< "}\n\n"
+				<< "[scene]\n"
+				<< "camera main {\n"
+				<< "position=(0,0,5)\n"
+				<< "direction=(0,0,-1)\n"
+				<< "fov=45\n"
+				<< "aperture=0\n"
+				<< "focusDistance=5\n"
+				<< "}\n"
+				<< "object triangle {\n"
+				<< "mesh=triangle_mesh\n"
+				<< "}\n";
+		}
 
-		require(scene.hasCamera(), "Example scene did not load a camera.");
-		require(!scene.getHittables().empty(), "Example scene did not load any hittables.");
+		Scene scene;
+		SceneFile::read(scene, scenePath.string());
+
+		require(scene.hasCamera(), "Relative-object scene did not load a camera.");
+		require(scene.getHittables().size() == 1, "Relative-object scene did not load one hittable.");
+
+		std::filesystem::remove(scenePath);
+		std::filesystem::remove(objectPath);
 	}
 
 	void	testSceneFileLoadsTransformedObject(void)
@@ -1167,7 +1201,7 @@ namespace
 	void	requireFlagParseThrows(std::vector<std::string> arguments, const std::string& message)
 	{
 		std::vector<char*> argv;
-		argv.push_back(const_cast<char*>("Luz"));
+		argv.push_back(const_cast<char*>("luz"));
 		for (std::string& argument : arguments)
 		{
 			argv.push_back(argument.data());
@@ -1183,7 +1217,7 @@ namespace
 	std::unique_ptr<Scene>	parseFlags(std::vector<std::string> arguments)
 	{
 		std::vector<char*> argv;
-		argv.push_back(const_cast<char*>("Luz"));
+		argv.push_back(const_cast<char*>("luz"));
 		for (std::string& argument : arguments)
 		{
 			argv.push_back(argument.data());

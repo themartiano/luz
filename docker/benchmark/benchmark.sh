@@ -1,9 +1,9 @@
 #!/bin/bash
 set -euo pipefail
 
-cd "${BENCH_ROOT:-/Luz}"
+cd "${BENCH_ROOT:-/luz}"
 
-make Luz >&2
+make luz >&2
 
 repeat=${BENCH_REPEAT:-20}
 warmup=${BENCH_WARMUP:-2}
@@ -261,13 +261,13 @@ for benchmark_case in $cases; do
 	echo "benchmark=$benchmark_case source=$source seed=$seed threads=$threads resolution=${width}x${height} samples=$samples bounces=$bounces adaptive=$adaptive denoise=$denoise gamma=$gamma tonemapping=$tonemapping bloom=$bloom warmup=$warmup repeat=$repeat" >&2
 
 	for ((n = 0; n < warmup; n++)); do
-		./Luz "${benchmark_args[@]}" >/dev/null
+		./luz "${benchmark_args[@]}" >/dev/null
 	done
 
 	times=()
 	total_paths=$((width * height * samples))
 	for ((n = 1; n <= repeat; n++)); do
-		run_output=$(./Luz "${benchmark_args[@]}")
+		run_output=$(./luz "${benchmark_args[@]}")
 		elapsed_ms=$(printf '%s\n' "$run_output" | elapsed_from_output) || {
 			printf '%s\n' "$run_output" >&2
 			echo "Could not parse elapsed benchmark time for $benchmark_case run $n." >&2

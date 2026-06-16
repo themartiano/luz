@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(Luz LANGUAGES CXX)
+project(luz LANGUAGES CXX)
 
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 	set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
@@ -43,13 +43,13 @@ list(REMOVE_ITEM LUZ_SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/src/cli/main.cpp"
 add_library(luz_core STATIC ${LUZ_SOURCE_FILES})
 luz_configure_target(luz_core)
 
-add_executable(Luz src/cli/main.cpp)
-target_link_libraries(Luz PRIVATE luz_core)
-luz_configure_target(Luz)
+add_executable(luz src/cli/main.cpp)
+target_link_libraries(luz PRIVATE luz_core)
+luz_configure_target(luz)
 
 enable_testing()
-add_executable(LuzTests tests/Tests.cpp)
-target_link_libraries(LuzTests PRIVATE luz_core)
-luz_configure_target(LuzTests)
-add_test(NAME LuzTests COMMAND LuzTests)
-set_tests_properties(LuzTests PROPERTIES WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
+add_executable(luz_tests tests/Tests.cpp)
+target_link_libraries(luz_tests PRIVATE luz_core)
+luz_configure_target(luz_tests)
+add_test(NAME luz_tests COMMAND luz_tests)
+set_tests_properties(luz_tests PROPERTIES WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
