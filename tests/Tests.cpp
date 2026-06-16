@@ -4,6 +4,7 @@
 #include "FlagsParser.hpp"
 #include "Image.hpp"
 #include "Materials/Lambertian.hpp"
+#include "Materials/Emissive.hpp"
 #include "Materials/Principled.hpp"
 #include "OBJReader.hpp"
 #include "PDFs/HittablePDF.hpp"
@@ -102,6 +103,92 @@ namespace
 	{
 		require(bytes.size() >= offset + 3, "BMP test file is too small.");
 		require(bytes[offset] == blue && bytes[offset + 1] == green && bytes[offset + 2] == red, message);
+	}
+
+	void	requireFiniteColor(const Color& color, const std::string& message)
+	{
+		require(std::isfinite(color.getRed()), message + " red channel is non-finite.");
+		require(std::isfinite(color.getGreen()), message + " green channel is non-finite.");
+		require(std::isfinite(color.getBlue()), message + " blue channel is non-finite.");
+	}
+
+	void	requireDisplayRange(const Color& color, const std::string& message)
+	{
+		requireFiniteColor(color, message);
+		require(color.getRed() >= 0.0 && color.getRed() <= 1.0, message + " red channel is outside display range.");
+		require(color.getGreen() >= 0.0 && color.getGreen() <= 1.0, message + " green channel is outside display range.");
+		require(color.getBlue() >= 0.0 && color.getBlue() <= 1.0, message + " blue channel is outside display range.");
+	}
+
+	void	requireImageIsFinite(const Image& image, const std::string& message)
+	{
+		for (std::size_t y = 0; y < image.getHeight(); y++)
+		{
+			for (std::size_t x = 0; x < image.getWidth(); x++)
+			{
+				requireFiniteColor(image.getPixel(x, y), message);
+			}
+		}
+	}
+
+	void	requireImageIsDisplayable(const Image& image, const std::string& message)
+	{
+		for (std::size_t y = 0; y < image.getHeight(); y++)
+		{
+			for (std::size_t x = 0; x < image.getWidth(); x++)
+			{
+				requireDisplayRange(image.getPixel(x, y), message);
+			}
+		}
+	}
+
+	bool	isVisualForegroundPixel(const Color& color)
+	{
+		return (
+			color.getRed() > 0.85
+			&& color.getGreen() < 0.25
+			&& color.getBlue() < 0.15
+		);
+	}
+
+	bool	isVisualBackgroundPixel(const Color& color)
+	{
+		return (
+			std::abs(color.getRed() - 0.02) < 0.000001
+			&& std::abs(color.getGreen() - 0.04) < 0.000001
+			&& std::abs(color.getBlue() - 0.08) < 0.000001
+		);
+	}
+
+	void	configureVisualRenderScene(Scene& scene, std::size_t width, std::size_t height)
+	{
+		scene.getImage()->setWidth(width);
+		scene.getImage()->setHeight(height);
+		scene.getImage()->initialize();
+		scene.setSampleCount(1);
+		scene.setAdaptiveSampling(false);
+		scene.setMaxLightBounces(1);
+		scene.setGammaCorrected(false);
+		scene.setToneMapped(false);
+		scene.setBloom(false);
+		scene.setDenoise(false);
+		scene.setRenderSky(SKY_NONE);
+		scene.setBackgroundColor(Color(0.02, 0.04, 0.08));
+		scene.setRenderingThreads(1);
+		scene.setBenchmarkMode(true);
+		scene.addCamera(Camera(Vector3(0.0, 0.0, 0.0), Vector3(0.0, 0.0, -1.0), 20, 0.0, 1.0));
+		scene.addHittable(std::make_shared<Sphere>(
+			Vector3(0.0, 0.0, -1.0),
+			0.11,
+			std::make_shared<Emissive>(Color(1.0, 0.12, 0.04), 1.0)
+		));
+	}
+
+	std::size_t	bmpPixelOffset(std::size_t width, std::size_t height, std::size_t x, std::size_t y)
+	{
+		const std::size_t rowStride = ((width * 3) + 3) / 4 * 4;
+
+		return (54 + ((height - 1 - y) * rowStride) + (x * 3));
 	}
 
 	std::uint16_t	readU16(const std::vector<unsigned char>& bytes, std::size_t offset)
@@ -1837,6 +1924,131 @@ namespace
 		require(scene.getDenoise(), "Denoising is not enabled by default.");
 	}
 
+	void	testRenderedSceneHasBasicVisualStructure(void)
+	{
+		setRandomSeed(42);
+
+		Scene scene;
+		configureVisualRenderScene(scene, 9, 9);
+
+		require(Renderer::render(scene), "Visual structure render failed.");
+		requireImageIsFinite(*scene.getImage(), "Visual structure render");
+
+		std::size_t foregroundPixels = 0;
+		std::size_t backgroundPixels = 0;
+		bool centerRegionHasForeground = false;
+
+		for (std::size_t y = 0; y < scene.getImage()->getHeight(); y++)
+		{
+			for (std::size_t x = 0; x < scene.getImage()->getWidth(); x++)
+			{
+				const Color pixel = scene.getImage()->getPixel(x, y);
+
+				if (isVisualForegroundPixel(pixel))
+				{
+					foregroundPixels++;
+					if (x >= 3 && x <= 5 && y >= 3 && y <= 5)
+					{
+						centerRegionHasForeground = true;
+					}
+				}
+				if (isVisualBackgroundPixel(pixel))
+				{
+					backgroundPixels++;
+				}
+			}
+		}
+
+		require(foregroundPixels > 0, "Visual render did not produce the emissive foreground object.");
+		require(centerRegionHasForeground, "Visual render foreground object is not near the image center.");
+		require(backgroundPixels >= 40, "Visual render did not preserve enough background pixels.");
+	}
+
+	void	testRenderedScenePostProcessingProducesDisplayableImage(void)
+	{
+		setRandomSeed(42);
+
+		Scene scene;
+		configureVisualRenderScene(scene, 9, 9);
+		scene.setGammaCorrected(true);
+		scene.setToneMapped(true);
+		scene.setBloom(true);
+		scene.setExposure(0.5);
+		scene.setContrast(1.1);
+
+		require(Renderer::render(scene), "Post-processed visual render failed.");
+		requireImageIsDisplayable(*scene.getImage(), "Post-processed visual render");
+
+		bool redForegroundSurvived = false;
+		for (std::size_t y = 3; y <= 5; y++)
+		{
+			for (std::size_t x = 3; x <= 5; x++)
+			{
+				const Color pixel = scene.getImage()->getPixel(x, y);
+				if (
+					pixel.getRed() > 0.55
+					&& pixel.getRed() > pixel.getGreen()
+					&& pixel.getRed() > pixel.getBlue()
+				)
+				{
+					redForegroundSurvived = true;
+				}
+			}
+		}
+
+		require(redForegroundSurvived, "Post-processing lost the red foreground visual signal.");
+	}
+
+	void	testRenderedBMPContainsVisualSignal(void)
+	{
+		setRandomSeed(42);
+
+		Scene scene;
+		configureVisualRenderScene(scene, 9, 9);
+
+		require(Renderer::render(scene), "Rendered BMP visual render failed.");
+
+		std::size_t brightestX = 0;
+		std::size_t brightestY = 0;
+		double brightestRed = -1.0;
+		for (std::size_t y = 0; y < scene.getImage()->getHeight(); y++)
+		{
+			for (std::size_t x = 0; x < scene.getImage()->getWidth(); x++)
+			{
+				const Color pixel = scene.getImage()->getPixel(x, y);
+				if (pixel.getRed() > brightestRed)
+				{
+					brightestRed = pixel.getRed();
+					brightestX = x;
+					brightestY = y;
+				}
+			}
+		}
+		require(brightestRed > 0.85, "Rendered image did not contain a bright red pixel before BMP output.");
+
+		const std::filesystem::path outputPath = std::filesystem::temp_directory_path() / "luz_visual_render_test";
+		const std::filesystem::path bmpPath = outputPath.string() + ".bmp";
+
+		scene.getImage()->saveToBMP(outputPath.string());
+		const std::vector<unsigned char> bytes = readFile(bmpPath);
+		const std::size_t foregroundOffset = bmpPixelOffset(
+			scene.getImage()->getWidth(),
+			scene.getImage()->getHeight(),
+			brightestX,
+			brightestY
+		);
+		const std::size_t backgroundOffset = bmpPixelOffset(scene.getImage()->getWidth(), scene.getImage()->getHeight(), 0, 0);
+
+		require(bytes.size() > foregroundOffset + 2, "Rendered BMP file is too small for foreground pixel.");
+		require(bytes.size() > backgroundOffset + 2, "Rendered BMP file is too small for background pixel.");
+		require(bytes[foregroundOffset + 2] > 200, "Rendered BMP foreground red channel is too dark.");
+		require(bytes[foregroundOffset + 2] > bytes[foregroundOffset + 1] * 4, "Rendered BMP foreground is not red-dominant.");
+		require(bytes[backgroundOffset] > bytes[backgroundOffset + 2], "Rendered BMP background did not preserve blue dominance.");
+		require(bytes[backgroundOffset + 2] < 20, "Rendered BMP background red channel is too bright.");
+
+		std::filesystem::remove(bmpPath);
+	}
+
 	void	testTinyRender(void)
 	{
 		setRandomSeed(42);
@@ -2096,6 +2308,9 @@ int	main(void)
 		testFlagsRejectInvalidValues();
 		testSettersRejectInvalidValues();
 		testSceneDefaultsEnableAdaptiveAndDenoise();
+		testRenderedSceneHasBasicVisualStructure();
+		testRenderedScenePostProcessingProducesDisplayableImage();
+		testRenderedBMPContainsVisualSignal();
 		testTinyRender();
 		testTinyAdaptiveRender();
 		testTinyAdaptiveDenoisedRender();
