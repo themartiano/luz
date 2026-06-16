@@ -6,6 +6,7 @@
 #include "SkyTypes.hpp"
 #include "Image.hpp"
 #include "Denoise/NFOR.hpp"
+#include "OutputFormat.hpp"
 #include <cstddef>
 #include <vector>
 #include <memory>
@@ -61,6 +62,8 @@ class	Scene
 		const std::vector<std::shared_ptr<Hittable>>&	getHittables(void) const;
 		std::string	getDefaultRenderOutputFileName(void) const;
 		void		setDefaultRenderOutputFileName(std::string defaultRenderOutputFileName);
+		RenderOutputFormat	getRenderOutputFormat(void) const;
+		void		setRenderOutputFormat(RenderOutputFormat renderOutputFormat);
 		void		updateLights(void);
 		const std::vector<std::shared_ptr<Hittable>>& getLights(void) const;
 		const std::vector<double>&	getLightSelectionCumulativeWeights(void) const;
@@ -112,6 +115,7 @@ class	Scene
 		double					_exposure;
 		double					_contrast;
 		std::string				_defaultRenderOutputFileName;
+		RenderOutputFormat		_renderOutputFormat;
 		std::unique_ptr<Image>	_image;
 		double					_skyline;
 		SkyTypes				_renderSky;
