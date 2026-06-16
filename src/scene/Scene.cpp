@@ -67,7 +67,7 @@ Scene::Scene(void)
 	this->_image = std::make_unique<Image>(D_WIDTH, D_HEIGHT);
 
 	this->_sampleCount = D_SAMPLE_COUNT;
-	this->_adaptiveSampling = false;
+	this->_adaptiveSampling = D_ADAPTIVE_SAMPLING;
 	this->_adaptiveMinSamples = D_ADAPTIVE_MIN_SAMPLES;
 	this->_adaptiveCheckInterval = D_ADAPTIVE_CHECK_INTERVAL;
 	this->_adaptiveThreshold = D_ADAPTIVE_THRESHOLD;
@@ -94,7 +94,7 @@ Scene::Scene(void)
 	this->_benchmarkMode = false;
 	this->_renderingThreads = CORE_COUNT;
 	this->_bloom = true;
-	this->_denoise = false;
+	this->_denoise = D_DENOISE;
 	this->_denoiseOutputFileName = "";
 	this->resetRenderStats();
 }

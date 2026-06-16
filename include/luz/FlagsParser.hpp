@@ -18,10 +18,11 @@ class	FlagsParser
 
 		_iterator	_findFlag(_stringVec flagVariations);
 		_iterator	_findFlag(std::string flag);
+		_iterator	_findPositionalFile(void);
 
-			void	_parseHelp(void);
-			void	_rejectRemovedFlags(void);
-			void	_parseSeed(void);
+		void	_parseHelp(void);
+		void	_rejectRemovedFlags(void);
+		void	_parseSeed(void);
 		void	_parseFile(Scene& scene);
 		void	_parseBenchmark(Scene& scene);
 		void	_parseSamples(Scene& scene);
@@ -35,11 +36,11 @@ class	FlagsParser
 		void	_parseThreads(Scene& scene);
 		void	_parseGamma(Scene& scene);
 		void	_parseToneMapping(Scene& scene);
-			void	_parseBloom(Scene& scene);
-			void	_parseExposure(Scene& scene);
-			void	_parseContrast(Scene& scene);
-			void	_parseDenoise(Scene& scene);
-			void	_parseOutput(Scene& scene);
-			void	_parseDenoiseOutput(Scene& scene);
+		void	_parseBloom(Scene& scene);
+		void	_parseExposure(Scene& scene);
+		void	_parseContrast(Scene& scene);
+		void	_parseDenoise(Scene& scene);
+		void	_parseOutput(Scene& scene);
+		void	_parseDenoiseOutput(Scene& scene);
 		void	_parseRenderTimes(Scene& scene);
 };

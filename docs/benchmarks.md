@@ -32,7 +32,7 @@ Run the deterministic default benchmark case without the container:
 Run a scene in benchmark mode:
 
 ```sh
-./luz --file examples/scenes/cornell.luz --resolution 320x180 --samples 128 --denoise --adaptive --max-light-bounces 5 --benchmark
+./luz examples/scenes/cornell.luz --resolution 320x180 --samples 128 --max-light-bounces 5 --benchmark
 ```
 
 ## Scoring Results
@@ -94,6 +94,6 @@ are:
 - `BENCH_CASES`: space-separated benchmark cases
 - `BENCH_WIDTH` and `BENCH_HEIGHT`: override case resolution
 - `BENCH_SAMPLES`: override samples per pixel
-- `BENCH_DENOISE`: force denoising on or off
-- `BENCH_ADAPTIVE`: force adaptive sampling on or off
+- `BENCH_DENOISE`: override the default denoising state
+- `BENCH_ADAPTIVE`: override the default adaptive sampling state
 - `BENCH_SCORE_SAMPLE_UNIT`: score divisor, defaulting to `1000`

@@ -11,6 +11,8 @@
 
 namespace
 {
+	typedef std::vector<std::string>	StringVec;
+
 	bool	parseOptionalBoolean(const std::string& value, bool& output)
 	{
 		if (value == "true" || value == "1")
@@ -25,6 +27,49 @@ namespace
 		}
 
 		return (false);
+	}
+
+	bool	isOneOf(const std::string& value, const StringVec& options)
+	{
+		return (std::find(options.begin(), options.end(), value) != options.end());
+	}
+
+	bool	isFlag(const std::string& value)
+	{
+		return (!value.empty() && value.rfind("-", 0) == 0);
+	}
+
+	void	printHelp(void)
+	{
+		std::cout
+			<< "Usage: ./luz [scene.luz] [options]\n\n"
+			<< "Arguments:\n"
+			<< "  PATH                        Load a .luz scene file\n\n"
+			<< "Options:\n"
+			<< "  -f, --file PATH             Load a .luz scene file\n"
+			<< "  -r, --resolution WxH        Override render resolution\n"
+			<< "  -s, --samples N             Override samples per pixel\n"
+			<< "  --adaptive [true|false]     Toggle adaptive sampling (default: true)\n"
+			<< "  --no-adaptive               Disable adaptive sampling\n"
+			<< "  --adaptive-min-samples N    Minimum samples before adaptive stopping\n"
+			<< "  --adaptive-threshold F      Relative adaptive noise threshold\n"
+			<< "  --adaptive-check-interval N Adaptive convergence check interval\n"
+			<< "  -mlb, --maxLightBounces N   Override maximum light bounces\n"
+			<< "      --max-light-bounces N   Alias for --maxLightBounces\n"
+			<< "  -t, --threads N             Render with N worker threads\n"
+			<< "  --seed N                    Seed random sampling\n"
+			<< "  --gamma true|false          Toggle gamma correction\n"
+			<< "  -tm, --tonemapping true|false  Toggle tone mapping\n"
+			<< "  --bloom true|false          Toggle bloom\n"
+			<< "  --exposure EV              Exposure compensation in stops\n"
+			<< "  --contrast F               Display contrast multiplier\n"
+			<< "  --denoise [true|false]      Toggle denoised companion render (default: true)\n"
+			<< "  --no-denoise                Disable denoising\n"
+			<< "  -o, --output PATH.EXT       Override render output path\n"
+			<< "  --denoise-output PATH.EXT   Override denoised output path\n"
+			<< "  --render-times              Write renderTime.bmp\n"
+			<< "  --benchmark                 Run the built-in benchmark scene\n"
+			<< "  --benchmark-case NAME       Benchmark case: default, many-objects, mesh-bvh, diffuse, postprocess, atmosphere, lights, emissive-geometry, primitives-materials, volumes, obj-mesh\n";
 	}
 }
 
@@ -64,35 +109,9 @@ void	FlagsParser::parse(Scene& scene)
 void	FlagsParser::_parseHelp(void)
 {
 	auto it = this->_findFlag(_stringVec{"--help", "-h"});
-	if (it != this->_args.end())
+	if (this->_args.empty() || it != this->_args.end())
 	{
-		std::cout
-			<< "Usage: ./luz [options]\n\n"
-			<< "Options:\n"
-			<< "  -f, --file PATH             Load a .luz scene file\n"
-			<< "  -r, --resolution WxH        Override render resolution\n"
-			<< "  -s, --samples N             Override samples per pixel\n"
-			<< "  --adaptive [true|false]     Enable adaptive per-pixel sampling\n"
-			<< "  --no-adaptive               Disable adaptive sampling\n"
-			<< "  --adaptive-min-samples N    Minimum samples before adaptive stopping\n"
-			<< "  --adaptive-threshold F      Relative adaptive noise threshold\n"
-			<< "  --adaptive-check-interval N Adaptive convergence check interval\n"
-			<< "  -mlb, --maxLightBounces N   Override maximum light bounces\n"
-			<< "      --max-light-bounces N   Alias for --maxLightBounces\n"
-			<< "  -t, --threads N             Render with N worker threads\n"
-			<< "  --seed N                    Seed random sampling\n"
-			<< "  --gamma true|false          Toggle gamma correction\n"
-			<< "  -tm, --tonemapping true|false  Toggle tone mapping\n"
-			<< "  --bloom true|false          Toggle bloom\n"
-			<< "  --exposure EV              Exposure compensation in stops\n"
-			<< "  --contrast F               Display contrast multiplier\n"
-			<< "  --denoise [true|false]      Write a denoised companion render\n"
-			<< "  --no-denoise                Disable denoising\n"
-			<< "  -o, --output PATH.EXT       Override render output path\n"
-			<< "  --denoise-output PATH.EXT   Override denoised output path\n"
-			<< "  --render-times              Write renderTime.bmp\n"
-			<< "  --benchmark                 Run the built-in benchmark scene\n"
-			<< "  --benchmark-case NAME       Benchmark case: default, many-objects, mesh-bvh, diffuse, postprocess, atmosphere, lights, emissive-geometry, primitives-materials, volumes, obj-mesh\n";
+		printHelp();
 		exit(EXIT_SUCCESS);
 	}
 }
@@ -131,6 +150,62 @@ FlagsParser::_iterator	FlagsParser::_findFlag(std::string flag)
 	return (_findFlag(_stringVec{flag}));
 }
 
+FlagsParser::_iterator	FlagsParser::_findPositionalFile(void)
+{
+	const StringVec valueFlags = {
+		"--seed",
+		"--file", "-f",
+		"--benchmark-case",
+		"--samples", "-s",
+		"--adaptive-min-samples",
+		"--adaptive-threshold",
+		"--adaptive-check-interval",
+		"--maxLightBounces", "--max-light-bounces", "-mlb",
+		"--resolution", "-r",
+		"--threads", "-t",
+		"--gamma",
+		"--tonemapping", "-tm",
+		"--bloom",
+		"--exposure",
+		"--contrast",
+		"--output", "-o",
+		"--denoise-output",
+	};
+	const StringVec optionalBooleanFlags = {
+		"--adaptive",
+		"--denoise",
+	};
+
+	for (auto it = this->_args.begin(); it != this->_args.end(); it++)
+	{
+		if (isOneOf(*it, valueFlags))
+		{
+			if (it + 1 != this->_args.end())
+			{
+				it++;
+			}
+			continue;
+		}
+		if (isOneOf(*it, optionalBooleanFlags))
+		{
+			bool ignored;
+
+			if (it + 1 != this->_args.end() && parseOptionalBoolean(*(it + 1), ignored))
+			{
+				it++;
+			}
+			continue;
+		}
+		if (isFlag(*it))
+		{
+			continue;
+		}
+		return (it);
+	}
+
+	return (this->_args.end());
+}
+
 void	FlagsParser::_parseSeed(void)
 {
 	auto it = this->_findFlag("--seed");
@@ -147,13 +222,23 @@ void	FlagsParser::_parseSeed(void)
 void	FlagsParser::_parseFile(Scene& scene)
 {
 	auto it = this->_findFlag(_stringVec{"--file", "-f"});
+	const bool explicitFileFlag = (it != this->_args.end());
+
+	if (it == this->_args.end())
+	{
+		it = this->_findPositionalFile();
+	}
 	if (it != this->_args.end())
 	{
-		if (it + 1 == this->_args.end())
+		if (explicitFileFlag && it + 1 == this->_args.end())
 		{
 			throw std::runtime_error("--file requires a path.");
 		}
-		std::string filename = *(it + 1);
+		std::string filename = *it;
+		if (explicitFileFlag)
+		{
+			filename = *(it + 1);
+		}
 		SceneFile::read(scene, filename);
 	}
 }
