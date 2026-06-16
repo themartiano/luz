@@ -10,6 +10,24 @@ bool Hittable::hitAny(Ray& ray, double t_min, double t_max) const
 	return (this->hit(ray, hitRecord, t_min, t_max));
 }
 
+bool Hittable::hitInterval(Ray& ray, double t_min, double t_max, double& t0, double& t1) const
+{
+	HitRecord firstHit, secondHit;
+
+	if (!this->hit(ray, firstHit, t_min, t_max))
+	{
+		return (false);
+	}
+	if (!this->hit(ray, secondHit, firstHit.t0 + T_MIN, t_max))
+	{
+		return (false);
+	}
+
+	t0 = firstHit.t0;
+	t1 = secondHit.t0;
+	return (t0 < t1);
+}
+
 double Hittable::pdfValue(const Vector3& origin, const Vector3& vec) const
 {
 	return (0.0);

@@ -14,7 +14,8 @@ enum	ScatterPDFType
 {
 	SCATTER_PDF_NONE,
 	SCATTER_PDF_COSINE,
-	SCATTER_PDF_SPHERE
+	SCATTER_PDF_SPHERE,
+	SCATTER_PDF_HENYEY_GREENSTEIN
 };
 
 struct	ScatterRecord
@@ -24,6 +25,8 @@ struct	ScatterRecord
 	Color	attenuation;
 	ScatterPDFType	pdfType = SCATTER_PDF_NONE;
 	ONB	cosineBasis;
+	Vector3	phaseDirection;
+	double	phaseAnisotropy = 0.0;
 };
 
 class	Material

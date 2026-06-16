@@ -21,6 +21,7 @@ class	Sphere : public Hittable
 		void				setMaterial(std::shared_ptr<Material> material);
 		virtual bool		hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) const override;
 		virtual bool		hitAny(Ray& ray, double t_min, double t_max) const override;
+		virtual bool		hitInterval(Ray& ray, double t_min, double t_max, double& t0, double& t1) const override;
 		virtual bool		createBoundingBox(AABB& outputBoundingBox) const override;
 		virtual double  	pdfValue(const Vector3& origin, const Vector3& vec) const override;
 		virtual Vector3 	random(const Vector3& origin) const override;
