@@ -1,6 +1,8 @@
 #include "Hittables/Cube.hpp"
 #include "Vector3.hpp"
 #include "Materials/Lambertian.hpp"
+#include <algorithm>
+#include <cmath>
 
 /*
 	Constructors
@@ -126,6 +128,54 @@ bool	Cube::hitAny(Ray& ray, double t_min, double t_max) const
 		}
 	}
 	return (false);
+}
+
+bool	Cube::hitInterval(Ray& ray, double t_min, double t_max, double& t0, double& t1) const
+{
+	AABB boundingBox;
+
+	if (!this->createBoundingBox(boundingBox))
+	{
+		return (false);
+	}
+
+	double intervalMin = t_min;
+	double intervalMax = t_max;
+	const Vector3& origin = ray.getOrigin();
+	const Vector3& direction = ray.getDirection();
+	const Vector3& minimum = boundingBox.getMinimum();
+	const Vector3& maximum = boundingBox.getMaximum();
+
+	for (int axis = 0; axis < 3; axis++)
+	{
+		if (direction[axis] == 0.0)
+		{
+			if (origin[axis] < minimum[axis] || origin[axis] > maximum[axis])
+			{
+				return (false);
+			}
+			continue;
+		}
+
+		const double inverseDirection = 1.0 / direction[axis];
+		double axisT0 = (minimum[axis] - origin[axis]) * inverseDirection;
+		double axisT1 = (maximum[axis] - origin[axis]) * inverseDirection;
+		if (axisT0 > axisT1)
+		{
+			std::swap(axisT0, axisT1);
+		}
+
+		intervalMin = std::max(intervalMin, axisT0);
+		intervalMax = std::min(intervalMax, axisT1);
+		if (intervalMin >= intervalMax)
+		{
+			return (false);
+		}
+	}
+
+	t0 = intervalMin;
+	t1 = intervalMax;
+	return (true);
 }
 
 // Creates an AABB / bounding box for this Cube
