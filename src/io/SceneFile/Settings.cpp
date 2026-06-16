@@ -285,18 +285,7 @@ void	SceneFile::internal::_readSettingsSection(Scene& scene, std::ifstream& stre
 			{
 				throw std::runtime_error("Invalid atmosphere setting. Use atmosphere=SUN,EARTH_RADIUS,ATMOSPHERE_RADIUS,HR,HM,SAMPLES,LIGHT_SAMPLES,STARS.");
 			}
-			Atmosphere atmosphere;
-
-			atmosphere.setSunAngle(sunAngle);
-			atmosphere.setEarthRadius(earthRadius);
-			atmosphere.setAtmosphereRadius(atmosphereRadius);
-			atmosphere.setHR(hR);
-			atmosphere.setHM(hM);
-			atmosphere.setSamples(samples);
-			atmosphere.setLightSamples(lightSamples);
-			atmosphere.setStarsBrightness(starsBrightness);
-
-			scene.setAtmosphere(atmosphere);
+			scene.setAtmosphere(Atmosphere(sunAngle, earthRadius, atmosphereRadius, hR, hM, samples, lightSamples, starsBrightness));
 		}
 		else if (lowerLine.rfind("distanceblueness=", 0) != std::string::npos)
 		{

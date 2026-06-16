@@ -1,4 +1,5 @@
 #include "AABB.hpp"
+#include "Atmosphere.hpp"
 #include "Color.hpp"
 #include "FlagsParser.hpp"
 #include "Image.hpp"
@@ -62,6 +63,13 @@ namespace
 		requireNear(actual.getX(), expected.getX(), message + " X component is wrong.");
 		requireNear(actual.getY(), expected.getY(), message + " Y component is wrong.");
 		requireNear(actual.getZ(), expected.getZ(), message + " Z component is wrong.");
+	}
+
+	void	requireFiniteNonNegativeColor(const Color& color, const std::string& message)
+	{
+		require(std::isfinite(color.getRed()) && color.getRed() >= 0.0, message + " Red component is invalid.");
+		require(std::isfinite(color.getGreen()) && color.getGreen() >= 0.0, message + " Green component is invalid.");
+		require(std::isfinite(color.getBlue()) && color.getBlue() >= 0.0, message + " Blue component is invalid.");
 	}
 
 	template <typename Function>
@@ -778,7 +786,31 @@ namespace
 		requireSceneFileSettingThrows("denoiseoutputfilename=render_denoised.tif", "Scene file accepted .tif denoise output.");
 		requireSceneFileSettingThrows("denoiseoutputfilename=render_denoised.jpg", "Scene file accepted unsupported denoise output extension.");
 		requireSceneFileSettingThrows("sky=wat", "Scene file accepted unknown sky setting.");
-		requireSceneFileSettingThrows("atmosphere=0,1,2,3,4,0,1,0", "Scene file accepted zero atmosphere samples.");
+		requireSceneFileSettingThrows("sky=atmosphere\natmosphere=0,1,2,3,4,0,1,0", "Scene file accepted zero atmosphere samples.");
+		requireSceneFileSettingThrows("sky=atmosphere\natmosphere=0,2,1,3,4,1,1,0", "Scene file accepted atmosphere radius smaller than Earth radius.");
+	}
+
+	void	testSceneFileAtmosphereSetting(void)
+	{
+		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_atmosphere_setting_test.luz";
+		{
+			std::ofstream sceneStream(scenePath);
+			sceneStream
+				<< "[settings]\n"
+				<< "sky=atmosphere\n"
+				<< "atmosphere=0.25,12840000.0,12910000.0,7994.0,1200.0,12,6,0.1\n\n";
+		}
+
+		Scene scene;
+		SceneFile::read(scene, scenePath.string());
+
+		require(scene.getRenderSky() == SKY_ATMOSPHERE, "Atmosphere scene sky type was not parsed.");
+		requireNear(scene.getAtmosphere().getSunAngle(), 0.25, "Atmosphere sun angle was not parsed.");
+		requireNear(scene.getAtmosphere().getEarthRadius(), 12840000.0, "Atmosphere Earth radius was not parsed.");
+		requireNear(scene.getAtmosphere().getAtmosphereRadius(), 12910000.0, "Atmosphere radius was not parsed.");
+		requireNear(scene.getAtmosphere().getStarsBrightness(), 0.1, "Atmosphere stars brightness was not parsed.");
+
+		std::filesystem::remove(scenePath);
 	}
 
 	void	testSceneFileBackgroundSetting(void)
@@ -1509,6 +1541,12 @@ namespace
 		require(fileBenchmarkScene->getMaxLightBounces() == 4, "--benchmark replaced the loaded file scene bounces.");
 		require(fileBenchmarkScene->getImage()->getWidth() == 3, "--benchmark replaced the loaded file scene width.");
 		require(fileBenchmarkScene->getImage()->getHeight() == 2, "--benchmark replaced the loaded file scene height.");
+
+		std::unique_ptr<Scene> defaultBenchmarkScene = parseFlags({"--benchmark"});
+		require(defaultBenchmarkScene->getRenderSky() == SKY_NONE, "Default benchmark should use the cheap black background.");
+
+		std::unique_ptr<Scene> atmosphereBenchmarkScene = parseFlags({"--benchmark", "--benchmark-case", "atmosphere"});
+		require(atmosphereBenchmarkScene->getRenderSky() == SKY_ATMOSPHERE, "Atmosphere benchmark disabled atmospheric sky.");
 	}
 
 	void	testFlagsParsePostProcessOptions(void)
@@ -1657,6 +1695,79 @@ namespace
 		requireThrows([&]() { image.setHeight(0); }, "Image accepted zero height.");
 		requireThrows([&]() { Atmosphere().setSamples(0); }, "Atmosphere accepted zero samples.");
 		requireThrows([&]() { Atmosphere().setLightSamples(0); }, "Atmosphere accepted zero light samples.");
+		requireThrows([&]() { Atmosphere().setSunAngle(std::numeric_limits<double>::quiet_NaN()); }, "Atmosphere accepted non-finite sun angle.");
+		requireThrows([&]() { Atmosphere().setEarthRadius(D_ATMOSPHERE_RADIUS); }, "Atmosphere accepted Earth radius at atmosphere radius.");
+		requireThrows([&]() { Atmosphere().setAtmosphereRadius(D_EARTH_RADIUS); }, "Atmosphere accepted atmosphere radius at Earth radius.");
+		requireThrows([&]() { Atmosphere().setHR(std::numeric_limits<double>::quiet_NaN()); }, "Atmosphere accepted non-finite HR.");
+		requireThrows([&]() { Atmosphere().setHM(std::numeric_limits<double>::quiet_NaN()); }, "Atmosphere accepted non-finite HM.");
+		requireThrows([&]() { Atmosphere().setStarsBrightness(std::numeric_limits<double>::quiet_NaN()); }, "Atmosphere accepted non-finite star brightness.");
+		requireThrows([&]() { Atmosphere(0.0, 2.0, 1.0, 1.0, 1.0, 1, 1, 0.0); }, "Atmosphere accepted atmosphere radius smaller than Earth radius.");
+		Atmosphere(0.0, D_ATMOSPHERE_RADIUS * 2.0, D_ATMOSPHERE_RADIUS * 2.0 + 1000.0, D_HR, D_HM, 1, 1, 0.0);
+	}
+
+	void	testPlanetaryHitRobustIntersections(void)
+	{
+		HitRecord hitRecord;
+		Ray perpendicularMiss(Vector3(2.0, 0.0, 0.0), Vector3(0.0, 1.0, 0.0));
+		require(!planetaryHit(1.0, perpendicularMiss, hitRecord), "Planetary hit accepted a perpendicular miss.");
+
+		Ray tangentRay(Vector3(1.0, 0.0, 0.0), Vector3(0.0, 1.0, 0.0));
+		require(planetaryHit(1.0, tangentRay, hitRecord), "Planetary hit rejected a tangent ray.");
+		requireNear(hitRecord.t0, 0.0, "Planetary tangent t0 is wrong.");
+		requireNear(hitRecord.t1, 0.0, "Planetary tangent t1 is wrong.");
+
+		Ray throughSphere(Vector3(0.0, 0.0, 2.0), Vector3(0.0, 0.0, -1.0));
+		require(planetaryHit(1.0, throughSphere, hitRecord), "Planetary hit rejected a direct hit.");
+		requireNear(hitRecord.t0, 1.0, "Planetary direct hit t0 is wrong.");
+		requireNear(hitRecord.t1, 3.0, "Planetary direct hit t1 is wrong.");
+	}
+
+	void	testAtmosphereIncidentLightInsideOutsideAndSunPosition(void)
+	{
+		const double earthRadius = 6360000.0;
+		const double atmosphereRadius = 6420000.0;
+		const double hR = 7994.0;
+		const double hM = 1200.0;
+		Atmosphere dayAtmosphere(0.0, earthRadius, atmosphereRadius, hR, hM, 16, 8, 0.0);
+		Atmosphere nightAtmosphere(1.0, earthRadius, atmosphereRadius, hR, hM, 16, 8, 0.0);
+		HitRecord hitRecord;
+
+		Ray groundUp(Vector3(0.0, earthRadius + 120.0, 0.0), Vector3(0.0, 1.0, 0.0));
+		const Color groundSky = dayAtmosphere.computeIncidentLight(groundUp, hitRecord, T_MAX);
+		requireFiniteNonNegativeColor(groundSky, "Ground atmosphere sky");
+		require(Utilities::luminance(groundSky) > 0.0, "Ground atmosphere sky is black.");
+
+		const Color nightSky = nightAtmosphere.computeIncidentLight(groundUp, hitRecord, T_MAX);
+		requireFiniteNonNegativeColor(nightSky, "Night atmosphere sky");
+		require(Utilities::luminance(groundSky) > Utilities::luminance(nightSky), "Sun angle did not affect atmosphere brightness.");
+
+		Ray spaceLimb(Vector3(0.0, 0.0, atmosphereRadius + 120000.0), Vector3(0.0, 0.98, -0.20));
+		const Color limbSky = dayAtmosphere.computeIncidentLight(spaceLimb, hitRecord, T_MAX);
+		requireFiniteNonNegativeColor(limbSky, "Space limb atmosphere sky");
+		require(Utilities::luminance(limbSky) > 0.0, "Space limb atmosphere sky is black.");
+
+		Ray spaceAway(Vector3(0.0, 0.0, atmosphereRadius + 120000.0), Vector3(0.0, 0.0, 1.0));
+		const Color spaceSky = dayAtmosphere.computeIncidentLight(spaceAway, hitRecord, T_MAX);
+		requireFiniteNonNegativeColor(spaceSky, "Space miss atmosphere sky");
+		requireNear(spaceSky.getRed(), 0.0, "Space miss atmosphere red should be black.");
+		requireNear(spaceSky.getGreen(), 0.0, "Space miss atmosphere green should be black.");
+		requireNear(spaceSky.getBlue(), 0.0, "Space miss atmosphere blue should be black.");
+
+		Ray planetRay(Vector3(0.0, 0.0, atmosphereRadius + 120000.0), Vector3(0.0, 0.0, -1.0));
+		HitRecord earthHitRecord;
+		double tMax = T_MAX;
+		if (planetaryHit(dayAtmosphere.getEarthRadius(), planetRay, earthHitRecord) && earthHitRecord.t1 > 0.0)
+		{
+			tMax = std::max(0.0, earthHitRecord.t0);
+		}
+		const Color clippedAtmosphere = dayAtmosphere.computeIncidentLight(planetRay, hitRecord, tMax);
+		requireFiniteNonNegativeColor(clippedAtmosphere, "Planet-clipped atmosphere sky");
+
+		const Color negativeIntervalSky = dayAtmosphere.computeIncidentLight(groundUp, hitRecord, 0.0);
+		requireFiniteNonNegativeColor(negativeIntervalSky, "Negative interval atmosphere sky");
+		requireNear(negativeIntervalSky.getRed(), 0.0, "Negative interval atmosphere red should be black.");
+		requireNear(negativeIntervalSky.getGreen(), 0.0, "Negative interval atmosphere green should be black.");
+		requireNear(negativeIntervalSky.getBlue(), 0.0, "Negative interval atmosphere blue should be black.");
 	}
 
 	void	testTinyRender(void)
@@ -1841,6 +1952,7 @@ int	main(void)
 		testSceneFileAdaptiveSettings();
 		testSceneFilePostProcessSettings();
 		testSceneFileRejectsInvalidSettings();
+		testSceneFileAtmosphereSetting();
 		testSceneFileBackgroundSetting();
 		testSceneFileLegacyCameraPreservesDecimalFOV();
 		testSceneFileLoadsRelativeObject();
@@ -1868,6 +1980,8 @@ int	main(void)
 		testFlagsParseAdaptiveOptions();
 		testFlagsRejectInvalidValues();
 		testSettersRejectInvalidValues();
+		testPlanetaryHitRobustIntersections();
+		testAtmosphereIncidentLightInsideOutsideAndSunPosition();
 		testTinyRender();
 		testTinyAdaptiveRender();
 		testTinyAdaptiveDenoisedRender();
