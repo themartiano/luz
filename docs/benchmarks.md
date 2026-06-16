@@ -26,13 +26,13 @@ stdout still writes a clean raw CSV.
 Run the deterministic default benchmark case without the container:
 
 ```sh
-./Luz --benchmark --seed 424242424 --threads 1
+./luz --benchmark --seed 424242424 --threads 1
 ```
 
 Run a scene in benchmark mode:
 
 ```sh
-./Luz --file examples/scenes/cornell.luz --resolution 320x180 --samples 128 --denoise --adaptive --max-light-bounces 5 --benchmark
+./luz --file examples/scenes/cornell.luz --resolution 320x180 --samples 128 --denoise --adaptive --max-light-bounces 5 --benchmark
 ```
 
 ## Scoring Results

@@ -22,7 +22,7 @@ settings:
 Then render with Luz:
 
 ```sh
-./Luz --file exports/scene.luz --threads 8
+./luz --file exports/scene.luz --threads 8
 ```
 
 The exporter also works without passing the `.blend` file before `--python`:

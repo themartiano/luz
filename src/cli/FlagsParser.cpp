@@ -65,7 +65,7 @@ void	FlagsParser::_parseHelp(void)
 	if (it != this->_args.end())
 	{
 		std::cout
-			<< "Usage: ./Luz [options]\n\n"
+			<< "Usage: ./luz [options]\n\n"
 			<< "Options:\n"
 			<< "  -f, --file PATH             Load a .luz scene file\n"
 			<< "  -r, --resolution WxH        Override render resolution\n"
