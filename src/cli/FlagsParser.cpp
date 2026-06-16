@@ -3,6 +3,7 @@
 #include "SceneFile/SceneFile.hpp"
 #include "Scene/SceneHelpers.hpp"
 #include "Defaults.hpp"
+#include "Utilities.hpp"
 #include <algorithm>
 #include <unistd.h>
 #include <stdexcept>
@@ -36,7 +37,7 @@ void	FlagsParser::parse(Scene& scene)
 {
 	// Function call order is important since it'll determine the flag importance
 	this->_parseHelp();
-	this->_rejectCompressionFlag();
+	this->_rejectRemovedFlags();
 	this->_parseSeed();
 	this->_parseFile(scene);
 	this->_parseBenchmark(scene);
@@ -87,7 +88,7 @@ void	FlagsParser::_parseHelp(void)
 			<< "  --contrast F               Display contrast multiplier\n"
 			<< "  --denoise [true|false]      Write a denoised companion render\n"
 			<< "  --no-denoise                Disable denoising\n"
-				<< "  -o, --output PATH.EXT       Override render output path\n"
+			<< "  -o, --output PATH.EXT       Override render output path\n"
 			<< "  --denoise-output PATH.EXT   Override denoised output path\n"
 			<< "  --render-times              Write renderTime.bmp\n"
 			<< "  --benchmark                 Run the built-in benchmark scene\n"
@@ -96,13 +97,17 @@ void	FlagsParser::_parseHelp(void)
 	}
 }
 
-void	FlagsParser::_rejectCompressionFlag(void)
+void	FlagsParser::_rejectRemovedFlags(void)
 {
 	for (const std::string& arg : this->_args)
 	{
 		if (arg == "--compression" || arg.rfind("--compression=", 0) == 0)
 		{
 			throw std::runtime_error("--compression has been removed.");
+		}
+		if (arg == "--output-file" || arg.rfind("--output-file=", 0) == 0)
+		{
+			throw std::runtime_error("--output-file has been removed. Use --output PATH.EXT.");
 		}
 	}
 }

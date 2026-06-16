@@ -90,10 +90,10 @@ static std::string	denoisedOutputFileName(Scene& scene)
 
 	Utilities::toLower(lowerExtension);
 	if (
-			lowerExtension == ".bmp"
-			|| lowerExtension == ".png"
-			|| lowerExtension == ".tiff"
-		)
+		lowerExtension == ".bmp"
+		|| lowerExtension == ".png"
+		|| lowerExtension == ".tiff"
+	)
 	{
 		std::filesystem::path denoisedPath = outputPath;
 

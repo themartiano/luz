@@ -25,7 +25,7 @@ https://github.com/user-attachments/assets/7dc03485-9418-47af-a7e7-c4c4c53b6b70
 - BVH acceleration, including packed mesh BVHs with binned SAH construction and near-first traversal
 - Atmospheric simulation w/ scattering
 - Depth of field, antialiasing, exposure, contrast, tone mapping, gamma correction, and bloom
-- BMP, PNG, and TIFF output
+- BMP, PNG, and 32-bit floating-point TIFF output
 - Deterministic benchmark harness with render, denoise, post-process, and score breakdowns
 
 ## Requirements
@@ -152,6 +152,10 @@ Usage: ./luz [options]
   --benchmark                 Run the built-in benchmark scene
   --benchmark-case NAME       Benchmark case: default, many-objects, mesh-bvh, diffuse, postprocess, atmosphere, lights, emissive-geometry, primitives-materials, volumes, obj-mesh
 ```
+
+TIFF output stores RGB as uncompressed 32-bit IEEE floating-point samples. Use
+`--output render.tiff` with `--tonemapping false --gamma false` to preserve
+scene-linear HDR values above 1.0.
 
 ## Adaptive Sampling
 

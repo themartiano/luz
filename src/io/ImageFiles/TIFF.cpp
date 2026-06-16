@@ -4,6 +4,7 @@
 #include "Utilities.hpp"
 #include <cmath>
 #include <cstdint>
+#include <cstring>
 #include <fstream>
 #include <iostream>
 #include <filesystem>
@@ -24,11 +25,15 @@ namespace
 	constexpr std::uint16_t	TIFF_VERSION = 42;
 	constexpr std::uint16_t	TYPE_SHORT = 3;
 	constexpr std::uint16_t	TYPE_LONG = 4;
-	constexpr std::uint16_t	TAG_COUNT = 10;
+	constexpr std::uint16_t	TAG_COUNT = 11;
 	constexpr std::uint32_t	IFD_OFFSET = 8;
 	constexpr std::uint32_t	IFD_BYTE_COUNT = sizeof(std::uint16_t) + (TAG_COUNT * 12) + sizeof(std::uint32_t);
 	constexpr std::uint32_t	BITS_PER_SAMPLE_OFFSET = IFD_OFFSET + IFD_BYTE_COUNT;
-	constexpr std::uint32_t	PIXEL_DATA_OFFSET = BITS_PER_SAMPLE_OFFSET + (3 * sizeof(std::uint16_t));
+	constexpr std::uint32_t	SAMPLE_FORMAT_OFFSET = BITS_PER_SAMPLE_OFFSET + (3 * sizeof(std::uint16_t));
+	constexpr std::uint32_t	PIXEL_DATA_OFFSET = SAMPLE_FORMAT_OFFSET + (3 * sizeof(std::uint16_t)) + 2;
+	constexpr std::uint16_t	SAMPLE_FORMAT_IEEE_FLOAT = 3;
+
+	static_assert(sizeof(float) == 4 && std::numeric_limits<float>::is_iec559, "TIFF HDR output requires IEEE 754 32-bit floats.");
 
 	void	writeU16(std::ofstream& stream, std::uint16_t value)
 	{
@@ -52,6 +57,14 @@ namespace
 		stream.write(reinterpret_cast<const char*>(bytes), sizeof(bytes));
 	}
 
+	void	writeF32(std::ofstream& stream, float value)
+	{
+		std::uint32_t bits;
+
+		std::memcpy(&bits, &value, sizeof(bits));
+		writeU32(stream, bits);
+	}
+
 	void	writeTag(std::ofstream& stream, const TiffTag& tag)
 	{
 		writeU16(stream, tag.id);
@@ -70,19 +83,22 @@ namespace
 		return (static_cast<std::uint32_t>(value));
 	}
 
-	unsigned char	colorByte(double value)
+	float	colorFloat(double value)
 	{
-		if (!std::isfinite(value))
+		if (!std::isfinite(value) || value <= 0.0)
 		{
-			value = 0.0;
+			return (0.0f);
 		}
-		Utilities::setDoubleRange(value, 0.0, 1.0);
-		return (static_cast<unsigned char>((value * 255.0) + 0.5));
+		if (value > std::numeric_limits<float>::max())
+		{
+			return (std::numeric_limits<float>::max());
+		}
+		return (static_cast<float>(value));
 	}
 
-	std::vector<unsigned char>	buildPixelData(const std::unique_ptr<Image>& image)
+	std::vector<float>	buildPixelData(const std::unique_ptr<Image>& image)
 	{
-		std::vector<unsigned char> pixels;
+		std::vector<float> pixels;
 
 		pixels.reserve(image->getWidth() * image->getHeight() * 3);
 		for (std::size_t y = 0; y < image->getHeight(); y++)
@@ -91,9 +107,9 @@ namespace
 			{
 				const Color pixel = image->getPixel(x, y);
 
-				pixels.push_back(colorByte(pixel.getRed()));
-				pixels.push_back(colorByte(pixel.getGreen()));
-				pixels.push_back(colorByte(pixel.getBlue()));
+				pixels.push_back(colorFloat(pixel.getRed()));
+				pixels.push_back(colorFloat(pixel.getGreen()));
+				pixels.push_back(colorFloat(pixel.getBlue()));
 			}
 		}
 
@@ -134,8 +150,8 @@ void	TIFF::writeFile(const std::unique_ptr<Image>& image, bool insideDir, std::s
 
 	const std::uint32_t width = checkedU32(image->getWidth(), "width");
 	const std::uint32_t height = checkedU32(image->getHeight(), "height");
-	const std::vector<unsigned char> pixelData = buildPixelData(image);
-	const std::uint32_t stripByteCount = checkedU32(pixelData.size(), "pixel data");
+	const std::vector<float> pixelData = buildPixelData(image);
+	const std::uint32_t stripByteCount = checkedU32(pixelData.size() * sizeof(float), "pixel data");
 	const TiffTag tags[TAG_COUNT] = {
 		{256, TYPE_LONG, 1, width},
 		{257, TYPE_LONG, 1, height},
@@ -146,7 +162,8 @@ void	TIFF::writeFile(const std::unique_ptr<Image>& image, bool insideDir, std::s
 		{277, TYPE_SHORT, 1, 3},
 		{278, TYPE_LONG, 1, height},
 		{279, TYPE_LONG, 1, stripByteCount},
-		{284, TYPE_SHORT, 1, 1}
+		{284, TYPE_SHORT, 1, 1},
+		{339, TYPE_SHORT, 3, SAMPLE_FORMAT_OFFSET}
 	};
 
 	std::cout << CLR_YELLOW << "Writing render to " << CLR_BLUE_BRIGHT << Utilities::terminalFilePath(filePath) << "\n" << CLR_RESET;
@@ -166,10 +183,17 @@ void	TIFF::writeFile(const std::unique_ptr<Image>& image, bool insideDir, std::s
 		writeTag(stream, tag);
 	}
 	writeU32(stream, 0);
-	writeU16(stream, 8);
-	writeU16(stream, 8);
-	writeU16(stream, 8);
-	stream.write(reinterpret_cast<const char*>(pixelData.data()), pixelData.size());
+	writeU16(stream, 32);
+	writeU16(stream, 32);
+	writeU16(stream, 32);
+	writeU16(stream, SAMPLE_FORMAT_IEEE_FLOAT);
+	writeU16(stream, SAMPLE_FORMAT_IEEE_FLOAT);
+	writeU16(stream, SAMPLE_FORMAT_IEEE_FLOAT);
+	writeU16(stream, 0);
+	for (float value : pixelData)
+	{
+		writeF32(stream, value);
+	}
 
 	if (!stream)
 	{
