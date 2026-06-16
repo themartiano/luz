@@ -32,3 +32,4 @@ renderTimes.bmp
 renderTime.bmp
 assets/objects/*.obj
 !assets/objects/suzanne.obj
+tools/image-compare*
