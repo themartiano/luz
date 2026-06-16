@@ -23,32 +23,51 @@
 #include "Charts/Bar.hpp"
 #include "FlagsParser.hpp"
 #include "Scene/SceneHelpers.hpp"
+#include "OutputFormat.hpp"
 #include "Random.hpp"
 #include <filesystem>
 #include <memory>
 #include <exception>
 #include <string>
 
-static bool	isTiffOutput(std::string outputFileName)
+static std::string	outputFormatExtension(RenderOutputFormat outputFormat)
 {
-	std::string lowerOutputFileName = outputFileName;
-
-	Utilities::toLower(lowerOutputFileName);
-	return (
-		Utilities::stringEndsWith(lowerOutputFileName, ".tiff")
-		|| Utilities::stringEndsWith(lowerOutputFileName, ".tif")
-	);
+	switch (outputFormat)
+	{
+		case OUTPUT_TIFF:
+			return (".tiff");
+		case OUTPUT_BMP:
+		default:
+			return (".bmp");
+	}
 }
 
-static void	saveImage(const std::unique_ptr<Image>& image, const std::string& outputFileName)
+static std::string	outputFileNameForFormat(
+	const std::string& outputFileName,
+	RenderOutputFormat outputFormat
+)
 {
-	if (isTiffOutput(outputFileName))
+	std::filesystem::path outputPath(outputFileName);
+
+	outputPath.replace_extension(outputFormatExtension(outputFormat));
+	return (outputPath.string());
+}
+
+static void	saveImage(
+	const std::unique_ptr<Image>& image,
+	const std::string& outputFileName,
+	RenderOutputFormat outputFormat
+)
+{
+	const std::string formattedOutputFileName = outputFileNameForFormat(outputFileName, outputFormat);
+
+	if (outputFormat == OUTPUT_TIFF)
 	{
-		image->saveToTIFF(outputFileName);
+		image->saveToTIFF(formattedOutputFileName);
 	}
 	else
 	{
-		image->saveToBMP(outputFileName);
+		image->saveToBMP(formattedOutputFileName);
 	}
 }
 
@@ -65,7 +84,7 @@ static std::string	denoisedOutputFileName(Scene& scene)
 	std::string lowerExtension = extension.string();
 
 	Utilities::toLower(lowerExtension);
-	if (lowerExtension == ".bmp" || lowerExtension == ".tiff" || lowerExtension == ".tif")
+	if (lowerExtension == ".bmp" || lowerExtension == ".tiff")
 	{
 		std::filesystem::path denoisedPath = outputPath;
 
@@ -148,10 +167,10 @@ int	main(int argc, char *argv[])
 		{
 			if (!scene.getBenchmarkMode())
 			{
-				saveImage(scene.getImage(), scene.getDefaultRenderOutputFileName());
+				saveImage(scene.getImage(), scene.getDefaultRenderOutputFileName(), scene.getRenderOutputFormat());
 				if (scene.hasDenoisedImage())
 				{
-					saveImage(scene.getDenoisedImage(), denoisedOutputFileName(scene));
+					saveImage(scene.getDenoisedImage(), denoisedOutputFileName(scene), scene.getRenderOutputFormat());
 				}
 				if (scene.getStorePixelRenderTimes())
 				{

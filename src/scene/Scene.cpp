@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <stdexcept>
 #include <cmath>
+#include <filesystem>
 
 namespace
 {
@@ -28,6 +29,63 @@ namespace
 			return (0.0);
 		}
 		return (weight);
+	}
+
+	std::string	outputFormatExtension(RenderOutputFormat outputFormat)
+	{
+		switch (outputFormat)
+		{
+			case OUTPUT_TIFF:
+				return (".tiff");
+			case OUTPUT_BMP:
+			default:
+				return (".bmp");
+		}
+	}
+
+	RenderOutputFormat	outputFormatFromExtension(const std::string& extension)
+	{
+		std::string lowerExtension = extension;
+
+		Utilities::toLower(lowerExtension);
+		if (lowerExtension == ".bmp")
+		{
+			return (OUTPUT_BMP);
+		}
+		if (lowerExtension == ".tiff")
+		{
+			return (OUTPUT_TIFF);
+		}
+		throw std::invalid_argument("Output file must use .bmp or .tiff.");
+	}
+
+	std::string	outputFileNameWithFormat(std::string fileName, RenderOutputFormat outputFormat)
+	{
+		std::filesystem::path outputPath(fileName);
+		const std::string extension = outputPath.extension().string();
+
+		if (extension.empty())
+		{
+			fileName += outputFormatExtension(outputFormat);
+			return (fileName);
+		}
+		outputPath.replace_extension(outputFormatExtension(outputFormat));
+		return (outputPath.string());
+	}
+
+	RenderOutputFormat	outputFormatForFileName(
+		const std::string& fileName,
+		RenderOutputFormat fallbackFormat
+	)
+	{
+		const std::filesystem::path outputPath(fileName);
+		const std::string extension = outputPath.extension().string();
+
+		if (extension.empty())
+		{
+			return (fallbackFormat);
+		}
+		return (outputFormatFromExtension(extension));
 	}
 }
 
@@ -56,7 +114,8 @@ Scene::Scene(void)
 	this->_atmosphere = Atmosphere();
 	this->_backgroundColor = Color(0.0, 0.0, 0.0);
 
-	this->_defaultRenderOutputFileName = D_RENDER_FILE_NAME;
+	this->_renderOutputFormat = OUTPUT_BMP;
+	this->_defaultRenderOutputFileName = D_RENDER_FILE_NAME + outputFormatExtension(this->_renderOutputFormat);
 
 	this->_activeCamera = 0;
 	this->_lightSelectionTotalWeight = 0.0;
@@ -308,7 +367,32 @@ std::string	Scene::getDefaultRenderOutputFileName(void) const
 // Sets the Output File Name
 void	Scene::setDefaultRenderOutputFileName(std::string defaultRenderOutputFileName)
 {
-	this->_defaultRenderOutputFileName = defaultRenderOutputFileName;
+	if (defaultRenderOutputFileName.empty())
+	{
+		throw std::invalid_argument("Output file name must not be empty.");
+	}
+	this->_renderOutputFormat = outputFormatForFileName(
+		defaultRenderOutputFileName,
+		this->_renderOutputFormat
+	);
+	this->_defaultRenderOutputFileName = outputFileNameWithFormat(
+		defaultRenderOutputFileName,
+		this->_renderOutputFormat
+	);
+}
+
+RenderOutputFormat	Scene::getRenderOutputFormat(void) const
+{
+	return (this->_renderOutputFormat);
+}
+
+void	Scene::setRenderOutputFormat(RenderOutputFormat renderOutputFormat)
+{
+	this->_renderOutputFormat = renderOutputFormat;
+	this->_defaultRenderOutputFileName = outputFileNameWithFormat(
+		this->_defaultRenderOutputFileName,
+		this->_renderOutputFormat
+	);
 }
 
 void	Scene::updateLights(void)
@@ -550,6 +634,16 @@ void	Scene::clearDenoisedImage(void)
 
 void	Scene::setDenoiseOutputFileName(std::string denoiseOutputFileName)
 {
+	if (denoiseOutputFileName.empty())
+	{
+		throw std::invalid_argument("Denoise output file name must not be empty.");
+	}
+	const std::filesystem::path outputPath(denoiseOutputFileName);
+	const std::string extension = outputPath.extension().string();
+	if (!extension.empty())
+	{
+		outputFormatFromExtension(extension);
+	}
 	this->_denoiseOutputFileName = denoiseOutputFileName;
 }
 
