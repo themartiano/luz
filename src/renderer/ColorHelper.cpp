@@ -45,9 +45,67 @@ namespace
 			}
 			case SCATTER_PDF_SPHERE:
 				return (1.0 / (4.0 * D_PI));
+			case SCATTER_PDF_HENYEY_GREENSTEIN:
+			{
+				const double directionLengthSquared = Utilities::vectorLengthSquared(direction);
+				const double phaseDirectionLengthSquared = Utilities::vectorLengthSquared(scatterRecord.phaseDirection);
+				if (
+					directionLengthSquared <= 0.0
+					|| phaseDirectionLengthSquared <= 0.0
+					|| !std::isfinite(directionLengthSquared)
+					|| !std::isfinite(phaseDirectionLengthSquared)
+				)
+				{
+					return (0.0);
+				}
+
+				const Vector3 normalizedDirection = direction / std::sqrt(directionLengthSquared);
+				const Vector3 phaseDirection = scatterRecord.phaseDirection / std::sqrt(phaseDirectionLengthSquared);
+				const double cosTheta = std::max(-1.0, std::min(1.0, Utilities::dot(normalizedDirection, phaseDirection)));
+				const double g = std::max(-0.99, std::min(0.99, scatterRecord.phaseAnisotropy));
+				const double g2 = g * g;
+				const double denominator = std::max(1e-12, 1.0 + g2 - (2.0 * g * cosTheta));
+
+				return ((1.0 - g2) / (4.0 * D_PI * denominator * std::sqrt(denominator)));
+			}
 			default:
 				return (0.0);
 		}
+	}
+
+	Vector3	henyeyGreensteinDirection(const ScatterRecord& scatterRecord)
+	{
+		const double phaseDirectionLengthSquared = Utilities::vectorLengthSquared(scatterRecord.phaseDirection);
+		if (phaseDirectionLengthSquared <= 0.0 || !std::isfinite(phaseDirectionLengthSquared))
+		{
+			return (Sampler::sphereDirection(Sampler::DIM_BSDF_DIRECTION));
+		}
+
+		const Vector3 phaseDirection = scatterRecord.phaseDirection / std::sqrt(phaseDirectionLengthSquared);
+		const double g = std::max(-0.99, std::min(0.99, scatterRecord.phaseAnisotropy));
+		const Sampler::Sample2D sample = Sampler::sample2D(Sampler::DIM_BSDF_DIRECTION);
+		const double phi = 2.0 * D_PI * sample.x;
+		double cosTheta;
+
+		if (std::fabs(g) < 1e-3)
+		{
+			cosTheta = 1.0 - (2.0 * sample.y);
+		}
+		else
+		{
+			const double remapped = (1.0 - (g * g)) / (1.0 - g + (2.0 * g * sample.y));
+			cosTheta = (1.0 + (g * g) - (remapped * remapped)) / (2.0 * g);
+			cosTheta = std::max(-1.0, std::min(1.0, cosTheta));
+		}
+
+		const double sinTheta = std::sqrt(std::max(0.0, 1.0 - (cosTheta * cosTheta)));
+		const ONB phaseBasis(phaseDirection);
+
+		return (phaseBasis.local(
+			sinTheta * std::cos(phi),
+			sinTheta * std::sin(phi),
+			cosTheta
+		));
 	}
 
 	Vector3	scatterPDFGenerate(const ScatterRecord& scatterRecord)
@@ -58,6 +116,8 @@ namespace
 				return (scatterRecord.cosineBasis.local(Sampler::cosineHemisphere(Sampler::DIM_BSDF_DIRECTION)));
 			case SCATTER_PDF_SPHERE:
 				return (Sampler::sphereDirection(Sampler::DIM_BSDF_DIRECTION));
+			case SCATTER_PDF_HENYEY_GREENSTEIN:
+				return (henyeyGreensteinDirection(scatterRecord));
 			default:
 				return (Vector3(0.0, 0.0, 0.0));
 		}
