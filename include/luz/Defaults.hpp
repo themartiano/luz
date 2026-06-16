@@ -10,9 +10,11 @@ const std::size_t	D_HEIGHT = 1080; // Default screen height in pixels
 
 const int	D_SAMPLE_COUNT = 48; // Default sample count (rays per pixel)
 const int	D_MAX_LIGHT_BOUNCES = 6; // Default maximum light bounces per ray
+const bool	D_ADAPTIVE_SAMPLING = true; // Default adaptive sampling state
 const int	D_ADAPTIVE_MIN_SAMPLES = 128; // Default minimum samples before adaptive sampling may stop a pixel
 const int	D_ADAPTIVE_CHECK_INTERVAL = 32; // Default adaptive sampling convergence check interval
 const double D_ADAPTIVE_THRESHOLD = 0.03; // Default relative 95% confidence interval threshold
+const bool	D_DENOISE = true; // Default denoising state
 
 const double T_MAX = std::numeric_limits<double>::max(); // Default T_MAX (as far as an object can be in order to be rendered, relatively to the camera's position)
 const double T_MIN = 0.001; // Default T_MIN (as near as an object can be in order to be rendered, relatively to the camera's position)

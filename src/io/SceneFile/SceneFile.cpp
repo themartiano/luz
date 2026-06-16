@@ -87,7 +87,7 @@ void	SceneFile::read(Scene& scene, std::string fileName)
 
 		if (lowerLine.rfind("[settings]", 0) != std::string::npos)
 		{
-			internal::_readSettingsSection(scene, stream);
+			internal::_readSettingsSection(scene, stream, context);
 		}
 		else if (lowerLine.rfind("[materials]", 0) != std::string::npos)
 		{

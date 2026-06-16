@@ -18,6 +18,7 @@ https://github.com/user-attachments/assets/7dc03485-9418-47af-a7e7-c4c4c53b6b70
 - Spheres, planes, rectangles, triangles, cubes, volumes, and OBJ meshes
 - Lambertian, metal, dielectric, emissive, and isotropic materials
 - Area, point, sphere and directional lights
+- PPM and HDR equirectangular environment maps
 - Custom `.luz` scene files
 - .blend to .luz converter
 - Fully customizable render parameters via CLI or scene file
@@ -45,10 +46,13 @@ make
 Render a bundled example scene:
 
 ```sh
-./luz --file examples/scenes/cornell.luz --samples 50 --resolution 300x300
+./luz examples/scenes/cornell.luz --samples 50 --resolution 300x300
 ```
 
-The default output is `render.bmp`. Scene files can set `outputfilename=...`, and the CLI can override common render settings. Use a `.bmp`, `.png`, or `.tiff` output path to select the format.
+The primary output is `render.bmp`, with `render_denoised.bmp` written by
+default. Scene files can set `outputfilename=...`, and the CLI can override
+common render settings. Use a `.bmp`, `.png`, or `.tiff` output path to select
+the format.
 
 Run the test suite:
 
@@ -125,12 +129,16 @@ cmake --build build --clean-first
 ## CLI
 
 ```text
-Usage: ./luz [options]
+Usage: ./luz [scene.luz] [options]
 
+Arguments:
+  PATH                        Load a .luz scene file
+
+Options:
   -f, --file PATH             Load a .luz scene file
   -r, --resolution WxH        Override render resolution
   -s, --samples N             Override samples per pixel
-  --adaptive [true|false]     Enable adaptive per-pixel sampling
+  --adaptive [true|false]     Toggle adaptive sampling (default: true)
   --no-adaptive               Disable adaptive sampling
   --adaptive-min-samples N    Minimum samples before adaptive stopping
   --adaptive-threshold F      Relative adaptive noise threshold
@@ -144,7 +152,7 @@ Usage: ./luz [options]
   --bloom true|false          Toggle bloom
   --exposure EV              Exposure compensation in stops
   --contrast F               Display contrast multiplier
-  --denoise [true|false]      Write a denoised companion render
+  --denoise [true|false]      Toggle denoised companion render (default: true)
   --no-denoise                Disable denoising
   -o, --output PATH.EXT       Override render output path
   --denoise-output PATH.EXT   Override denoised output path
@@ -159,24 +167,28 @@ scene-linear HDR values above 1.0.
 
 ## Adaptive Sampling
 
-`--adaptive` treats `--samples` as the maximum samples per pixel. Each pixel
-uses a progressive per-pixel sample sequence, renders at least
+Adaptive sampling is enabled by default. `--samples` is the maximum samples per
+pixel when adaptive stopping is active. Each pixel uses a progressive per-pixel
+sample sequence, renders at least
 `--adaptive-min-samples`, then periodically checks luminance and RGB confidence
 intervals. Very dark pixels use a conservative minimum before they can stop, so
 rare light contributions are less likely to be mistaken for converged black.
+Use `--no-adaptive` or `--adaptive false` to render every pixel for the full
+sample count.
 
 Lower thresholds keep more detail and cost more time. For final renders, start
 with a high max sample count and tune with values like:
 
 ```sh
-./luz --file exports/stormtroopers.luz --samples 4096 --adaptive --adaptive-min-samples 512 --adaptive-check-interval 64 --adaptive-threshold 0.005 --denoise
+./luz exports/stormtroopers.luz --samples 4096 --adaptive-min-samples 512 --adaptive-check-interval 64 --adaptive-threshold 0.005
 ```
 
 ## Denoising
 
-`--denoise` enables Luz's NFOR-style feature-buffer denoiser and writes a
-separate companion image. By default, `render.bmp` becomes
-`render_denoised.bmp`; use `--denoise-output PATH.EXT` to choose the exact path.
+Denoising is enabled by default. Luz's NFOR-style feature-buffer denoiser writes
+a separate companion image: by default, `render.bmp` becomes
+`render_denoised.bmp`; use `--denoise-output PATH.EXT` to choose the exact
+path. Use `--no-denoise` or `--denoise false` to skip the companion render.
 
 PNG output writes post-processed 8-bit RGB SDR images using stored DEFLATE
 blocks for dependency-free writing.

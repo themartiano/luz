@@ -28,7 +28,7 @@ The parser is intentionally strict: unknown lines and malformed values throw an 
 | --- | --- | --- |
 | `resolution` | `resolution=WIDTH,HEIGHT` | Width and height must be positive. |
 | `samples` | `samples=N` | Rays per pixel. |
-| `adaptive` | `adaptive=0` or `adaptive=1` | Enables adaptive per-pixel sampling. When enabled, `samples` is the maximum samples per pixel. Aliases: `adaptivesampling`, `adaptive_sampling`. |
+| `adaptive` | `adaptive=0` or `adaptive=1` | Toggles adaptive per-pixel sampling. Enabled by default. When enabled, `samples` is the maximum samples per pixel. Aliases: `adaptivesampling`, `adaptive_sampling`. |
 | `adaptiveminsamples` | `adaptiveminsamples=N` | Minimum samples before adaptive stopping can occur. Alias: `adaptive_min_samples`. |
 | `adaptivethreshold` | `adaptivethreshold=F` | Relative 95% confidence interval threshold for luminance convergence. Lower values render longer. Alias: `adaptive_threshold`. |
 | `adaptivecheckinterval` | `adaptivecheckinterval=N` | Sample interval between adaptive convergence checks. Alias: `adaptive_check_interval`. |
@@ -38,31 +38,49 @@ The parser is intentionally strict: unknown lines and malformed values throw an 
 | `bloom` | `bloom=0` or `bloom=1` | Enables bloom when set to `1`. |
 | `exposure` | `exposure=F` | Exposure compensation in stops. `1.0` doubles light before bloom and tone mapping; `-1.0` halves it. |
 | `contrast` | `contrast=F` | Display contrast multiplier applied after tone mapping and before gamma correction. `1.0` keeps contrast unchanged. |
-| `denoise` | `denoise=0` or `denoise=1` | Writes a denoised companion image using the NFOR feature-buffer denoiser before exposure, bloom, tone mapping, contrast, and gamma correction. |
+| `denoise` | `denoise=0` or `denoise=1` | Toggles the NFOR denoised companion image. Enabled by default. The denoiser runs before exposure, bloom, tone mapping, contrast, and gamma correction. |
 | `denoiseoutputfilename` | `denoiseoutputfilename=PATH` | Optional denoised companion output path. Defaults to `outputfilename` with `_denoised` before the extension. Must use a `.bmp`, `.png`, or `.tiff` suffix. Aliases: `denoiseoutput`, `denoise_output`. |
 | `outputfilename` | `outputfilename=PATH` | `.bmp` is appended if no suffix is present. Explicit suffixes must be `.bmp`, `.png`, or `.tiff`; `.tif` is not accepted. PNG output is 8-bit RGB SDR. TIFF output is uncompressed 32-bit floating-point RGB; disable tone mapping and gamma to preserve scene-linear HDR values above 1.0. |
-| `sky` | `sky=none`, `sky=linear`, or `sky=atmosphere` | Selects background rendering. |
+| `sky` | `sky=none`, `sky=linear`, `sky=atmosphere`, or `sky=environment` | Selects background rendering. |
 | `background` | `background=(R,G,B)` | Background color used when `sky=none`. Aliases: `backgroundcolor`, `background_color`. |
+| `environment` | `environment=PATH[,STRENGTH[,ROTATION_DEGREES]]` | Equirectangular environment map used when `sky=environment`. `environment=...` also enables `sky=environment`. Aliases: `environmentmap`, `environment_map`, `backgroundimage`, `background_image`. |
+| `environmentstrength` | `environmentstrength=F` | Multiplies environment radiance. Defaults to `1.0`. Aliases: `environment_strength`, `worldstrength`, `world_strength`. |
+| `environmentrotation` | `environmentrotation=DEGREES` | Offsets the equirectangular U coordinate around world Y. Defaults to `0`. Aliases: `environment_rotation`, `worldrotation`, `world_rotation`. |
 | `atmosphere` | `atmosphere=SUN,EARTH_RADIUS,ATMOSPHERE_RADIUS,HR,HM,SAMPLES,LIGHT_SAMPLES,STARS` | Only valid after `sky=atmosphere`. |
 | `distanceblueness` | `distanceblueness=0` or `distanceblueness=1` | Enables distance blue tinting when set to `1`. |
 
 ### Adaptive Sampling Notes
 
-Adaptive sampling never exceeds `samples`. It renders at least
-`adaptiveminsamples`, then periodically estimates luminance variance and stops a
-pixel early only when the configured confidence threshold is met. Dark pixels
-that are consistently black can finish quickly, while low-light pixels with rare
-bright contributions continue sampling.
+Adaptive sampling is enabled by default and never exceeds `samples`. It renders
+at least `adaptiveminsamples`, then periodically estimates luminance variance
+and stops a pixel early only when the configured confidence threshold is met.
+Dark pixels that are consistently black can finish quickly, while low-light
+pixels with rare bright contributions continue sampling.
 
 ### Denoising Notes
 
-`denoise=1` has no hard minimum resolution or sample count, but NFOR needs
-enough signal to estimate useful color and feature statistics. One sample per
-pixel is not a good quality target: there is no per-pixel variance estimate, so
-the denoised image can look almost unchanged or can smooth the wrong details.
-Use at least a few samples per pixel for quick previews, and prefer roughly 16+
-samples per pixel when judging denoiser quality. Very low resolutions can also
-be misleading because each local filter window covers too much of the image.
+Denoising is enabled by default. It has no hard minimum resolution or sample
+count, but NFOR needs enough signal to estimate useful color and feature
+statistics. One sample per pixel is not a good quality target: there is no
+per-pixel variance estimate, so the denoised image can look almost unchanged or
+can smooth the wrong details. Use at least a few samples per pixel for quick
+previews, and prefer roughly 16+ samples per pixel when judging denoiser
+quality. Very low resolutions can also be misleading because each local filter
+window covers too much of the image.
+
+### Environment Map Notes
+
+Environment maps use latitude-longitude/equirectangular projection. Luz supports
+PPM `P3`/`P6` files for ordinary background images and Radiance RGBE `.hdr`/`.pic`
+files for HDR world lighting. HDR values above `1.0` are preserved in scene-linear
+rendering, so they can drive bright reflections, bloom, and diffuse illumination.
+
+Paths are resolved like other assets: relative to the scene file, relative to
+the current working directory, then under common asset directories including
+`textures/` and `assets/textures/`. When `sky=environment`, the map is visible
+to camera rays and specular/refraction misses. Diffuse bounces also sample it as
+an infinite light using luminance-weighted solid-angle importance sampling and
+MIS, which reduces noise with bright HDR maps.
 
 ## Scene
 

@@ -1,9 +1,11 @@
 #include "AABB.hpp"
 #include "Atmosphere.hpp"
 #include "Color.hpp"
+#include "EnvironmentMap.hpp"
 #include "FlagsParser.hpp"
 #include "Image.hpp"
 #include "Materials/Lambertian.hpp"
+#include "Materials/Emissive.hpp"
 #include "Materials/Principled.hpp"
 #include "OBJReader.hpp"
 #include "PDFs/HittablePDF.hpp"
@@ -109,6 +111,92 @@ namespace
 	{
 		require(bytes.size() >= offset + 3, "BMP test file is too small.");
 		require(bytes[offset] == blue && bytes[offset + 1] == green && bytes[offset + 2] == red, message);
+	}
+
+	void	requireFiniteColor(const Color& color, const std::string& message)
+	{
+		require(std::isfinite(color.getRed()), message + " red channel is non-finite.");
+		require(std::isfinite(color.getGreen()), message + " green channel is non-finite.");
+		require(std::isfinite(color.getBlue()), message + " blue channel is non-finite.");
+	}
+
+	void	requireDisplayRange(const Color& color, const std::string& message)
+	{
+		requireFiniteColor(color, message);
+		require(color.getRed() >= 0.0 && color.getRed() <= 1.0, message + " red channel is outside display range.");
+		require(color.getGreen() >= 0.0 && color.getGreen() <= 1.0, message + " green channel is outside display range.");
+		require(color.getBlue() >= 0.0 && color.getBlue() <= 1.0, message + " blue channel is outside display range.");
+	}
+
+	void	requireImageIsFinite(const Image& image, const std::string& message)
+	{
+		for (std::size_t y = 0; y < image.getHeight(); y++)
+		{
+			for (std::size_t x = 0; x < image.getWidth(); x++)
+			{
+				requireFiniteColor(image.getPixel(x, y), message);
+			}
+		}
+	}
+
+	void	requireImageIsDisplayable(const Image& image, const std::string& message)
+	{
+		for (std::size_t y = 0; y < image.getHeight(); y++)
+		{
+			for (std::size_t x = 0; x < image.getWidth(); x++)
+			{
+				requireDisplayRange(image.getPixel(x, y), message);
+			}
+		}
+	}
+
+	bool	isVisualForegroundPixel(const Color& color)
+	{
+		return (
+			color.getRed() > 0.85
+			&& color.getGreen() < 0.25
+			&& color.getBlue() < 0.15
+		);
+	}
+
+	bool	isVisualBackgroundPixel(const Color& color)
+	{
+		return (
+			std::abs(color.getRed() - 0.02) < 0.000001
+			&& std::abs(color.getGreen() - 0.04) < 0.000001
+			&& std::abs(color.getBlue() - 0.08) < 0.000001
+		);
+	}
+
+	void	configureVisualRenderScene(Scene& scene, std::size_t width, std::size_t height)
+	{
+		scene.getImage()->setWidth(width);
+		scene.getImage()->setHeight(height);
+		scene.getImage()->initialize();
+		scene.setSampleCount(1);
+		scene.setAdaptiveSampling(false);
+		scene.setMaxLightBounces(1);
+		scene.setGammaCorrected(false);
+		scene.setToneMapped(false);
+		scene.setBloom(false);
+		scene.setDenoise(false);
+		scene.setRenderSky(SKY_NONE);
+		scene.setBackgroundColor(Color(0.02, 0.04, 0.08));
+		scene.setRenderingThreads(1);
+		scene.setBenchmarkMode(true);
+		scene.addCamera(Camera(Vector3(0.0, 0.0, 0.0), Vector3(0.0, 0.0, -1.0), 20, 0.0, 1.0));
+		scene.addHittable(std::make_shared<Sphere>(
+			Vector3(0.0, 0.0, -1.0),
+			0.11,
+			std::make_shared<Emissive>(Color(1.0, 0.12, 0.04), 1.0)
+		));
+	}
+
+	std::size_t	bmpPixelOffset(std::size_t width, std::size_t height, std::size_t x, std::size_t y)
+	{
+		const std::size_t rowStride = ((width * 3) + 3) / 4 * 4;
+
+		return (54 + ((height - 1 - y) * rowStride) + (x * 3));
 	}
 
 	std::uint16_t	readU16(const std::vector<unsigned char>& bytes, std::size_t offset)
@@ -690,6 +778,24 @@ namespace
 		std::filesystem::remove(scenePath);
 	}
 
+	void	testSceneFileUsesSceneDefaults(void)
+	{
+		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_scene_defaults_test.luz";
+		{
+			std::ofstream stream(scenePath);
+			stream
+				<< "[settings]\n"
+				<< "resolution=2,2\n\n";
+		}
+
+		Scene scene;
+		SceneFile::read(scene, scenePath.string());
+		require(scene.getAdaptiveSampling(), "Scene file did not keep default adaptive sampling.");
+		require(scene.getDenoise(), "Scene file did not keep default denoising.");
+
+		std::filesystem::remove(scenePath);
+	}
+
 	void	testSceneFileAdaptiveSettings(void)
 	{
 		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_scene_adaptive_test.luz";
@@ -786,6 +892,8 @@ namespace
 		requireSceneFileSettingThrows("denoiseoutputfilename=render_denoised.tif", "Scene file accepted .tif denoise output.");
 		requireSceneFileSettingThrows("denoiseoutputfilename=render_denoised.jpg", "Scene file accepted unsupported denoise output extension.");
 		requireSceneFileSettingThrows("sky=wat", "Scene file accepted unknown sky setting.");
+		requireSceneFileSettingThrows("environmentstrength=-1", "Scene file accepted negative environment strength.");
+		requireSceneFileSettingThrows("environmentrotation=nan", "Scene file accepted non-finite environment rotation.");
 		requireSceneFileSettingThrows("sky=atmosphere\natmosphere=0,1,2,3,4,0,1,0", "Scene file accepted zero atmosphere samples.");
 		requireSceneFileSettingThrows("sky=atmosphere\natmosphere=0,2,1,3,4,1,1,0", "Scene file accepted atmosphere radius smaller than Earth radius.");
 	}
@@ -833,6 +941,119 @@ namespace
 		requireNear(background.getBlue(), 0.3, "Background blue component was not parsed.");
 
 		std::filesystem::remove(scenePath);
+	}
+
+	void	writeSinglePixelPPM(const std::filesystem::path& path, int red, int green, int blue, int maxValue = 10)
+	{
+		std::ofstream textureStream(path);
+		textureStream
+			<< "P3\n"
+			<< "1 1\n"
+			<< maxValue << "\n"
+			<< red << " " << green << " " << blue << "\n";
+	}
+
+	void	testEnvironmentMapLoadsPPM(void)
+	{
+		const std::filesystem::path environmentPath = std::filesystem::temp_directory_path() / "luz_environment_ppm_test.ppm";
+		writeSinglePixelPPM(environmentPath, 1, 2, 3);
+
+		const EnvironmentMap environmentMap = EnvironmentMap::load(environmentPath.string());
+		const Color color = environmentMap.sampleDirection(Vector3(1.0, 0.0, 0.0));
+		const EnvironmentMap::Sample sample = environmentMap.sample(0.5, Sampler::Sample2D{0.5, 0.5});
+
+		require(environmentMap.getWidth() == 1, "PPM environment width was not loaded.");
+		require(environmentMap.getHeight() == 1, "PPM environment height was not loaded.");
+		requireNear(color.getRed(), 0.1, "PPM environment red channel was not sampled.");
+		requireNear(color.getGreen(), 0.2, "PPM environment green channel was not sampled.");
+		requireNear(color.getBlue(), 0.3, "PPM environment blue channel was not sampled.");
+		require(sample.valid, "PPM environment importance sample was invalid.");
+		require(std::isfinite(sample.pdf) && sample.pdf > 0.0, "PPM environment sample PDF was invalid.");
+
+		std::filesystem::remove(environmentPath);
+	}
+
+	void	testEnvironmentMapLoadsHDR(void)
+	{
+		const std::filesystem::path environmentPath = std::filesystem::temp_directory_path() / "luz_environment_hdr_test.hdr";
+		{
+			std::ofstream stream(environmentPath, std::ios::binary);
+			const unsigned char pixel[4] = {128, 64, 32, 130};
+
+			stream << "#?RADIANCE\n";
+			stream << "FORMAT=32-bit_rle_rgbe\n";
+			stream << "\n";
+			stream << "-Y 1 +X 1\n";
+			stream.write(reinterpret_cast<const char*>(pixel), 4);
+		}
+
+		const EnvironmentMap environmentMap = EnvironmentMap::load(environmentPath.string());
+		const Color color = environmentMap.sampleDirection(Vector3(0.0, 1.0, 0.0));
+
+		requireNear(color.getRed(), 2.0, "HDR environment red channel was not decoded.");
+		requireNear(color.getGreen(), 1.0, "HDR environment green channel was not decoded.");
+		requireNear(color.getBlue(), 0.5, "HDR environment blue channel was not decoded.");
+
+		std::filesystem::remove(environmentPath);
+	}
+
+	void	testEnvironmentMapLoadsRLEHDR(void)
+	{
+		const std::filesystem::path environmentPath = std::filesystem::temp_directory_path() / "luz_environment_rle_hdr_test.hdr";
+		{
+			std::ofstream stream(environmentPath, std::ios::binary);
+			const unsigned char scanlineHeader[4] = {2, 2, 0, 8};
+			const unsigned char redRun[2] = {136, 128};
+			const unsigned char greenRun[2] = {136, 64};
+			const unsigned char blueRun[2] = {136, 32};
+			const unsigned char exponentRun[2] = {136, 130};
+
+			stream << "#?RADIANCE\n";
+			stream << "FORMAT=32-bit_rle_rgbe\n";
+			stream << "\n";
+			stream << "-Y 1 +X 8\n";
+			stream.write(reinterpret_cast<const char*>(scanlineHeader), 4);
+			stream.write(reinterpret_cast<const char*>(redRun), 2);
+			stream.write(reinterpret_cast<const char*>(greenRun), 2);
+			stream.write(reinterpret_cast<const char*>(blueRun), 2);
+			stream.write(reinterpret_cast<const char*>(exponentRun), 2);
+		}
+
+		const EnvironmentMap environmentMap = EnvironmentMap::load(environmentPath.string());
+		const Color color = environmentMap.sampleDirection(Vector3(1.0, 0.0, 0.0));
+
+		require(environmentMap.getWidth() == 8, "RLE HDR environment width was not loaded.");
+		requireNear(color.getRed(), 2.0, "RLE HDR environment red channel was not decoded.");
+		requireNear(color.getGreen(), 1.0, "RLE HDR environment green channel was not decoded.");
+		requireNear(color.getBlue(), 0.5, "RLE HDR environment blue channel was not decoded.");
+
+		std::filesystem::remove(environmentPath);
+	}
+
+	void	testSceneFileEnvironmentSetting(void)
+	{
+		const std::filesystem::path directory = std::filesystem::temp_directory_path();
+		const std::filesystem::path scenePath = directory / "luz_environment_setting_test.luz";
+		const std::filesystem::path environmentPath = directory / "luz_environment_setting_test.ppm";
+
+		writeSinglePixelPPM(environmentPath, 2, 4, 6);
+		{
+			std::ofstream sceneStream(scenePath);
+			sceneStream
+				<< "[settings]\n"
+				<< "environment=" << environmentPath.filename().string() << ",2.5,90\n\n";
+		}
+
+		Scene scene;
+		SceneFile::read(scene, scenePath.string());
+
+		require(scene.getRenderSky() == SKY_ENVIRONMENT, "Environment setting did not enable environment sky.");
+		require(scene.hasEnvironmentMap(), "Environment setting did not load an environment map.");
+		requireNear(scene.getEnvironmentStrength(), 2.5, "Environment strength was not parsed.");
+		requireNear(scene.getEnvironmentRotation(), 90.0, "Environment rotation was not parsed.");
+
+		std::filesystem::remove(scenePath);
+		std::filesystem::remove(environmentPath);
 	}
 
 	void	testSceneFileLegacyCameraPreservesDecimalFOV(void)
@@ -1547,6 +1768,39 @@ namespace
 
 		std::unique_ptr<Scene> atmosphereBenchmarkScene = parseFlags({"--benchmark", "--benchmark-case", "atmosphere"});
 		require(atmosphereBenchmarkScene->getRenderSky() == SKY_ATMOSPHERE, "Atmosphere benchmark disabled atmospheric sky.");
+
+		std::filesystem::remove(scenePath);
+	}
+
+	void	testFlagsParsePositionalSceneFile(void)
+	{
+		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_cli_positional_file_test.luz";
+		std::ofstream sceneFile(scenePath);
+
+		sceneFile
+			<< "[settings]\n"
+			<< "resolution=3,2\n"
+			<< "samples=7\n"
+			<< "maxlightbounces=4\n\n";
+		sceneFile.close();
+
+		std::unique_ptr<Scene> scene = parseFlags({scenePath.string()});
+		require(scene->getIsFromFile(), "Positional scene path was not loaded.");
+		require(scene->getSampleCount() == 7, "Positional scene path did not load scene samples.");
+		require(scene->getMaxLightBounces() == 4, "Positional scene path did not load scene bounces.");
+		require(scene->getImage()->getWidth() == 3, "Positional scene path did not load scene width.");
+		require(scene->getImage()->getHeight() == 2, "Positional scene path did not load scene height.");
+
+		std::unique_ptr<Scene> overrideScene = parseFlags({
+			scenePath.string(),
+			"--samples", "9",
+			"--resolution", "4x5"
+		});
+		require(overrideScene->getSampleCount() == 9, "CLI samples did not override positional scene file.");
+		require(overrideScene->getImage()->getWidth() == 4, "CLI width did not override positional scene file.");
+		require(overrideScene->getImage()->getHeight() == 5, "CLI height did not override positional scene file.");
+
+		std::filesystem::remove(scenePath);
 	}
 
 	void	testFlagsParsePostProcessOptions(void)
@@ -1685,6 +1939,9 @@ namespace
 		requireThrows([&]() { scene.setExposure(std::numeric_limits<double>::quiet_NaN()); }, "Scene accepted non-finite exposure.");
 		requireThrows([&]() { scene.setContrast(-1.0); }, "Scene accepted negative contrast.");
 		requireThrows([&]() { scene.setContrast(std::numeric_limits<double>::quiet_NaN()); }, "Scene accepted non-finite contrast.");
+		requireThrows([&]() { scene.setEnvironmentStrength(-1.0); }, "Scene accepted negative environment strength.");
+		requireThrows([&]() { scene.setEnvironmentStrength(std::numeric_limits<double>::quiet_NaN()); }, "Scene accepted non-finite environment strength.");
+		requireThrows([&]() { scene.setEnvironmentRotation(std::numeric_limits<double>::quiet_NaN()); }, "Scene accepted non-finite environment rotation.");
 		requireThrows([&]() { scene.setDefaultRenderOutputFileName("render"); }, "Scene accepted output file without an extension.");
 		requireThrows([&]() { scene.setDefaultRenderOutputFileName("render.tif"); }, "Scene accepted .tif output extension.");
 		requireThrows([&]() { scene.setDefaultRenderOutputFileName("render.jpg"); }, "Scene accepted unsupported output extension.");
@@ -1770,6 +2027,139 @@ namespace
 		requireNear(negativeIntervalSky.getBlue(), 0.0, "Negative interval atmosphere blue should be black.");
 	}
 
+	void	testSceneDefaultsEnableAdaptiveAndDenoise(void)
+	{
+		Scene scene;
+
+		require(scene.getAdaptiveSampling(), "Adaptive sampling is not enabled by default.");
+		require(scene.getDenoise(), "Denoising is not enabled by default.");
+	}
+
+	void	testRenderedSceneHasBasicVisualStructure(void)
+	{
+		setRandomSeed(42);
+
+		Scene scene;
+		configureVisualRenderScene(scene, 9, 9);
+
+		require(Renderer::render(scene), "Visual structure render failed.");
+		requireImageIsFinite(*scene.getImage(), "Visual structure render");
+
+		std::size_t foregroundPixels = 0;
+		std::size_t backgroundPixels = 0;
+		bool centerRegionHasForeground = false;
+
+		for (std::size_t y = 0; y < scene.getImage()->getHeight(); y++)
+		{
+			for (std::size_t x = 0; x < scene.getImage()->getWidth(); x++)
+			{
+				const Color pixel = scene.getImage()->getPixel(x, y);
+
+				if (isVisualForegroundPixel(pixel))
+				{
+					foregroundPixels++;
+					if (x >= 3 && x <= 5 && y >= 3 && y <= 5)
+					{
+						centerRegionHasForeground = true;
+					}
+				}
+				if (isVisualBackgroundPixel(pixel))
+				{
+					backgroundPixels++;
+				}
+			}
+		}
+
+		require(foregroundPixels > 0, "Visual render did not produce the emissive foreground object.");
+		require(centerRegionHasForeground, "Visual render foreground object is not near the image center.");
+		require(backgroundPixels >= 40, "Visual render did not preserve enough background pixels.");
+	}
+
+	void	testRenderedScenePostProcessingProducesDisplayableImage(void)
+	{
+		setRandomSeed(42);
+
+		Scene scene;
+		configureVisualRenderScene(scene, 9, 9);
+		scene.setGammaCorrected(true);
+		scene.setToneMapped(true);
+		scene.setBloom(true);
+		scene.setExposure(0.5);
+		scene.setContrast(1.1);
+
+		require(Renderer::render(scene), "Post-processed visual render failed.");
+		requireImageIsDisplayable(*scene.getImage(), "Post-processed visual render");
+
+		bool redForegroundSurvived = false;
+		for (std::size_t y = 3; y <= 5; y++)
+		{
+			for (std::size_t x = 3; x <= 5; x++)
+			{
+				const Color pixel = scene.getImage()->getPixel(x, y);
+				if (
+					pixel.getRed() > 0.55
+					&& pixel.getRed() > pixel.getGreen()
+					&& pixel.getRed() > pixel.getBlue()
+				)
+				{
+					redForegroundSurvived = true;
+				}
+			}
+		}
+
+		require(redForegroundSurvived, "Post-processing lost the red foreground visual signal.");
+	}
+
+	void	testRenderedBMPContainsVisualSignal(void)
+	{
+		setRandomSeed(42);
+
+		Scene scene;
+		configureVisualRenderScene(scene, 9, 9);
+
+		require(Renderer::render(scene), "Rendered BMP visual render failed.");
+
+		std::size_t brightestX = 0;
+		std::size_t brightestY = 0;
+		double brightestRed = -1.0;
+		for (std::size_t y = 0; y < scene.getImage()->getHeight(); y++)
+		{
+			for (std::size_t x = 0; x < scene.getImage()->getWidth(); x++)
+			{
+				const Color pixel = scene.getImage()->getPixel(x, y);
+				if (pixel.getRed() > brightestRed)
+				{
+					brightestRed = pixel.getRed();
+					brightestX = x;
+					brightestY = y;
+				}
+			}
+		}
+		require(brightestRed > 0.85, "Rendered image did not contain a bright red pixel before BMP output.");
+
+		const std::filesystem::path outputPath = std::filesystem::temp_directory_path() / "luz_visual_render_test";
+		const std::filesystem::path bmpPath = outputPath.string() + ".bmp";
+
+		scene.getImage()->saveToBMP(outputPath.string());
+		const std::vector<unsigned char> bytes = readFile(bmpPath);
+		const std::size_t foregroundOffset = bmpPixelOffset(
+			scene.getImage()->getWidth(),
+			scene.getImage()->getHeight(),
+			brightestX,
+			brightestY
+		);
+		const std::size_t backgroundOffset = bmpPixelOffset(scene.getImage()->getWidth(), scene.getImage()->getHeight(), 0, 0);
+
+		require(bytes.size() > foregroundOffset + 2, "Rendered BMP file is too small for foreground pixel.");
+		require(bytes.size() > backgroundOffset + 2, "Rendered BMP file is too small for background pixel.");
+		require(bytes[foregroundOffset + 2] > 200, "Rendered BMP foreground red channel is too dark.");
+		require(bytes[foregroundOffset + 2] > bytes[foregroundOffset + 1] * 4, "Rendered BMP foreground is not red-dominant.");
+		require(bytes[backgroundOffset] > bytes[backgroundOffset + 2], "Rendered BMP background did not preserve blue dominance.");
+		require(bytes[backgroundOffset + 2] < 20, "Rendered BMP background red channel is too bright.");
+
+		std::filesystem::remove(bmpPath);
+	}
+
 	void	testTinyRender(void)
 	{
 		setRandomSeed(42);
@@ -1779,10 +2169,12 @@ namespace
 		scene.getImage()->setHeight(3);
 		scene.getImage()->initialize();
 		scene.setSampleCount(1);
+		scene.setAdaptiveSampling(false);
 		scene.setMaxLightBounces(1);
 		scene.setGammaCorrected(false);
 		scene.setToneMapped(false);
 		scene.setBloom(false);
+		scene.setDenoise(false);
 		scene.setRenderSky(SKY_NONE);
 		scene.setBackgroundColor(Color(0.1, 0.2, 0.3));
 		scene.setRenderingThreads(1);
@@ -1806,6 +2198,43 @@ namespace
 		}
 	}
 
+	void	testEnvironmentBackgroundRender(void)
+	{
+		setRandomSeed(42);
+
+		const std::filesystem::path environmentPath = std::filesystem::temp_directory_path() / "luz_environment_render_test.ppm";
+		writeSinglePixelPPM(environmentPath, 2, 4, 6);
+
+		Scene scene;
+		scene.getImage()->setWidth(2);
+		scene.getImage()->setHeight(2);
+		scene.getImage()->initialize();
+		scene.setSampleCount(1);
+		scene.setMaxLightBounces(0);
+		scene.setGammaCorrected(false);
+		scene.setToneMapped(false);
+		scene.setBloom(false);
+		scene.setRenderSky(SKY_ENVIRONMENT);
+		scene.setEnvironmentMap(std::make_shared<EnvironmentMap>(EnvironmentMap::load(environmentPath.string())));
+		scene.setEnvironmentStrength(1.5);
+		scene.setRenderingThreads(1);
+		scene.addCamera(Camera(Vector3(0.0, 0.0, 1.0), Vector3(0.0, 0.0, -1.0), 45, 0.0, 1.0));
+
+		require(Renderer::render(scene), "Environment background render failed.");
+		for (std::size_t y = 0; y < scene.getImage()->getHeight(); y++)
+		{
+			for (std::size_t x = 0; x < scene.getImage()->getWidth(); x++)
+			{
+				const Color pixel = scene.getImage()->getPixel(x, y);
+				requireNear(pixel.getRed(), 0.3, "Environment render red channel was wrong.");
+				requireNear(pixel.getGreen(), 0.6, "Environment render green channel was wrong.");
+				requireNear(pixel.getBlue(), 0.9, "Environment render blue channel was wrong.");
+			}
+		}
+
+		std::filesystem::remove(environmentPath);
+	}
+
 	void	testTinyAdaptiveRender(void)
 	{
 		setRandomSeed(42);
@@ -1823,6 +2252,7 @@ namespace
 		scene.setGammaCorrected(false);
 		scene.setToneMapped(false);
 		scene.setBloom(false);
+		scene.setDenoise(false);
 		scene.setRenderSky(SKY_NONE);
 		scene.setBackgroundColor(Color(0.1, 0.2, 0.3));
 		scene.setRenderingThreads(1);
@@ -1878,6 +2308,7 @@ namespace
 		scene.getImage()->setHeight(2);
 		scene.getImage()->initialize();
 		scene.setSampleCount(1);
+		scene.setAdaptiveSampling(false);
 		scene.setMaxLightBounces(1);
 		scene.setGammaCorrected(false);
 		scene.setToneMapped(false);
@@ -1907,10 +2338,12 @@ namespace
 		scene.getImage()->setHeight(2);
 		scene.getImage()->initialize();
 		scene.setSampleCount(1);
+		scene.setAdaptiveSampling(false);
 		scene.setMaxLightBounces(1);
 		scene.setGammaCorrected(false);
 		scene.setToneMapped(false);
 		scene.setBloom(false);
+		scene.setDenoise(false);
 		scene.setRenderSky(SKY_NONE);
 		scene.setBackgroundColor(Color(0.1, 0.2, 0.3));
 		scene.setRenderingThreads(1);
@@ -1949,11 +2382,16 @@ int	main(void)
 		testSceneFileTiffOutputName();
 		testSceneFilePNGOutputSettings();
 		testSceneFileDenoiseOutputName();
+		testSceneFileUsesSceneDefaults();
 		testSceneFileAdaptiveSettings();
 		testSceneFilePostProcessSettings();
 		testSceneFileRejectsInvalidSettings();
 		testSceneFileAtmosphereSetting();
 		testSceneFileBackgroundSetting();
+		testEnvironmentMapLoadsPPM();
+		testEnvironmentMapLoadsHDR();
+		testEnvironmentMapLoadsRLEHDR();
+		testSceneFileEnvironmentSetting();
 		testSceneFileLegacyCameraPreservesDecimalFOV();
 		testSceneFileLoadsRelativeObject();
 		testSceneFileLoadsTransformedObject();
@@ -1977,16 +2415,22 @@ int	main(void)
 		testFlagsParseDenoiseOptions();
 		testFlagsParsePNGOutput();
 		testFlagsParseBenchmarkFileOptions();
+		testFlagsParsePositionalSceneFile();
 		testFlagsParseAdaptiveOptions();
 		testFlagsRejectInvalidValues();
 		testSettersRejectInvalidValues();
 		testPlanetaryHitRobustIntersections();
 		testAtmosphereIncidentLightInsideOutsideAndSunPosition();
+		testSceneDefaultsEnableAdaptiveAndDenoise();
+		testRenderedSceneHasBasicVisualStructure();
+		testRenderedScenePostProcessingProducesDisplayableImage();
+		testRenderedBMPContainsVisualSignal();
 		testTinyRender();
 		testTinyAdaptiveRender();
 		testTinyAdaptiveDenoisedRender();
 		testTinyDenoisedRenderProducesCompanionImage();
 		testZeroFocusDistanceRender();
+		testEnvironmentBackgroundRender();
 	}
 	catch (const std::exception& exception)
 	{

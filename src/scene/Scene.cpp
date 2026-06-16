@@ -67,7 +67,7 @@ Scene::Scene(void)
 	this->_image = std::make_unique<Image>(D_WIDTH, D_HEIGHT);
 
 	this->_sampleCount = D_SAMPLE_COUNT;
-	this->_adaptiveSampling = false;
+	this->_adaptiveSampling = D_ADAPTIVE_SAMPLING;
 	this->_adaptiveMinSamples = D_ADAPTIVE_MIN_SAMPLES;
 	this->_adaptiveCheckInterval = D_ADAPTIVE_CHECK_INTERVAL;
 	this->_adaptiveThreshold = D_ADAPTIVE_THRESHOLD;
@@ -81,6 +81,8 @@ Scene::Scene(void)
 	this->_distanceBlueness = true;
 	this->_atmosphere = Atmosphere();
 	this->_backgroundColor = Color(0.0, 0.0, 0.0);
+	this->_environmentStrength = 1.0;
+	this->_environmentRotation = 0.0;
 
 	this->_defaultRenderOutputFileName = D_RENDER_FILE_NAME + ".bmp";
 
@@ -94,7 +96,7 @@ Scene::Scene(void)
 	this->_benchmarkMode = false;
 	this->_renderingThreads = CORE_COUNT;
 	this->_bloom = true;
-	this->_denoise = false;
+	this->_denoise = D_DENOISE;
 	this->_denoiseOutputFileName = "";
 	this->resetRenderStats();
 }
@@ -300,6 +302,49 @@ Color	Scene::getBackgroundColor(void) const
 void	Scene::setBackgroundColor(Color backgroundColor)
 {
 	this->_backgroundColor = backgroundColor;
+}
+
+void	Scene::setEnvironmentMap(std::shared_ptr<EnvironmentMap> environmentMap)
+{
+	this->_environmentMap = environmentMap;
+}
+
+const std::shared_ptr<EnvironmentMap>&	Scene::getEnvironmentMap(void) const
+{
+	return (this->_environmentMap);
+}
+
+bool	Scene::hasEnvironmentMap(void) const
+{
+	return (this->_environmentMap != nullptr && !this->_environmentMap->empty());
+}
+
+void	Scene::setEnvironmentStrength(double environmentStrength)
+{
+	if (!std::isfinite(environmentStrength) || environmentStrength < 0.0)
+	{
+		throw std::invalid_argument("Environment strength must be finite and non-negative.");
+	}
+	this->_environmentStrength = environmentStrength;
+}
+
+double	Scene::getEnvironmentStrength(void) const
+{
+	return (this->_environmentStrength);
+}
+
+void	Scene::setEnvironmentRotation(double environmentRotation)
+{
+	if (!std::isfinite(environmentRotation))
+	{
+		throw std::invalid_argument("Environment rotation must be finite.");
+	}
+	this->_environmentRotation = environmentRotation;
+}
+
+double	Scene::getEnvironmentRotation(void) const
+{
+	return (this->_environmentRotation);
 }
 
 // Returns the vector (list) of Hittables

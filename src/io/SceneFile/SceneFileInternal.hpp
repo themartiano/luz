@@ -29,7 +29,7 @@ namespace SceneFile::internal
 		std::vector<std::shared_future<std::shared_ptr<Hittable>>>	pendingMeshLoads;
 	};
 
-	void	_readSettingsSection(Scene& scene, std::ifstream& stream);
+	void	_readSettingsSection(Scene& scene, std::ifstream& stream, SceneFileContext& context);
 	void	_readNamedMaterialsSection(std::ifstream& stream, SceneFileContext& context);
 	void	_readNamedMeshesSection(std::ifstream& stream, SceneFileContext& context);
 	void	_readSceneSection(Scene& scene, std::ifstream& stream, SceneFileContext& context);
