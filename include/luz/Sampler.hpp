@@ -8,8 +8,8 @@ namespace Sampler
 {
 	struct	Sample2D
 	{
-		double	x = 0.0;
-		double	y = 0.0;
+		float	x = 0.0f;
+		float	y = 0.0f;
 	};
 
 	enum	Dimension : std::uint32_t

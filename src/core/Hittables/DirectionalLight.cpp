@@ -43,9 +43,9 @@ bool	DirectionalLight::createBoundingBox(AABB& outputBoundingBox) const
 	return (false);
 }
 
-std::shared_ptr<Material>	DirectionalLight::getMaterial(void) const
+Material*	DirectionalLight::getMaterial(void) const
 {
-	return (this->_material);
+	return (this->_material.get());
 }
 
 double	DirectionalLight::pdfValue(const Vector3& origin, const Vector3& vec) const
@@ -68,7 +68,7 @@ bool	DirectionalLight::sampleLight(const Vector3& origin, HittableLightSample& s
 	sample.direction = this->random(origin);
 	sample.pdf = 1.0;
 	sample.tMax = T_MAX;
-	sample.material = this->_material;
+	sample.material = this->_material.get();
 	sample.valid = (
 		this->_material != nullptr
 		&& Utilities::vectorLengthSquared(sample.direction) > 0.0

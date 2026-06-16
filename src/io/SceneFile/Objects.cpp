@@ -199,7 +199,7 @@ namespace
 				return (this->hittable()->createBoundingBox(outputBoundingBox));
 			}
 
-			std::shared_ptr<Material>	getMaterial(void) const override
+			Material*	getMaterial(void) const override
 			{
 				return (this->hittable()->getMaterial());
 			}
