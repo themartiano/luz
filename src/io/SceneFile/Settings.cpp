@@ -1,6 +1,7 @@
 #include "SceneFileInternal.hpp"
 #include "Utilities.hpp"
 #include <cmath>
+#include <filesystem>
 #include <fstream>
 #include <memory>
 #include <stdexcept>
@@ -259,15 +260,20 @@ void	SceneFile::internal::_readSettingsSection(Scene& scene, std::ifstream& stre
 			{
 				throw std::runtime_error("Invalid outputfilename setting. Use outputfilename=PATH.");
 			}
-			std::string lowerOutputFileName = strOutputFileName;
-			Utilities::toLower(lowerOutputFileName);
-			if (
-				!Utilities::stringEndsWith(lowerOutputFileName, ".bmp")
-				&& !Utilities::stringEndsWith(lowerOutputFileName, ".tiff")
-				&& !Utilities::stringEndsWith(lowerOutputFileName, ".tif")
-			)
+			std::filesystem::path outputPath(strOutputFileName);
+			std::string lowerExtension = outputPath.extension().string();
+			Utilities::toLower(lowerExtension);
+			if (lowerExtension.empty())
 			{
 				strOutputFileName += ".bmp";
+			}
+			else if (
+				lowerExtension != ".bmp"
+				&& lowerExtension != ".png"
+				&& lowerExtension != ".tiff"
+			)
+			{
+				throw std::runtime_error("Invalid outputfilename setting. Use a .bmp, .png, or .tiff path.");
 			}
 			scene.setDefaultRenderOutputFileName(strOutputFileName);
 		}

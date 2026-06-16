@@ -96,13 +96,14 @@ Vector3 Random::pointInsideUnitDisk(void)
 // Generates uniform random directions
 Vector3	Random::cosineDirection(void)
 {
-	double rand1 = doubleFloat();
-	double rand2 = doubleFloat();
-	double z = sqrt(1.0 - rand2);
+	const float rand1 = static_cast<float>(doubleFloat());
+	const float rand2 = static_cast<float>(doubleFloat());
+	const float z = std::sqrt(1.0f - rand2);
 
-	double phi = 2.0 * D_PI * rand1;
-	double x = cos(phi) * sqrt(rand2);
-	double y = sin(phi) * sqrt(rand2);
+	const float phi = static_cast<float>(2.0 * D_PI) * rand1;
+	const float radius = std::sqrt(rand2);
+	const float x = std::cos(phi) * radius;
+	const float y = std::sin(phi) * radius;
 
 	return (Vector3(x, y, z));
 }

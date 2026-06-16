@@ -40,9 +40,9 @@ void	Cube::setTransform(Transform transform)
 }
 
 // Returns the Cube's material
-std::shared_ptr<Material>	Cube::getMaterial(void) const
+Material*	Cube::getMaterial(void) const
 {
-	return (this->_material);
+	return (this->_material.get());
 }
 
 // Sets the Cube's Material

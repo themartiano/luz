@@ -26,7 +26,7 @@ https://github.com/user-attachments/assets/7dc03485-9418-47af-a7e7-c4c4c53b6b70
 - BVH acceleration, including packed mesh BVHs with binned SAH construction and near-first traversal
 - Atmospheric simulation w/ scattering
 - Depth of field, antialiasing, exposure, contrast, tone mapping, gamma correction, and bloom
-- BMP and TIFF output
+- BMP, PNG, and 32-bit floating-point TIFF output
 - Deterministic benchmark harness with render, denoise, post-process, and score breakdowns
 
 ## Requirements
@@ -46,10 +46,13 @@ make
 Render a bundled example scene:
 
 ```sh
-./luz --file examples/scenes/cornell.luz --samples 50 --resolution 300x300
+./luz examples/scenes/cornell.luz --samples 50 --resolution 300x300
 ```
 
-The default output is `render.bmp`. Scene files can set `outputfilename=...`, and the CLI can override common render settings.
+The primary output is `render.bmp`, with `render_denoised.bmp` written by
+default. Scene files can set `outputfilename=...`, and the CLI can override
+common render settings. Use a `.bmp`, `.png`, or `.tiff` output path to select
+the format.
 
 Run the test suite:
 
@@ -126,12 +129,16 @@ cmake --build build --clean-first
 ## CLI
 
 ```text
-Usage: ./luz [options]
+Usage: ./luz [scene.luz] [options]
 
+Arguments:
+  PATH                        Load a .luz scene file
+
+Options:
   -f, --file PATH             Load a .luz scene file
   -r, --resolution WxH        Override render resolution
   -s, --samples N             Override samples per pixel
-  --adaptive [true|false]     Enable adaptive per-pixel sampling
+  --adaptive [true|false]     Toggle adaptive sampling (default: true)
   --no-adaptive               Disable adaptive sampling
   --adaptive-min-samples N    Minimum samples before adaptive stopping
   --adaptive-threshold F      Relative adaptive noise threshold
@@ -145,35 +152,46 @@ Usage: ./luz [options]
   --bloom true|false          Toggle bloom
   --exposure EV              Exposure compensation in stops
   --contrast F               Display contrast multiplier
-  --denoise [true|false]      Write a denoised companion render
+  --denoise [true|false]      Toggle denoised companion render (default: true)
   --no-denoise                Disable denoising
-  -o, --output PATH           Override render output path
-  --denoise-output PATH       Override denoised output path
+  -o, --output PATH.EXT       Override render output path
+  --denoise-output PATH.EXT   Override denoised output path
   --render-times              Write renderTime.bmp
   --benchmark                 Run the built-in benchmark scene
   --benchmark-case NAME       Benchmark case: default, many-objects, mesh-bvh, diffuse, postprocess, atmosphere, lights, emissive-geometry, primitives-materials, volumes, obj-mesh
 ```
 
+TIFF output stores RGB as uncompressed 32-bit IEEE floating-point samples. Use
+`--output render.tiff` with `--tonemapping false --gamma false` to preserve
+scene-linear HDR values above 1.0.
+
 ## Adaptive Sampling
 
-`--adaptive` treats `--samples` as the maximum samples per pixel. Each pixel
-uses a progressive per-pixel sample sequence, renders at least
+Adaptive sampling is enabled by default. `--samples` is the maximum samples per
+pixel when adaptive stopping is active. Each pixel uses a progressive per-pixel
+sample sequence, renders at least
 `--adaptive-min-samples`, then periodically checks luminance and RGB confidence
 intervals. Very dark pixels use a conservative minimum before they can stop, so
 rare light contributions are less likely to be mistaken for converged black.
+Use `--no-adaptive` or `--adaptive false` to render every pixel for the full
+sample count.
 
 Lower thresholds keep more detail and cost more time. For final renders, start
 with a high max sample count and tune with values like:
 
 ```sh
-./luz --file exports/stormtroopers.luz --samples 4096 --adaptive --adaptive-min-samples 512 --adaptive-check-interval 64 --adaptive-threshold 0.005 --denoise
+./luz exports/stormtroopers.luz --samples 4096 --adaptive-min-samples 512 --adaptive-check-interval 64 --adaptive-threshold 0.005
 ```
 
 ## Denoising
 
-`--denoise` enables Luz's NFOR-style feature-buffer denoiser and writes a
-separate companion image. By default, `render.bmp` becomes
-`render_denoised.bmp`; use `--denoise-output PATH` to choose the exact path.
+Denoising is enabled by default. Luz's NFOR-style feature-buffer denoiser writes
+a separate companion image: by default, `render.bmp` becomes
+`render_denoised.bmp`; use `--denoise-output PATH.EXT` to choose the exact
+path. Use `--no-denoise` or `--denoise false` to skip the companion render.
+
+PNG output writes post-processed 8-bit RGB SDR images using stored DEFLATE
+blocks for dependency-free writing.
 
 The denoiser has no hard minimum resolution or sample count, but it needs enough
 signal to estimate useful color and feature statistics. One sample per pixel is
@@ -216,7 +234,7 @@ include/luz/       Public headers
 src/core/          Math, geometry, materials, image, and sampling code
 src/renderer/      Rendering implementation
 src/scene/         Scene model and scene helpers
-src/io/            Scene-file, OBJ, BMP, and TIFF loading/writing
+src/io/            Scene-file, OBJ, BMP, PNG, and TIFF loading/writing
 src/cli/           Command-line entry point and flags
 examples/scenes/   Example .luz scene files
 assets/objects/    Benchmark OBJ assets and optional local OBJ assets

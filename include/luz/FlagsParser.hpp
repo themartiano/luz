@@ -18,8 +18,10 @@ class	FlagsParser
 
 		_iterator	_findFlag(_stringVec flagVariations);
 		_iterator	_findFlag(std::string flag);
+		_iterator	_findPositionalFile(void);
 
 		void	_parseHelp(void);
+		void	_rejectRemovedFlags(void);
 		void	_parseSeed(void);
 		void	_parseFile(Scene& scene);
 		void	_parseBenchmark(Scene& scene);

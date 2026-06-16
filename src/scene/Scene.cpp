@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <stdexcept>
 #include <cmath>
+#include <filesystem>
 
 namespace
 {
@@ -29,6 +30,31 @@ namespace
 		}
 		return (weight);
 	}
+
+	bool	isSupportedOutputExtension(std::string extension)
+	{
+		Utilities::toLower(extension);
+		return (
+			extension == ".bmp"
+			|| extension == ".png"
+			|| extension == ".tiff"
+		);
+	}
+
+	void	requireSupportedOutputFileName(const std::string& fileName, const std::string& settingName)
+	{
+		if (fileName.empty())
+		{
+			throw std::invalid_argument(settingName + " file name must not be empty.");
+		}
+
+		const std::filesystem::path outputPath(fileName);
+		const std::string extension = outputPath.extension().string();
+		if (!isSupportedOutputExtension(extension))
+		{
+			throw std::invalid_argument(settingName + " file name must use .bmp, .png, or .tiff.");
+		}
+	}
 }
 
 /*
@@ -41,7 +67,7 @@ Scene::Scene(void)
 	this->_image = std::make_unique<Image>(D_WIDTH, D_HEIGHT);
 
 	this->_sampleCount = D_SAMPLE_COUNT;
-	this->_adaptiveSampling = false;
+	this->_adaptiveSampling = D_ADAPTIVE_SAMPLING;
 	this->_adaptiveMinSamples = D_ADAPTIVE_MIN_SAMPLES;
 	this->_adaptiveCheckInterval = D_ADAPTIVE_CHECK_INTERVAL;
 	this->_adaptiveThreshold = D_ADAPTIVE_THRESHOLD;
@@ -58,7 +84,7 @@ Scene::Scene(void)
 	this->_environmentStrength = 1.0;
 	this->_environmentRotation = 0.0;
 
-	this->_defaultRenderOutputFileName = D_RENDER_FILE_NAME;
+	this->_defaultRenderOutputFileName = D_RENDER_FILE_NAME + ".bmp";
 
 	this->_activeCamera = 0;
 	this->_lightSelectionTotalWeight = 0.0;
@@ -70,7 +96,7 @@ Scene::Scene(void)
 	this->_benchmarkMode = false;
 	this->_renderingThreads = CORE_COUNT;
 	this->_bloom = true;
-	this->_denoise = false;
+	this->_denoise = D_DENOISE;
 	this->_denoiseOutputFileName = "";
 	this->resetRenderStats();
 }
@@ -353,6 +379,7 @@ std::string	Scene::getDefaultRenderOutputFileName(void) const
 // Sets the Output File Name
 void	Scene::setDefaultRenderOutputFileName(std::string defaultRenderOutputFileName)
 {
+	requireSupportedOutputFileName(defaultRenderOutputFileName, "Output");
 	this->_defaultRenderOutputFileName = defaultRenderOutputFileName;
 }
 
@@ -364,7 +391,7 @@ void	Scene::updateLights(void)
 	this->_lightSelectionTotalWeight = 0.0;
 	for (std::shared_ptr<Hittable> hittable : this->_hittables)
 	{
-		const std::shared_ptr<Material> material = hittable ? hittable->getMaterial() : nullptr;
+		Material* material = hittable ? hittable->getMaterial() : nullptr;
 
 		if (material && material->getType() == EMISSIVE)
 		{
@@ -595,6 +622,7 @@ void	Scene::clearDenoisedImage(void)
 
 void	Scene::setDenoiseOutputFileName(std::string denoiseOutputFileName)
 {
+	requireSupportedOutputFileName(denoiseOutputFileName, "Denoise output");
 	this->_denoiseOutputFileName = denoiseOutputFileName;
 }
 

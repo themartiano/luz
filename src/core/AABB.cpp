@@ -37,11 +37,25 @@ const Vector3& AABB::getMaximum(void) const
 bool	AABB::hit(Ray& ray, HitRecord& hitRecord, double t_max) const
 {
 	const Vector3& origin = ray.getOrigin();
+	const Vector3& direction = ray.getDirection();
 	const Vector3& inverseDirection = ray.getInverseDirection();
+	double t_min = T_MIN;
 
+	if (direction[0] == 0.0 && direction[1] == 0.0 && direction[2] == 0.0)
+	{
+		return (false);
+	}
 	for (int a = 0; a < 3; a++)
 	{
 		double invD = inverseDirection[a];
+		if (invD == 0.0)
+		{
+			if (origin[a] < this->_minimum[a] || origin[a] > this->_maximum[a])
+			{
+				return (false);
+			}
+			continue;
+		}
 		double t0 = (this->_minimum[a] - origin[a]) * invD;
 		double t1 = (this->_maximum[a] - origin[a]) * invD;
 		if (invD < 0.0)
@@ -49,7 +63,7 @@ bool	AABB::hit(Ray& ray, HitRecord& hitRecord, double t_max) const
 			std::swap(t0, t1);
 		}
 
-		double t_min = t0 > T_MIN ? t0 : T_MIN;
+		t_min = t0 > t_min ? t0 : t_min;
 		t_max = t1 < t_max ? t1 : t_max;
 		if (t_max <= t_min)
 		{

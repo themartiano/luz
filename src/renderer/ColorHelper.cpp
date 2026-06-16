@@ -451,7 +451,7 @@ namespace
 			return (sample);
 		}
 
-		const std::shared_ptr<Material> material = surfaceSample.material
+		Material* material = surfaceSample.material
 			? surfaceSample.material
 			: lights[lightIndex]->getMaterial();
 		if (!material)
