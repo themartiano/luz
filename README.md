@@ -18,6 +18,7 @@ https://github.com/user-attachments/assets/7dc03485-9418-47af-a7e7-c4c4c53b6b70
 - Spheres, planes, rectangles, triangles, cubes, volumes, and OBJ meshes
 - Lambertian, metal, dielectric, emissive, and isotropic materials
 - Area, point, sphere and directional lights
+- PPM and HDR equirectangular environment maps
 - Custom `.luz` scene files
 - .blend to .luz converter
 - Fully customizable render parameters via CLI or scene file
