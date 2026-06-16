@@ -19,6 +19,7 @@ class	Image
 		const SmartArray<Color>&	data(void) const;
 		void		saveToBMP(const std::string &filename) const;
 		void		saveToTIFF(const std::string &filename) const;
+		void		saveToPNG(const std::string &filename) const;
 		void		initialize(void);
 		Color&		at(std::size_t index);
 		void		fill(Color color);

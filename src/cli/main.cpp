@@ -23,51 +23,56 @@
 #include "Charts/Bar.hpp"
 #include "FlagsParser.hpp"
 #include "Scene/SceneHelpers.hpp"
-#include "OutputFormat.hpp"
 #include "Random.hpp"
 #include <filesystem>
 #include <memory>
 #include <exception>
+#include <stdexcept>
 #include <string>
 
-static std::string	outputFormatExtension(RenderOutputFormat outputFormat)
+static bool	isTiffOutput(std::string outputFileName)
 {
-	switch (outputFormat)
+	std::string lowerOutputFileName = outputFileName;
+
+	Utilities::toLower(lowerOutputFileName);
+	return (
+		Utilities::stringEndsWith(lowerOutputFileName, ".tiff")
+	);
+}
+
+static bool	isPngOutput(std::string outputFileName)
+{
+	std::string lowerOutputFileName = outputFileName;
+
+	Utilities::toLower(lowerOutputFileName);
+	return (Utilities::stringEndsWith(lowerOutputFileName, ".png"));
+}
+
+static bool	isBmpOutput(std::string outputFileName)
+{
+	std::string lowerOutputFileName = outputFileName;
+
+	Utilities::toLower(lowerOutputFileName);
+	return (Utilities::stringEndsWith(lowerOutputFileName, ".bmp"));
+}
+
+static void	saveImage(const std::unique_ptr<Image>& image, const std::string& outputFileName)
+{
+	if (isTiffOutput(outputFileName))
 	{
-		case OUTPUT_TIFF:
-			return (".tiff");
-		case OUTPUT_BMP:
-		default:
-			return (".bmp");
+		image->saveToTIFF(outputFileName);
 	}
-}
-
-static std::string	outputFileNameForFormat(
-	const std::string& outputFileName,
-	RenderOutputFormat outputFormat
-)
-{
-	std::filesystem::path outputPath(outputFileName);
-
-	outputPath.replace_extension(outputFormatExtension(outputFormat));
-	return (outputPath.string());
-}
-
-static void	saveImage(
-	const std::unique_ptr<Image>& image,
-	const std::string& outputFileName,
-	RenderOutputFormat outputFormat
-)
-{
-	const std::string formattedOutputFileName = outputFileNameForFormat(outputFileName, outputFormat);
-
-	if (outputFormat == OUTPUT_TIFF)
+	else if (isPngOutput(outputFileName))
 	{
-		image->saveToTIFF(formattedOutputFileName);
+		image->saveToPNG(outputFileName);
+	}
+	else if (isBmpOutput(outputFileName))
+	{
+		image->saveToBMP(outputFileName);
 	}
 	else
 	{
-		image->saveToBMP(formattedOutputFileName);
+		throw std::runtime_error("Output path must use .bmp, .png, or .tiff.");
 	}
 }
 
@@ -84,7 +89,11 @@ static std::string	denoisedOutputFileName(Scene& scene)
 	std::string lowerExtension = extension.string();
 
 	Utilities::toLower(lowerExtension);
-	if (lowerExtension == ".bmp" || lowerExtension == ".tiff")
+	if (
+		lowerExtension == ".bmp"
+		|| lowerExtension == ".png"
+		|| lowerExtension == ".tiff"
+	)
 	{
 		std::filesystem::path denoisedPath = outputPath;
 
@@ -167,10 +176,10 @@ int	main(int argc, char *argv[])
 		{
 			if (!scene.getBenchmarkMode())
 			{
-				saveImage(scene.getImage(), scene.getDefaultRenderOutputFileName(), scene.getRenderOutputFormat());
+				saveImage(scene.getImage(), scene.getDefaultRenderOutputFileName());
 				if (scene.hasDenoisedImage())
 				{
-					saveImage(scene.getDenoisedImage(), denoisedOutputFileName(scene), scene.getRenderOutputFormat());
+					saveImage(scene.getDenoisedImage(), denoisedOutputFileName(scene));
 				}
 				if (scene.getStorePixelRenderTimes())
 				{

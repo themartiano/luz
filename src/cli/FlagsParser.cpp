@@ -37,6 +37,7 @@ void	FlagsParser::parse(Scene& scene)
 {
 	// Function call order is important since it'll determine the flag importance
 	this->_parseHelp();
+	this->_rejectRemovedFlags();
 	this->_parseSeed();
 	this->_parseFile(scene);
 	this->_parseBenchmark(scene);
@@ -55,7 +56,6 @@ void	FlagsParser::parse(Scene& scene)
 	this->_parseExposure(scene);
 	this->_parseContrast(scene);
 	this->_parseDenoise(scene);
-	this->_parseOutputFile(scene);
 	this->_parseOutput(scene);
 	this->_parseDenoiseOutput(scene);
 	this->_parseRenderTimes(scene);
@@ -88,13 +88,27 @@ void	FlagsParser::_parseHelp(void)
 			<< "  --contrast F               Display contrast multiplier\n"
 			<< "  --denoise [true|false]      Write a denoised companion render\n"
 			<< "  --no-denoise                Disable denoising\n"
-			<< "  -o, --output bmp|tiff       Override render output format\n"
-			<< "  --output-file PATH          Override render output path\n"
-			<< "  --denoise-output PATH       Override denoised output path\n"
+			<< "  -o, --output PATH.EXT       Override render output path\n"
+			<< "  --denoise-output PATH.EXT   Override denoised output path\n"
 			<< "  --render-times              Write renderTime.bmp\n"
 			<< "  --benchmark                 Run the built-in benchmark scene\n"
 			<< "  --benchmark-case NAME       Benchmark case: default, many-objects, mesh-bvh, diffuse, postprocess, atmosphere, lights, emissive-geometry, primitives-materials, volumes, obj-mesh\n";
 		exit(EXIT_SUCCESS);
+	}
+}
+
+void	FlagsParser::_rejectRemovedFlags(void)
+{
+	for (const std::string& arg : this->_args)
+	{
+		if (arg == "--compression" || arg.rfind("--compression=", 0) == 0)
+		{
+			throw std::runtime_error("--compression has been removed.");
+		}
+		if (arg == "--output-file" || arg.rfind("--output-file=", 0) == 0)
+		{
+			throw std::runtime_error("--output-file has been removed. Use --output PATH.EXT.");
+		}
 	}
 }
 
@@ -489,33 +503,7 @@ void	FlagsParser::_parseOutput(Scene& scene)
 	{
 		if (it + 1 == this->_args.end())
 		{
-			throw std::runtime_error("--output requires bmp or tiff.");
-		}
-		std::string outputFormat = *(it + 1);
-		Utilities::toLower(outputFormat);
-		if (outputFormat == "bmp")
-		{
-			scene.setRenderOutputFormat(OUTPUT_BMP);
-		}
-		else if (outputFormat == "tiff")
-		{
-			scene.setRenderOutputFormat(OUTPUT_TIFF);
-		}
-		else
-		{
-			throw std::runtime_error("Invalid value for --output. Use bmp or tiff.");
-		}
-	}
-}
-
-void	FlagsParser::_parseOutputFile(Scene& scene)
-{
-	auto it = this->_findFlag("--output-file");
-	if (it != this->_args.end())
-	{
-		if (it + 1 == this->_args.end())
-		{
-			throw std::runtime_error("--output-file requires a path.");
+			throw std::runtime_error("--output requires a path.");
 		}
 		scene.setDefaultRenderOutputFileName(*(it + 1));
 	}

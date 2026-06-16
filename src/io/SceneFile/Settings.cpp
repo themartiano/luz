@@ -220,9 +220,13 @@ void	SceneFile::internal::_readSettingsSection(Scene& scene, std::ifstream& stre
 			{
 				strOutputFileName += ".bmp";
 			}
-			else if (lowerExtension != ".bmp" && lowerExtension != ".tiff")
+			else if (
+				lowerExtension != ".bmp"
+				&& lowerExtension != ".png"
+				&& lowerExtension != ".tiff"
+			)
 			{
-				throw std::runtime_error("Invalid outputfilename setting. Use a .bmp or .tiff path.");
+				throw std::runtime_error("Invalid outputfilename setting. Use a .bmp, .png, or .tiff path.");
 			}
 			scene.setDefaultRenderOutputFileName(strOutputFileName);
 		}
