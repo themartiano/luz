@@ -25,7 +25,7 @@ class   Triangle : public Hittable
 		void			setVertex2(Vector3 vertex2);
 		void			setVertexNormals(Vector3 normal0, Vector3 normal1, Vector3 normal2);
 		void			setTextureCoordinates(Vector3 uv0, Vector3 uv1, Vector3 uv2);
-		virtual std::shared_ptr<Material> getMaterial(void) const override;
+		virtual Material* getMaterial(void) const override;
 		void			setMaterial(std::shared_ptr<Material> material);
 		virtual bool	hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) const override;
 		virtual bool	hitAny(Ray& ray, double t_min, double t_max) const override;

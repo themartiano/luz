@@ -15,7 +15,7 @@ class	PerlinSphere : public Hittable
 		void				setPosition(Vector3 position);
 		double				getRadius(void) const;
 		void				setRadius(double radius);
-		virtual std::shared_ptr<Material>	getMaterial(void) const override;
+		virtual Material*	getMaterial(void) const override;
 		void				setMaterial(std::shared_ptr<Material> material);
 		virtual bool		hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) const override;
 		virtual bool		hitAny(Ray& ray, double t_min, double t_max) const override;

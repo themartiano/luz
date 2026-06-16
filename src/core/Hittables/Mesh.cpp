@@ -102,11 +102,24 @@ namespace
 		const Vector3& minimum = box.getMinimum();
 		const Vector3& maximum = box.getMaximum();
 		const Vector3& origin = ray.getOrigin();
+		const Vector3& direction = ray.getDirection();
 		const Vector3& inverseDirection = ray.getInverseDirection();
 
+		if (direction[0] == 0.0 && direction[1] == 0.0 && direction[2] == 0.0)
+		{
+			return (false);
+		}
 		for (int axis = 0; axis < 3; axis++)
 		{
 			const double invD = inverseDirection[axis];
+			if (invD == 0.0)
+			{
+				if (origin[axis] < minimum[axis] || origin[axis] > maximum[axis])
+				{
+					return (false);
+				}
+				continue;
+			}
 			double t0 = (minimum[axis] - origin[axis]) * invD;
 			double t1 = (maximum[axis] - origin[axis]) * invD;
 			if (invD < 0.0)
@@ -505,9 +518,9 @@ void	Mesh::_computeLegacyTriangleAreas(void)
 }
 
 // Returns the Mesh's material
-std::shared_ptr<Material>	Mesh::getMaterial(void) const
+Material*	Mesh::getMaterial(void) const
 {
-	return (this->_material);
+	return (this->_material.get());
 }
 
 // Calculates if the Mesh's BVH is hit by 'ray', is closer than 't_max' and farther than T_MIN

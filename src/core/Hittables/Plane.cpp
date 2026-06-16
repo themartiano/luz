@@ -36,9 +36,9 @@ void	Plane::setOrientation(Vector3 orientation)
 }
 
 // Returns the Plane's material
-std::shared_ptr<Material>	Plane::getMaterial(void) const
+Material*	Plane::getMaterial(void) const
 {
-	return (this->_material);
+	return (this->_material.get());
 }
 
 // Sets the Plane's Material
@@ -66,7 +66,7 @@ bool	Plane::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) cons
 
 	hitRecord.t0 = t;
 	hitRecord.normal = this->_orientation;
-	hitRecord.material = this->_material;
+	hitRecord.material = this->_material.get();
 	hitRecord.position = ray.pointAtRay(t);
 
 	return (true);

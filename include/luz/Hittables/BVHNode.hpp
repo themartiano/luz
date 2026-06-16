@@ -15,7 +15,7 @@ class   BVHNode : public Hittable
 		virtual bool	hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) const override;
 		virtual bool	hitAny(Ray& ray, double t_min, double t_max) const override;
 		virtual bool	createBoundingBox(AABB& outputBoundingBox) const override;
-		virtual std::shared_ptr<Material> getMaterial(void) const override;
+		virtual Material* getMaterial(void) const override;
 
 	private:
 		BVHNode(std::vector<std::shared_ptr<Hittable>>& hittables, size_t start, size_t end);
