@@ -90,6 +90,8 @@ namespace
 			|| baseDimension == Sampler::DIM_LENS
 			|| baseDimension == Sampler::DIM_LIGHT_SURFACE_SELECTION
 			|| baseDimension == Sampler::DIM_LIGHT_SURFACE_POINT
+			|| baseDimension == Sampler::DIM_ENVIRONMENT_SELECTION
+			|| baseDimension == Sampler::DIM_ENVIRONMENT_POINT
 		);
 	}
 
