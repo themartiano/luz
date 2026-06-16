@@ -27,6 +27,7 @@
 #include <filesystem>
 #include <memory>
 #include <exception>
+#include <stdexcept>
 #include <string>
 
 static bool	isTiffOutput(std::string outputFileName)
@@ -36,8 +37,23 @@ static bool	isTiffOutput(std::string outputFileName)
 	Utilities::toLower(lowerOutputFileName);
 	return (
 		Utilities::stringEndsWith(lowerOutputFileName, ".tiff")
-		|| Utilities::stringEndsWith(lowerOutputFileName, ".tif")
 	);
+}
+
+static bool	isPngOutput(std::string outputFileName)
+{
+	std::string lowerOutputFileName = outputFileName;
+
+	Utilities::toLower(lowerOutputFileName);
+	return (Utilities::stringEndsWith(lowerOutputFileName, ".png"));
+}
+
+static bool	isBmpOutput(std::string outputFileName)
+{
+	std::string lowerOutputFileName = outputFileName;
+
+	Utilities::toLower(lowerOutputFileName);
+	return (Utilities::stringEndsWith(lowerOutputFileName, ".bmp"));
 }
 
 static void	saveImage(const std::unique_ptr<Image>& image, const std::string& outputFileName)
@@ -46,9 +62,17 @@ static void	saveImage(const std::unique_ptr<Image>& image, const std::string& ou
 	{
 		image->saveToTIFF(outputFileName);
 	}
-	else
+	else if (isPngOutput(outputFileName))
+	{
+		image->saveToPNG(outputFileName);
+	}
+	else if (isBmpOutput(outputFileName))
 	{
 		image->saveToBMP(outputFileName);
+	}
+	else
+	{
+		throw std::runtime_error("Output path must use .bmp, .png, or .tiff.");
 	}
 }
 
@@ -65,7 +89,11 @@ static std::string	denoisedOutputFileName(Scene& scene)
 	std::string lowerExtension = extension.string();
 
 	Utilities::toLower(lowerExtension);
-	if (lowerExtension == ".bmp" || lowerExtension == ".tiff" || lowerExtension == ".tif")
+	if (
+			lowerExtension == ".bmp"
+			|| lowerExtension == ".png"
+			|| lowerExtension == ".tiff"
+		)
 	{
 		std::filesystem::path denoisedPath = outputPath;
 

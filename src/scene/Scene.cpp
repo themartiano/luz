@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <stdexcept>
 #include <cmath>
+#include <filesystem>
 
 namespace
 {
@@ -28,6 +29,31 @@ namespace
 			return (0.0);
 		}
 		return (weight);
+	}
+
+	bool	isSupportedOutputExtension(std::string extension)
+	{
+		Utilities::toLower(extension);
+		return (
+			extension == ".bmp"
+			|| extension == ".png"
+			|| extension == ".tiff"
+		);
+	}
+
+	void	requireSupportedOutputFileName(const std::string& fileName, const std::string& settingName)
+	{
+		if (fileName.empty())
+		{
+			throw std::invalid_argument(settingName + " file name must not be empty.");
+		}
+
+		const std::filesystem::path outputPath(fileName);
+		const std::string extension = outputPath.extension().string();
+		if (!isSupportedOutputExtension(extension))
+		{
+			throw std::invalid_argument(settingName + " file name must use .bmp, .png, or .tiff.");
+		}
 	}
 }
 
@@ -56,7 +82,7 @@ Scene::Scene(void)
 	this->_atmosphere = Atmosphere();
 	this->_backgroundColor = Color(0.0, 0.0, 0.0);
 
-	this->_defaultRenderOutputFileName = D_RENDER_FILE_NAME;
+	this->_defaultRenderOutputFileName = D_RENDER_FILE_NAME + ".bmp";
 
 	this->_activeCamera = 0;
 	this->_lightSelectionTotalWeight = 0.0;
@@ -308,6 +334,7 @@ std::string	Scene::getDefaultRenderOutputFileName(void) const
 // Sets the Output File Name
 void	Scene::setDefaultRenderOutputFileName(std::string defaultRenderOutputFileName)
 {
+	requireSupportedOutputFileName(defaultRenderOutputFileName, "Output");
 	this->_defaultRenderOutputFileName = defaultRenderOutputFileName;
 }
 
@@ -550,6 +577,7 @@ void	Scene::clearDenoisedImage(void)
 
 void	Scene::setDenoiseOutputFileName(std::string denoiseOutputFileName)
 {
+	requireSupportedOutputFileName(denoiseOutputFileName, "Denoise output");
 	this->_denoiseOutputFileName = denoiseOutputFileName;
 }
 

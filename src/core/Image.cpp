@@ -1,6 +1,7 @@
 #include "Image.hpp"
 #include "Defaults.hpp"
 #include "ImageFiles/BMP.hpp"
+#include "ImageFiles/PNG.hpp"
 #include "ImageFiles/TIFF.hpp"
 #include "Utilities.hpp"
 #include <algorithm>
@@ -136,6 +137,14 @@ void	Image::saveToTIFF(const std::string &fileName) const
 
 	TIFF tiff(fileName);
 	tiff.writeFile(std::make_unique<Image>(*this));
+}
+
+void	Image::saveToPNG(const std::string &fileName) const
+{
+	_checkInitialized();
+
+	PNG png(fileName);
+	png.writeFile(std::make_unique<Image>(*this));
 }
 
 const SmartArray<Color>&	Image::data(void) const

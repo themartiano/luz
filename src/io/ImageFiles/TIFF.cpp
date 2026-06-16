@@ -122,7 +122,7 @@ void	TIFF::writeFile(const std::unique_ptr<Image>& image, bool insideDir, std::s
 	}
 	filePath += this->_fileName;
 
-	if (!Utilities::stringEndsWith(filePath, ".tiff") && !Utilities::stringEndsWith(filePath, ".tif"))
+	if (!Utilities::stringEndsWith(filePath, ".tiff"))
 	{
 		filePath += ".tiff";
 	}
