@@ -4,6 +4,8 @@
 #include "Materials/Dielectric.hpp"
 #include "Materials/Emissive.hpp"
 #include "Materials/Principled.hpp"
+#include "Materials/Isotropic.hpp"
+#include "Materials/HenyeyGreenstein.hpp"
 #include "Texture.hpp"
 #include "Utilities.hpp"
 #include <fstream>
@@ -25,6 +27,7 @@ namespace
 		double		alpha = 1.0;
 		double		intensity = 1.0;
 		double		emissionStrength = 0.0;
+		double		anisotropy = 0.0;
 		std::string	texturePath;
 		bool		hasProperties = false;
 		bool		hasEmissionColor = false;
@@ -91,6 +94,32 @@ namespace
 				throw std::runtime_error("Invalid emissive material: " + line);
 			}
 			material = std::make_shared<Emissive>(Color(r, g, b), lightIntensity);
+			return (true);
+		}
+		if (lowerLine.rfind("isotropic=", 0) != std::string::npos)
+		{
+			double r, g, b;
+
+			if (sscanf(lowerLine.c_str(), "isotropic=(%lf,%lf,%lf)", &r, &g, &b) != 3)
+			{
+				throw std::runtime_error("Invalid isotropic material: " + line);
+			}
+			material = std::make_shared<Isotropic>(Color(r, g, b));
+			return (true);
+		}
+		if (
+			lowerLine.rfind("henyey_greenstein=", 0) != std::string::npos
+			|| lowerLine.rfind("henyeygreenstein=", 0) != std::string::npos
+			|| lowerLine.rfind("hg=", 0) != std::string::npos
+		)
+		{
+			double r, g, b, anisotropy;
+
+			if (sscanf(lowerLine.c_str(), "%*[^=]=(%lf,%lf,%lf),%lf", &r, &g, &b, &anisotropy) != 4)
+			{
+				throw std::runtime_error("Invalid Henyey-Greenstein material: " + line);
+			}
+			material = std::make_shared<HenyeyGreenstein>(Color(r, g, b), anisotropy);
 			return (true);
 		}
 
@@ -161,6 +190,10 @@ namespace
 		else if (key == "emissionstrength" || key == "emission_strength")
 		{
 			builder.emissionStrength = std::stod(value);
+		}
+		else if (key == "anisotropy" || key == "g")
+		{
+			builder.anisotropy = std::stod(value);
 		}
 		else if (key == "texture" || key == "basecolortexture" || key == "base_color_texture" || key == "albedo")
 		{
@@ -250,6 +283,20 @@ namespace
 				builder.hasEmissionColor ? builder.emissionColor : builder.color,
 				builder.emissionStrength > 0.0 ? builder.emissionStrength : builder.intensity
 			));
+		}
+		if (type == "isotropic")
+		{
+			return (std::make_shared<Isotropic>(builder.color));
+		}
+		if (
+			type == "volume"
+			|| type == "phase"
+			|| type == "henyey_greenstein"
+			|| type == "henyeygreenstein"
+			|| type == "hg"
+		)
+		{
+			return (std::make_shared<HenyeyGreenstein>(builder.color, builder.anisotropy));
 		}
 
 		throw std::runtime_error("Unknown material type: " + type);

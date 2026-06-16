@@ -154,6 +154,45 @@ bool	Sphere::hitAny(Ray& ray, double t_min, double t_max) const
 	return (root >= t_min && root <= t_max);
 }
 
+bool	Sphere::hitInterval(Ray& ray, double t_min, double t_max, double& t0, double& t1) const
+{
+	Vector3 oc = ray.getOrigin() - this->_position;
+	double a = Utilities::dot(ray.getDirection(), ray.getDirection());
+	double b = Utilities::dot(oc, ray.getDirection());
+	double c = Utilities::dot(oc, oc) - (this->_radius * this->_radius);
+	double discriminant = (b * b) - (a * c);
+
+	if (a <= 0.0 || discriminant < 0.0)
+	{
+		return (false);
+	}
+
+	const double sqrtd = sqrt(discriminant);
+	double root0 = (-b - sqrtd) / a;
+	double root1 = (-b + sqrtd) / a;
+	if (root0 > root1)
+	{
+		std::swap(root0, root1);
+	}
+
+	if (root0 < t_min)
+	{
+		root0 = t_min;
+	}
+	if (root1 > t_max)
+	{
+		root1 = t_max;
+	}
+	if (root0 >= root1)
+	{
+		return (false);
+	}
+
+	t0 = root0;
+	t1 = root1;
+	return (true);
+}
+
 // Creates an AABB / bounding box for this Sphere
 bool	Sphere::createBoundingBox(AABB& outputBoundingBox) const
 {

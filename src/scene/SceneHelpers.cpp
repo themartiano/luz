@@ -11,6 +11,7 @@
 #include "Materials/Metal.hpp"
 #include "Materials/Dielectric.hpp"
 #include "Materials/Isotropic.hpp"
+#include "Materials/HenyeyGreenstein.hpp"
 #include "Materials/Principled.hpp"
 #include "Atmosphere.hpp"
 #include "AssetPath.hpp"
@@ -436,7 +437,7 @@ namespace
 		);
 		scene.addHittable(std::make_shared<ConstantVolume>(
 			smokeBoundary,
-			std::make_shared<Isotropic>(Color(0.7, 0.68, 0.62)),
+			std::make_shared<HenyeyGreenstein>(Color(0.7, 0.68, 0.62), 0.35),
 			0.65
 		));
 

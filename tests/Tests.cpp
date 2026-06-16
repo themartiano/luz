@@ -7,12 +7,15 @@
 #include "Materials/Lambertian.hpp"
 #include "Materials/Emissive.hpp"
 #include "Materials/Principled.hpp"
+#include "Materials/Isotropic.hpp"
+#include "Materials/HenyeyGreenstein.hpp"
 #include "OBJReader.hpp"
 #include "PDFs/HittablePDF.hpp"
 #include "Renderer/Renderer.hpp"
 #include "Scene/Scene.hpp"
 #include "SceneFile/SceneFile.hpp"
 #include "Hittables/BVHNode.hpp"
+#include "Hittables/ConstantVolume.hpp"
 #include "Hittables/Cube.hpp"
 #include "Hittables/Mesh.hpp"
 #include "Hittables/Rectangle.hpp"
@@ -1256,6 +1259,55 @@ namespace
 		std::filesystem::remove(objectPath);
 	}
 
+	void	testSceneFileLoadsVolumeBlock(void)
+	{
+		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_volume_block_test.luz";
+		{
+			std::ofstream sceneStream(scenePath);
+			sceneStream
+				<< "[materials]\n"
+				<< "material forward_mist {\n"
+				<< "type=phase\n"
+				<< "color=(0.7,0.78,1.0)\n"
+				<< "anisotropy=0.62\n"
+				<< "}\n\n"
+				<< "[scene]\n"
+				<< "camera main {\n"
+				<< "position=(0,0,8)\n"
+				<< "direction=(0,0,-1)\n"
+				<< "fov=45\n"
+				<< "aperture=0\n"
+				<< "focusDistance=8\n"
+				<< "}\n"
+				<< "volume mist {\n"
+				<< "shape=sphere\n"
+				<< "position=(1,2,3)\n"
+				<< "radius=4\n"
+				<< "density=0.25\n"
+				<< "material=forward_mist\n"
+				<< "}\n";
+		}
+
+		Scene scene;
+		SceneFile::read(scene, scenePath.string());
+
+		require(scene.getHittables().size() == 1, "Volume block did not load one hittable.");
+		auto volume = std::dynamic_pointer_cast<ConstantVolume>(scene.getHittables()[0]);
+		require(volume != nullptr, "Volume block did not create a ConstantVolume.");
+		requireNear(volume->getDensity(), 0.25, "Volume density was not parsed.");
+		require(volume->getMaterial()->getType() == HENYEY_GREENSTEIN, "Volume phase material was not parsed.");
+		const HenyeyGreenstein* phase = dynamic_cast<const HenyeyGreenstein*>(volume->getMaterial());
+		require(phase != nullptr, "Volume phase material has the wrong runtime type.");
+		requireNear(phase->getAnisotropy(), 0.62, "Volume phase anisotropy was not parsed.");
+
+		AABB boundingBox;
+		require(volume->createBoundingBox(boundingBox), "Volume did not create a bounding box.");
+		requireNear(boundingBox.getMinimum().getX(), -3.0, "Volume sphere bounds minimum X is wrong.");
+		requireNear(boundingBox.getMaximum().getX(), 5.0, "Volume sphere bounds maximum X is wrong.");
+
+		std::filesystem::remove(scenePath);
+	}
+
 	void	testSceneFileLoadsNonMetallicPrincipledMaterial(void)
 	{
 		const std::filesystem::path directory = std::filesystem::temp_directory_path();
@@ -1356,6 +1408,54 @@ namespace
 
 		require(bvh.hit(ray, hitRecord, 0.001, 100.0), "BVH did not report a hit.");
 		requireNear(hitRecord.t0, 1.5, "BVH did not return the closest hit.");
+	}
+
+	void	testVolumeHitWorksFromInsideBoundary(void)
+	{
+		setRandomSeed(7);
+
+		const auto boundary = std::make_shared<Sphere>(
+			Vector3(0.0, 0.0, 0.0),
+			10.0,
+			std::make_shared<Lambertian>(Color(0.0, 0.0, 0.0))
+		);
+		ConstantVolume volume(
+			boundary,
+			std::make_shared<Isotropic>(Color(1.0, 1.0, 1.0)),
+			1000.0
+		);
+		Ray ray(Vector3(0.0, 0.0, 0.0), Vector3(0.0, 0.0, 1.0));
+		HitRecord hitRecord;
+
+		require(volume.hit(ray, hitRecord, T_MIN, T_MAX), "Volume missed when ray started inside its boundary.");
+		require(hitRecord.t0 >= T_MIN, "Inside volume hit was behind the ray minimum.");
+		require(hitRecord.t0 < 10.0, "Inside volume hit was beyond the boundary exit.");
+		require(hitRecord.material != nullptr && hitRecord.material->getType() == ISOTROPIC, "Inside volume hit did not use the phase material.");
+	}
+
+	void	testBoxVolumeHitWorksFromInsideBoundary(void)
+	{
+		setRandomSeed(11);
+
+		const auto boundary = std::make_shared<Cube>(
+			Transform(Vector3(0.0, 0.0, 0.0), Vector3(0.0, 0.0, -1.0), Vector3(1.0, 1.0, 1.0)),
+			4.0,
+			4.0,
+			4.0,
+			std::make_shared<Lambertian>(Color(0.0, 0.0, 0.0))
+		);
+		ConstantVolume volume(
+			boundary,
+			std::make_shared<Isotropic>(Color(1.0, 1.0, 1.0)),
+			1000.0
+		);
+		Ray ray(Vector3(0.0, 0.0, 0.0), Vector3(0.0, 0.0, 1.0));
+		HitRecord hitRecord;
+
+		require(volume.hit(ray, hitRecord, T_MIN, T_MAX), "Box volume missed when ray started inside its boundary.");
+		require(hitRecord.t0 >= T_MIN, "Inside box volume hit was behind the ray minimum.");
+		require(hitRecord.t0 < 2.0, "Inside box volume hit was beyond the boundary exit.");
+		require(hitRecord.material != nullptr && hitRecord.material->getType() == ISOTROPIC, "Inside box volume hit did not use the phase material.");
 	}
 
 	void	testTinyTriangleHitAndNormal(void)
@@ -1960,6 +2060,14 @@ namespace
 		requireThrows([&]() { Atmosphere().setStarsBrightness(std::numeric_limits<double>::quiet_NaN()); }, "Atmosphere accepted non-finite star brightness.");
 		requireThrows([&]() { Atmosphere(0.0, 2.0, 1.0, 1.0, 1.0, 1, 1, 0.0); }, "Atmosphere accepted atmosphere radius smaller than Earth radius.");
 		Atmosphere(0.0, D_ATMOSPHERE_RADIUS * 2.0, D_ATMOSPHERE_RADIUS * 2.0 + 1000.0, D_HR, D_HM, 1, 1, 0.0);
+		requireThrows([&]() { HenyeyGreenstein(Color(1.0, 1.0, 1.0), 1.0); }, "Henyey-Greenstein material accepted invalid anisotropy.");
+		requireThrows([&]() {
+			ConstantVolume(
+				std::make_shared<Sphere>(Vector3(0.0, 0.0, 0.0), 1.0, std::make_shared<Lambertian>(Color(0.0, 0.0, 0.0))),
+				std::make_shared<Isotropic>(Color(1.0, 1.0, 1.0)),
+				0.0
+			);
+		}, "ConstantVolume accepted zero density.");
 	}
 
 	void	testPlanetaryHitRobustIntersections(void)
@@ -2396,9 +2504,12 @@ int	main(void)
 		testSceneFileLoadsRelativeObject();
 		testSceneFileLoadsTransformedObject();
 		testSceneFileLoadsNamedBlocks();
+		testSceneFileLoadsVolumeBlock();
 		testSceneFileLoadsNonMetallicPrincipledMaterial();
 		testSceneFileRejectsInvalidMaterial();
 		testBVHReturnsClosestHit();
+		testVolumeHitWorksFromInsideBoundary();
+		testBoxVolumeHitWorksFromInsideBoundary();
 		testTinyTriangleHitAndNormal();
 		testTrianglePDFAndRandomSampling();
 		testTriangleInterpolatesVertexNormals();

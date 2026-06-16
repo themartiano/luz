@@ -16,7 +16,7 @@ https://github.com/user-attachments/assets/7dc03485-9418-47af-a7e7-c4c4c53b6b70
 - Adaptive sampling
 - Denoiser (NFOR-style)
 - Spheres, planes, rectangles, triangles, cubes, volumes, and OBJ meshes
-- Lambertian, metal, dielectric, emissive, and isotropic materials
+- Lambertian, metal, dielectric, emissive, isotropic, and Henyey-Greenstein phase materials
 - Area, point, sphere and directional lights
 - PPM and HDR equirectangular environment maps
 - Custom `.luz` scene files
@@ -53,6 +53,12 @@ The primary output is `render.bmp`, with `render_denoised.bmp` written by
 default. Scene files can set `outputfilename=...`, and the CLI can override
 common render settings. Use a `.bmp`, `.png`, or `.tiff` output path to select
 the format.
+
+The volumetric fog and godrays sample is:
+
+```sh
+./luz --file examples/scenes/volumetric_godrays.luz --threads 8
+```
 
 Run the test suite:
 
