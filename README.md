@@ -25,7 +25,7 @@ https://github.com/user-attachments/assets/7dc03485-9418-47af-a7e7-c4c4c53b6b70
 - BVH acceleration, including packed mesh BVHs with binned SAH construction and near-first traversal
 - Atmospheric simulation w/ scattering
 - Depth of field, antialiasing, exposure, contrast, tone mapping, gamma correction, and bloom
-- BMP and TIFF output
+- BMP and 32-bit floating-point TIFF output
 - Deterministic benchmark harness with render, denoise, post-process, and score breakdowns
 
 ## Requirements
@@ -48,7 +48,9 @@ Render a bundled example scene:
 ./luz --file examples/scenes/cornell.luz --samples 50 --resolution 300x300
 ```
 
-The default output is `render.bmp`. Scene files can set `outputfilename=...`, and the CLI can override common render settings.
+The default output is `render.bmp`. Use `--output bmp|tiff` to choose the
+format and `--output-file PATH` to choose the path. Scene files can set
+`outputfilename=...`, and the CLI can override common render settings.
 
 Run the test suite:
 
@@ -146,12 +148,17 @@ Usage: ./luz [options]
   --contrast F               Display contrast multiplier
   --denoise [true|false]      Write a denoised companion render
   --no-denoise                Disable denoising
-  -o, --output PATH           Override render output path
+  -o, --output bmp|tiff       Override render output format
+  --output-file PATH          Override render output path
   --denoise-output PATH       Override denoised output path
   --render-times              Write renderTime.bmp
   --benchmark                 Run the built-in benchmark scene
   --benchmark-case NAME       Benchmark case: default, many-objects, mesh-bvh, diffuse, postprocess, atmosphere, lights, emissive-geometry, primitives-materials, volumes, obj-mesh
 ```
+
+TIFF output stores RGB as uncompressed 32-bit IEEE floating-point samples. Use
+`--output tiff` with `--tonemapping false --gamma false` to preserve
+scene-linear HDR values above 1.0.
 
 ## Adaptive Sampling
 

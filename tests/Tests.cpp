@@ -23,6 +23,7 @@
 
 #include <cmath>
 #include <cstdint>
+#include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -102,19 +103,6 @@ namespace
 		require(bytes[offset] == blue && bytes[offset + 1] == green && bytes[offset + 2] == red, message);
 	}
 
-	void	requireRGBBytes(
-		const std::vector<unsigned char>& bytes,
-		std::size_t offset,
-		unsigned char red,
-		unsigned char green,
-		unsigned char blue,
-		const std::string& message
-	)
-	{
-		require(bytes.size() >= offset + 3, "TIFF test file is too small.");
-		require(bytes[offset] == red && bytes[offset + 1] == green && bytes[offset + 2] == blue, message);
-	}
-
 	std::uint16_t	readU16(const std::vector<unsigned char>& bytes, std::size_t offset)
 	{
 		require(bytes.size() >= offset + 2, "TIFF test file is too small.");
@@ -133,6 +121,15 @@ namespace
 			(static_cast<std::uint32_t>(bytes[offset + 2]) << 16) |
 			(static_cast<std::uint32_t>(bytes[offset + 3]) << 24)
 		);
+	}
+
+	float	readF32(const std::vector<unsigned char>& bytes, std::size_t offset)
+	{
+		const std::uint32_t bits = readU32(bytes, offset);
+		float value;
+
+		std::memcpy(&value, &bits, sizeof(value));
+		return (value);
 	}
 
 	TiffTag	readTiffTag(const std::vector<unsigned char>& bytes, std::size_t offset)
@@ -325,6 +322,20 @@ namespace
 		std::filesystem::remove(bmpPath);
 	}
 
+	void	requireRGBFloats(
+		const std::vector<unsigned char>& bytes,
+		std::size_t offset,
+		float red,
+		float green,
+		float blue,
+		const std::string& message
+	)
+	{
+		requireNear(readF32(bytes, offset), red, message + " red channel is wrong.");
+		requireNear(readF32(bytes, offset + 4), green, message + " green channel is wrong.");
+		requireNear(readF32(bytes, offset + 8), blue, message + " blue channel is wrong.");
+	}
+
 	void	testNonSquareTIFF(void)
 	{
 		const std::filesystem::path outputPath = std::filesystem::temp_directory_path() / "luz_test_non_square";
@@ -332,9 +343,9 @@ namespace
 
 		Image image(3, 2);
 		image.initialize();
-		image.setPixel(0, 0, Color(1.0, 0.0, 0.0));
-		image.setPixel(1, 0, Color(0.0, 1.0, 0.0));
-		image.setPixel(2, 0, Color(0.0, 0.0, 1.0));
+		image.setPixel(0, 0, Color(1.5, 0.25, 0.0));
+		image.setPixel(1, 0, Color(0.0, 2.25, 0.125));
+		image.setPixel(2, 0, Color(0.5, 0.0, 4.0));
 		image.setPixel(0, 1, Color(0.0, 1.0, 1.0));
 		image.setPixel(1, 1, Color(1.0, 0.0, 1.0));
 		image.setPixel(2, 1, Color(1.0, 1.0, 0.0));
@@ -351,24 +362,30 @@ namespace
 
 		const TiffTag bitsPerSample = findTiffTag(bytes, ifdOffset, 258);
 		require(bitsPerSample.type == 3 && bitsPerSample.count == 3, "TIFF BitsPerSample tag is wrong.");
-		require(readU16(bytes, bitsPerSample.valueOrOffset) == 8, "TIFF red bit depth is wrong.");
-		require(readU16(bytes, bitsPerSample.valueOrOffset + 2) == 8, "TIFF green bit depth is wrong.");
-		require(readU16(bytes, bitsPerSample.valueOrOffset + 4) == 8, "TIFF blue bit depth is wrong.");
+		require(readU16(bytes, bitsPerSample.valueOrOffset) == 32, "TIFF red bit depth is wrong.");
+		require(readU16(bytes, bitsPerSample.valueOrOffset + 2) == 32, "TIFF green bit depth is wrong.");
+		require(readU16(bytes, bitsPerSample.valueOrOffset + 4) == 32, "TIFF blue bit depth is wrong.");
+
+		const TiffTag sampleFormat = findTiffTag(bytes, ifdOffset, 339);
+		require(sampleFormat.type == 3 && sampleFormat.count == 3, "TIFF SampleFormat tag is wrong.");
+		require(readU16(bytes, sampleFormat.valueOrOffset) == 3, "TIFF red sample format is wrong.");
+		require(readU16(bytes, sampleFormat.valueOrOffset + 2) == 3, "TIFF green sample format is wrong.");
+		require(readU16(bytes, sampleFormat.valueOrOffset + 4) == 3, "TIFF blue sample format is wrong.");
 
 		require(findTiffTag(bytes, ifdOffset, 259).valueOrOffset == 1, "TIFF compression is wrong.");
 		require(findTiffTag(bytes, ifdOffset, 262).valueOrOffset == 2, "TIFF photometric interpretation is wrong.");
 		require(findTiffTag(bytes, ifdOffset, 277).valueOrOffset == 3, "TIFF samples per pixel is wrong.");
 		require(findTiffTag(bytes, ifdOffset, 278).valueOrOffset == 2, "TIFF rows per strip is wrong.");
-		require(findTiffTag(bytes, ifdOffset, 279).valueOrOffset == 18, "TIFF strip byte count is wrong.");
+		require(findTiffTag(bytes, ifdOffset, 279).valueOrOffset == 72, "TIFF strip byte count is wrong.");
 		require(findTiffTag(bytes, ifdOffset, 284).valueOrOffset == 1, "TIFF planar configuration is wrong.");
 
 		const std::uint32_t pixelDataOffset = findTiffTag(bytes, ifdOffset, 273).valueOrOffset;
-		requireRGBBytes(bytes, pixelDataOffset + 0, 255, 0, 0, "TIFF top-left pixel is wrong.");
-		requireRGBBytes(bytes, pixelDataOffset + 3, 0, 255, 0, "TIFF top-middle pixel is wrong.");
-		requireRGBBytes(bytes, pixelDataOffset + 6, 0, 0, 255, "TIFF top-right pixel is wrong.");
-		requireRGBBytes(bytes, pixelDataOffset + 9, 0, 255, 255, "TIFF bottom-left pixel is wrong.");
-		requireRGBBytes(bytes, pixelDataOffset + 12, 255, 0, 255, "TIFF bottom-middle pixel is wrong.");
-		requireRGBBytes(bytes, pixelDataOffset + 15, 255, 255, 0, "TIFF bottom-right pixel is wrong.");
+		requireRGBFloats(bytes, pixelDataOffset + 0, 1.5f, 0.25f, 0.0f, "TIFF top-left pixel");
+		requireRGBFloats(bytes, pixelDataOffset + 12, 0.0f, 2.25f, 0.125f, "TIFF top-middle pixel");
+		requireRGBFloats(bytes, pixelDataOffset + 24, 0.5f, 0.0f, 4.0f, "TIFF top-right pixel");
+		requireRGBFloats(bytes, pixelDataOffset + 36, 0.0f, 1.0f, 1.0f, "TIFF bottom-left pixel");
+		requireRGBFloats(bytes, pixelDataOffset + 48, 1.0f, 0.0f, 1.0f, "TIFF bottom-middle pixel");
+		requireRGBFloats(bytes, pixelDataOffset + 60, 1.0f, 1.0f, 0.0f, "TIFF bottom-right pixel");
 
 		std::filesystem::remove(tiffPath);
 	}
@@ -391,6 +408,7 @@ namespace
 			scene.getDefaultRenderOutputFileName() == outputPath.string() + ".bmp",
 			"Scene outputfilename setting was not applied."
 		);
+		require(scene.getRenderOutputFormat() == OUTPUT_BMP, "Scene BMP output format was not applied.");
 
 		std::filesystem::remove(scenePath);
 	}
@@ -413,6 +431,7 @@ namespace
 			scene.getDefaultRenderOutputFileName() == outputPath.string(),
 			"Scene TIFF outputfilename setting was not preserved."
 		);
+		require(scene.getRenderOutputFormat() == OUTPUT_TIFF, "Scene TIFF output format was not applied.");
 
 		std::filesystem::remove(scenePath);
 	}
@@ -529,7 +548,9 @@ namespace
 		requireSceneFileSettingThrows("exposure=nan", "Scene file accepted non-finite exposure.");
 		requireSceneFileSettingThrows("contrast=-1", "Scene file accepted negative contrast.");
 		requireSceneFileSettingThrows("denoise=2", "Scene file accepted non-binary denoise.");
+		requireSceneFileSettingThrows("outputfilename=render.tif", "Scene file accepted .tif output.");
 		requireSceneFileSettingThrows("denoiseoutputfilename=", "Scene file accepted empty denoise output name.");
+		requireSceneFileSettingThrows("denoiseoutputfilename=render_denoised.tif", "Scene file accepted .tif denoise output.");
 		requireSceneFileSettingThrows("sky=wat", "Scene file accepted unknown sky setting.");
 		requireSceneFileSettingThrows("atmosphere=0,1,2,3,4,0,1,0", "Scene file accepted zero atmosphere samples.");
 	}
@@ -1300,15 +1321,23 @@ namespace
 			outputScene->getDenoiseOutputFileName() == "custom_denoised.tiff",
 			"--denoise-output was not parsed."
 		);
-		std::unique_ptr<Scene> rawOutputScene = parseFlags({"--output", "custom_render.tiff"});
+		std::unique_ptr<Scene> tiffOutputScene = parseFlags({"--output", "tiff"});
+		require(tiffOutputScene->getRenderOutputFormat() == OUTPUT_TIFF, "--output tiff was not parsed.");
 		require(
-			rawOutputScene->getDefaultRenderOutputFileName() == "custom_render.tiff",
-			"--output was not parsed."
+			tiffOutputScene->getDefaultRenderOutputFileName() == "render.tiff",
+			"--output tiff did not update the default output filename."
 		);
-		std::unique_ptr<Scene> shortOutputScene = parseFlags({"-o", "short_render.bmp"});
+		std::unique_ptr<Scene> outputFileScene = parseFlags({"--output-file", "custom_render.tiff"});
+		require(outputFileScene->getRenderOutputFormat() == OUTPUT_TIFF, "--output-file .tiff did not set TIFF output.");
 		require(
-			shortOutputScene->getDefaultRenderOutputFileName() == "short_render.bmp",
-			"-o was not parsed."
+			outputFileScene->getDefaultRenderOutputFileName() == "custom_render.tiff",
+			"--output-file was not parsed."
+		);
+		std::unique_ptr<Scene> shortOutputScene = parseFlags({"--output-file", "short_render.bmp", "-o", "tiff"});
+		require(shortOutputScene->getRenderOutputFormat() == OUTPUT_TIFF, "-o tiff was not parsed.");
+		require(
+			shortOutputScene->getDefaultRenderOutputFileName() == "short_render.tiff",
+			"-o tiff did not update the output filename extension."
 		);
 
 		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_cli_denoise_override_test.luz";
@@ -1362,8 +1391,12 @@ namespace
 		requireFlagParseThrows({"--contrast"}, "CLI accepted missing contrast.");
 		requireFlagParseThrows({"--contrast", "-1"}, "CLI accepted negative contrast.");
 		requireFlagParseThrows({"--denoise", "maybe"}, "CLI accepted invalid denoise value.");
-		requireFlagParseThrows({"--output"}, "CLI accepted missing output path.");
+		requireFlagParseThrows({"--output"}, "CLI accepted missing output format.");
+		requireFlagParseThrows({"--output", "png"}, "CLI accepted invalid output format.");
+		requireFlagParseThrows({"--output-file"}, "CLI accepted missing output file path.");
+		requireFlagParseThrows({"--output-file", "render.tif"}, "CLI accepted .tif output file.");
 		requireFlagParseThrows({"--denoise-output"}, "CLI accepted missing denoise output path.");
+		requireFlagParseThrows({"--denoise-output", "render_denoised.tif"}, "CLI accepted .tif denoise output path.");
 	}
 
 	void	testSettersRejectInvalidValues(void)

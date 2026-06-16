@@ -39,6 +39,7 @@ class	FlagsParser
 		void	_parseContrast(Scene& scene);
 		void	_parseDenoise(Scene& scene);
 		void	_parseOutput(Scene& scene);
+		void	_parseOutputFile(Scene& scene);
 		void	_parseDenoiseOutput(Scene& scene);
 		void	_parseRenderTimes(Scene& scene);
 };
