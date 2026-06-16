@@ -477,28 +477,29 @@ namespace
 
 		ObjReadOptions options;
 		options.quiet = true;
+		const std::string suzannePath = AssetPath::resolve("suzanne.obj");
 
 		scene.addHittable(std::make_shared<Mesh>(readObj(
-			AssetPath::resolve("blender_monkey.obj"),
+			suzannePath,
 			Vector3(-0.8, 0.05, 1.1),
 			Vector3(0.0, 180.0, 0.0),
-			Vector3(0.018, 0.018, 0.018),
+			Vector3(1.35, 1.35, 1.35),
 			std::make_shared<Principled>(Color(0.62, 0.64, 0.68), 0.15, 0.42),
 			options
 		)));
 		scene.addHittable(std::make_shared<Mesh>(readObj(
-			AssetPath::resolve("cube.obj"),
+			suzannePath,
 			Vector3(1.05, 0.0, 1.6),
 			Vector3(0.0, 35.0, 0.0),
-			Vector3(1.15, 1.15, 1.15),
+			Vector3(0.95, 0.95, 0.95),
 			std::make_shared<Metal>(Color(0.78, 0.72, 0.62), 0.22),
 			options
 		)));
 		scene.addHittable(std::make_shared<Mesh>(readObj(
-			AssetPath::resolve("pyramid.obj"),
+			suzannePath,
 			Vector3(0.35, 0.0, 3.2),
 			Vector3(0.0, -25.0, 0.0),
-			Vector3(0.85, 0.85, 0.85),
+			Vector3(0.7, 0.7, 0.7),
 			std::make_shared<Lambertian>(Color(0.68, 0.38, 0.26)),
 			options
 		)));

@@ -45,7 +45,7 @@ make
 Render a bundled example scene:
 
 ```sh
-./Luz --file examples/scenes/blender_monkey.luz --samples 50 --resolution 300x300
+./luz --file examples/scenes/cornell.luz --samples 50 --resolution 300x300
 ```
 
 The default output is `render.bmp`. Scene files can set `outputfilename=...`, and the CLI can override common render settings.
@@ -125,7 +125,7 @@ cmake --build build --clean-first
 ## CLI
 
 ```text
-Usage: ./Luz [options]
+Usage: ./luz [options]
 
   -f, --file PATH             Load a .luz scene file
   -r, --resolution WxH        Override render resolution
@@ -165,7 +165,7 @@ Lower thresholds keep more detail and cost more time. For final renders, start
 with a high max sample count and tune with values like:
 
 ```sh
-./Luz --file exports/stormtroopers.luz --samples 4096 --adaptive --adaptive-min-samples 512 --adaptive-check-interval 64 --adaptive-threshold 0.005 --denoise
+./luz --file exports/stormtroopers.luz --samples 4096 --adaptive --adaptive-min-samples 512 --adaptive-check-interval 64 --adaptive-threshold 0.005 --denoise
 ```
 
 ## Denoising
@@ -184,9 +184,9 @@ misleading because each local filter window covers too much of the image.
 
 ## Scene Files
 
-Example scenes live in `examples/scenes/`. Mesh assets live in `assets/objects/`. The scene-file format is documented in [`docs/scene-files.md`](docs/scene-files.md).
+Example scenes live in `examples/scenes/`. The scene-file format is documented in [`docs/scene-files.md`](docs/scene-files.md).
 
-Object paths in `.luz` files are resolved relative to the scene file first, then relative to the current working directory, then under `assets/objects/`. This means `examples/scenes/blender_monkey.luz` can reference `../../assets/objects/blender_monkey.obj` and still run from the repository root.
+Object paths in `.luz` files are resolved relative to the scene file first, then relative to the current working directory, then under `assets/objects/`. Keep large or generated OBJ assets local unless they are intentionally reviewed for inclusion.
 
 OBJ meshes can also be offset and assigned a scene material:
 
@@ -202,7 +202,7 @@ Blender scenes can be exported through Blender's Python API:
 
 ```sh
 "/Applications/Blender.app/Contents/MacOS/Blender" -b scene.blend --python tools/blender_export_luz.py -- --output exports/scene.luz
-./Luz --file exports/scene.luz --threads 8
+./luz --file exports/scene.luz --threads 8
 ```
 
 The exporter writes a `.luz` file plus OBJ meshes. Usage and current fidelity
@@ -218,7 +218,7 @@ src/scene/         Scene model and scene helpers
 src/io/            Scene-file, OBJ, BMP, and TIFF loading/writing
 src/cli/           Command-line entry point and flags
 examples/scenes/   Example .luz scene files
-assets/objects/    OBJ assets used by examples
+assets/objects/    Benchmark OBJ assets and optional local OBJ assets
 docs/images/       Compressed showcase images
 tools/             Export and utility scripts
 tests/             Standard-library-only test program

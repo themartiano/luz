@@ -15,8 +15,8 @@
 
 #######  ~~~   Initial variable setup   ~~~  #######
 
-NAME := Luz
-TEST_NAME := LuzTests
+NAME := luz
+TEST_NAME := luz_tests
 SRCS_DIR := ./src
 OBJS_DIR := ./objs
 MAIN_SRC := $(SRCS_DIR)/cli/main.cpp
@@ -174,6 +174,7 @@ clean:
 fclean: clean
 	rm -f $(NAME)
 	rm -f $(TEST_NAME)
+	rm -f Luz Luz.exe LuzTests LuzTests.exe
 
 .PHONY: re
 re:
