@@ -25,7 +25,7 @@ https://github.com/user-attachments/assets/7dc03485-9418-47af-a7e7-c4c4c53b6b70
 - BVH acceleration, including packed mesh BVHs with binned SAH construction and near-first traversal
 - Atmospheric simulation w/ scattering
 - Depth of field, antialiasing, exposure, contrast, tone mapping, gamma correction, and bloom
-- BMP and TIFF output
+- BMP, PNG, and 32-bit floating-point TIFF output
 - Deterministic benchmark harness with render, denoise, post-process, and score breakdowns
 
 ## Requirements
@@ -50,7 +50,8 @@ Render a bundled example scene:
 
 The primary output is `render.bmp`, with `render_denoised.bmp` written by
 default. Scene files can set `outputfilename=...`, and the CLI can override
-common render settings.
+common render settings. Use a `.bmp`, `.png`, or `.tiff` output path to select
+the format.
 
 Run the test suite:
 
@@ -152,12 +153,16 @@ Options:
   --contrast F               Display contrast multiplier
   --denoise [true|false]      Toggle denoised companion render (default: true)
   --no-denoise                Disable denoising
-  -o, --output PATH           Override render output path
-  --denoise-output PATH       Override denoised output path
+  -o, --output PATH.EXT       Override render output path
+  --denoise-output PATH.EXT   Override denoised output path
   --render-times              Write renderTime.bmp
   --benchmark                 Run the built-in benchmark scene
   --benchmark-case NAME       Benchmark case: default, many-objects, mesh-bvh, diffuse, postprocess, atmosphere, lights, emissive-geometry, primitives-materials, volumes, obj-mesh
 ```
+
+TIFF output stores RGB as uncompressed 32-bit IEEE floating-point samples. Use
+`--output render.tiff` with `--tonemapping false --gamma false` to preserve
+scene-linear HDR values above 1.0.
 
 ## Adaptive Sampling
 
@@ -181,8 +186,11 @@ with a high max sample count and tune with values like:
 
 Denoising is enabled by default. Luz's NFOR-style feature-buffer denoiser writes
 a separate companion image: by default, `render.bmp` becomes
-`render_denoised.bmp`; use `--denoise-output PATH` to choose the exact path. Use
-`--no-denoise` or `--denoise false` to skip the companion render.
+`render_denoised.bmp`; use `--denoise-output PATH.EXT` to choose the exact
+path. Use `--no-denoise` or `--denoise false` to skip the companion render.
+
+PNG output writes post-processed 8-bit RGB SDR images using stored DEFLATE
+blocks for dependency-free writing.
 
 The denoiser has no hard minimum resolution or sample count, but it needs enough
 signal to estimate useful color and feature statistics. One sample per pixel is
@@ -225,7 +233,7 @@ include/luz/       Public headers
 src/core/          Math, geometry, materials, image, and sampling code
 src/renderer/      Rendering implementation
 src/scene/         Scene model and scene helpers
-src/io/            Scene-file, OBJ, BMP, and TIFF loading/writing
+src/io/            Scene-file, OBJ, BMP, PNG, and TIFF loading/writing
 src/cli/           Command-line entry point and flags
 examples/scenes/   Example .luz scene files
 assets/objects/    Benchmark OBJ assets and optional local OBJ assets

@@ -23,6 +23,7 @@
 
 #include <cmath>
 #include <cstdint>
+#include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -102,19 +103,6 @@ namespace
 		require(bytes[offset] == blue && bytes[offset + 1] == green && bytes[offset + 2] == red, message);
 	}
 
-	void	requireRGBBytes(
-		const std::vector<unsigned char>& bytes,
-		std::size_t offset,
-		unsigned char red,
-		unsigned char green,
-		unsigned char blue,
-		const std::string& message
-	)
-	{
-		require(bytes.size() >= offset + 3, "TIFF test file is too small.");
-		require(bytes[offset] == red && bytes[offset + 1] == green && bytes[offset + 2] == blue, message);
-	}
-
 	std::uint16_t	readU16(const std::vector<unsigned char>& bytes, std::size_t offset)
 	{
 		require(bytes.size() >= offset + 2, "TIFF test file is too small.");
@@ -133,6 +121,82 @@ namespace
 			(static_cast<std::uint32_t>(bytes[offset + 2]) << 16) |
 			(static_cast<std::uint32_t>(bytes[offset + 3]) << 24)
 		);
+	}
+
+	std::uint32_t	readBE32(const std::vector<unsigned char>& bytes, std::size_t offset)
+	{
+		require(bytes.size() >= offset + 4, "PNG test file is too small.");
+		return (
+			(static_cast<std::uint32_t>(bytes[offset]) << 24) |
+			(static_cast<std::uint32_t>(bytes[offset + 1]) << 16) |
+			(static_cast<std::uint32_t>(bytes[offset + 2]) << 8) |
+			static_cast<std::uint32_t>(bytes[offset + 3])
+		);
+	}
+
+	std::uint32_t	adler32(const std::vector<unsigned char>& data)
+	{
+		constexpr std::uint32_t MOD_ADLER = 65521;
+		std::uint32_t a = 1;
+		std::uint32_t b = 0;
+
+		for (unsigned char byte : data)
+		{
+			a = (a + byte) % MOD_ADLER;
+			b = (b + a) % MOD_ADLER;
+		}
+
+		return ((b << 16) | a);
+	}
+
+	std::vector<unsigned char>	inflatePNGZlib(const std::vector<unsigned char>& zlibData)
+	{
+		require(zlibData.size() >= 6, "PNG zlib stream is too small.");
+
+		const std::uint16_t header = static_cast<std::uint16_t>((zlibData[0] << 8) | zlibData[1]);
+		require((zlibData[0] & 0x0f) == 8, "PNG zlib stream is not deflate.");
+		require((header % 31) == 0, "PNG zlib header check bits are wrong.");
+
+		std::vector<unsigned char> output;
+		std::size_t offset = 2;
+		const std::size_t end = zlibData.size() - 4;
+		bool finalBlock = false;
+
+		while (!finalBlock)
+		{
+			require(offset + 5 <= end, "PNG stored deflate stream ended early.");
+			const unsigned char blockHeader = zlibData[offset++];
+			finalBlock = (blockHeader & 1) != 0;
+
+			require(((blockHeader >> 1) & 3) == 0, "PNG deflate block is not stored.");
+			require((blockHeader & 0xf8) == 0, "PNG stored deflate padding bits are not zero.");
+
+			const std::uint16_t length = static_cast<std::uint16_t>(
+				zlibData[offset] | (zlibData[offset + 1] << 8)
+			);
+			const std::uint16_t inverseLength = static_cast<std::uint16_t>(
+				zlibData[offset + 2] | (zlibData[offset + 3] << 8)
+			);
+			offset += 4;
+
+			require(static_cast<std::uint16_t>(~length) == inverseLength, "PNG stored deflate length check failed.");
+			require(offset + length <= end, "PNG stored deflate data ended early.");
+			output.insert(output.end(), zlibData.begin() + offset, zlibData.begin() + offset + length);
+			offset += length;
+		}
+
+		require(offset == end, "PNG zlib stream has trailing deflate data.");
+		require(readBE32(zlibData, zlibData.size() - 4) == adler32(output), "PNG zlib Adler-32 is wrong.");
+		return (output);
+	}
+
+	float	readF32(const std::vector<unsigned char>& bytes, std::size_t offset)
+	{
+		const std::uint32_t bits = readU32(bytes, offset);
+		float value;
+
+		std::memcpy(&value, &bits, sizeof(value));
+		return (value);
 	}
 
 	TiffTag	readTiffTag(const std::vector<unsigned char>& bytes, std::size_t offset)
@@ -159,6 +223,95 @@ namespace
 		}
 
 		throw std::runtime_error("TIFF tag not found.");
+	}
+
+	struct PNGData
+	{
+		std::uint32_t				width = 0;
+		std::uint32_t				height = 0;
+		unsigned char				bitDepth = 0;
+		unsigned char				colorType = 0;
+		std::vector<unsigned char>	imageData;
+	};
+
+	PNGData	readPNG(const std::filesystem::path& path)
+	{
+		const std::vector<unsigned char> bytes = readFile(path);
+		const unsigned char signature[8] = {137, 80, 78, 71, 13, 10, 26, 10};
+		PNGData png;
+		std::size_t offset = 8;
+		bool sawIHDR = false;
+		bool sawIEND = false;
+
+		require(bytes.size() >= 8, "PNG test file is too small.");
+		for (std::size_t i = 0; i < 8; i++)
+		{
+			require(bytes[i] == signature[i], "PNG signature is wrong.");
+		}
+
+		while (offset < bytes.size())
+		{
+			const std::uint32_t length = readBE32(bytes, offset);
+			const std::size_t typeOffset = offset + 4;
+			const std::size_t dataOffset = typeOffset + 4;
+			const std::size_t crcOffset = dataOffset + length;
+
+			require(crcOffset + 4 <= bytes.size(), "PNG chunk extends past end of file.");
+			const std::string type(reinterpret_cast<const char*>(&bytes[typeOffset]), 4);
+			if (type == "IHDR")
+			{
+				require(length == 13, "PNG IHDR chunk length is wrong.");
+				png.width = readBE32(bytes, dataOffset);
+				png.height = readBE32(bytes, dataOffset + 4);
+				png.bitDepth = bytes[dataOffset + 8];
+				png.colorType = bytes[dataOffset + 9];
+				require(bytes[dataOffset + 10] == 0, "PNG compression method is wrong.");
+				require(bytes[dataOffset + 11] == 0, "PNG filter method is wrong.");
+				require(bytes[dataOffset + 12] == 0, "PNG interlace method is wrong.");
+				sawIHDR = true;
+			}
+			else if (type == "IDAT")
+			{
+				png.imageData.insert(png.imageData.end(), bytes.begin() + dataOffset, bytes.begin() + crcOffset);
+			}
+			else if (type == "IEND")
+			{
+				require(length == 0, "PNG IEND chunk length is wrong.");
+				sawIEND = true;
+				break;
+			}
+			offset = crcOffset + 4;
+		}
+
+		require(sawIHDR, "PNG file is missing IHDR.");
+		require(sawIEND, "PNG file is missing IEND.");
+		require(!png.imageData.empty(), "PNG file is missing IDAT data.");
+		return (png);
+	}
+
+	void	requirePNGPixel(
+		const std::vector<unsigned char>& scanlines,
+		std::uint32_t width,
+		std::uint32_t x,
+		std::uint32_t y,
+		unsigned char red,
+		unsigned char green,
+		unsigned char blue,
+		const std::string& message
+	)
+	{
+		const std::size_t rowSize = 1 + (static_cast<std::size_t>(width) * 3);
+		const std::size_t rowOffset = static_cast<std::size_t>(y) * rowSize;
+		const std::size_t pixelOffset = rowOffset + 1 + (static_cast<std::size_t>(x) * 3);
+
+		require(scanlines.size() >= pixelOffset + 3, "PNG scanlines are too small.");
+		require(scanlines[rowOffset] == 0, "PNG scanline filter is not none.");
+		require(
+			scanlines[pixelOffset] == red
+			&& scanlines[pixelOffset + 1] == green
+			&& scanlines[pixelOffset + 2] == blue,
+			message
+		);
 	}
 
 	void	testColorMath(void)
@@ -325,6 +478,20 @@ namespace
 		std::filesystem::remove(bmpPath);
 	}
 
+	void	requireRGBFloats(
+		const std::vector<unsigned char>& bytes,
+		std::size_t offset,
+		float red,
+		float green,
+		float blue,
+		const std::string& message
+	)
+	{
+		requireNear(readF32(bytes, offset), red, message + " red channel is wrong.");
+		requireNear(readF32(bytes, offset + 4), green, message + " green channel is wrong.");
+		requireNear(readF32(bytes, offset + 8), blue, message + " blue channel is wrong.");
+	}
+
 	void	testNonSquareTIFF(void)
 	{
 		const std::filesystem::path outputPath = std::filesystem::temp_directory_path() / "luz_test_non_square";
@@ -332,9 +499,9 @@ namespace
 
 		Image image(3, 2);
 		image.initialize();
-		image.setPixel(0, 0, Color(1.0, 0.0, 0.0));
-		image.setPixel(1, 0, Color(0.0, 1.0, 0.0));
-		image.setPixel(2, 0, Color(0.0, 0.0, 1.0));
+		image.setPixel(0, 0, Color(1.5, 0.25, 0.0));
+		image.setPixel(1, 0, Color(0.0, 2.25, 0.125));
+		image.setPixel(2, 0, Color(0.5, 0.0, 4.0));
 		image.setPixel(0, 1, Color(0.0, 1.0, 1.0));
 		image.setPixel(1, 1, Color(1.0, 0.0, 1.0));
 		image.setPixel(2, 1, Color(1.0, 1.0, 0.0));
@@ -351,26 +518,78 @@ namespace
 
 		const TiffTag bitsPerSample = findTiffTag(bytes, ifdOffset, 258);
 		require(bitsPerSample.type == 3 && bitsPerSample.count == 3, "TIFF BitsPerSample tag is wrong.");
-		require(readU16(bytes, bitsPerSample.valueOrOffset) == 8, "TIFF red bit depth is wrong.");
-		require(readU16(bytes, bitsPerSample.valueOrOffset + 2) == 8, "TIFF green bit depth is wrong.");
-		require(readU16(bytes, bitsPerSample.valueOrOffset + 4) == 8, "TIFF blue bit depth is wrong.");
+		require(readU16(bytes, bitsPerSample.valueOrOffset) == 32, "TIFF red bit depth is wrong.");
+		require(readU16(bytes, bitsPerSample.valueOrOffset + 2) == 32, "TIFF green bit depth is wrong.");
+		require(readU16(bytes, bitsPerSample.valueOrOffset + 4) == 32, "TIFF blue bit depth is wrong.");
+
+		const TiffTag sampleFormat = findTiffTag(bytes, ifdOffset, 339);
+		require(sampleFormat.type == 3 && sampleFormat.count == 3, "TIFF SampleFormat tag is wrong.");
+		require(readU16(bytes, sampleFormat.valueOrOffset) == 3, "TIFF red sample format is wrong.");
+		require(readU16(bytes, sampleFormat.valueOrOffset + 2) == 3, "TIFF green sample format is wrong.");
+		require(readU16(bytes, sampleFormat.valueOrOffset + 4) == 3, "TIFF blue sample format is wrong.");
 
 		require(findTiffTag(bytes, ifdOffset, 259).valueOrOffset == 1, "TIFF compression is wrong.");
 		require(findTiffTag(bytes, ifdOffset, 262).valueOrOffset == 2, "TIFF photometric interpretation is wrong.");
 		require(findTiffTag(bytes, ifdOffset, 277).valueOrOffset == 3, "TIFF samples per pixel is wrong.");
 		require(findTiffTag(bytes, ifdOffset, 278).valueOrOffset == 2, "TIFF rows per strip is wrong.");
-		require(findTiffTag(bytes, ifdOffset, 279).valueOrOffset == 18, "TIFF strip byte count is wrong.");
+		require(findTiffTag(bytes, ifdOffset, 279).valueOrOffset == 72, "TIFF strip byte count is wrong.");
 		require(findTiffTag(bytes, ifdOffset, 284).valueOrOffset == 1, "TIFF planar configuration is wrong.");
 
 		const std::uint32_t pixelDataOffset = findTiffTag(bytes, ifdOffset, 273).valueOrOffset;
-		requireRGBBytes(bytes, pixelDataOffset + 0, 255, 0, 0, "TIFF top-left pixel is wrong.");
-		requireRGBBytes(bytes, pixelDataOffset + 3, 0, 255, 0, "TIFF top-middle pixel is wrong.");
-		requireRGBBytes(bytes, pixelDataOffset + 6, 0, 0, 255, "TIFF top-right pixel is wrong.");
-		requireRGBBytes(bytes, pixelDataOffset + 9, 0, 255, 255, "TIFF bottom-left pixel is wrong.");
-		requireRGBBytes(bytes, pixelDataOffset + 12, 255, 0, 255, "TIFF bottom-middle pixel is wrong.");
-		requireRGBBytes(bytes, pixelDataOffset + 15, 255, 255, 0, "TIFF bottom-right pixel is wrong.");
+		requireRGBFloats(bytes, pixelDataOffset + 0, 1.5f, 0.25f, 0.0f, "TIFF top-left pixel");
+		requireRGBFloats(bytes, pixelDataOffset + 12, 0.0f, 2.25f, 0.125f, "TIFF top-middle pixel");
+		requireRGBFloats(bytes, pixelDataOffset + 24, 0.5f, 0.0f, 4.0f, "TIFF top-right pixel");
+		requireRGBFloats(bytes, pixelDataOffset + 36, 0.0f, 1.0f, 1.0f, "TIFF bottom-left pixel");
+		requireRGBFloats(bytes, pixelDataOffset + 48, 1.0f, 0.0f, 1.0f, "TIFF bottom-middle pixel");
+		requireRGBFloats(bytes, pixelDataOffset + 60, 1.0f, 1.0f, 0.0f, "TIFF bottom-right pixel");
 
 		std::filesystem::remove(tiffPath);
+	}
+
+	void	writeTestPNG(const std::filesystem::path& outputPath)
+	{
+		Image image(3, 2);
+
+		image.initialize();
+		image.setPixel(0, 0, Color(1.0, 0.0, 0.0));
+		image.setPixel(1, 0, Color(0.0, 1.0, 0.0));
+		image.setPixel(2, 0, Color(0.0, 0.0, 1.0));
+		image.setPixel(0, 1, Color(0.0, 1.0, 1.0));
+		image.setPixel(1, 1, Color(1.0, 0.0, 1.0));
+		image.setPixel(2, 1, Color(1.0, 1.0, 0.0));
+		image.saveToPNG(outputPath.string());
+	}
+
+	void	requireTestPNG(const std::filesystem::path& pngPath)
+	{
+		const PNGData png = readPNG(pngPath);
+		const std::vector<unsigned char> scanlines = inflatePNGZlib(png.imageData);
+		const std::size_t rowSize = 1 + (png.width * 3);
+
+		require(png.width == 3, "PNG width is wrong.");
+		require(png.height == 2, "PNG height is wrong.");
+		require(png.bitDepth == 8, "PNG bit depth is wrong.");
+		require(png.colorType == 2, "PNG color type is wrong.");
+		require(scanlines.size() == rowSize * png.height, "PNG scanline byte count is wrong.");
+		require((png.imageData[2] & 0x07) == 0x01, "PNG did not use stored deflate.");
+
+		requirePNGPixel(scanlines, png.width, 0, 0, 255, 0, 0, "PNG top-left pixel is wrong.");
+		requirePNGPixel(scanlines, png.width, 1, 0, 0, 255, 0, "PNG top-middle pixel is wrong.");
+		requirePNGPixel(scanlines, png.width, 2, 0, 0, 0, 255, "PNG top-right pixel is wrong.");
+		requirePNGPixel(scanlines, png.width, 0, 1, 0, 255, 255, "PNG bottom-left pixel is wrong.");
+		requirePNGPixel(scanlines, png.width, 1, 1, 255, 0, 255, "PNG bottom-middle pixel is wrong.");
+		requirePNGPixel(scanlines, png.width, 2, 1, 255, 255, 0, "PNG bottom-right pixel is wrong.");
+	}
+
+	void	testNonSquarePNG(void)
+	{
+		const std::filesystem::path outputPath = std::filesystem::temp_directory_path() / "luz_test_non_square";
+		const std::filesystem::path pngPath = outputPath.string() + ".png";
+
+		writeTestPNG(outputPath);
+		requireTestPNG(pngPath);
+
+		std::filesystem::remove(pngPath);
 	}
 
 	void	testSceneFileOutputName(void)
@@ -412,6 +631,28 @@ namespace
 		require(
 			scene.getDefaultRenderOutputFileName() == outputPath.string(),
 			"Scene TIFF outputfilename setting was not preserved."
+		);
+
+		std::filesystem::remove(scenePath);
+	}
+
+	void	testSceneFilePNGOutputSettings(void)
+	{
+		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_scene_png_output_test.luz";
+		const std::filesystem::path outputPath = std::filesystem::temp_directory_path() / "luz_custom_output.png";
+		{
+			std::ofstream stream(scenePath);
+			stream
+				<< "[settings]\n"
+				<< "resolution=2,2\n"
+				<< "outputfilename=" << outputPath.string() << "\n\n";
+		}
+
+		Scene scene;
+		SceneFile::read(scene, scenePath.string());
+		require(
+			scene.getDefaultRenderOutputFileName() == outputPath.string(),
+			"Scene PNG outputfilename setting was not preserved."
 		);
 
 		std::filesystem::remove(scenePath);
@@ -547,7 +788,13 @@ namespace
 		requireSceneFileSettingThrows("exposure=nan", "Scene file accepted non-finite exposure.");
 		requireSceneFileSettingThrows("contrast=-1", "Scene file accepted negative contrast.");
 		requireSceneFileSettingThrows("denoise=2", "Scene file accepted non-binary denoise.");
+		requireSceneFileSettingThrows("compression=75", "Scene file accepted removed compression setting.");
+		requireSceneFileSettingThrows("outputfilename=render.tif", "Scene file accepted .tif output.");
+		requireSceneFileSettingThrows("outputfilename=render.jpg", "Scene file accepted unsupported output extension.");
 		requireSceneFileSettingThrows("denoiseoutputfilename=", "Scene file accepted empty denoise output name.");
+		requireSceneFileSettingThrows("denoiseoutputfilename=render_denoised", "Scene file accepted denoise output without an extension.");
+		requireSceneFileSettingThrows("denoiseoutputfilename=render_denoised.tif", "Scene file accepted .tif denoise output.");
+		requireSceneFileSettingThrows("denoiseoutputfilename=render_denoised.jpg", "Scene file accepted unsupported denoise output extension.");
 		requireSceneFileSettingThrows("sky=wat", "Scene file accepted unknown sky setting.");
 		requireSceneFileSettingThrows("atmosphere=0,1,2,3,4,0,1,0", "Scene file accepted zero atmosphere samples.");
 	}
@@ -1375,6 +1622,15 @@ namespace
 		require(fileOverrideScene->getDenoise(), "--denoise did not override scene file denoise setting.");
 	}
 
+	void	testFlagsParsePNGOutput(void)
+	{
+		std::unique_ptr<Scene> outputScene = parseFlags({"--output", "custom_render.png"});
+		require(
+			outputScene->getDefaultRenderOutputFileName() == "custom_render.png",
+			"PNG --output was not parsed."
+		);
+	}
+
 	void	testFlagsParseAdaptiveOptions(void)
 	{
 		std::unique_ptr<Scene> enabledScene = parseFlags({"--adaptive"});
@@ -1413,8 +1669,19 @@ namespace
 		requireFlagParseThrows({"--contrast"}, "CLI accepted missing contrast.");
 		requireFlagParseThrows({"--contrast", "-1"}, "CLI accepted negative contrast.");
 		requireFlagParseThrows({"--denoise", "maybe"}, "CLI accepted invalid denoise value.");
+		requireFlagParseThrows({"--compression", "75"}, "CLI accepted removed compression flag.");
+		requireFlagParseThrows({"--compression=75"}, "CLI accepted removed compression assignment.");
+		requireFlagParseThrows({"--output-file", "render.tiff"}, "CLI accepted removed output-file flag.");
+		requireFlagParseThrows({"--output-file=render.tiff"}, "CLI accepted removed output-file assignment.");
 		requireFlagParseThrows({"--output"}, "CLI accepted missing output path.");
+		requireFlagParseThrows({"--output", "tiff"}, "CLI accepted output format instead of output path.");
+		requireFlagParseThrows({"--output", "render"}, "CLI accepted output path without an extension.");
+		requireFlagParseThrows({"--output", "render.tif"}, "CLI accepted .tif output extension.");
+		requireFlagParseThrows({"--output", "render.jpg"}, "CLI accepted unsupported output extension.");
 		requireFlagParseThrows({"--denoise-output"}, "CLI accepted missing denoise output path.");
+		requireFlagParseThrows({"--denoise-output", "render"}, "CLI accepted denoise output path without an extension.");
+		requireFlagParseThrows({"--denoise-output", "render_denoised.tif"}, "CLI accepted .tif denoise output extension.");
+		requireFlagParseThrows({"--denoise-output", "render.jpg"}, "CLI accepted unsupported denoise output extension.");
 	}
 
 	void	testSettersRejectInvalidValues(void)
@@ -1431,6 +1698,12 @@ namespace
 		requireThrows([&]() { scene.setExposure(std::numeric_limits<double>::quiet_NaN()); }, "Scene accepted non-finite exposure.");
 		requireThrows([&]() { scene.setContrast(-1.0); }, "Scene accepted negative contrast.");
 		requireThrows([&]() { scene.setContrast(std::numeric_limits<double>::quiet_NaN()); }, "Scene accepted non-finite contrast.");
+		requireThrows([&]() { scene.setDefaultRenderOutputFileName("render"); }, "Scene accepted output file without an extension.");
+		requireThrows([&]() { scene.setDefaultRenderOutputFileName("render.tif"); }, "Scene accepted .tif output extension.");
+		requireThrows([&]() { scene.setDefaultRenderOutputFileName("render.jpg"); }, "Scene accepted unsupported output extension.");
+		requireThrows([&]() { scene.setDenoiseOutputFileName("render_denoised"); }, "Scene accepted denoise output without an extension.");
+		requireThrows([&]() { scene.setDenoiseOutputFileName("render_denoised.tif"); }, "Scene accepted .tif denoise output extension.");
+		requireThrows([&]() { scene.setDenoiseOutputFileName("render_denoised.jpg"); }, "Scene accepted unsupported denoise output extension.");
 		requireThrows([&]() { image.setWidth(0); }, "Image accepted zero width.");
 		requireThrows([&]() { image.setHeight(0); }, "Image accepted zero height.");
 		requireThrows([&]() { Atmosphere().setSamples(0); }, "Atmosphere accepted zero samples.");
@@ -1625,8 +1898,10 @@ int	main(void)
 		testTerminalFilePath();
 		testNonSquareBMP();
 		testNonSquareTIFF();
+		testNonSquarePNG();
 		testSceneFileOutputName();
 		testSceneFileTiffOutputName();
+		testSceneFilePNGOutputSettings();
 		testSceneFileDenoiseOutputName();
 		testSceneFileUsesSceneDefaults();
 		testSceneFileAdaptiveSettings();
@@ -1654,6 +1929,7 @@ int	main(void)
 		testHittablePDFAveragesMultipleLights();
 		testFlagsParsePostProcessOptions();
 		testFlagsParseDenoiseOptions();
+		testFlagsParsePNGOutput();
 		testFlagsParseBenchmarkFileOptions();
 		testFlagsParsePositionalSceneFile();
 		testFlagsParseAdaptiveOptions();
