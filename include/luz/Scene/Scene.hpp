@@ -3,6 +3,7 @@
 #include "Camera.hpp"
 #include "Hittables/Hittable.hpp"
 #include "Atmosphere.hpp"
+#include "EnvironmentMap.hpp"
 #include "SkyTypes.hpp"
 #include "Image.hpp"
 #include "Denoise/NFOR.hpp"
@@ -56,6 +57,13 @@ class	Scene
 		Atmosphere	getAtmosphere(void) const;
 		Color	getBackgroundColor(void) const;
 		void	setBackgroundColor(Color backgroundColor);
+		void	setEnvironmentMap(std::shared_ptr<EnvironmentMap> environmentMap);
+		const std::shared_ptr<EnvironmentMap>&	getEnvironmentMap(void) const;
+		bool	hasEnvironmentMap(void) const;
+		void	setEnvironmentStrength(double environmentStrength);
+		double	getEnvironmentStrength(void) const;
+		void	setEnvironmentRotation(double environmentRotation);
+		double	getEnvironmentRotation(void) const;
 		Camera	getActiveCamera(void) const;
 		bool	hasCamera(void) const;
 		const std::vector<std::shared_ptr<Hittable>>&	getHittables(void) const;
@@ -118,6 +126,9 @@ class	Scene
 		bool					_distanceBlueness;
 		Atmosphere				_atmosphere;
 		Color					_backgroundColor;
+		std::shared_ptr<EnvironmentMap>	_environmentMap;
+		double					_environmentStrength;
+		double					_environmentRotation;
 		std::vector<Camera>		_cameras;
 		size_t					_activeCamera;
 		std::vector<std::shared_ptr<Hittable>>	_hittables;

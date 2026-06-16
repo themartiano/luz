@@ -41,7 +41,8 @@ The exporter also works without passing the `.blend` file before `--python`:
 --resolution WIDTHxHEIGHT     Override exported render resolution.
 --samples N                   Override samples per pixel.
 --max-light-bounces N         Override max light bounces.
---sky linear|none|atmosphere  Override exported Luz sky mode.
+--sky linear|none|atmosphere|environment
+                             Override exported Luz sky mode.
 --render-output PATH          Luz render output path.
 --global-scale N              Scale exported positions, meshes, and light sizes.
 --light-power-scale N         Extra multiplier after Blender lamp energy conversion. Defaults to 1.0.
@@ -66,9 +67,13 @@ The exporter also works without passing the `.blend` file before `--python`:
 - Active Blender UV coordinates are exported as OBJ `vt` data and used by Luz
   when a material has a texture.
 - Blender World camera background is exported as `sky=none` plus
-  `background=(R,G,B)` unless `--sky` overrides the sky mode. Light Path mixes
-  that separate camera rays from non-camera rays are handled for the camera
-  background only.
+  `background=(R,G,B)` unless an Environment Texture is found or `--sky`
+  overrides the sky mode. Light Path mixes that separate camera rays from
+  non-camera rays are handled for the camera background only.
+- Blender World Environment Texture nodes connected to Background Color are
+  exported as `sky=environment` plus `environment=...`. External `.hdr` and
+  `.pic` files are copied through as HDR environment maps; generated, packed, or
+  non-HDR environment images are exported as PPM.
 - The active camera is exported as a Luz camera block.
 - Blender camera roll is preserved through the named camera `up` vector.
 - Invalid zero camera focus distances are replaced with a scene-based fallback;
@@ -112,6 +117,9 @@ The exporter also works without passing the `.blend` file before `--python`:
 - Only direct image textures feeding the selected shader's base color are
   exported as texture files. Procedural textures, normal maps, bump maps,
   displacement, and full shader graphs are not exported as texture networks.
+- World environment mapping nodes are not exported yet. Environment maps are
+  written with Luz's default equirectangular orientation and `0` degrees
+  rotation.
 - Image texture export uses Luz's built-in PPM texture loader. When no usable
   Base Color image texture is found, image colors can still be approximated by
   averaging a temporary thumbnail, controlled by `--texture-sample-size`.

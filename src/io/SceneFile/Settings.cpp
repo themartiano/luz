@@ -1,8 +1,11 @@
 #include "SceneFileInternal.hpp"
 #include "Utilities.hpp"
+#include <cmath>
 #include <fstream>
+#include <memory>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 namespace
 {
@@ -13,10 +16,54 @@ namespace
 			throw std::runtime_error(name + " must be 0 or 1.");
 		}
 	}
+
+	std::string	settingValue(const std::string& line, const std::string& message)
+	{
+		const std::size_t separator = line.find('=');
+
+		if (separator == std::string::npos || separator == line.length() - 1)
+		{
+			throw std::runtime_error(message);
+		}
+		return (SceneFile::internal::_trim(line.substr(separator + 1)));
+	}
+
+	double	parseFiniteDouble(const std::string& value, const std::string& label)
+	{
+		std::size_t parsed = 0;
+		const std::string trimmed = SceneFile::internal::_trim(value);
+		const double result = std::stod(trimmed, &parsed);
+
+		if (parsed != trimmed.length() || !std::isfinite(result))
+		{
+			throw std::runtime_error(label + " must be finite.");
+		}
+		return (result);
+	}
+
+	std::vector<std::string>	splitCommaList(const std::string& value)
+	{
+		std::vector<std::string> parts;
+		std::size_t start = 0;
+
+		while (start <= value.length())
+		{
+			const std::size_t comma = value.find(',', start);
+			const std::size_t end = comma == std::string::npos ? value.length() : comma;
+
+			parts.push_back(SceneFile::internal::_trim(value.substr(start, end - start)));
+			if (comma == std::string::npos)
+			{
+				break;
+			}
+			start = comma + 1;
+		}
+		return (parts);
+	}
 }
 
 // Parses the [settings] section of a Scene file
-void	SceneFile::internal::_readSettingsSection(Scene& scene, std::ifstream& stream)
+void	SceneFile::internal::_readSettingsSection(Scene& scene, std::ifstream& stream, SceneFileContext& context)
 {
 	std::string line;
 	do
@@ -230,7 +277,7 @@ void	SceneFile::internal::_readSettingsSection(Scene& scene, std::ifstream& stre
 
 			if (sscanf(lowerLine.c_str(), "sky=%255s", sky) != 1)
 			{
-				throw std::runtime_error("Invalid sky setting. Use sky=none, sky=linear, or sky=atmosphere.");
+				throw std::runtime_error("Invalid sky setting. Use sky=none, sky=linear, sky=atmosphere, or sky=environment.");
 			}
 			std::string skyStr(sky);
 			Utilities::toLower(skyStr);
@@ -247,10 +294,68 @@ void	SceneFile::internal::_readSettingsSection(Scene& scene, std::ifstream& stre
 			{
 				scene.setRenderSky(SKY_NONE);
 			}
+			else if (skyStr == "environment")
+			{
+				scene.setRenderSky(SKY_ENVIRONMENT);
+			}
 			else
 			{
 				throw std::runtime_error("Unknown sky setting: " + line);
 			}
+		}
+		else if (
+			lowerLine.rfind("environment=", 0) != std::string::npos
+			|| lowerLine.rfind("environmentmap=", 0) != std::string::npos
+			|| lowerLine.rfind("environment_map=", 0) != std::string::npos
+			|| lowerLine.rfind("backgroundimage=", 0) != std::string::npos
+			|| lowerLine.rfind("background_image=", 0) != std::string::npos
+		)
+		{
+			const std::vector<std::string> parts = splitCommaList(settingValue(
+				line,
+				"Invalid environment setting. Use environment=PATH[,STRENGTH[,ROTATION_DEGREES]]."
+			));
+
+			if (parts.empty() || parts[0].empty() || parts.size() > 3)
+			{
+				throw std::runtime_error("Invalid environment setting. Use environment=PATH[,STRENGTH[,ROTATION_DEGREES]].");
+			}
+			scene.setEnvironmentMap(std::make_shared<EnvironmentMap>(
+				EnvironmentMap::load(_resolveAssetPath(context.baseDirectory, parts[0]))
+			));
+			if (parts.size() >= 2 && !parts[1].empty())
+			{
+				scene.setEnvironmentStrength(parseFiniteDouble(parts[1], "Environment strength"));
+			}
+			if (parts.size() >= 3 && !parts[2].empty())
+			{
+				scene.setEnvironmentRotation(parseFiniteDouble(parts[2], "Environment rotation"));
+			}
+			scene.setRenderSky(SKY_ENVIRONMENT);
+		}
+		else if (
+			lowerLine.rfind("environmentstrength=", 0) != std::string::npos
+			|| lowerLine.rfind("environment_strength=", 0) != std::string::npos
+			|| lowerLine.rfind("worldstrength=", 0) != std::string::npos
+			|| lowerLine.rfind("world_strength=", 0) != std::string::npos
+		)
+		{
+			scene.setEnvironmentStrength(parseFiniteDouble(
+				settingValue(line, "Invalid environment strength setting. Use environmentstrength=F."),
+				"Environment strength"
+			));
+		}
+		else if (
+			lowerLine.rfind("environmentrotation=", 0) != std::string::npos
+			|| lowerLine.rfind("environment_rotation=", 0) != std::string::npos
+			|| lowerLine.rfind("worldrotation=", 0) != std::string::npos
+			|| lowerLine.rfind("world_rotation=", 0) != std::string::npos
+		)
+		{
+			scene.setEnvironmentRotation(parseFiniteDouble(
+				settingValue(line, "Invalid environment rotation setting. Use environmentrotation=DEGREES."),
+				"Environment rotation"
+			));
 		}
 		else if (
 			lowerLine.rfind("background=", 0) != std::string::npos
