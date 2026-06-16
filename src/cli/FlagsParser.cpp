@@ -3,6 +3,7 @@
 #include "SceneFile/SceneFile.hpp"
 #include "Scene/SceneHelpers.hpp"
 #include "Defaults.hpp"
+#include "Utilities.hpp"
 #include <algorithm>
 #include <unistd.h>
 #include <stdexcept>
@@ -54,6 +55,7 @@ void	FlagsParser::parse(Scene& scene)
 	this->_parseExposure(scene);
 	this->_parseContrast(scene);
 	this->_parseDenoise(scene);
+	this->_parseOutputFile(scene);
 	this->_parseOutput(scene);
 	this->_parseDenoiseOutput(scene);
 	this->_parseRenderTimes(scene);
@@ -86,7 +88,8 @@ void	FlagsParser::_parseHelp(void)
 			<< "  --contrast F               Display contrast multiplier\n"
 			<< "  --denoise [true|false]      Write a denoised companion render\n"
 			<< "  --no-denoise                Disable denoising\n"
-			<< "  -o, --output PATH           Override render output path\n"
+			<< "  -o, --output bmp|tiff       Override render output format\n"
+			<< "  --output-file PATH          Override render output path\n"
 			<< "  --denoise-output PATH       Override denoised output path\n"
 			<< "  --render-times              Write renderTime.bmp\n"
 			<< "  --benchmark                 Run the built-in benchmark scene\n"
@@ -486,7 +489,33 @@ void	FlagsParser::_parseOutput(Scene& scene)
 	{
 		if (it + 1 == this->_args.end())
 		{
-			throw std::runtime_error("--output requires a path.");
+			throw std::runtime_error("--output requires bmp or tiff.");
+		}
+		std::string outputFormat = *(it + 1);
+		Utilities::toLower(outputFormat);
+		if (outputFormat == "bmp")
+		{
+			scene.setRenderOutputFormat(OUTPUT_BMP);
+		}
+		else if (outputFormat == "tiff")
+		{
+			scene.setRenderOutputFormat(OUTPUT_TIFF);
+		}
+		else
+		{
+			throw std::runtime_error("Invalid value for --output. Use bmp or tiff.");
+		}
+	}
+}
+
+void	FlagsParser::_parseOutputFile(Scene& scene)
+{
+	auto it = this->_findFlag("--output-file");
+	if (it != this->_args.end())
+	{
+		if (it + 1 == this->_args.end())
+		{
+			throw std::runtime_error("--output-file requires a path.");
 		}
 		scene.setDefaultRenderOutputFileName(*(it + 1));
 	}
