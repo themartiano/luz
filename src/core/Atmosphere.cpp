@@ -2,8 +2,32 @@
 #include "Defaults.hpp"
 #include "Utilities.hpp"
 #include "SystemSpecifics.hpp"
+#include <algorithm>
 #include <cmath>
 #include <stdexcept>
+
+namespace
+{
+	constexpr double kMieG = 0.76;
+	const double kRayleighPhaseScale = 3.0 / (16.0 * D_PI);
+	const double kMiePhaseScale = 3.0 / (8.0 * D_PI);
+	constexpr double kMieAbsorptionScale = 1.1;
+	constexpr double kSunIntensity = 20.0;
+
+	Vector3	exponentialAttenuation(const Vector3& tau)
+	{
+		return (Vector3(std::exp(-tau.getX()), std::exp(-tau.getY()), std::exp(-tau.getZ())));
+	}
+
+	double	densityAtHeight(double height, double inverseScaleHeight)
+	{
+		if (height < 0.0 || !std::isfinite(height))
+		{
+			return (0.0);
+		}
+		return (std::exp(-height * inverseScaleHeight));
+	}
+}
 
 /*
 	Constructors
@@ -13,7 +37,6 @@
 Atmosphere::Atmosphere(void)
 {
 	this->_sunAngle = -0.4;
-	updateSunDirectionVector();
 	this->_earthRadius = D_EARTH_RADIUS;
 	this->_atmosphereRadius = D_ATMOSPHERE_RADIUS;
 	this->_hR = D_HR;
@@ -21,14 +44,31 @@ Atmosphere::Atmosphere(void)
 	this->_samples = 16;
 	this->_lightSamples = 8;
 	this->_starsBrightness = 0.5;
+	updateSunDirectionVector();
 }
 
 // Constructs the Atmosphere with custom values
 Atmosphere::Atmosphere(double sunAngle, double earthRadius, double atmosphereRadius, double hR, double hM, int samples, int lightSamples, double starsBrightness)
 {
+	this->_sunAngle = -0.4;
+	this->_earthRadius = D_EARTH_RADIUS;
+	this->_atmosphereRadius = D_ATMOSPHERE_RADIUS;
+	this->_hR = D_HR;
+	this->_hM = D_HM;
+	this->_samples = 16;
+	this->_lightSamples = 8;
+	this->_starsBrightness = 0.5;
 	setSunAngle(sunAngle);
-	setEarthRadius(earthRadius);
-	setAtmosphereRadius(atmosphereRadius);
+	if (!std::isfinite(earthRadius) || earthRadius <= 0.0)
+	{
+		throw std::invalid_argument("Earth radius must be positive.");
+	}
+	if (!std::isfinite(atmosphereRadius) || atmosphereRadius <= earthRadius)
+	{
+		throw std::invalid_argument("Atmosphere radius must be larger than Earth radius.");
+	}
+	this->_earthRadius = earthRadius;
+	this->_atmosphereRadius = atmosphereRadius;
 	setHR(hR);
 	setHM(hM);
 	setSamples(samples);
@@ -66,6 +106,10 @@ double  Atmosphere::getSunAngle(void) const
 //Sets the Sun Angle and updates internal variables
 void	Atmosphere::setSunAngle(double newAngle)
 {
+	if (!std::isfinite(newAngle))
+	{
+		throw std::invalid_argument("Sun angle must be finite.");
+	}
 	this->_sunAngle = newAngle;
 	updateSunDirectionVector();
 }
@@ -73,9 +117,13 @@ void	Atmosphere::setSunAngle(double newAngle)
 // Sets the EarthRadius
 void	Atmosphere::setEarthRadius(double earthRadius)
 {
-	if (earthRadius <= 0.0)
+	if (!std::isfinite(earthRadius) || earthRadius <= 0.0)
 	{
 		throw std::invalid_argument("Earth radius must be positive.");
+	}
+	if (earthRadius >= this->_atmosphereRadius)
+	{
+		throw std::invalid_argument("Earth radius must be smaller than atmosphere radius.");
 	}
 	this->_earthRadius = earthRadius;
 }
@@ -83,9 +131,13 @@ void	Atmosphere::setEarthRadius(double earthRadius)
 // Sets the AtmosphereRadius
 void	Atmosphere::setAtmosphereRadius(double atmosphereRadius)
 {
-	if (atmosphereRadius <= 0.0)
+	if (!std::isfinite(atmosphereRadius) || atmosphereRadius <= 0.0)
 	{
 		throw std::invalid_argument("Atmosphere radius must be positive.");
+	}
+	if (atmosphereRadius <= this->_earthRadius)
+	{
+		throw std::invalid_argument("Atmosphere radius must be larger than Earth radius.");
 	}
 	this->_atmosphereRadius = atmosphereRadius;
 }
@@ -93,7 +145,7 @@ void	Atmosphere::setAtmosphereRadius(double atmosphereRadius)
 // Sets the HR value
 void	Atmosphere::setHR(double hR)
 {
-	if (hR <= 0.0)
+	if (!std::isfinite(hR) || hR <= 0.0)
 	{
 		throw std::invalid_argument("Atmosphere HR must be positive.");
 	}
@@ -103,7 +155,7 @@ void	Atmosphere::setHR(double hR)
 // Sets the HM value
 void	Atmosphere::setHM(double hM)
 {
-	if (hM <= 0.0)
+	if (!std::isfinite(hM) || hM <= 0.0)
 	{
 		throw std::invalid_argument("Atmosphere HM must be positive.");
 	}
@@ -133,7 +185,7 @@ void	Atmosphere::setLightSamples(int lightSamples)
 // Sets the Stars Brightness
 void	Atmosphere::setStarsBrightness(double starsBrightness)
 {
-	if (starsBrightness < 0.0)
+	if (!std::isfinite(starsBrightness) || starsBrightness < 0.0)
 	{
 		throw std::invalid_argument("Stars brightness must be non-negative.");
 	}
@@ -148,39 +200,31 @@ void	Atmosphere::updateSunDirectionVector(void)
 }
 
 // (Sphere) Hit function for planets and atmospheres (sets both t0 and t1 on the Hit Record). Returns true if hit occurs, false otherwise
-bool planetaryHit(double radius, Ray& ray, HitRecord& hitRecord)
+bool planetaryHit(double radius, const Ray& ray, HitRecord& hitRecord)
 {
-	double a = Utilities::dot(ray.getDirection(), ray.getDirection());
-	double b = 2.0 * Utilities::dot(ray.getDirection(), ray.getOrigin());
-	double c = Utilities::dot(ray.getOrigin(), ray.getOrigin()) - radius * radius;
-
-	if (b == 0.0)
-	{
-		if (a == 0.0)
-		{
-			return (false);
-		}
-
-		hitRecord.t0 = 0.0;
-		hitRecord.t1 = std::sqrt(-c / a);
-
-		if (hitRecord.t0 > hitRecord.t1)
-		{
-			std::swap(hitRecord.t0, hitRecord.t1);
-		}
-
-		return (true);
-	}
-	double discriminant = b * b - 4 * a * c;
-
-	if (discriminant < 0.0)
+	if (!std::isfinite(radius) || radius <= 0.0)
 	{
 		return (false);
 	}
 
-	double q = (b < 0.0) ? -0.5 * (b - std::sqrt(discriminant)) : -0.5 * (b + std::sqrt(discriminant));
-	hitRecord.t0 = q / a;
-	hitRecord.t1 = c / q;
+	const double a = Utilities::dot(ray.getDirection(), ray.getDirection());
+	if (!std::isfinite(a) || a <= 0.0)
+	{
+		return (false);
+	}
+
+	const double halfB = Utilities::dot(ray.getOrigin(), ray.getDirection());
+	const double c = Utilities::dot(ray.getOrigin(), ray.getOrigin()) - radius * radius;
+	const double discriminant = halfB * halfB - a * c;
+
+	if (!std::isfinite(discriminant) || discriminant < 0.0)
+	{
+		return (false);
+	}
+
+	const double sqrtDiscriminant = std::sqrt(std::max(0.0, discriminant));
+	hitRecord.t0 = (-halfB - sqrtDiscriminant) / a;
+	hitRecord.t1 = (-halfB + sqrtDiscriminant) / a;
 
 	if (hitRecord.t0 > hitRecord.t1)
 	{
@@ -191,84 +235,105 @@ bool planetaryHit(double radius, Ray& ray, HitRecord& hitRecord)
 }
 
 // Returns the sky color for 'ray'
-Color   Atmosphere::computeIncidentLight(Ray& ray, HitRecord& hitRecord, double t_max)
+Color   Atmosphere::computeIncidentLight(const Ray& ray, HitRecord& hitRecord, double t_max) const
 {
-	double  t_min = T_MIN;
-
-	if (!planetaryHit(this->_atmosphereRadius, ray, hitRecord) || hitRecord.t1 < 0.0)
+	if (!std::isfinite(t_max) || t_max <= T_MIN)
 	{
 		return (Color(0.0, 0.0, 0.0));
 	}
-	if (hitRecord.t0 > T_MIN && hitRecord.t0 > 0.0)
+	if (!planetaryHit(this->_atmosphereRadius, ray, hitRecord) || hitRecord.t1 <= T_MIN)
 	{
-		t_min = hitRecord.t0;
-	}
-	if (hitRecord.t1 < t_max)
-	{
-		t_max = hitRecord.t1;
+		return (Color(0.0, 0.0, 0.0));
 	}
 
-	double  segmentLength = (t_max - t_min) / this->_samples;
-	double  tCurrent = t_min;
+	const double t_min = std::max(T_MIN, hitRecord.t0);
+	t_max = std::min(t_max, hitRecord.t1);
+	if (!std::isfinite(t_min) || !std::isfinite(t_max) || t_max <= t_min)
+	{
+		return (Color(0.0, 0.0, 0.0));
+	}
+
+	const double segmentLength = (t_max - t_min) / this->_samples;
+	if (!std::isfinite(segmentLength) || segmentLength <= 0.0)
+	{
+		return (Color(0.0, 0.0, 0.0));
+	}
+
+	const double inverseHR = 1.0 / this->_hR;
+	const double inverseHM = 1.0 / this->_hM;
 	Vector3 sumR(0.0, 0.0, 0.0);
 	Vector3 sumM(0.0, 0.0, 0.0);
-	double  transmittanceR = 0.0;
-	double  transmittanceM = 0.0;
-	double  mu = Utilities::dot(ray.getDirection(), this->_sunDirection);
-	static double   g = 0.76;
-	static double   phaseRStatic = 3.0 / (16.0 * D_PI);
-	static double   phaseMStatic = 3.0 / (8.0 * D_PI);
-	double  phaseR = phaseRStatic * (1.0 + mu * mu);
-	double  phaseM = phaseMStatic * ((1.0 - g * g) * (1.0 + mu * mu) / ((2.0 + g * g) * pow(1.0 + g * g - 2.0 * g * mu, 1.5)));
+	double  opticalDepthR = 0.0;
+	double  opticalDepthM = 0.0;
+	const double mu = std::clamp(Utilities::dot(ray.getDirection(), this->_sunDirection), -1.0, 1.0);
+	const double muSquared = mu * mu;
+	const double phaseR = kRayleighPhaseScale * (1.0 + muSquared);
+	const double mieDenominatorBase = std::max(1.0 + kMieG * kMieG - 2.0 * kMieG * mu, 1.0e-6);
+	const double mieDenominator = mieDenominatorBase * std::sqrt(mieDenominatorBase);
+	const double phaseM = kMiePhaseScale * (
+		(1.0 - kMieG * kMieG) * (1.0 + muSquared)
+		/ ((2.0 + kMieG * kMieG) * mieDenominator)
+	);
 
 	for (int i = 0; i < this->_samples; i++)
 	{
-		Vector3 samplePosition = ray.getOrigin() + (tCurrent + segmentLength * 0.5) * ray.getDirection();
-		double  height = Utilities::vectorLength(samplePosition) - this->_earthRadius;
+		const double viewSampleT = t_min + (static_cast<double>(i) + 0.5) * segmentLength;
+		const Vector3 samplePosition = ray.getOrigin() + viewSampleT * ray.getDirection();
+		const double height = Utilities::vectorLength(samplePosition) - this->_earthRadius;
+		const double densityR = densityAtHeight(height, inverseHR);
+		const double densityM = densityAtHeight(height, inverseHM);
 
-		double  hR = exp(-height / this->_hR) * segmentLength;
-		double  hM = exp(-height / this->_hM) * segmentLength;
-		transmittanceR += hR;
-		transmittanceM += hM;
+		if (densityR == 0.0 && densityM == 0.0)
+		{
+			continue;
+		}
+
+		const double sampleOpticalDepthR = densityR * segmentLength;
+		const double sampleOpticalDepthM = densityM * segmentLength;
+		opticalDepthR += sampleOpticalDepthR;
+		opticalDepthM += sampleOpticalDepthM;
+
 		Ray ray2(samplePosition, this->_sunDirection);
 		HitRecord hitRecord2;
-		planetaryHit(this->_atmosphereRadius, ray2, hitRecord2);
-		double  segmentLengthLight = hitRecord2.t1 / this->_lightSamples;
-		double  tCurrentLight = 0.0;
-		double  transmittanceLightR = 0.0;
-		double  transmittanceLightM = 0.0;
-
-		int j;
-		for (j = 0; j < this->_lightSamples; j++)
+		if (!planetaryHit(this->_atmosphereRadius, ray2, hitRecord2) || hitRecord2.t1 <= 0.0)
 		{
-			Vector3 samplePositionLight = samplePosition + (tCurrentLight + segmentLengthLight * 0.5) * this->_sunDirection;
-			double  heightLight = Utilities::vectorLength(samplePositionLight) - this->_earthRadius;
+			continue;
+		}
+
+		const double segmentLengthLight = hitRecord2.t1 / this->_lightSamples;
+		if (!std::isfinite(segmentLengthLight) || segmentLengthLight <= 0.0)
+		{
+			continue;
+		}
+
+		double  opticalDepthLightR = 0.0;
+		double  opticalDepthLightM = 0.0;
+		bool	reachesSun = true;
+
+		for (int j = 0; j < this->_lightSamples; j++)
+		{
+			const double lightSampleT = (static_cast<double>(j) + 0.5) * segmentLengthLight;
+			const Vector3 samplePositionLight = samplePosition + lightSampleT * this->_sunDirection;
+			const double heightLight = Utilities::vectorLength(samplePositionLight) - this->_earthRadius;
 			if (heightLight < 0.0)
 			{
+				reachesSun = false;
 				break;
 			}
-			transmittanceLightR += exp(-heightLight / this->_hR) * segmentLengthLight;
-			transmittanceLightM += exp(-heightLight / this->_hM) * segmentLengthLight;
-			tCurrentLight += segmentLengthLight;
+			opticalDepthLightR += densityAtHeight(heightLight, inverseHR) * segmentLengthLight;
+			opticalDepthLightM += densityAtHeight(heightLight, inverseHM) * segmentLengthLight;
 		}
 
-		if (j == this->_lightSamples)
+		if (reachesSun)
 		{
-			Vector3 tau = betaR * (transmittanceR + transmittanceLightR) + betaM * 1.1 * (transmittanceM + transmittanceLightM);
-			Vector3 attenuation(exp(-tau.getX()), exp(-tau.getY()), exp(-tau.getZ()));
-			sumR += attenuation * hR;
-			sumM += attenuation * hM;
+			const Vector3 tau = betaR * (opticalDepthR + opticalDepthLightR)
+				+ betaM * kMieAbsorptionScale * (opticalDepthM + opticalDepthLightM);
+			const Vector3 attenuation = exponentialAttenuation(tau);
+			sumR += attenuation * sampleOpticalDepthR;
+			sumM += attenuation * sampleOpticalDepthM;
 		}
-
-		tCurrent += segmentLength;
 	}
 
-	// // Turns NaNs into zeros
-	// if (phaseM != phaseM)
-	// {
-	// 	 phaseM = 0.0;
-	// }
-
-	Vector3 result = (sumR * betaR * phaseR + sumM * betaM * phaseM) * 20.0;
+	Vector3 result = (sumR * betaR * phaseR + sumM * betaM * phaseM) * kSunIntensity;
 	return (Color(result.getX(), result.getY(), result.getZ()));
 }

@@ -285,7 +285,7 @@ void	Scene::setAtmosphere(Atmosphere atmosphere)
 }
 
 // Returns the Atmosphere object
-Atmosphere	Scene::getAtmosphere(void) const
+const Atmosphere&	Scene::getAtmosphere(void) const
 {
 	return (this->_atmosphere);
 }

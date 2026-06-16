@@ -1,0 +1,13 @@
+[settings]
+resolution=500,500
+samples=64
+maxlightbounces=0
+gamma=1
+tonemapping=1
+bloom=0
+sky=atmosphere
+atmosphere=0.30,6360000.0,6420000.0,7994.0,1200.0,16,8,0.0
+distanceblueness=0
+
+[scene]
+camera=(0,0,-30000000),(0,0,1),30,0,30000000
