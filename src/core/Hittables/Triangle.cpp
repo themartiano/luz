@@ -20,14 +20,6 @@ namespace
 		return (Utilities::normalize(normal));
 	}
 
-	Vector3	orientAgainstRay(Vector3 normal, const Ray& ray)
-	{
-		if (Utilities::dot(normal, ray.getDirection()) > 0.0)
-		{
-			return (normal * -1.0);
-		}
-		return (normal);
-	}
 }
 
 /*
@@ -251,7 +243,7 @@ bool	Triangle::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) c
 		hitRecord.u = 0.0;
 		hitRecord.v = 0.0;
 	}
-	hitRecord.normal = orientAgainstRay(hitRecord.normal, ray);
+	hitRecord.setFaceNormal(ray, hitRecord.normal);
 	hitRecord.material = this->_material.get();
 	hitRecord.position = ray.pointAtRay(hitRecord.t0);
 
@@ -322,11 +314,11 @@ double	Triangle::pdfValue(const Vector3& origin, const Vector3& vec) const
 		return (0.0);
 	}
 
-	Vector3 geometricNormal = this->_faceNormal;
-	geometricNormal = orientAgainstRay(geometricNormal, ray);
+	HitRecord geometricHitRecord;
+	geometricHitRecord.setFaceNormal(ray, this->_faceNormal);
 
 	const double distanceSquared = hitRecord.t0 * hitRecord.t0 * Utilities::vectorLengthSquared(vec);
-	const double cosine = std::fabs(Utilities::dot(vec, geometricNormal) / Utilities::vectorLength(vec));
+	const double cosine = std::fabs(Utilities::dot(vec, geometricHitRecord.normal) / Utilities::vectorLength(vec));
 	if (cosine <= 0.0)
 	{
 		return (0.0);

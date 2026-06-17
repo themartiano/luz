@@ -142,7 +142,7 @@ bool	Rectangle::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) 
 	}
 
 	hitRecord.t0 = t;
-	hitRecord.normal = normal;
+	hitRecord.setFaceNormal(ray, normal);
 	hitRecord.material = this->_material.get();
 	hitRecord.position = ray.pointAtRay(t);
 

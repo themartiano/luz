@@ -29,7 +29,7 @@ bool	Dielectric::scatter(Ray& ray, HitRecord& hitRecord, ScatterRecord& scatterR
 
 	double	refractionRatio = this->_refractiveIndex;
 	const Vector3&	normalizedDirection = ray.getDirection();
-	if (Utilities::dot(normalizedDirection, hitRecord.normal) <= 0.0)
+	if (hitRecord.frontFace)
 	{
 		refractionRatio = 1.0 / refractionRatio;
 	}
