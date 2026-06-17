@@ -6,6 +6,7 @@
 #include "Image.hpp"
 #include "Materials/Lambertian.hpp"
 #include "Materials/Emissive.hpp"
+#include "Materials/Dielectric.hpp"
 #include "Materials/Principled.hpp"
 #include "Materials/Isotropic.hpp"
 #include "Materials/HenyeyGreenstein.hpp"
@@ -1328,6 +1329,50 @@ namespace
 		require(sphere.hit(cubeCrossRay, cubeCrossHitRecord, 0.001, 100.0), "Cube-cross sphere was not hit.");
 		requireNear(cubeCrossHitRecord.u, 0.375, "Cube-cross sphere U was not generated.");
 		requireNear(cubeCrossHitRecord.v, 0.5, "Cube-cross sphere V was not generated.");
+	}
+
+	void	testSphereHitTracksFrontFace(void)
+	{
+		const auto material = std::make_shared<Lambertian>(Color(1.0, 1.0, 1.0));
+		Sphere sphere(Vector3(0.0, 0.0, 0.0), 1.0, material);
+		Ray outsideRay(Vector3(0.0, 0.0, -3.0), Vector3(0.0, 0.0, 1.0));
+		HitRecord outsideHit;
+
+		require(sphere.hit(outsideRay, outsideHit, 0.001, 100.0), "Outside sphere ray was not hit.");
+		require(outsideHit.frontFace, "Outside sphere hit was not marked as front-facing.");
+		requireVectorNear(outsideHit.normal, Vector3(0.0, 0.0, -1.0), "Outside sphere normal");
+
+		Ray insideRay(Vector3(0.0, 0.0, 0.0), Vector3(0.0, 0.0, 1.0));
+		HitRecord insideHit;
+
+		require(sphere.hit(insideRay, insideHit, 0.001, 100.0), "Inside sphere ray was not hit.");
+		require(!insideHit.frontFace, "Inside sphere hit was not marked as back-facing.");
+		requireVectorNear(insideHit.normal, Vector3(0.0, 0.0, -1.0), "Inside sphere shading normal");
+	}
+
+	void	testDielectricUsesExitRefractionRatio(void)
+	{
+		Dielectric glass(Color(1.0, 1.0, 1.0), 1.5);
+		Ray ray(Vector3(0.0, 0.0, 0.0), Vector3(0.9, 0.0, std::sqrt(1.0 - (0.9 * 0.9))));
+		HitRecord hitRecord;
+		ScatterRecord scatterRecord;
+
+		hitRecord.position = Vector3(0.0, 0.0, 0.0);
+		hitRecord.normal = Vector3(0.0, 0.0, -1.0);
+		hitRecord.frontFace = false;
+		Sampler::setRenderSeed(1234);
+		Sampler::beginPixelSample(13, 17, 5);
+		require(
+			Sampler::sample1D(Sampler::DIM_MATERIAL_DECISION) > 0.5,
+			"Dielectric test setup did not choose a refractive random sample."
+		);
+		require(glass.scatter(ray, hitRecord, scatterRecord), "Glass did not scatter.");
+		Sampler::endPixelSample();
+
+		require(
+			scatterRecord.specularRay.getDirection().getZ() < 0.0,
+			"Glass exit above the critical angle did not total-internally reflect."
+		);
 	}
 
 	void	testSceneFileLoadsNamedTexturedSphere(void)
@@ -2721,6 +2766,8 @@ int	main(void)
 		testSceneFileLoadsTransformedObject();
 		testSceneFileLoadsNamedBlocks();
 		testSphereUVProjectionModes();
+		testSphereHitTracksFrontFace();
+		testDielectricUsesExitRefractionRatio();
 		testSceneFileLoadsNamedTexturedSphere();
 		testSceneFileLoadsVolumeBlock();
 		testSceneFileLoadsNonMetallicPrincipledMaterial();

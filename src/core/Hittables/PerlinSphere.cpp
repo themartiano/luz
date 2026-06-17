@@ -97,12 +97,8 @@ bool	PerlinSphere::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_ma
 	hitRecord.t0 = root;
 	hitRecord.position = ray.pointAtRay(root);
 
-	Vector3 n = Utilities::normalize((hitRecord.position - this->_position) / this->_radius);
-	// if (Utilities::dot(n, ray.getDirection()) > 0.0)
-	// {
-	// 	n = n * -1.0;
-	// }
-	hitRecord.normal = n;
+	const Vector3 outwardNormal = Utilities::normalize((hitRecord.position - this->_position) / this->_radius);
+	hitRecord.setFaceNormal(ray, outwardNormal);
 	hitRecord.material = this->_material.get();
 
 	Vector3 hitPosForNoise = hitRecord.position + this->_radius;

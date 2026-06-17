@@ -15,9 +15,22 @@ struct	HitRecord
 	double		t1 = 0.0;
 	Vector3		position;
 	Vector3		normal;
+	bool		frontFace = true;
 	double		u = 0.0;
 	double		v = 0.0;
 	Material*	material = nullptr;
+
+	void	setFaceNormal(const Ray& ray, const Vector3& outwardNormal)
+	{
+		const Vector3& direction = ray.getDirection();
+
+		this->frontFace = (
+			(direction.getX() * outwardNormal.getX())
+			+ (direction.getY() * outwardNormal.getY())
+			+ (direction.getZ() * outwardNormal.getZ())
+		) < 0.0;
+		this->normal = this->frontFace ? outwardNormal : outwardNormal * -1.0;
+	}
 };
 
 struct	HittableLightSample

@@ -222,12 +222,7 @@ bool	Sphere::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) con
 	hitRecord.position = ray.pointAtRay(root);
 	const Vector3 outwardNormal = Utilities::normalize((hitRecord.position - this->_position) / this->_radius);
 	setSphereUV(outwardNormal, this->_uvProjection, hitRecord);
-	Vector3 shadingNormal = outwardNormal;
-	if (Utilities::dot(shadingNormal, ray.getDirection()) > 0.0)
-	{
-		shadingNormal = shadingNormal * -1.0;
-	}
-	hitRecord.normal = shadingNormal;
+	hitRecord.setFaceNormal(ray, outwardNormal);
 	hitRecord.material = this->_material.get();
 
 	return (true);

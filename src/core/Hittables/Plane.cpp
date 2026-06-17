@@ -65,7 +65,7 @@ bool	Plane::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) cons
 	}
 
 	hitRecord.t0 = t;
-	hitRecord.normal = this->_orientation;
+	hitRecord.setFaceNormal(ray, this->_orientation);
 	hitRecord.material = this->_material.get();
 	hitRecord.position = ray.pointAtRay(t);
 
