@@ -5,18 +5,26 @@
 #include "Hittables/Hittable.hpp"
 #include "Vector3.hpp"
 
+enum class SphereUVProjection
+{
+	LatLong,
+	CubeCross
+};
+
 class	Sphere : public Hittable
 {
 	public:
 		Sphere(void);
-		Sphere(Vector3 position, double radius, std::shared_ptr<Material> material);
-		Sphere(Vector3 position, double radius, std::shared_ptr<Material> material, bool visible);
+		Sphere(Vector3 position, double radius, std::shared_ptr<Material> material, SphereUVProjection uvProjection = SphereUVProjection::LatLong);
+		Sphere(Vector3 position, double radius, std::shared_ptr<Material> material, bool visible, SphereUVProjection uvProjection = SphereUVProjection::LatLong);
 		Vector3				getPosition(void) const;
 		void				setPosition(Vector3 position);
 		double				getRadius(void) const;
 		void				setRadius(double radius);
 		bool				isVisible(void) const;
 		void				setVisible(bool visible);
+		SphereUVProjection	getUVProjection(void) const;
+		void				setUVProjection(SphereUVProjection uvProjection);
 		virtual Material*	getMaterial(void) const override;
 		void				setMaterial(std::shared_ptr<Material> material);
 		virtual bool		hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) const override;
@@ -34,4 +42,5 @@ class	Sphere : public Hittable
 		std::shared_ptr<Material>	_material;
 		double		_radius;
 		bool		_visible;
+		SphereUVProjection	_uvProjection;
 };

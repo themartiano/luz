@@ -95,10 +95,12 @@ The exporter also works without passing the `.blend` file before `--python`:
 - Sun lights become `directional_light` blocks. They use
   `--sun-power-scale`, not `--light-power-scale`, because Blender SUN energy is
   directional rather than finite-area power.
-- When `--sky atmosphere` is used, the exporter writes an `atmosphere=` line
-  whose sun angle is derived from the first exported Blender SUN light. Luz's
-  atmosphere model only supports a vertical sun angle, so horizontal rotation is
-  discarded.
+- When `--sky atmosphere` is used, the first exported Blender SUN light becomes
+  the source of truth for both surface lighting and atmosphere lighting,
+  including sun direction, color, and intensity. The exporter still writes an
+  `atmosphere=` line for the physical atmosphere parameters; its sun-angle field
+  and legacy atmosphere radiance are only fallbacks when no `directional_light`
+  exists in the scene.
 - Emissive mesh materials stay as emissive mesh objects. Luz importance-samples
   emissive meshes directly.
 - Common Blender shader nodes connected to Material Output are mapped into

@@ -46,7 +46,8 @@ The parser is intentionally strict: unknown lines and malformed values throw an 
 | `environment` | `environment=PATH[,STRENGTH[,ROTATION_DEGREES]]` | Equirectangular environment map used when `sky=environment`. `environment=...` also enables `sky=environment`. Aliases: `environmentmap`, `environment_map`, `backgroundimage`, `background_image`. |
 | `environmentstrength` | `environmentstrength=F` | Multiplies environment radiance. Defaults to `1.0`. Aliases: `environment_strength`, `worldstrength`, `world_strength`. |
 | `environmentrotation` | `environmentrotation=DEGREES` | Offsets the equirectangular U coordinate around world Y. Defaults to `0`. Aliases: `environment_rotation`, `worldrotation`, `world_rotation`. |
-| `atmosphere` | `atmosphere=SUN,EARTH_RADIUS,ATMOSPHERE_RADIUS,HR,HM,SAMPLES,LIGHT_SAMPLES,STARS` | Only valid after `sky=atmosphere`. |
+| `atmosphere` | `atmosphere=SUN,EARTH_RADIUS,ATMOSPHERE_RADIUS,HR,HM,SAMPLES,LIGHT_SAMPLES,STARS` | Only valid after `sky=atmosphere`. `SUN` is the legacy fallback sun angle. If the scene has a `directional_light`, the first one drives atmosphere sun direction and radiance instead. |
+| `atmosphere_sun_scale` | `atmosphere_sun_scale=F` | Multiplies atmosphere sun radiance after it is sourced from the first `directional_light`, or from the legacy fallback when no directional light exists. Defaults to `1.0`. Aliases: `atmospheresunscale`, `atmosphere_sun_multiplier`, `atmospheresunmultiplier`. |
 | `distanceblueness` | `distanceblueness=0` or `distanceblueness=1` | Enables distance blue tinting when set to `1`. |
 
 ### Adaptive Sampling Notes
@@ -183,6 +184,7 @@ visible=0
 | Object | Format |
 | --- | --- |
 | Sphere | `sphere=(x,y,z),radius,material[` |
+| Named sphere | `sphere name { position=(x,y,z) radius=R material=name }` |
 | Plane | `plane=y,(ox,oy,oz),material[` |
 | Rectangle | `rectangle=(x,y,z),(ox,oy,oz),width,height,material[` |
 | Triangle | `triangle=(x0,y0,z0),(x1,y1,z1),(x2,y2,z2),material[` |
@@ -192,6 +194,31 @@ visible=0
 | Volume block | `volume name { ... }` |
 
 Objects except plain `obj=path/to/file.obj` must be followed by a material block and a closing `]`. Plain OBJ meshes use the default material.
+
+Named sphere blocks may appear in `[scene]` or inside `objects{}`. Use them
+when an analytic sphere needs a named material, including materials with
+`texture=`. Sphere textures use longitude/latitude UVs generated from the
+sphere normal:
+
+```text
+material earth_surface {
+type=principled
+base_color=(1,1,1)
+roughness=0.9
+texture=textures/earth_diff_jpg.ppm
+}
+
+sphere earth {
+position=(0,0,0)
+radius=6360000
+material=earth_surface
+uv_projection=latlong
+}
+```
+
+Set `uv_projection=cube_cross` when the texture is a cube-cross atlas instead
+of an equirectangular map. The bundled planet scene uses this for
+`textures/earth_diff_jpg.ppm`.
 
 ### Volumes
 
@@ -314,11 +341,17 @@ material=matte_red
 
 `area_light` creates an emissive rectangle and supports arbitrary normals.
 `directional_light` creates an infinite light whose `direction` is the direction
-light travels, suitable for sun lights. `point_light` and `sphere_light` create
-emissive spheres. These lights are still sampled through Luz's emissive-hittable
-lighting path. Sphere and point lights also accept `visible=0` to hide the light
-surface from camera and shadow rays while keeping it available for direct-light
-sampling.
+light travels, suitable for sun lights. When `sky=atmosphere`, the first
+`directional_light` is also the atmosphere sun source: its opposite direction is
+used for scattering rays toward the sun, and its emitted color and `intensity`
+set the atmosphere sun radiance. Use `atmosphere_sun_scale` only when you need
+an artistic atmosphere-only multiplier.
+If no directional light exists, the first `atmosphere=` value is used as the
+legacy vertical sun-angle fallback with the legacy atmosphere radiance.
+`point_light` and `sphere_light` create emissive spheres. These lights are still
+sampled through Luz's emissive-hittable lighting path. Sphere and point lights
+also accept `visible=0` to hide the light surface from camera and shadow rays
+while keeping it available for direct-light sampling.
 
 ## Minimal Example
 

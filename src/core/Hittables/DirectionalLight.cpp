@@ -48,6 +48,11 @@ Material*	DirectionalLight::getMaterial(void) const
 	return (this->_material.get());
 }
 
+Vector3	DirectionalLight::getDirection(void) const
+{
+	return (this->_direction);
+}
+
 double	DirectionalLight::pdfValue(const Vector3& origin, const Vector3& vec) const
 {
 	(void)origin;

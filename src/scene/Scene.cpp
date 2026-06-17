@@ -6,6 +6,7 @@
 #include "ImageFiles/BMP.hpp"
 #include "ImageFiles/TIFF.hpp"
 #include "Hittables/BVHNode.hpp"
+#include "Hittables/DirectionalLight.hpp"
 #include "Materials/Emissive.hpp"
 #include <limits>
 #include <utility>
@@ -290,6 +291,23 @@ void	Scene::setAtmosphere(Atmosphere atmosphere)
 const Atmosphere&	Scene::getAtmosphere(void) const
 {
 	return (this->_atmosphere);
+}
+
+void	Scene::syncAtmosphereSunDirection(void)
+{
+	for (const std::shared_ptr<Hittable>& hittable : this->_hittables)
+	{
+		const std::shared_ptr<DirectionalLight> directionalLight = std::dynamic_pointer_cast<DirectionalLight>(hittable);
+		if (directionalLight)
+		{
+			this->_atmosphere.setSunDirection(directionalLight->getDirection() * -1.0);
+			if (directionalLight->getMaterial())
+			{
+				this->_atmosphere.setSunRadiance(directionalLight->getMaterial()->emitted());
+			}
+			return;
+		}
+	}
 }
 
 // Returns the Background Color

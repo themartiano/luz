@@ -907,6 +907,7 @@ namespace
 		requireSceneFileSettingThrows("environmentrotation=nan", "Scene file accepted non-finite environment rotation.");
 		requireSceneFileSettingThrows("sky=atmosphere\natmosphere=0,1,2,3,4,0,1,0", "Scene file accepted zero atmosphere samples.");
 		requireSceneFileSettingThrows("sky=atmosphere\natmosphere=0,2,1,3,4,1,1,0", "Scene file accepted atmosphere radius smaller than Earth radius.");
+		requireSceneFileSettingThrows("sky=atmosphere\natmosphere_sun_scale=-1", "Scene file accepted negative atmosphere sun scale.");
 	}
 
 	void	testSceneFileAtmosphereSetting(void)
@@ -925,9 +926,52 @@ namespace
 
 		require(scene.getRenderSky() == SKY_ATMOSPHERE, "Atmosphere scene sky type was not parsed.");
 		requireNear(scene.getAtmosphere().getSunAngle(), 0.25, "Atmosphere sun angle was not parsed.");
+		requireVectorNear(
+			scene.getAtmosphere().getSunDirection(),
+			Vector3(0.0, std::sqrt(0.5), -std::sqrt(0.5)),
+			"Atmosphere fallback sun direction"
+		);
 		requireNear(scene.getAtmosphere().getEarthRadius(), 12840000.0, "Atmosphere Earth radius was not parsed.");
 		requireNear(scene.getAtmosphere().getAtmosphereRadius(), 12910000.0, "Atmosphere radius was not parsed.");
 		requireNear(scene.getAtmosphere().getStarsBrightness(), 0.1, "Atmosphere stars brightness was not parsed.");
+		requireColorNear(scene.getAtmosphere().getSunRadiance(), Color(20.0, 20.0, 20.0), "Atmosphere fallback sun radiance");
+		requireNear(scene.getAtmosphere().getSunRadianceScale(), 1.0, "Atmosphere sun scale default was not preserved.");
+
+		std::filesystem::remove(scenePath);
+	}
+
+	void	testSceneFileDirectionalSunDrivesAtmosphere(void)
+	{
+		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_atmosphere_directional_sun_test.luz";
+		{
+			std::ofstream sceneStream(scenePath);
+			sceneStream
+				<< "[settings]\n"
+				<< "sky=atmosphere\n"
+				<< "atmosphere_sun_scale=0.5\n"
+				<< "atmosphere=0.25,12840000.0,12910000.0,7994.0,1200.0,12,6,0.1\n\n"
+				<< "[scene]\n"
+				<< "directional_light sun {\n"
+				<< "direction=(2,0,0)\n"
+				<< "color=(1,0.95,0.8)\n"
+				<< "intensity=2\n"
+				<< "}\n";
+		}
+
+		Scene scene;
+		SceneFile::read(scene, scenePath.string());
+
+		requireVectorNear(
+			scene.getAtmosphere().getSunDirection(),
+			Vector3(-1.0, 0.0, 0.0),
+			"Atmosphere did not use the scene directional light as sun direction"
+		);
+		requireColorNear(
+			scene.getAtmosphere().getSunRadiance(),
+			Color(2.0, 1.9, 1.6),
+			"Atmosphere did not use the scene directional light as sun radiance"
+		);
+		requireNear(scene.getAtmosphere().getSunRadianceScale(), 0.5, "Atmosphere sun scale was not parsed.");
 
 		std::filesystem::remove(scenePath);
 	}
@@ -1265,6 +1309,83 @@ namespace
 
 		std::filesystem::remove(scenePath);
 		std::filesystem::remove(objectPath);
+	}
+
+	void	testSphereUVProjectionModes(void)
+	{
+		const auto material = std::make_shared<Lambertian>(Color(1.0, 1.0, 1.0));
+		Sphere sphere(Vector3(0.0, 0.0, 0.0), 1.0, material);
+		Ray ray(Vector3(0.0, 0.0, 3.0), Vector3(0.0, 0.0, -1.0));
+		HitRecord hitRecord;
+
+		require(sphere.hit(ray, hitRecord, 0.001, 100.0), "Lat-long sphere was not hit.");
+		requireNear(hitRecord.u, 0.75, "Lat-long sphere longitude UV was not generated.");
+		requireNear(hitRecord.v, 0.5, "Lat-long sphere latitude UV was not generated.");
+
+		sphere.setUVProjection(SphereUVProjection::CubeCross);
+		Ray cubeCrossRay(Vector3(0.0, 0.0, 3.0), Vector3(0.0, 0.0, -1.0));
+		HitRecord cubeCrossHitRecord;
+		require(sphere.hit(cubeCrossRay, cubeCrossHitRecord, 0.001, 100.0), "Cube-cross sphere was not hit.");
+		requireNear(cubeCrossHitRecord.u, 0.375, "Cube-cross sphere U was not generated.");
+		requireNear(cubeCrossHitRecord.v, 0.5, "Cube-cross sphere V was not generated.");
+	}
+
+	void	testSceneFileLoadsNamedTexturedSphere(void)
+	{
+		const std::filesystem::path directory = std::filesystem::temp_directory_path();
+		const std::filesystem::path scenePath = directory / "luz_named_textured_sphere_test.luz";
+		const std::filesystem::path texturePath = directory / "luz_named_textured_sphere_test.ppm";
+		{
+			std::ofstream textureStream(texturePath);
+			textureStream
+				<< "P3\n"
+				<< "1 1\n"
+				<< "255\n"
+				<< "255 0 0\n";
+		}
+		{
+			std::ofstream sceneStream(scenePath);
+			sceneStream
+				<< "[settings]\n"
+				<< "resolution=2,2\n\n"
+				<< "[materials]\n"
+				<< "material textured_earth {\n"
+				<< "type=lambertian\n"
+				<< "color=(1,1,1)\n"
+				<< "texture=" << texturePath.filename().string() << "\n"
+				<< "}\n\n"
+				<< "[scene]\n"
+				<< "camera=(1,2,10),(0,0,-1),45,0,7\n"
+				<< "sphere earth {\n"
+				<< "position=(1,2,3)\n"
+				<< "radius=4\n"
+				<< "material=textured_earth\n"
+				<< "uv_projection=cube_cross\n"
+				<< "}\n";
+		}
+
+		Scene scene;
+		SceneFile::read(scene, scenePath.string());
+
+		require(scene.getHittables().size() == 1, "Named textured sphere scene did not load one hittable.");
+		auto sphere = std::dynamic_pointer_cast<Sphere>(scene.getHittables()[0]);
+		require(sphere != nullptr, "Named textured sphere block did not create a sphere.");
+		requireVectorNear(sphere->getPosition(), Vector3(1.0, 2.0, 3.0), "Named sphere position was not parsed.");
+		requireNear(sphere->getRadius(), 4.0, "Named sphere radius was not parsed.");
+		require(sphere->getUVProjection() == SphereUVProjection::CubeCross, "Named sphere UV projection was not parsed.");
+
+		Ray ray(Vector3(1.0, 2.0, 10.0), Vector3(0.0, 0.0, -1.0));
+		HitRecord hitRecord;
+		require(sphere->hit(ray, hitRecord, 0.001, 100.0), "Named textured sphere was not hit.");
+		requireNear(hitRecord.u, 0.375, "Sphere cube-cross U was not generated.");
+		requireNear(hitRecord.v, 0.5, "Sphere cube-cross V was not generated.");
+		const Color texturedColor = hitRecord.material->colorAt(hitRecord);
+		requireNear(texturedColor.getRed(), 1.0, "Named sphere texture red channel was not sampled.");
+		requireNear(texturedColor.getGreen(), 0.0, "Named sphere texture green channel was not sampled.");
+		requireNear(texturedColor.getBlue(), 0.0, "Named sphere texture blue channel was not sampled.");
+
+		std::filesystem::remove(scenePath);
+		std::filesystem::remove(texturePath);
 	}
 
 	void	testSceneFileLoadsVolumeBlock(void)
@@ -2061,6 +2182,12 @@ namespace
 		requireThrows([&]() { Atmosphere().setSamples(0); }, "Atmosphere accepted zero samples.");
 		requireThrows([&]() { Atmosphere().setLightSamples(0); }, "Atmosphere accepted zero light samples.");
 		requireThrows([&]() { Atmosphere().setSunAngle(std::numeric_limits<double>::quiet_NaN()); }, "Atmosphere accepted non-finite sun angle.");
+		requireThrows([&]() { Atmosphere().setSunDirection(Vector3(0.0, 0.0, 0.0)); }, "Atmosphere accepted zero sun direction.");
+		requireThrows([&]() { Atmosphere().setSunDirection(Vector3(1.0, std::numeric_limits<double>::quiet_NaN(), 0.0)); }, "Atmosphere accepted non-finite sun direction.");
+		requireThrows([&]() { Atmosphere().setSunRadiance(Color(-1.0, 1.0, 1.0)); }, "Atmosphere accepted negative sun radiance.");
+		requireThrows([&]() { Atmosphere().setSunRadiance(Color(1.0, std::numeric_limits<double>::quiet_NaN(), 1.0)); }, "Atmosphere accepted non-finite sun radiance.");
+		requireThrows([&]() { Atmosphere().setSunRadianceScale(-1.0); }, "Atmosphere accepted negative sun radiance scale.");
+		requireThrows([&]() { Atmosphere().setSunRadianceScale(std::numeric_limits<double>::quiet_NaN()); }, "Atmosphere accepted non-finite sun radiance scale.");
 		requireThrows([&]() { Atmosphere().setEarthRadius(D_ATMOSPHERE_RADIUS); }, "Atmosphere accepted Earth radius at atmosphere radius.");
 		requireThrows([&]() { Atmosphere().setAtmosphereRadius(D_EARTH_RADIUS); }, "Atmosphere accepted atmosphere radius at Earth radius.");
 		requireThrows([&]() { Atmosphere().setHR(std::numeric_limits<double>::quiet_NaN()); }, "Atmosphere accepted non-finite HR.");
@@ -2201,6 +2328,25 @@ namespace
 			|| std::abs(actual.getGreen() - surfaceEmission.getGreen()) > 1e-8
 			|| std::abs(actual.getBlue() - surfaceEmission.getBlue()) > 1e-8,
 			"Atmosphere primary-hit composite returned the bare surface color."
+		);
+
+		Scene protrudingScene;
+		protrudingScene.setRenderSky(SKY_ATMOSPHERE);
+		protrudingScene.setAtmosphere(atmosphere);
+		protrudingScene.setMaxLightBounces(0);
+		protrudingScene.addHittable(std::make_shared<Sphere>(
+			Vector3(0.0, 0.0, 0.0),
+			1.5,
+			std::make_shared<Emissive>(surfaceEmission, 1.0)
+		));
+
+		const Color protrudingExpected = atmosphereSample.inScattering + (atmosphereSample.transmittance * surfaceEmission);
+		const Color protrudingActual = Renderer::internal::_calculateLightRaysColor(ray, protrudingScene);
+		requireFiniteNonNegativeColor(protrudingActual, "Atmosphere protruding primary-hit composite");
+		requireColorNear(
+			protrudingActual,
+			protrudingExpected,
+			"Atmosphere protruding primary-hit should use analytic ground depth"
 		);
 	}
 
@@ -2564,6 +2710,7 @@ int	main(void)
 		testSceneFilePostProcessSettings();
 		testSceneFileRejectsInvalidSettings();
 		testSceneFileAtmosphereSetting();
+		testSceneFileDirectionalSunDrivesAtmosphere();
 		testSceneFileBackgroundSetting();
 		testEnvironmentMapLoadsPPM();
 		testEnvironmentMapLoadsHDR();
@@ -2573,6 +2720,8 @@ int	main(void)
 		testSceneFileLoadsRelativeObject();
 		testSceneFileLoadsTransformedObject();
 		testSceneFileLoadsNamedBlocks();
+		testSphereUVProjectionModes();
+		testSceneFileLoadsNamedTexturedSphere();
 		testSceneFileLoadsVolumeBlock();
 		testSceneFileLoadsNonMetallicPrincipledMaterial();
 		testSceneFileRejectsInvalidMaterial();

@@ -13,6 +13,7 @@ bool	Renderer::render(Scene& scene)
 		return (false);
 	}
 
+	scene.syncAtmosphereSunDirection();
 	scene.updateLights();
 	scene.updateAccelerationStructure();
 

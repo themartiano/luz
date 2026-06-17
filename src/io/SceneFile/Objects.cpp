@@ -296,6 +296,15 @@ namespace
 		bool	visible = true;
 	};
 
+	struct SphereBlock
+	{
+		Vector3	position = Vector3(0.0, 0.0, 0.0);
+		double	radius = 1.0;
+		std::shared_ptr<Material>	material = std::make_shared<Lambertian>(Color(0.6, 0.6, 0.6));
+		bool	visible = true;
+		SphereUVProjection	uvProjection = SphereUVProjection::LatLong;
+	};
+
 	struct DirectionalLightBlock
 	{
 		Vector3	direction = Vector3(0.0, -1.0, 0.0);
@@ -321,6 +330,32 @@ namespace
 		{
 			throw std::runtime_error(description + " must be finite and positive.");
 		}
+	}
+
+	SphereUVProjection	parseSphereUVProjection(const std::string& value)
+	{
+		const std::string projection = SceneFile::internal::_lowerCopy(SceneFile::internal::_trim(value));
+
+		if (
+			projection == "latlong"
+			|| projection == "lat_long"
+			|| projection == "longitude_latitude"
+			|| projection == "equirectangular"
+		)
+		{
+			return (SphereUVProjection::LatLong);
+		}
+		if (
+			projection == "cube_cross"
+			|| projection == "cubecross"
+			|| projection == "cross"
+			|| projection == "cube"
+		)
+		{
+			return (SphereUVProjection::CubeCross);
+		}
+
+		throw std::runtime_error("Unknown sphere uv projection: " + value);
 	}
 
 	void	requireVolumeSize(const Vector3& size, const std::string& volumeName)
@@ -446,6 +481,75 @@ namespace
 		} while (!stream.eof());
 
 		throw std::runtime_error("Object block '" + objectName + "' is missing a closing }.");
+	}
+
+	void	addSphereBlock(Scene& scene, std::ifstream& stream, SceneFile::internal::SceneFileContext& context, const std::string& sphereName)
+	{
+		std::string line;
+		SphereBlock sphere;
+
+		do
+		{
+			getline(stream, line);
+			const std::string blockLine = SceneFile::internal::_trim(line);
+
+			if (blockLine.empty() || blockLine.at(0) == '#')
+			{
+				continue;
+			}
+			if (blockLine == "}")
+			{
+				requirePositiveFinite(sphere.radius, "Sphere object '" + sphereName + "' radius");
+				scene.addHittable(std::make_shared<Sphere>(
+					sphere.position,
+					sphere.radius,
+					sphere.material,
+					sphere.visible,
+					sphere.uvProjection
+				));
+				return;
+			}
+
+			std::string key;
+			std::string value;
+			if (!splitAssignment(blockLine, key, value))
+			{
+				throw std::runtime_error("Invalid sphere property: " + blockLine);
+			}
+
+			if (key == "position" || key == "center")
+			{
+				sphere.position = SceneFile::internal::_parseVector3Value(value, key);
+			}
+			else if (key == "radius")
+			{
+				sphere.radius = std::stod(value);
+			}
+			else if (key == "material")
+			{
+				sphere.material = findNamedMaterial(context, value);
+			}
+			else if (key == "visible")
+			{
+				int visible;
+
+				if (sscanf(value.c_str(), "%d", &visible) != 1 || (visible != 0 && visible != 1))
+				{
+					throw std::runtime_error("Sphere object '" + sphereName + "' visible must be 0 or 1.");
+				}
+				sphere.visible = visible != 0;
+			}
+			else if (key == "uv_projection" || key == "uvprojection" || key == "texture_projection" || key == "projection")
+			{
+				sphere.uvProjection = parseSphereUVProjection(value);
+			}
+			else
+			{
+				throw std::runtime_error("Unknown sphere property: " + blockLine);
+			}
+		} while (!stream.eof());
+
+		throw std::runtime_error("Sphere object '" + sphereName + "' is missing a closing }.");
 	}
 
 	void	addAreaLightBlock(Scene& scene, std::ifstream& stream, const std::string& lightName)
@@ -750,6 +854,11 @@ namespace
 			addObjectBlock(scene, stream, context, blockName);
 			return (true);
 		}
+		if (SceneFile::internal::_parseNamedBlockHeader(line, "sphere", blockName))
+		{
+			addSphereBlock(scene, stream, context, blockName);
+			return (true);
+		}
 		if (SceneFile::internal::_parseNamedBlockHeader(line, "area_light", blockName))
 		{
 			addAreaLightBlock(scene, stream, blockName);
@@ -777,6 +886,7 @@ namespace
 		const std::string lowerLine = SceneFile::internal::_lowerCopy(SceneFile::internal::_trim(line));
 		if (
 			lowerLine.rfind("object ", 0) == 0
+			|| lowerLine.rfind("sphere ", 0) == 0
 			|| lowerLine.rfind("area_light ", 0) == 0
 			|| lowerLine.rfind("directional_light ", 0) == 0
 			|| lowerLine.rfind("volume ", 0) == 0

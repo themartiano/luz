@@ -111,4 +111,5 @@ void	SceneFile::read(Scene& scene, std::string fileName)
 	{
 		pendingMeshLoad.get();
 	}
+	scene.syncAtmosphereSunDirection();
 }

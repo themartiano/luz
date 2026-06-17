@@ -12,7 +12,7 @@ namespace
 	const double kRayleighPhaseScale = 3.0 / (16.0 * D_PI);
 	const double kMiePhaseScale = 3.0 / (8.0 * D_PI);
 	constexpr double kMieAbsorptionScale = 1.1;
-	constexpr double kSunIntensity = 20.0;
+	constexpr double kLegacyFallbackSunRadiance = 20.0;
 
 	Vector3	exponentialAttenuation(const Vector3& tau)
 	{
@@ -26,6 +26,35 @@ namespace
 			return (0.0);
 		}
 		return (std::exp(-height * inverseScaleHeight));
+	}
+
+	Vector3	normalizedSunDirection(Vector3 sunDirection)
+	{
+		if (
+			!std::isfinite(sunDirection.getX())
+			|| !std::isfinite(sunDirection.getY())
+			|| !std::isfinite(sunDirection.getZ())
+			|| Utilities::vectorLengthSquared(sunDirection) <= 0.0
+		)
+		{
+			throw std::invalid_argument("Atmosphere sun direction must be finite and non-zero.");
+		}
+		return (Utilities::normalize(sunDirection));
+	}
+
+	void	requireFiniteNonNegativeColor(const Color& color, const std::string& description)
+	{
+		if (
+			!std::isfinite(color.getRed())
+			|| !std::isfinite(color.getGreen())
+			|| !std::isfinite(color.getBlue())
+			|| color.getRed() < 0.0
+			|| color.getGreen() < 0.0
+			|| color.getBlue() < 0.0
+		)
+		{
+			throw std::invalid_argument(description + " must be finite and non-negative.");
+		}
 	}
 }
 
@@ -44,6 +73,8 @@ Atmosphere::Atmosphere(void)
 	this->_samples = 16;
 	this->_lightSamples = 8;
 	this->_starsBrightness = 0.5;
+	this->_sunRadiance = Color(kLegacyFallbackSunRadiance, kLegacyFallbackSunRadiance, kLegacyFallbackSunRadiance);
+	this->_sunRadianceScale = 1.0;
 	updateSunDirectionVector();
 }
 
@@ -58,6 +89,8 @@ Atmosphere::Atmosphere(double sunAngle, double earthRadius, double atmosphereRad
 	this->_samples = 16;
 	this->_lightSamples = 8;
 	this->_starsBrightness = 0.5;
+	this->_sunRadiance = Color(kLegacyFallbackSunRadiance, kLegacyFallbackSunRadiance, kLegacyFallbackSunRadiance);
+	this->_sunRadianceScale = 1.0;
 	setSunAngle(sunAngle);
 	if (!std::isfinite(earthRadius) || earthRadius <= 0.0)
 	{
@@ -97,6 +130,21 @@ double  Atmosphere::getStarsBrightness(void) const
 	return (this->_starsBrightness);
 }
 
+Vector3	Atmosphere::getSunDirection(void) const
+{
+	return (this->_sunDirection);
+}
+
+Color	Atmosphere::getSunRadiance(void) const
+{
+	return (this->_sunRadiance);
+}
+
+double	Atmosphere::getSunRadianceScale(void) const
+{
+	return (this->_sunRadianceScale);
+}
+
 //Returns the Sun Angle (double)
 double  Atmosphere::getSunAngle(void) const
 {
@@ -112,6 +160,26 @@ void	Atmosphere::setSunAngle(double newAngle)
 	}
 	this->_sunAngle = newAngle;
 	updateSunDirectionVector();
+}
+
+void	Atmosphere::setSunDirection(Vector3 sunDirection)
+{
+	this->_sunDirection = normalizedSunDirection(sunDirection);
+}
+
+void	Atmosphere::setSunRadiance(Color sunRadiance)
+{
+	requireFiniteNonNegativeColor(sunRadiance, "Atmosphere sun radiance");
+	this->_sunRadiance = sunRadiance;
+}
+
+void	Atmosphere::setSunRadianceScale(double sunRadianceScale)
+{
+	if (!std::isfinite(sunRadianceScale) || sunRadianceScale < 0.0)
+	{
+		throw std::invalid_argument("Atmosphere sun radiance scale must be finite and non-negative.");
+	}
+	this->_sunRadianceScale = sunRadianceScale;
 }
 
 // Sets the EarthRadius
@@ -196,7 +264,7 @@ void	Atmosphere::setStarsBrightness(double starsBrightness)
 void	Atmosphere::updateSunDirectionVector(void)
 {
 	double angle = D_PI * this->_sunAngle;
-	this->_sunDirection = Vector3(0.0, std::cos(angle), -std::sin(angle));
+	this->setSunDirection(Vector3(0.0, std::cos(angle), -std::sin(angle)));
 }
 
 // (Sphere) Hit function for planets and atmospheres (sets both t0 and t1 on the Hit Record). Returns true if hit occurs, false otherwise
@@ -345,7 +413,8 @@ AtmosphereSample	Atmosphere::sampleSegment(const Ray& ray, double t_max) const
 
 	const Vector3 viewTau = betaR * opticalDepthR + betaM * kMieAbsorptionScale * opticalDepthM;
 	const Vector3 viewTransmittance = exponentialAttenuation(viewTau);
-	Vector3 result = (sumR * betaR * phaseR + sumM * betaM * phaseM) * kSunIntensity;
+	const Vector3 sunRadiance = static_cast<Vector3>(this->_sunRadiance * this->_sunRadianceScale);
+	Vector3 result = (sumR * betaR * phaseR + sumM * betaM * phaseM) * sunRadiance;
 	sample.inScattering = Color(result.getX(), result.getY(), result.getZ());
 	sample.transmittance = Color(
 		viewTransmittance.getX(),

@@ -7,6 +7,98 @@
 #include <algorithm>
 #include <cmath>
 
+namespace
+{
+	void	setLatLongUV(const Vector3& outwardNormal, HitRecord& hitRecord)
+	{
+		const double phi = std::atan2(outwardNormal.getZ(), outwardNormal.getX());
+		const double theta = std::acos(std::clamp(outwardNormal.getY(), -1.0, 1.0));
+
+		hitRecord.u = 0.5 + phi / (2.0 * D_PI);
+		hitRecord.v = 1.0 - theta / D_PI;
+	}
+
+	void	setCubeCrossUV(const Vector3& outwardNormal, HitRecord& hitRecord)
+	{
+		const double x = outwardNormal.getX();
+		const double y = outwardNormal.getY();
+		const double z = outwardNormal.getZ();
+		const double ax = std::abs(x);
+		const double ay = std::abs(y);
+		const double az = std::abs(z);
+		int column = 0;
+		int row = 1;
+		double s = 0.5;
+		double t = 0.5;
+
+		if (ax >= ay && ax >= az)
+		{
+			if (x >= 0.0)
+			{
+				column = 2;
+				row = 1;
+				s = 0.5 - z / (2.0 * ax);
+			}
+			else
+			{
+				column = 0;
+				row = 1;
+				s = 0.5 + z / (2.0 * ax);
+			}
+			t = 0.5 + y / (2.0 * ax);
+		}
+		else if (ay >= ax && ay >= az)
+		{
+			if (y >= 0.0)
+			{
+				column = 2;
+				row = 2;
+				s = 0.5 - z / (2.0 * ay);
+			}
+			else
+			{
+				column = 0;
+				row = 0;
+				s = 0.5 + z / (2.0 * ay);
+			}
+			t = 0.5 - x / (2.0 * ay);
+		}
+		else
+		{
+			if (z >= 0.0)
+			{
+				column = 1;
+				row = 1;
+				s = 0.5 + x / (2.0 * az);
+			}
+			else
+			{
+				column = 3;
+				row = 1;
+				s = 0.5 - x / (2.0 * az);
+			}
+			t = 0.5 + y / (2.0 * az);
+		}
+
+		// Match the slight atlas-edge inset used by exported cube-sphere UVs.
+		const double faceInset = 0.02;
+		s = faceInset + std::clamp(s, 0.0, 1.0) * (1.0 - 2.0 * faceInset);
+		t = faceInset + std::clamp(t, 0.0, 1.0) * (1.0 - 2.0 * faceInset);
+		hitRecord.u = (static_cast<double>(column) + s) / 4.0;
+		hitRecord.v = (static_cast<double>(row) + t) / 3.0;
+	}
+
+	void	setSphereUV(const Vector3& outwardNormal, SphereUVProjection uvProjection, HitRecord& hitRecord)
+	{
+		if (uvProjection == SphereUVProjection::CubeCross)
+		{
+			setCubeCrossUV(outwardNormal, hitRecord);
+			return;
+		}
+		setLatLongUV(outwardNormal, hitRecord);
+	}
+}
+
 /*
 	Constructors
 */
@@ -18,23 +110,26 @@ Sphere::Sphere(void)
 	this->_material = std::make_shared<Lambertian>(Color(0.6, 0.6, 0.6));
 	this->_radius = 1.0;
 	this->_visible = true;
+	this->_uvProjection = SphereUVProjection::LatLong;
 }
 
 // Constructs the Sphere with custom values
-Sphere::Sphere(Vector3 position, double radius, std::shared_ptr<Material> material)
+Sphere::Sphere(Vector3 position, double radius, std::shared_ptr<Material> material, SphereUVProjection uvProjection)
 {
 	this->_position = position;
 	this->_radius = radius;
 	this->_material = material;
 	this->_visible = true;
+	this->_uvProjection = uvProjection;
 }
 
-Sphere::Sphere(Vector3 position, double radius, std::shared_ptr<Material> material, bool visible)
+Sphere::Sphere(Vector3 position, double radius, std::shared_ptr<Material> material, bool visible, SphereUVProjection uvProjection)
 {
 	this->_position = position;
 	this->_radius = radius;
 	this->_material = material;
 	this->_visible = visible;
+	this->_uvProjection = uvProjection;
 }
 
 // Returns the Sphere's position
@@ -69,6 +164,16 @@ bool	Sphere::isVisible(void) const
 void	Sphere::setVisible(bool visible)
 {
 	this->_visible = visible;
+}
+
+SphereUVProjection	Sphere::getUVProjection(void) const
+{
+	return (this->_uvProjection);
+}
+
+void	Sphere::setUVProjection(SphereUVProjection uvProjection)
+{
+	this->_uvProjection = uvProjection;
 }
 
 // Returns the Sphere's material
@@ -115,12 +220,14 @@ bool	Sphere::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) con
 
 	hitRecord.t0 = root;
 	hitRecord.position = ray.pointAtRay(root);
-	Vector3 n = Utilities::normalize((hitRecord.position - this->_position) / this->_radius);
-	if (Utilities::dot(n, ray.getDirection()) > 0.0)
+	const Vector3 outwardNormal = Utilities::normalize((hitRecord.position - this->_position) / this->_radius);
+	setSphereUV(outwardNormal, this->_uvProjection, hitRecord);
+	Vector3 shadingNormal = outwardNormal;
+	if (Utilities::dot(shadingNormal, ray.getDirection()) > 0.0)
 	{
-		n = n * -1.0;
+		shadingNormal = shadingNormal * -1.0;
 	}
-	hitRecord.normal = n;
+	hitRecord.normal = shadingNormal;
 	hitRecord.material = this->_material.get();
 
 	return (true);

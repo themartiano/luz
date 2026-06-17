@@ -289,6 +289,27 @@ namespace
 		}
 	}
 
+	double	primaryAtmosphereTMax(const Atmosphere& atmosphere, const Ray& ray, double surfaceTMax)
+	{
+		if (!std::isfinite(surfaceTMax) || surfaceTMax <= T_MIN)
+		{
+			return (surfaceTMax);
+		}
+
+		HitRecord earthHitRecord;
+		if (!planetaryHit(atmosphere.getEarthRadius(), ray, earthHitRecord) || earthHitRecord.t1 <= T_MIN)
+		{
+			return (surfaceTMax);
+		}
+
+		const double groundTMax = std::max(0.0, earthHitRecord.t0);
+		if (!std::isfinite(groundTMax) || groundTMax <= T_MIN)
+		{
+			return (surfaceTMax);
+		}
+		return (std::max(surfaceTMax, groundTMax));
+	}
+
 	void	compositePrimaryAtmosphereSegment(Scene& scene, const Ray& ray, double tMax, Color& accumulatedColor, Color& throughput)
 	{
 		if (scene.getRenderSky() != SKY_ATMOSPHERE)
@@ -296,7 +317,11 @@ namespace
 			return;
 		}
 
-		const AtmosphereSample atmosphereSample = scene.getAtmosphere().sampleSegment(ray, tMax);
+		const Atmosphere& atmosphere = scene.getAtmosphere();
+		const AtmosphereSample atmosphereSample = atmosphere.sampleSegment(
+			ray,
+			primaryAtmosphereTMax(atmosphere, ray, tMax)
+		);
 		accumulatedColor += clampRayColor(throughput * atmosphereSample.inScattering);
 		throughput = clampRayColor(throughput * atmosphereSample.transmittance);
 	}

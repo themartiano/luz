@@ -390,7 +390,25 @@ void	SceneFile::internal::_readSettingsSection(Scene& scene, std::ifstream& stre
 			{
 				throw std::runtime_error("Invalid atmosphere setting. Use atmosphere=SUN,EARTH_RADIUS,ATMOSPHERE_RADIUS,HR,HM,SAMPLES,LIGHT_SAMPLES,STARS.");
 			}
-			scene.setAtmosphere(Atmosphere(sunAngle, earthRadius, atmosphereRadius, hR, hM, samples, lightSamples, starsBrightness));
+			Atmosphere atmosphere(sunAngle, earthRadius, atmosphereRadius, hR, hM, samples, lightSamples, starsBrightness);
+			atmosphere.setSunRadianceScale(scene.getAtmosphere().getSunRadianceScale());
+			scene.setAtmosphere(atmosphere);
+		}
+		else if (
+			lowerLine.rfind("atmosphere_sun_scale=", 0) != std::string::npos
+			|| lowerLine.rfind("atmospheresunscale=", 0) != std::string::npos
+			|| lowerLine.rfind("atmosphere_sun_multiplier=", 0) != std::string::npos
+			|| lowerLine.rfind("atmospheresunmultiplier=", 0) != std::string::npos
+		)
+		{
+			const double atmosphereSunScale = parseFiniteDouble(
+				settingValue(line, "Invalid atmosphere sun scale setting. Use atmosphere_sun_scale=F."),
+				"Atmosphere sun scale"
+			);
+			Atmosphere atmosphere = scene.getAtmosphere();
+
+			atmosphere.setSunRadianceScale(atmosphereSunScale);
+			scene.setAtmosphere(atmosphere);
 		}
 		else if (lowerLine.rfind("distanceblueness=", 0) != std::string::npos)
 		{
