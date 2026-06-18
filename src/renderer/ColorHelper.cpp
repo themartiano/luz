@@ -297,7 +297,7 @@ namespace
 		}
 
 		HitRecord earthHitRecord;
-		if (!planetaryHit(atmosphere.getEarthRadius(), ray, earthHitRecord) || earthHitRecord.t1 <= T_MIN)
+		if (!planetaryHit(atmosphere.metersToSceneUnits(atmosphere.getEarthRadius()), ray, earthHitRecord) || earthHitRecord.t1 <= T_MIN)
 		{
 			return (surfaceTMax);
 		}

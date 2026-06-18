@@ -80,7 +80,9 @@ Scene::Scene(void)
 	this->_skyline = 0.5;
 	this->_renderSky = SKY_ATMOSPHERE;
 	this->_distanceBlueness = true;
+	this->_metersPerUnit = 1.0;
 	this->_atmosphere = Atmosphere();
+	this->_atmosphere.setMetersPerUnit(this->_metersPerUnit);
 	this->_backgroundColor = Color(0.0, 0.0, 0.0);
 	this->_environmentStrength = 1.0;
 	this->_environmentRotation = 0.0;
@@ -284,6 +286,7 @@ void	Scene::setDistanceBlueness(bool distanceBlueness)
 // Sets the Atmosphere object
 void	Scene::setAtmosphere(Atmosphere atmosphere)
 {
+	atmosphere.setMetersPerUnit(this->_metersPerUnit);
 	this->_atmosphere = atmosphere;
 }
 
@@ -291,6 +294,44 @@ void	Scene::setAtmosphere(Atmosphere atmosphere)
 const Atmosphere&	Scene::getAtmosphere(void) const
 {
 	return (this->_atmosphere);
+}
+
+double	Scene::getMetersPerUnit(void) const
+{
+	return (this->_metersPerUnit);
+}
+
+void	Scene::setMetersPerUnit(double metersPerUnit)
+{
+	if (!std::isfinite(metersPerUnit) || metersPerUnit <= 0.0)
+	{
+		throw std::invalid_argument("Scene meters per unit must be finite and positive.");
+	}
+	this->_metersPerUnit = metersPerUnit;
+	this->_atmosphere.setMetersPerUnit(metersPerUnit);
+}
+
+double	Scene::sceneUnitsToMeters(double sceneUnits) const
+{
+	if (!std::isfinite(sceneUnits))
+	{
+		return (sceneUnits);
+	}
+	const double maxSceneUnits = T_MAX / this->_metersPerUnit;
+	if (sceneUnits >= maxSceneUnits)
+	{
+		return (T_MAX);
+	}
+	if (sceneUnits <= -maxSceneUnits)
+	{
+		return (-T_MAX);
+	}
+	return (sceneUnits * this->_metersPerUnit);
+}
+
+double	Scene::sceneAreaToSquareMeters(double sceneArea) const
+{
+	return (sceneArea * this->_metersPerUnit * this->_metersPerUnit);
 }
 
 void	Scene::syncAtmosphereSunDirection(void)

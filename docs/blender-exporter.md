@@ -76,6 +76,9 @@ The exporter also works without passing the `.blend` file before `--python`:
   non-HDR environment images are exported as PPM.
 - The active camera is exported as a Luz camera block.
 - Blender camera roll is preserved through the named camera `up` vector.
+- The exporter writes `meters_per_unit=1 / --global-scale` so physical light
+  power, light area, and atmosphere distances preserve Blender-meter scale even
+  when exported coordinates are scaled for Luz.
 - Invalid zero camera focus distances are replaced with a scene-based fallback;
   DOF aperture is disabled unless Blender provides a valid focus target/distance.
 - Blender f-stop DOF is converted to a Luz world-unit lens diameter from

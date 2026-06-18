@@ -55,6 +55,10 @@ class	Scene
 		void	setDistanceBlueness(bool distanceBlueness);
 		void	setAtmosphere(Atmosphere atmosphere);
 		const Atmosphere&	getAtmosphere(void) const;
+		double	getMetersPerUnit(void) const;
+		void	setMetersPerUnit(double metersPerUnit);
+		double	sceneUnitsToMeters(double sceneUnits) const;
+		double	sceneAreaToSquareMeters(double sceneArea) const;
 		void	syncAtmosphereSunDirection(void);
 		Color	getBackgroundColor(void) const;
 		void	setBackgroundColor(Color backgroundColor);
@@ -125,6 +129,7 @@ class	Scene
 		double					_skyline;
 		SkyTypes				_renderSky;
 		bool					_distanceBlueness;
+		double					_metersPerUnit;
 		Atmosphere				_atmosphere;
 		Color					_backgroundColor;
 		std::shared_ptr<EnvironmentMap>	_environmentMap;

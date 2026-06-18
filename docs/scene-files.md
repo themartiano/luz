@@ -46,6 +46,7 @@ The parser is intentionally strict: unknown lines and malformed values throw an 
 | `environment` | `environment=PATH[,STRENGTH[,ROTATION_DEGREES]]` | Equirectangular environment map used when `sky=environment`. `environment=...` also enables `sky=environment`. Aliases: `environmentmap`, `environment_map`, `backgroundimage`, `background_image`. |
 | `environmentstrength` | `environmentstrength=F` | Multiplies environment radiance. Defaults to `1.0`. Aliases: `environment_strength`, `worldstrength`, `world_strength`. |
 | `environmentrotation` | `environmentrotation=DEGREES` | Offsets the equirectangular U coordinate around world Y. Defaults to `0`. Aliases: `environment_rotation`, `worldrotation`, `world_rotation`. |
+| `meters_per_unit` | `meters_per_unit=F` | Physical scale of Luz world coordinates. Defaults to `1.0`. Finite light `power`/`lumens` use physical area in square meters, and atmosphere ray distances are converted through this value. Alias: `metersperunit`. |
 | `atmosphere` | `atmosphere=SUN,EARTH_RADIUS,ATMOSPHERE_RADIUS,HR,HM,SAMPLES,LIGHT_SAMPLES,STARS` | Only valid after `sky=atmosphere`. `SUN` is a fallback sun angle. If the scene has a `directional_light`, the first one drives atmosphere sun direction and radiance instead. |
 | `atmosphere_sun_scale` | `atmosphere_sun_scale=F` | Multiplies atmosphere sun radiance after it is sourced from the first `directional_light`, or from the fallback atmosphere sun when no directional light exists. Defaults to `1.0`. Aliases: `atmospheresunscale`, `atmosphere_sun_multiplier`, `atmospheresunmultiplier`. |
 | `distanceblueness` | `distanceblueness=0` or `distanceblueness=1` | Enables distance blue tinting when set to `1`. |
@@ -363,7 +364,9 @@ Light blocks must define exactly one unit property:
 | `directional_light` | `irradiance`/`w_m2`, `illuminance`/`lux` |
 
 For Lambertian surface emitters, `power` is converted to radiance with
-`power / (pi * area)`. For sphere and point lights, `area` is `4 * pi * r^2`.
+`power / (pi * area)`, where `area` is measured in square meters after applying
+`meters_per_unit`. For sphere and point lights, physical area is
+`4 * pi * (radius * meters_per_unit)^2`.
 `lumens` is converted through luminance using 683 lm/W. RGB color is treated as
 chromaticity for physical unit properties; zero-luminance colors are rejected.
 

@@ -277,6 +277,16 @@ void	SceneFile::internal::_readSettingsSection(Scene& scene, std::ifstream& stre
 			}
 			scene.setDefaultRenderOutputFileName(strOutputFileName);
 		}
+		else if (
+			lowerLine.rfind("meters_per_unit=", 0) != std::string::npos
+			|| lowerLine.rfind("metersperunit=", 0) != std::string::npos
+		)
+		{
+			scene.setMetersPerUnit(parseFiniteDouble(
+				settingValue(line, "Invalid meters_per_unit setting. Use meters_per_unit=F."),
+				"Meters per unit"
+			));
+		}
 		else if (lowerLine.rfind("sky=", 0) != std::string::npos)
 		{
 			char sky[256];

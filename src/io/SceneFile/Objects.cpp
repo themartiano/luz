@@ -696,7 +696,11 @@ namespace
 					light.width,
 					light.height,
 					std::make_shared<Emissive>(
-						surfaceLightEmission(light.color, light.units, light.width * light.height)
+						surfaceLightEmission(
+							light.color,
+							light.units,
+							scene.sceneAreaToSquareMeters(light.width * light.height)
+						)
 					)
 				));
 				return;
@@ -776,7 +780,7 @@ namespace
 						surfaceLightEmission(
 							light.color,
 							light.units,
-							4.0 * D_PI * light.radius * light.radius
+							scene.sceneAreaToSquareMeters(4.0 * D_PI * light.radius * light.radius)
 						)
 					),
 					light.visible

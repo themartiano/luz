@@ -29,6 +29,9 @@ class   Atmosphere
 		Vector3	getSunDirection(void) const;
 		Color	getSunRadiance(void) const;
 		double	getSunRadianceScale(void) const;
+		double	getMetersPerUnit(void) const;
+		double	sceneUnitsToMeters(double sceneUnits) const;
+		double	metersToSceneUnits(double meters) const;
 		Color   computeIncidentLight(const Ray& ray, HitRecord& hitRecord, double t_max) const;
 		AtmosphereSample	sampleSegment(const Ray& ray, double t_max) const;
 		double  getSunAngle(void) const;
@@ -36,6 +39,7 @@ class   Atmosphere
 		void	setSunDirection(Vector3 sunDirection);
 		void	setSunRadiance(Color sunRadiance);
 		void	setSunRadianceScale(double sunRadianceScale);
+		void	setMetersPerUnit(double metersPerUnit);
 		void	setEarthRadius(double earthRadius);
 		void	setAtmosphereRadius(double atmosphereRadius);
 		void	setHR(double hR);
@@ -56,6 +60,7 @@ class   Atmosphere
 		int	 _samples; // Samples per ray
 		int	 _lightSamples; // Number of samples per ray sample
 		double  _starsBrightness;
+		double	_metersPerUnit;
 		void	updateSunDirectionVector(void);
 };
 

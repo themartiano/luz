@@ -145,6 +145,8 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 	parser.add_argument("--profile", action="store_true", help="Print per-stage exporter progress and timings.")
 	parser.set_defaults(sample_texture_colors=True)
 	args = parser.parse_args(argv)
+	if not math.isfinite(args.global_scale) or args.global_scale <= 0.0:
+		parser.error("--global-scale must be a finite positive value.")
 	if not math.isfinite(args.min_point_light_radius) or args.min_point_light_radius < 0.0:
 		parser.error("--min-point-light-radius must be a finite non-negative value.")
 	return args
@@ -1588,6 +1590,7 @@ def write_luz_scene(
 			f"resolution={width},{height}",
 			f"samples={scene_samples(args)}",
 			f"maxlightbounces={scene_bounces(args)}",
+			f"meters_per_unit={fmt_float(1.0 / args.global_scale)}",
 			"gamma=1",
 			"bloom=1",
 			f"sky={sky}",

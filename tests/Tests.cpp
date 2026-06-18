@@ -998,6 +998,8 @@ namespace
 		requireSceneFileSettingThrows("sky=wat", "Scene file accepted unknown sky setting.");
 		requireSceneFileSettingThrows("environmentstrength=-1", "Scene file accepted negative environment strength.");
 		requireSceneFileSettingThrows("environmentrotation=nan", "Scene file accepted non-finite environment rotation.");
+		requireSceneFileSettingThrows("meters_per_unit=0", "Scene file accepted zero meters per unit.");
+		requireSceneFileSettingThrows("meters_per_unit=nan", "Scene file accepted non-finite meters per unit.");
 		requireSceneFileSettingThrows("sky=atmosphere\natmosphere=0,1,2,3,4,0,1,0", "Scene file accepted zero atmosphere samples.");
 		requireSceneFileSettingThrows("sky=atmosphere\natmosphere=0,2,1,3,4,1,1,0", "Scene file accepted atmosphere radius smaller than Earth radius.");
 		requireSceneFileSettingThrows("sky=atmosphere\natmosphere_sun_scale=-1", "Scene file accepted negative atmosphere sun scale.");
@@ -1476,6 +1478,44 @@ namespace
 			},
 			"Scene file accepted area_light intensity."
 		);
+
+		std::filesystem::remove(scenePath);
+	}
+
+	void	testSceneFileMetersPerUnitScalesPhysicalLightArea(void)
+	{
+		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_meters_per_unit_test.luz";
+		{
+			std::ofstream sceneStream(scenePath);
+			sceneStream << std::setprecision(17);
+			sceneStream
+				<< "[settings]\n"
+				<< "meters_per_unit=0.5\n\n"
+				<< "[scene]\n"
+				<< "area_light area {\n"
+				<< "position=(0,4,0)\n"
+				<< "normal=(0,-1,0)\n"
+				<< "size=(4,2)\n"
+				<< "color=(1,1,1)\n"
+				<< "power=" << 2.0 * D_PI << "\n"
+				<< "}\n"
+				<< "point_light point {\n"
+				<< "position=(1,2,3)\n"
+				<< "radius=2\n"
+				<< "color=(1,1,1)\n"
+				<< "lumens=" << LightUnits::LUMENS_PER_RADIANT_WATT * 4.0 * D_PI * D_PI << "\n"
+				<< "visible=0\n"
+				<< "}\n";
+		}
+
+		Scene scene;
+		SceneFile::read(scene, scenePath.string());
+
+		requireNear(scene.getMetersPerUnit(), 0.5, "Scene meters_per_unit was not parsed.");
+		requireNear(scene.getAtmosphere().getMetersPerUnit(), 0.5, "Scene atmosphere did not inherit meters_per_unit.");
+		require(scene.getHittables().size() == 2, "Meters-per-unit scene did not load both lights.");
+		requireColorNear(scene.getHittables()[0]->getMaterial()->emitted(), Color(1.0, 1.0, 1.0), "Area light power did not use physical square meters.");
+		requireColorNear(scene.getHittables()[1]->getMaterial()->emitted(), Color(1.0, 1.0, 1.0), "Point light lumens did not use physical square meters.");
 
 		std::filesystem::remove(scenePath);
 	}
@@ -2376,6 +2416,8 @@ namespace
 		requireThrows([&]() { scene.setAdaptiveCheckInterval(0); }, "Scene accepted zero adaptive check interval.");
 		requireThrows([&]() { scene.setMaxLightBounces(-1); }, "Scene accepted negative max light bounces.");
 		requireThrows([&]() { scene.setRenderingThreads(0); }, "Scene accepted zero rendering threads.");
+		requireThrows([&]() { scene.setMetersPerUnit(0.0); }, "Scene accepted zero meters per unit.");
+		requireThrows([&]() { scene.setMetersPerUnit(std::numeric_limits<double>::quiet_NaN()); }, "Scene accepted non-finite meters per unit.");
 		requireThrows([&]() { scene.setExposure(std::numeric_limits<double>::quiet_NaN()); }, "Scene accepted non-finite exposure.");
 		requireThrows([&]() { scene.setContrast(-1.0); }, "Scene accepted negative contrast.");
 		requireThrows([&]() { scene.setContrast(std::numeric_limits<double>::quiet_NaN()); }, "Scene accepted non-finite contrast.");
@@ -2399,6 +2441,8 @@ namespace
 		requireThrows([&]() { Atmosphere().setSunRadiance(Color(1.0, std::numeric_limits<double>::quiet_NaN(), 1.0)); }, "Atmosphere accepted non-finite sun radiance.");
 		requireThrows([&]() { Atmosphere().setSunRadianceScale(-1.0); }, "Atmosphere accepted negative sun radiance scale.");
 		requireThrows([&]() { Atmosphere().setSunRadianceScale(std::numeric_limits<double>::quiet_NaN()); }, "Atmosphere accepted non-finite sun radiance scale.");
+		requireThrows([&]() { Atmosphere().setMetersPerUnit(0.0); }, "Atmosphere accepted zero meters per unit.");
+		requireThrows([&]() { Atmosphere().setMetersPerUnit(std::numeric_limits<double>::quiet_NaN()); }, "Atmosphere accepted non-finite meters per unit.");
 		requireThrows([&]() { Atmosphere().setEarthRadius(D_ATMOSPHERE_RADIUS); }, "Atmosphere accepted Earth radius at atmosphere radius.");
 		requireThrows([&]() { Atmosphere().setAtmosphereRadius(D_EARTH_RADIUS); }, "Atmosphere accepted atmosphere radius at Earth radius.");
 		requireThrows([&]() { Atmosphere().setHR(std::numeric_limits<double>::quiet_NaN()); }, "Atmosphere accepted non-finite HR.");
@@ -2512,6 +2556,29 @@ namespace
 		requireNear(emptySample.transmittance.getBlue(), 1.0, "Empty atmosphere segment blue transmittance should be one.");
 	}
 
+	void	testAtmosphereMetersPerUnitPreservesPhysicalScale(void)
+	{
+		const Atmosphere meterAtmosphere(0.0, 1.0, 2.0, 1.0, 1.0, 8, 4, 0.0);
+		Atmosphere scaledAtmosphere(0.0, 1.0, 2.0, 1.0, 1.0, 8, 4, 0.0);
+		scaledAtmosphere.setMetersPerUnit(0.5);
+
+		const Ray meterRay(Vector3(0.0, 0.0, -4.0), Vector3(0.0, 0.0, 1.0));
+		const Ray scaledRay(Vector3(0.0, 0.0, -8.0), Vector3(0.0, 0.0, 1.0));
+		const AtmosphereSample meterSample = meterAtmosphere.sampleSegment(meterRay, 3.0);
+		const AtmosphereSample scaledSample = scaledAtmosphere.sampleSegment(scaledRay, 6.0);
+
+		requireColorNear(scaledSample.inScattering, meterSample.inScattering, "Scaled atmosphere in-scattering");
+		requireColorNear(scaledSample.transmittance, meterSample.transmittance, "Scaled atmosphere transmittance");
+
+		Atmosphere largeUnitAtmosphere(0.0, 1.0, 2.0, 1.0, 1.0, 8, 4, 0.0);
+		largeUnitAtmosphere.setMetersPerUnit(2.0);
+		const Ray largeUnitRay(Vector3(0.0, 0.0, -2.0), Vector3(0.0, 0.0, 1.0));
+		const AtmosphereSample largeUnitSample = largeUnitAtmosphere.sampleSegment(largeUnitRay, T_MAX);
+
+		requireFiniteNonNegativeColor(largeUnitSample.inScattering, "Large-unit atmosphere in-scattering");
+		require(Utilities::luminance(largeUnitSample.inScattering) > 0.0, "Large-unit atmosphere T_MAX overflowed to an empty sample.");
+	}
+
 	void	testAtmospherePrimaryHitCompositesSurface(void)
 	{
 		const Atmosphere atmosphere(0.0, 1.0, 2.0, 1.0, 1.0, 8, 4, 0.0);
@@ -2540,6 +2607,27 @@ namespace
 			|| std::abs(actual.getBlue() - surfaceEmission.getBlue()) > 1e-8,
 			"Atmosphere primary-hit composite returned the bare surface color."
 		);
+
+		Atmosphere scaledAtmosphere(0.0, 1.0, 2.0, 1.0, 1.0, 8, 4, 0.0);
+		Scene scaledScene;
+		scaledScene.setMetersPerUnit(0.5);
+		scaledScene.setRenderSky(SKY_ATMOSPHERE);
+		scaledScene.setAtmosphere(scaledAtmosphere);
+		scaledScene.setMaxLightBounces(0);
+		scaledScene.addHittable(std::make_shared<Sphere>(
+			Vector3(0.0, 0.0, 0.0),
+			2.0,
+			std::make_shared<Emissive>(surfaceEmission)
+		));
+
+		Ray scaledRay(Vector3(0.0, 0.0, -8.0), Vector3(0.0, 0.0, 1.0));
+		const AtmosphereSample scaledAtmosphereSample = scaledScene.getAtmosphere().sampleSegment(scaledRay, 6.0);
+		const Color scaledExpected = scaledAtmosphereSample.inScattering + (scaledAtmosphereSample.transmittance * surfaceEmission);
+		const Color scaledActual = Renderer::internal::_calculateLightRaysColor(scaledRay, scaledScene);
+
+		requireFiniteNonNegativeColor(scaledActual, "Scaled atmosphere primary-hit composite");
+		requireColorNear(scaledActual, scaledExpected, "Scaled atmosphere primary-hit composite");
+		requireColorNear(scaledActual, actual, "Scaled atmosphere primary-hit physical equivalence");
 
 		Scene protrudingScene;
 		protrudingScene.setRenderSky(SKY_ATMOSPHERE);
@@ -2934,6 +3022,7 @@ int	main(void)
 		testSceneFileLoadsTransformedObject();
 		testSceneFileLoadsNamedBlocks();
 		testSceneFilePhysicalLightUnits();
+		testSceneFileMetersPerUnitScalesPhysicalLightArea();
 		testSphereUVProjectionModes();
 		testSphereHitTracksFrontFace();
 		testDielectricUsesExitRefractionRatio();
@@ -2967,6 +3056,7 @@ int	main(void)
 		testPlanetaryHitRobustIntersections();
 		testAtmosphereIncidentLightInsideOutsideAndSunPosition();
 		testAtmosphereSegmentTransmittance();
+		testAtmosphereMetersPerUnitPreservesPhysicalScale();
 		testAtmospherePrimaryHitCompositesSurface();
 		testSceneDefaultsEnableAdaptiveAndDenoise();
 		testRenderedSceneHasBasicVisualStructure();
