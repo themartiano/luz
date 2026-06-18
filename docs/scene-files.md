@@ -529,7 +529,7 @@ Named meshes bind a mesh name to an OBJ file:
 ```text
 [meshes]
 mesh suzanne {
-file=assets/objects/blender_monkey.obj
+file=assets/objects/suzanne.obj
 }
 ```
 

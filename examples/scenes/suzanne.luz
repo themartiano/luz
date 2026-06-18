@@ -5,10 +5,10 @@ maxlightbounces=8
 gamma=1
 bloom=1
 sky=linear
-outputfilename=named_blocks
+outputfilename=suzanne
 
 [materials]
-material monkey_matte {
+material suzanne_matte {
 type=principled
 base_color=srgb(0.55,0.43,0.31)
 metallic=0
@@ -20,7 +20,7 @@ color=srgb(0.62,0.62,0.58)
 }
 
 [meshes]
-mesh monkey {
+mesh suzanne {
 file=suzanne.obj
 }
 
@@ -34,12 +34,12 @@ sensor_height_mm=24
 pinhole=1
 focus_distance=5
 }
-object monkey_body {
-mesh=monkey
+object suzanne {
+mesh=suzanne
 position=(0,1.25,0)
 rotation=(0,20,0)
 scale=(0.008,0.008,0.008)
-material=monkey_matte
+material=suzanne_matte
 }
 area_light key {
 position=(-1.5,4,2)
