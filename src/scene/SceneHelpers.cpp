@@ -17,6 +17,7 @@
 #include "AssetPath.hpp"
 #include "OBJReader.hpp"
 #include "SkyTypes.hpp"
+#include "Defaults.hpp"
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -24,9 +25,25 @@
 
 namespace
 {
+	Camera	pinholeCamera(Vector3 position, Vector3 direction, double focalLengthMeters, double focusDistanceMeters)
+	{
+		Camera camera(
+			position,
+			direction,
+			focalLengthMeters,
+			D_CAMERA_SENSOR_WIDTH_METERS,
+			D_CAMERA_SENSOR_HEIGHT_METERS,
+			D_CAMERA_F_NUMBER,
+			focusDistanceMeters
+		);
+
+		camera.setPinhole(true);
+		return (camera);
+	}
+
 	void	addBenchmarkRoom(Scene& scene)
 	{
-		scene.addCamera(Camera(Vector3(0.0, 2.2, -7.0), Vector3(0.0, -0.18, 1.0), 45.0, 0.0, 8.0));
+		scene.addCamera(pinholeCamera(Vector3(0.0, 2.2, -7.0), Vector3(0.0, -0.18, 1.0), 0.043456, 8.0));
 		scene.addHittable(std::make_shared<Rectangle>(
 			Transform(Vector3(0.0, 0.0, 1.0), Vector3(0.0, 1.0, 0.0), Vector3(1.0, 1.0, 1.0)),
 			12.0,
@@ -210,7 +227,7 @@ namespace
 
 	void	benchmarkPostProcess(Scene& scene)
 	{
-		scene.addCamera(Camera(Vector3(0.0, 1.7, -5.5), Vector3(0.0, -0.12, 1.0), 48.0, 0.0, 6.0));
+		scene.addCamera(pinholeCamera(Vector3(0.0, 1.7, -5.5), Vector3(0.0, -0.12, 1.0), 0.040429, 6.0));
 		scene.addHittable(std::make_shared<Rectangle>(
 			Transform(Vector3(0.0, 0.0, 0.5), Vector3(0.0, 1.0, 0.0), Vector3(1.0, 1.0, 1.0)),
 			8.0,
@@ -227,7 +244,7 @@ namespace
 
 	void	benchmarkAtmosphere(Scene& scene)
 	{
-		scene.addCamera(Camera(Vector3(0.0, 6360120.0, 600.0), Vector3(0.0, 0.0, -1.0), 42.0, 0.0, 200.0));
+		scene.addCamera(pinholeCamera(Vector3(0.0, 6360120.0, 600.0), Vector3(0.0, 0.0, -1.0), 0.046892, 200.0));
 		scene.addHittable(std::make_shared<Rectangle>(
 			Transform(Vector3(0.0, 6360000.0, 0.0), Vector3(0.0, 1.0, 0.0), Vector3(1.0, 1.0, 1.0)),
 			1200.0,
@@ -250,7 +267,7 @@ namespace
 
 	void	benchmarkLights(Scene& scene)
 	{
-		scene.addCamera(Camera(Vector3(0.0, 2.4, -7.3), Vector3(0.0, -0.18, 1.0), 46.0, 0.0, 8.0));
+		scene.addCamera(pinholeCamera(Vector3(0.0, 2.4, -7.3), Vector3(0.0, -0.18, 1.0), 0.042405, 8.0));
 		addBenchmarkBackdrop(scene);
 
 		scene.addHittable(std::make_shared<Rectangle>(
@@ -297,7 +314,7 @@ namespace
 
 	void	benchmarkEmissiveGeometry(Scene& scene)
 	{
-		scene.addCamera(Camera(Vector3(0.0, 2.2, -6.6), Vector3(0.0, -0.16, 1.0), 48.0, 0.0, 7.0));
+		scene.addCamera(pinholeCamera(Vector3(0.0, 2.2, -6.6), Vector3(0.0, -0.16, 1.0), 0.040429, 7.0));
 		addBenchmarkBackdrop(scene);
 
 		const auto meshLight = std::make_shared<Emissive>(Color(1.0, 0.74, 0.38) * 7.5);
@@ -348,7 +365,7 @@ namespace
 
 	void	benchmarkPrimitivesMaterials(Scene& scene)
 	{
-		scene.addCamera(Camera(Vector3(0.0, 2.0, -7.0), Vector3(0.0, -0.12, 1.0), 47.0, 0.08, 7.0));
+		scene.addCamera(Camera(Vector3(0.0, 2.0, -7.0), Vector3(0.0, -0.12, 1.0), 0.041397, D_CAMERA_SENSOR_WIDTH_METERS, D_CAMERA_SENSOR_HEIGHT_METERS, 8.0, 7.0));
 
 		scene.addHittable(std::make_shared<Plane>(
 			0.0,
@@ -401,7 +418,7 @@ namespace
 
 	void	benchmarkVolumes(Scene& scene)
 	{
-		scene.addCamera(Camera(Vector3(0.0, 2.15, -7.2), Vector3(0.0, -0.13, 1.0), 47.0, 0.0, 7.0));
+		scene.addCamera(pinholeCamera(Vector3(0.0, 2.15, -7.2), Vector3(0.0, -0.13, 1.0), 0.041397, 7.0));
 		addBenchmarkBackdrop(scene);
 
 		scene.addHittable(std::make_shared<Rectangle>(
@@ -467,7 +484,7 @@ namespace
 
 	void	benchmarkObjMesh(Scene& scene)
 	{
-		scene.addCamera(Camera(Vector3(0.0, 2.2, -7.2), Vector3(0.0, -0.13, 1.0), 45.0, 0.0, 7.0));
+		scene.addCamera(pinholeCamera(Vector3(0.0, 2.2, -7.2), Vector3(0.0, -0.13, 1.0), 0.043456, 7.0));
 		addBenchmarkBackdrop(scene);
 		scene.addHittable(std::make_shared<Rectangle>(
 			Transform(Vector3(0.0, 5.0, 1.2), Vector3(0.0, -1.0, 0.0), Vector3(1.0, 1.0, 1.0)),
@@ -513,7 +530,7 @@ namespace
 void	SceneHelpers::cornellBox(Scene& scene, bool cubes)
 {
 	// Camera
-	scene.addCamera(Camera(Vector3(0.0, 275.0, -1075.0), Vector3(0.0, 0.0, 1.0), 39.31, 0.0, 20.0));
+	scene.addCamera(pinholeCamera(Vector3(0.0, 275.0, -1075.0), Vector3(0.0, 0.0, 1.0), 0.050397, 20.0));
 
 	// Floor
 	scene.addHittable(std::make_shared<Rectangle>(

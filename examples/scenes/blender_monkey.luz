@@ -28,9 +28,11 @@ file=../../assets/objects/blender_monkey.obj
 camera main {
 position=(0,1.35,5.2)
 direction=(0,-0.05,-1)
-fov=42
-aperture=0
-focusDistance=5
+focal_length_mm=46.892
+sensor_width_mm=36
+sensor_height_mm=24
+pinhole=1
+focus_distance=5
 }
 object monkey_body {
 mesh=monkey

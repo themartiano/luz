@@ -48,7 +48,7 @@ The exporter also works without passing the `.blend` file before `--python`:
 --light-power-scale N         Extra multiplier for exported area/point power. Defaults to 1.0.
 --min-point-light-radius N    Minimum Blender-unit radius for point/spot lights. Defaults to 0.1.
 --sun-power-scale N           Multiplier for exported sun irradiance. Defaults to 1.0.
---camera-aperture N           Override Luz camera aperture.
+--camera-f-stop N             Override exported camera f-number.
 --texture-dir DIR             Texture output directory. Defaults to textures next to the .luz file.
 --texture-max-size N          Maximum exported texture width/height. Defaults to 1024.
 --no-texture-colors           Skip image texture color approximation.
@@ -79,10 +79,13 @@ The exporter also works without passing the `.blend` file before `--python`:
 - The exporter writes `meters_per_unit=1 / --global-scale` so physical light
   power, light area, and atmosphere distances preserve Blender-meter scale even
   when exported coordinates are scaled for Luz.
-- Invalid zero camera focus distances are replaced with a scene-based fallback;
-  DOF aperture is disabled unless Blender provides a valid focus target/distance.
-- Blender f-stop DOF is converted to a Luz world-unit lens diameter from
-  `camera.lens / aperture_fstop`.
+- Invalid zero camera focus distances are replaced with a scene-based fallback.
+- Blender camera lens, sensor size, f-stop, and focus distance are exported as
+  physical Luz camera properties. Focus distance remains in meters even when
+  `--global-scale` changes exported coordinates; Luz converts it through
+  `meters_per_unit` while rendering.
+- Blender cameras with DOF disabled are exported as `pinhole=1`. Cameras with
+  valid DOF export Blender's `aperture_fstop` as `f_stop`.
 - Area lights become `area_light` blocks. Blender's area-light energy is treated
   as total emitted power and written as `power=energy * --light-power-scale`.
   Luz converts power to surface radiance from the exported light area.

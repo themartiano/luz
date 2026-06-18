@@ -186,6 +186,22 @@ namespace
 		);
 	}
 
+	Camera	testPinholeCamera(Vector3 position, Vector3 direction, double focusDistanceMeters)
+	{
+		Camera camera(
+			position,
+			direction,
+			D_CAMERA_FOCAL_LENGTH_METERS,
+			D_CAMERA_SENSOR_WIDTH_METERS,
+			D_CAMERA_SENSOR_HEIGHT_METERS,
+			D_CAMERA_F_NUMBER,
+			focusDistanceMeters
+		);
+
+		camera.setPinhole(true);
+		return (camera);
+	}
+
 	void	configureVisualRenderScene(Scene& scene, std::size_t width, std::size_t height)
 	{
 		scene.getImage()->setWidth(width);
@@ -202,7 +218,7 @@ namespace
 		scene.setBackgroundColor(Color(0.02, 0.04, 0.08));
 		scene.setRenderingThreads(1);
 		scene.setBenchmarkMode(true);
-		scene.addCamera(Camera(Vector3(0.0, 0.0, 0.0), Vector3(0.0, 0.0, -1.0), 20, 0.0, 1.0));
+		scene.addCamera(testPinholeCamera(Vector3(0.0, 0.0, 0.0), Vector3(0.0, 0.0, -1.0), 1.0));
 		scene.addHittable(std::make_shared<Sphere>(
 			Vector3(0.0, 0.0, -1.0),
 			0.11,
@@ -886,7 +902,15 @@ namespace
 				<< "[settings]\n"
 				<< "resolution=2,2\n\n"
 				<< "[scene]\n"
-				<< "camera=(0,0,1),(0,0,-1),45,0,1\n"
+				<< "camera main {\n"
+				<< "position=(0,0,1)\n"
+				<< "direction=(0,0,-1)\n"
+				<< "focal_length_mm=50\n"
+				<< "sensor_width_mm=36\n"
+				<< "sensor_height_mm=20.25\n"
+				<< "pinhole=1\n"
+				<< "focus_distance=1\n"
+				<< "}\n"
 				<< "objects{\n"
 				<< "sphere=(0,0,-1),0.5,material[\n"
 				<< "emissive=(1.0,1.0,1.0),4.0\n"
@@ -1067,9 +1091,10 @@ namespace
 				<< "camera main {\n"
 				<< "position=(0,0,1)\n"
 				<< "direction=(0,0,-1)\n"
-				<< "fov=45\n"
-				<< "aperture=0\n"
-				<< "focusDistance=1\n"
+				<< "focal_length_mm=50\n"
+				<< "sensor_width_mm=36\n"
+				<< "sensor_height_mm=20.25\n"
+				<< "focus_distance=1\n"
 				<< "f_stop=4\n"
 				<< "shutter=1\n"
 				<< "iso=100\n"
@@ -1350,21 +1375,62 @@ namespace
 		std::filesystem::remove(environmentPath);
 	}
 
-	void	testSceneFileLegacyCameraPreservesDecimalFOV(void)
+	void	testSceneFileLoadsPhysicalCamera(void)
 	{
-		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_legacy_camera_fov_test.luz";
+		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_physical_camera_test.luz";
 		{
 			std::ofstream sceneStream(scenePath);
 			sceneStream
+				<< "[settings]\n"
+				<< "meters_per_unit=0.01\n\n"
 				<< "[scene]\n"
-				<< "camera=(0,0,1),(0,0,-1),35.489342,0,1\n\n";
+				<< "camera main {\n"
+				<< "position=(0,0,100)\n"
+				<< "direction=(0,0,-1)\n"
+				<< "focal_length_mm=50\n"
+				<< "sensor_width_mm=36\n"
+				<< "sensor_height_mm=24\n"
+				<< "f_stop=5\n"
+				<< "focus_distance=2\n"
+				<< "}\n";
 		}
 
 		Scene scene;
 		SceneFile::read(scene, scenePath.string());
 
-		require(scene.hasCamera(), "Legacy camera scene did not load a camera.");
-		requireNear(scene.getActiveCamera().getFOV(), 35.489342, "Legacy camera FOV lost decimal precision.");
+		require(scene.hasCamera(), "Physical camera scene did not load a camera.");
+		const Camera camera = scene.getActiveCamera();
+		requireNear(camera.getFocalLengthMeters(), 0.05, "Camera focal length was not parsed as meters.");
+		requireNear(camera.getSensorWidthMeters(), 0.036, "Camera sensor width was not parsed as meters.");
+		requireNear(camera.getSensorHeightMeters(), 0.024, "Camera sensor height was not parsed as meters.");
+		requireNear(camera.getFNumber(), 5.0, "Camera f-stop was not parsed.");
+		requireNear(camera.getFocusDistanceMeters(), 2.0, "Camera focus distance was not parsed as meters.");
+
+		Renderer::internal::RenderCamera renderCamera = Renderer::internal::_prepareRenderCamera(scene);
+		requireNear(renderCamera.lensRadius, 0.5, "Camera lens radius did not convert through meters_per_unit.");
+		requireNear(Utilities::vectorLength(renderCamera.horizontal), 144.0, "Camera sensor width did not project through physical focal length.");
+
+		std::filesystem::remove(scenePath);
+	}
+
+	void	testSceneFileRejectsCompactCameraSyntax(void)
+	{
+		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_compact_camera_rejected_test.luz";
+		{
+			std::ofstream sceneStream(scenePath);
+			sceneStream
+				<< "[scene]\n"
+				<< "camera=(0,0,1),(0,0,-1),45,0,1\n\n";
+		}
+
+		Scene scene;
+		requireThrows(
+			[&scene, &scenePath]()
+			{
+				SceneFile::read(scene, scenePath.string());
+			},
+			"Scene file accepted compact camera syntax."
+		);
 
 		std::filesystem::remove(scenePath);
 	}
@@ -1393,9 +1459,11 @@ namespace
 				<< "camera main {\n"
 				<< "position=(0,0,5)\n"
 				<< "direction=(0,0,-1)\n"
-				<< "fov=45\n"
-				<< "aperture=0\n"
-				<< "focusDistance=5\n"
+				<< "focal_length_mm=50\n"
+				<< "sensor_width_mm=36\n"
+				<< "sensor_height_mm=20.25\n"
+				<< "pinhole=1\n"
+				<< "focus_distance=5\n"
 				<< "}\n"
 				<< "object triangle {\n"
 				<< "mesh=triangle_mesh\n"
@@ -1486,9 +1554,11 @@ namespace
 				<< "position=(0,0,5)\n"
 				<< "direction=(0,0,-1)\n"
 				<< "up=(0,1,0)\n"
-				<< "fov=45\n"
-				<< "aperture=0\n"
-				<< "focusDistance=5\n"
+				<< "focal_length_mm=50\n"
+				<< "sensor_width_mm=36\n"
+				<< "sensor_height_mm=20.25\n"
+				<< "pinhole=1\n"
+				<< "focus_distance=5\n"
 				<< "}\n"
 				<< "object triangle {\n"
 				<< "mesh=triangle_mesh\n"
@@ -2014,7 +2084,15 @@ namespace
 				<< "texture=" << texturePath.filename().string() << "\n"
 				<< "}\n\n"
 				<< "[scene]\n"
-				<< "camera=(1,2,10),(0,0,-1),45,0,7\n"
+				<< "camera main {\n"
+				<< "position=(1,2,10)\n"
+				<< "direction=(0,0,-1)\n"
+				<< "focal_length_mm=50\n"
+				<< "sensor_width_mm=36\n"
+				<< "sensor_height_mm=20.25\n"
+				<< "pinhole=1\n"
+				<< "focus_distance=7\n"
+				<< "}\n"
 				<< "sphere earth {\n"
 				<< "position=(1,2,3)\n"
 				<< "radius=4\n"
@@ -2063,9 +2141,11 @@ namespace
 				<< "camera main {\n"
 				<< "position=(0,0,8)\n"
 				<< "direction=(0,0,-1)\n"
-				<< "fov=45\n"
-				<< "aperture=0\n"
-				<< "focusDistance=8\n"
+				<< "focal_length_mm=50\n"
+				<< "sensor_width_mm=36\n"
+				<< "sensor_height_mm=20.25\n"
+				<< "pinhole=1\n"
+				<< "focus_distance=8\n"
 				<< "}\n"
 				<< "volume mist {\n"
 				<< "shape=sphere\n"
@@ -2158,9 +2238,11 @@ namespace
 				<< "camera main {\n"
 				<< "position=(0,0,3)\n"
 				<< "direction=(0,0,-1)\n"
-				<< "fov=45\n"
-				<< "aperture=0\n"
-				<< "focusDistance=3\n"
+				<< "focal_length_mm=50\n"
+				<< "sensor_width_mm=36\n"
+				<< "sensor_height_mm=20.25\n"
+				<< "pinhole=1\n"
+				<< "focus_distance=3\n"
 				<< "}\n"
 				<< "object triangle {\n"
 				<< "mesh=triangle_mesh\n"
@@ -2190,7 +2272,15 @@ namespace
 				<< "[settings]\n"
 				<< "resolution=2,2\n\n"
 				<< "[scene]\n"
-				<< "camera=(0,0,1),(0,0,-1),45,0,1\n"
+				<< "camera main {\n"
+				<< "position=(0,0,1)\n"
+				<< "direction=(0,0,-1)\n"
+				<< "focal_length_mm=50\n"
+				<< "sensor_width_mm=36\n"
+				<< "sensor_height_mm=20.25\n"
+				<< "pinhole=1\n"
+				<< "focus_distance=1\n"
+				<< "}\n"
 				<< "objects{\n"
 				<< "sphere=(0,0,-1),0.5,material[\n"
 				<< "plastic=(1.0,1.0,1.0)\n"
@@ -2414,7 +2504,15 @@ namespace
 				<< "file=" << objectPath.filename().string() << "\n"
 				<< "}\n\n"
 				<< "[scene]\n"
-				<< "camera=(0,0,2),(0,0,-1),45,0,2\n"
+				<< "camera main {\n"
+				<< "position=(0,0,2)\n"
+				<< "direction=(0,0,-1)\n"
+				<< "focal_length_mm=50\n"
+				<< "sensor_width_mm=36\n"
+				<< "sensor_height_mm=20.25\n"
+				<< "pinhole=1\n"
+				<< "focus_distance=2\n"
+				<< "}\n"
 				<< "object triangle {\n"
 				<< "mesh=triangle_mesh\n"
 				<< "position=(0,0,0)\n"
@@ -3247,7 +3345,7 @@ namespace
 		scene.setRenderSky(SKY_NONE);
 		scene.setBackgroundColor(Color(0.1, 0.2, 0.3));
 		scene.setRenderingThreads(1);
-		scene.addCamera(Camera(Vector3(0.0, 0.0, 1.0), Vector3(0.0, 0.0, -1.0), 45, 0.0, 1.0));
+		scene.addCamera(testPinholeCamera(Vector3(0.0, 0.0, 1.0), Vector3(0.0, 0.0, -1.0), 1.0));
 		scene.addHittable(std::make_shared<Sphere>(
 			Vector3(0.0, 0.0, -1.0),
 			0.5,
@@ -3287,7 +3385,7 @@ namespace
 		scene.setEnvironmentMap(std::make_shared<EnvironmentMap>(EnvironmentMap::load(environmentPath.string())));
 		scene.setEnvironmentStrength(1.5);
 		scene.setRenderingThreads(1);
-		scene.addCamera(Camera(Vector3(0.0, 0.0, 1.0), Vector3(0.0, 0.0, -1.0), 45, 0.0, 1.0));
+		scene.addCamera(testPinholeCamera(Vector3(0.0, 0.0, 1.0), Vector3(0.0, 0.0, -1.0), 1.0));
 
 		require(Renderer::render(scene), "Environment background render failed.");
 		for (std::size_t y = 0; y < scene.getImage()->getHeight(); y++)
@@ -3325,7 +3423,7 @@ namespace
 		scene.setRenderSky(SKY_NONE);
 		scene.setBackgroundColor(Color(0.1, 0.2, 0.3));
 		scene.setRenderingThreads(1);
-		scene.addCamera(Camera(Vector3(0.0, 0.0, 1.0), Vector3(0.0, 0.0, -1.0), 45, 0.0, 1.0));
+		scene.addCamera(testPinholeCamera(Vector3(0.0, 0.0, 1.0), Vector3(0.0, 0.0, -1.0), 1.0));
 
 		require(Renderer::render(scene), "Tiny adaptive render failed.");
 		for (std::size_t y = 0; y < scene.getImage()->getHeight(); y++)
@@ -3360,7 +3458,7 @@ namespace
 		scene.setRenderSky(SKY_NONE);
 		scene.setBackgroundColor(Color(0.1, 0.2, 0.3));
 		scene.setRenderingThreads(1);
-		scene.addCamera(Camera(Vector3(0.0, 0.0, 1.0), Vector3(0.0, 0.0, -1.0), 45, 0.0, 1.0));
+		scene.addCamera(testPinholeCamera(Vector3(0.0, 0.0, 1.0), Vector3(0.0, 0.0, -1.0), 1.0));
 
 		require(Renderer::render(scene), "Tiny adaptive denoised render failed.");
 		require(scene.hasDenoisedImage(), "Adaptive denoised render did not create a companion image.");
@@ -3386,7 +3484,7 @@ namespace
 		scene.setRenderSky(SKY_NONE);
 		scene.setBackgroundColor(Color(0.1, 0.2, 0.3));
 		scene.setRenderingThreads(1);
-		scene.addCamera(Camera(Vector3(0.0, 0.0, 1.0), Vector3(0.0, 0.0, -1.0), 45, 0.0, 1.0));
+		scene.addCamera(testPinholeCamera(Vector3(0.0, 0.0, 1.0), Vector3(0.0, 0.0, -1.0), 1.0));
 
 		require(Renderer::render(scene), "Tiny denoised render failed.");
 		require(scene.hasDenoisedImage(), "Denoised render did not create a companion image.");
@@ -3398,37 +3496,16 @@ namespace
 		require(std::abs(denoisedPixel.getRed() - 0.1) < 0.02, "Denoised companion image value drifted too far.");
 	}
 
-	void	testZeroFocusDistanceRender(void)
+	void	testCameraRejectsInvalidPhysicalOptics(void)
 	{
-		setRandomSeed(42);
+		Camera camera;
 
-		Scene scene;
-		scene.getImage()->setWidth(2);
-		scene.getImage()->setHeight(2);
-		scene.getImage()->initialize();
-		scene.setSampleCount(1);
-		scene.setAdaptiveSampling(false);
-		scene.setMaxLightBounces(1);
-		scene.setGammaCorrected(false);
-		scene.setToneMapped(false);
-		scene.setBloom(false);
-		scene.setDenoise(false);
-		scene.setRenderSky(SKY_NONE);
-		scene.setBackgroundColor(Color(0.1, 0.2, 0.3));
-		scene.setRenderingThreads(1);
-		scene.addCamera(Camera(Vector3(0.0, 0.0, 1.0), Vector3(0.0, 0.0, -1.0), 45, 3.0, 0.0));
-
-		require(Renderer::render(scene), "Zero-focus render failed.");
-		for (std::size_t y = 0; y < scene.getImage()->getHeight(); y++)
-		{
-			for (std::size_t x = 0; x < scene.getImage()->getWidth(); x++)
-			{
-				const Color pixel = scene.getImage()->getPixel(x, y);
-				require(std::isfinite(pixel.getRed()), "Zero-focus render produced non-finite red value.");
-				require(std::isfinite(pixel.getGreen()), "Zero-focus render produced non-finite green value.");
-				require(std::isfinite(pixel.getBlue()), "Zero-focus render produced non-finite blue value.");
-			}
-		}
+		requireThrows([&]() { camera.setFocalLengthMeters(0.0); }, "Camera accepted zero focal length.");
+		requireThrows([&]() { camera.setSensorWidthMeters(0.0); }, "Camera accepted zero sensor width.");
+		requireThrows([&]() { camera.setSensorHeightMeters(0.0); }, "Camera accepted zero sensor height.");
+		requireThrows([&]() { camera.setFNumber(0.0); }, "Camera accepted zero f-number.");
+		requireThrows([&]() { camera.setApertureDiameterMeters(0.0); }, "Camera accepted zero aperture diameter.");
+		requireThrows([&]() { camera.setFocusDistanceMeters(0.0); }, "Camera accepted zero focus distance.");
 	}
 }
 
@@ -3469,7 +3546,8 @@ int	main(void)
 		testEnvironmentMapLoadsHDR();
 		testEnvironmentMapLoadsRLEHDR();
 		testSceneFileEnvironmentSetting();
-		testSceneFileLegacyCameraPreservesDecimalFOV();
+		testSceneFileLoadsPhysicalCamera();
+		testSceneFileRejectsCompactCameraSyntax();
 		testSceneFileLoadsRelativeObject();
 		testSceneFileLoadsTransformedObject();
 		testSceneFileLoadsNamedBlocks();
@@ -3526,7 +3604,7 @@ int	main(void)
 		testTinyAdaptiveRender();
 		testTinyAdaptiveDenoisedRender();
 		testTinyDenoisedRenderProducesCompanionImage();
-		testZeroFocusDistanceRender();
+		testCameraRejectsInvalidPhysicalOptics();
 		testEnvironmentBackgroundRender();
 	}
 	catch (const std::exception& exception)

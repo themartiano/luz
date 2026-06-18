@@ -23,7 +23,15 @@ texture=../textures/earth_diff_jpg.ppm
 }
 
 [scene]
-camera=(10260604,0,-28190779),(-0.3420201,0,0.9396926),30,0,30000000
+camera main {
+position=(10260604,0,-28190779)
+direction=(-0.3420201,0,0.9396926)
+focal_length_mm=67.177
+sensor_width_mm=36
+sensor_height_mm=36
+pinhole=1
+focus_distance=30000000
+}
 directional_light sun {
 direction=(-0.9659258,0.0,0.2588190)
 solar=1

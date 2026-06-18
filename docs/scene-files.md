@@ -1,6 +1,6 @@
 # Luz Scene Files
 
-Luz scene files use a small line-oriented format. Classic scenes can use only
+Luz scene files use a small line-oriented format. Simple scenes can use only
 `[settings]` and `[scene]`:
 
 ```text
@@ -8,7 +8,15 @@ Luz scene files use a small line-oriented format. Classic scenes can use only
 key=value
 
 [scene]
-camera=(x,y,z),(dx,dy,dz),fov,aperture,focusDistance
+camera main {
+position=(x,y,z)
+direction=(dx,dy,dz)
+focal_length_mm=50
+sensor_width_mm=36
+sensor_height_mm=24
+pinhole=1
+focus_distance=4
+}
 objects{
 object=...
 }
@@ -87,29 +95,45 @@ MIS, which reduces noise with bright HDR maps.
 
 ## Scene
 
-Each scene needs at least one camera:
+Each scene needs at least one named camera block:
 
 ```text
-camera=(x,y,z),(dx,dy,dz),fov,aperture,focusDistance
+camera main {
+position=(x,y,z)
+direction=(dx,dy,dz)
+focal_length_mm=50
+sensor_width_mm=36
+sensor_height_mm=24
+f_stop=8
+focus_distance=4
+}
 ```
 
-The first vector is the camera position. The second vector is the camera direction.
-The `fov` value is horizontal FOV. The `aperture` value is a lens diameter in
-Luz world units; use `0` to disable depth of field.
-
-Named camera blocks also support an optional `up` vector:
+Camera position is in Luz world coordinates. Physical lens and focus quantities
+are in meters, or in millimeters for fields ending in `_mm`. At render time Luz
+converts `focus_distance` and lens aperture through `meters_per_unit`, so the
+same camera behaves consistently when exported coordinates are scaled. Sensor
+width and height define the captured gate; keep the sensor aspect ratio aligned
+with the image resolution for square-pixel framing.
 
 | Camera Property | Format | Notes |
 | --- | --- | --- |
 | `position` | `position=(x,y,z)` | Camera origin in Luz world space. |
 | `direction` | `direction=(x,y,z)` | Look direction. It does not need to be normalized. |
 | `up` | `up=(x,y,z)` | Image-up direction used to preserve camera roll. Defaults to `(0,1,0)`. |
-| `fov` | `fov=DEGREES` | Horizontal field of view. |
-| `aperture` | `aperture=DIAMETER` | Lens diameter in Luz world units. |
-| `focusDistance` | `focusDistance=DISTANCE` | Distance to the focal plane along the camera direction. |
-| `f_stop` | `f_stop=N` | Optional photographic f-number. Requires `shutter` and `iso`, then sets scene exposure from camera controls. Aliases: `fstop`, `f_number`, `fnumber`. |
-| `shutter` | `shutter=SECONDS` | Optional photographic shutter time in seconds. Requires `f_stop` and `iso`. Aliases: `shutter_seconds`, `shutter_speed`. |
-| `iso` | `iso=N` | Optional photographic ISO speed. Requires `f_stop` and `shutter`. |
+| `focal_length` | `focal_length=METERS` | Physical lens focal length. Defaults to `0.050`. |
+| `focal_length_mm` | `focal_length_mm=MM` | Millimeter form of `focal_length`; common for camera authoring. |
+| `sensor_width` | `sensor_width=METERS` | Physical sensor/gate width. Defaults to `0.036`. |
+| `sensor_width_mm` | `sensor_width_mm=MM` | Millimeter form of `sensor_width`. |
+| `sensor_height` | `sensor_height=METERS` | Physical sensor/gate height. Defaults to `0.02025`. |
+| `sensor_height_mm` | `sensor_height_mm=MM` | Millimeter form of `sensor_height`. |
+| `f_stop` | `f_stop=N` | Lens f-number. Sets aperture diameter to `focal_length / f_stop`. If `shutter` and `iso` are present, also sets scene exposure from camera controls. Aliases: `fstop`, `f_number`, `fnumber`. |
+| `aperture_diameter` | `aperture_diameter=METERS` | Alternative to `f_stop`; Luz derives f-number from focal length. Do not combine with `f_stop`. |
+| `aperture_diameter_mm` | `aperture_diameter_mm=MM` | Millimeter form of `aperture_diameter`. |
+| `pinhole` | `pinhole=0` or `pinhole=1` | Disables thin-lens depth of field when set to `1`. |
+| `focus_distance` | `focus_distance=METERS` | Physical distance to the focal plane along the camera direction. Defaults to `10`. |
+| `shutter` | `shutter=SECONDS` | Optional photographic shutter time in seconds. Requires `iso`; uses the camera f-number for exposure. Aliases: `shutter_seconds`, `shutter_speed`. |
+| `iso` | `iso=N` | Optional photographic ISO speed. Requires `shutter`. |
 
 Objects are placed inside an `objects{` block:
 
@@ -144,9 +168,11 @@ camera main {
 position=(6.2,3.8,8.2)
 direction=(-6.2,-1.54,-8.2)
 up=(0,1,0)
-fov=46
-aperture=0.04
-focusDistance=10.5
+focal_length_mm=42.405
+sensor_width_mm=36
+sensor_height_mm=20.25
+f_stop=2.8
+focus_distance=10.5
 }
 object helmet {
 mesh=helmet_mesh
@@ -446,7 +472,15 @@ gamma=1
 sky=linear
 
 [scene]
-camera=(0,1,4),(0,0,-1),60,0,4
+camera main {
+position=(0,1,4)
+direction=(0,0,-1)
+focal_length_mm=31.177
+sensor_width_mm=36
+sensor_height_mm=36
+pinhole=1
+focus_distance=4
+}
 objects{
 sphere=(0,0,-1),1,material[
 lambertian=(0.8,0.2,0.2)

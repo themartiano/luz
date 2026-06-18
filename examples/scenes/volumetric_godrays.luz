@@ -22,9 +22,11 @@ camera main {
 position=(0,2.0,-8.6)
 direction=(0,-0.06,1)
 up=(0,1,0)
-fov=46
-aperture=0.02
-focusDistance=8.4
+focal_length_mm=42.405
+sensor_width_mm=36
+sensor_height_mm=20.25
+f_stop=2.12
+focus_distance=8.4
 }
 directional_light low_sun {
 direction=(0.16,-0.14,-1.0)

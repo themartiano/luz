@@ -9,7 +9,15 @@ meters_per_unit=0.01
 #outputfilename=cornellBox
 
 [scene]
-camera=(0,275,-1075),(0,0,1),39.31,0,20
+camera main {
+position=(0,275,-1075)
+direction=(0,0,1)
+focal_length_mm=50.397
+sensor_width_mm=36
+sensor_height_mm=36
+pinhole=1
+focus_distance=10.75
+}
 objects{
 # Floor
 rectangle=(0,0,0),(0,1,0),550,560,material[

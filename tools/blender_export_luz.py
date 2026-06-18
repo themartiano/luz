@@ -59,9 +59,12 @@ class LuzCamera:
 	position: Vector
 	direction: Vector
 	up: Vector
-	fov: float
-	aperture: float
-	focus_distance: float
+	focal_length_mm: float
+	sensor_width_mm: float
+	sensor_height_mm: float
+	f_stop: float
+	pinhole: bool
+	focus_distance_meters: float
 
 
 @dataclass
@@ -137,7 +140,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 	parser.add_argument("--light-power-scale", type=float, default=1.0, help="Additional multiplier for exported area and point light power.")
 	parser.add_argument("--min-point-light-radius", type=float, default=0.1, help="Minimum Blender-unit radius for point and spot lights. Defaults to 0.1.")
 	parser.add_argument("--sun-power-scale", type=float, default=1.0, help="Multiplier from Blender sun energy to Luz directional irradiance.")
-	parser.add_argument("--camera-aperture", type=float, help="Override Luz camera lens diameter in world units.")
+	parser.add_argument("--camera-f-stop", type=float, help="Override exported camera f-number.")
 	parser.add_argument("--default-focus-distance", type=float, default=10.0, help="Fallback focus distance in Blender units.")
 	parser.add_argument("--no-texture-colors", action="store_false", dest="sample_texture_colors", help="Skip image texture color approximation.")
 	parser.add_argument("--texture-sample-size", type=int, default=64, help="Temporary texture thumbnail size used for image color averaging. Defaults to 64.")
@@ -149,6 +152,8 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 		parser.error("--global-scale must be a finite positive value.")
 	if not math.isfinite(args.min_point_light_radius) or args.min_point_light_radius < 0.0:
 		parser.error("--min-point-light-radius must be a finite non-negative value.")
+	if args.camera_f_stop is not None and (not math.isfinite(args.camera_f_stop) or args.camera_f_stop <= 0.0):
+		parser.error("--camera-f-stop must be a finite positive value.")
 	return args
 
 
@@ -1211,44 +1216,47 @@ def export_camera(args: argparse.Namespace, bounds: Bounds) -> LuzCamera:
 		position = blender_point_to_luz(camera_object.matrix_world.translation, args.global_scale)
 		direction = blender_vector_to_luz(camera_object.matrix_world.to_quaternion() @ Vector((0.0, 0.0, -1.0)))
 		up = blender_vector_to_luz(camera_object.matrix_world.to_quaternion() @ Vector((0.0, 1.0, 0.0)))
-		fov = math.degrees(camera_data.angle_x)
+		focal_length_mm = max(float(getattr(camera_data, "lens", 50.0)), 1e-6)
+		sensor_width_mm = max(float(getattr(camera_data, "sensor_width", 36.0)), 1e-6)
+		sensor_height_mm = max(float(getattr(camera_data, "sensor_height", 20.25)), 1e-6)
 
 		use_dof = getattr(camera_data.dof, "use_dof", False)
-		focus_distance = float(args.default_focus_distance) * args.global_scale
+		focus_distance_meters = float(args.default_focus_distance)
 		has_valid_blender_focus = False
 		if use_dof:
 			focus_object = getattr(camera_data.dof, "focus_object", None)
 			if focus_object:
-				focus_position = blender_point_to_luz(focus_object.matrix_world.translation, args.global_scale)
-				focus_distance = (focus_position - position).length
-				has_valid_blender_focus = focus_distance > 1e-6
+				focus_distance_meters = (focus_object.matrix_world.translation - camera_object.matrix_world.translation).length
+				has_valid_blender_focus = focus_distance_meters > 1e-6
 			else:
-				focus_distance = float(camera_data.dof.focus_distance) * args.global_scale
-				has_valid_blender_focus = focus_distance > 1e-6
+				focus_distance_meters = float(camera_data.dof.focus_distance)
+				has_valid_blender_focus = focus_distance_meters > 1e-6
 
-		if focus_distance <= 1e-6:
+		if focus_distance_meters <= 1e-6:
 			center_distance = (bounds.center() - position).dot(direction)
 			if center_distance > 1e-6:
-				focus_distance = center_distance
+				focus_distance_meters = center_distance / args.global_scale
 			else:
-				focus_distance = max(float(args.default_focus_distance) * args.global_scale, 1.0)
+				focus_distance_meters = max(float(args.default_focus_distance), 1.0)
 
-		if args.camera_aperture is not None:
-			aperture = args.camera_aperture
+		if args.camera_f_stop is not None:
+			f_stop = args.camera_f_stop
+			pinhole = False
 		elif use_dof and has_valid_blender_focus and getattr(camera_data.dof, "aperture_fstop", 0.0) > 0.0:
-			aperture = (float(camera_data.lens) / 1000.0) / float(camera_data.dof.aperture_fstop)
-			aperture *= args.global_scale
+			f_stop = float(camera_data.dof.aperture_fstop)
+			pinhole = False
 		else:
-			aperture = 0.0
+			f_stop = 8.0
+			pinhole = True
 
-		return LuzCamera("main", position, direction, up, fov, aperture, focus_distance)
+		return LuzCamera("main", position, direction, up, focal_length_mm, sensor_width_mm, sensor_height_mm, f_stop, pinhole, focus_distance_meters)
 
 	center = bounds.center()
 	radius = bounds.radius()
 	position = Vector((center.x, center.y + radius * 0.25, center.z + radius * 3.0))
 	direction = center - position
-	focus_distance = max(direction.length, 1.0)
-	return LuzCamera("main", position, direction.normalized(), Vector((0.0, 1.0, 0.0)), 50.0, 0.0, focus_distance)
+	focus_distance_meters = max(direction.length / args.global_scale, 1.0)
+	return LuzCamera("main", position, direction.normalized(), Vector((0.0, 1.0, 0.0)), 50.0, 36.0, 20.25, 8.0, True, focus_distance_meters)
 
 
 def light_color(light_data: object) -> tuple[float, float, float]:
@@ -1660,9 +1668,12 @@ def write_luz_scene(
 			f"position={fmt_vector(camera.position)}",
 			f"direction={fmt_vector(camera.direction)}",
 			f"up={fmt_vector(camera.up)}",
-			f"fov={fmt_float(camera.fov)}",
-			f"aperture={fmt_float(camera.aperture)}",
-			f"focusDistance={fmt_float(camera.focus_distance)}",
+			f"focal_length_mm={fmt_float(camera.focal_length_mm)}",
+			f"sensor_width_mm={fmt_float(camera.sensor_width_mm)}",
+			f"sensor_height_mm={fmt_float(camera.sensor_height_mm)}",
+			f"f_stop={fmt_float(camera.f_stop)}",
+			f"pinhole={1 if camera.pinhole else 0}",
+			f"focus_distance={fmt_float(camera.focus_distance_meters)}",
 			"}",
 		]
 	)
