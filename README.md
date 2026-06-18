@@ -254,7 +254,7 @@ docker/            Benchmark container
 
 <img src="./docs/images/stormtroopers.jpg" />
 <img src="./docs/images/cornell.jpg" />
-<img src="./docs/images/atmosphere-from-space.jpg" />
+<img src="./docs/images/earth-atmosphere-and-moon.jpg" />
 
 ## Personal Note
 

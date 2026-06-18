@@ -1,0 +1,38 @@
+[settings]
+resolution=500,500
+samples=64
+maxlightbounces=0
+gamma=1
+tonemapping=1
+bloom=0
+sky=atmosphere
+# The first atmosphere value is a fallback only; directional_light sun drives atmosphere direction and radiance.
+atmosphere=0.30,6360000.0,6420000.0,7994.0,1200.0,16,8,0.0
+distanceblueness=0
+
+[materials]
+material default_obj {
+type=principled
+base_color=(1,1,1)
+metallic=0
+roughness=0.89999998
+alpha=1
+transmission=0
+emission=(1,1,1)
+emissionStrength=0
+texture=../textures/earth_diff_jpg.ppm
+}
+
+[scene]
+camera=(10260604,0,-28190779),(-0.3420201,0,0.9396926),30,0,30000000
+directional_light sun {
+direction=(-0.9659258,0.0,0.2588190)
+color=(1.0,0.95,0.8)
+intensity=2.5
+}
+objects{
+# Moon: real mean radius 1,737.4 km, center placed 384,400 km from Earth.
+sphere=(-35981830,63512260,377405433),1737400,material[
+lambertian=(0.86,0.86,0.82)
+]
+}
