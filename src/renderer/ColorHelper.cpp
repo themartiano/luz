@@ -356,6 +356,36 @@ namespace
 		return (true);
 	}
 
+	Color	mediumTransmittance(const ScatterRecord& scatterRecord, double distanceMeters)
+	{
+		if (!scatterRecord.hasMediumAbsorption || !std::isfinite(distanceMeters) || distanceMeters <= 0.0)
+		{
+			return (Color(1.0, 1.0, 1.0));
+		}
+
+		return (Color(
+			std::exp(-scatterRecord.mediumAbsorptionCoefficient.getRed() * distanceMeters),
+			std::exp(-scatterRecord.mediumAbsorptionCoefficient.getGreen() * distanceMeters),
+			std::exp(-scatterRecord.mediumAbsorptionCoefficient.getBlue() * distanceMeters)
+		));
+	}
+
+	Color	effectiveScatterAttenuation(
+		Scene& scene,
+		const HitRecord& hitRecord,
+		const ScatterRecord& scatterRecord
+	)
+	{
+		if (hitRecord.frontFace)
+		{
+			return (scatterRecord.attenuation);
+		}
+		return (
+			scatterRecord.attenuation
+			* mediumTransmittance(scatterRecord, scene.sceneUnitsToMeters(hitRecord.t0))
+		);
+	}
+
 	double	normalizedColorChannel(double value)
 	{
 		if (!std::isfinite(value) || value <= 0.0)
@@ -773,10 +803,11 @@ namespace
 
 				return (accumulatedColor + clampRayColor((throughput * emitted) * emissionMISWeight));
 			}
+			const Color attenuation = effectiveScatterAttenuation(scene, hitRecord, scatterRecord);
 
 			if (scatterRecord.isSpecular)
 			{
-				throughput = clampRayColor(throughput * scatterRecord.attenuation);
+				throughput = clampRayColor(throughput * attenuation);
 				if (isTerminatedThroughput(throughput) || !applyRussianRoulette(throughput, bounces))
 				{
 					return (accumulatedColor);
@@ -788,7 +819,7 @@ namespace
 			}
 
 			accumulatedColor += throughput * emitted;
-			if (isTerminatedThroughput(throughput * scatterRecord.attenuation))
+			if (isTerminatedThroughput(throughput * attenuation))
 			{
 				return (accumulatedColor);
 			}
@@ -827,7 +858,7 @@ namespace
 			}
 
 			throughput = clampRayColor(
-				throughput * scatterRecord.attenuation
+				throughput * attenuation
 			);
 			if (isTerminatedThroughput(throughput) || !applyRussianRoulette(throughput, bounces))
 			{

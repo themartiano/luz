@@ -329,6 +329,15 @@ should write emissive Blender materials as `type=emissive`; metallic materials
 become `metal`, transmissive or alpha-blended materials become `dielectric`, and
 the rest use Luz's rough plastic/specular `principled` approximation.
 
+Dielectric material property blocks support physical glass controls:
+
+| Property | Meaning |
+| --- | --- |
+| `ior=F` | Refractive index. Defaults to ordinary glass. Alias: `refractive_index`. |
+| `absorption=(r,g,b)` | Beer-Lambert absorption coefficient in `1/m`, applied by physical path length inside the medium. Aliases: `absorption_coefficient`, `sigma_a`. |
+| `transmittance=COLOR` | Alternative to `absorption`: desired medium transmittance over `attenuation_distance`. Aliases: `transmittance_color`, `attenuation`, `attenuation_color`. |
+| `attenuation_distance=F` | Distance in meters used with `transmittance`. Defaults to `1.0`. Alias: `absorption_distance`. |
+
 `type=isotropic` and `type=phase`/`type=henyey_greenstein` are intended for
 volume blocks. A positive Henyey-Greenstein anisotropy favors forward scattering,
 which is the useful control for fog shafts and godrays.

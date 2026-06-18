@@ -8,6 +8,7 @@
 #include "Materials/HenyeyGreenstein.hpp"
 #include "Texture.hpp"
 #include "LightUnits.hpp"
+#include "RefractiveIndexes.hpp"
 #include "Utilities.hpp"
 #include <fstream>
 #include <optional>
@@ -26,10 +27,15 @@ namespace
 		double		roughness = 0.0;
 		double		metallic = 0.0;
 		double		transmission = 0.0;
+		double		refractiveIndex = RI_GLASS;
 		double		alpha = 1.0;
 		double		anisotropy = 0.0;
 		std::optional<double>	emissionRadiance;
 		std::optional<double>	emissionLuminance;
+		std::optional<Color>	absorptionCoefficient;
+		std::optional<Color>	transmittance;
+		double		transmittanceDistance = 1.0;
+		bool		hasTransmittanceDistance = false;
 		std::string	texturePath;
 		bool		hasProperties = false;
 		bool		hasEmissionColor = false;
@@ -158,6 +164,29 @@ namespace
 		return (std::make_shared<Emissive>(color));
 	}
 
+	std::shared_ptr<Dielectric>	buildDielectricMaterial(const MaterialBuilder& builder)
+	{
+		if (builder.absorptionCoefficient && builder.transmittance)
+		{
+			throw std::runtime_error("Dielectric material defines both absorption and transmittance.");
+		}
+		if (builder.hasTransmittanceDistance && !builder.transmittance)
+		{
+			throw std::runtime_error("Dielectric attenuation distance requires transmittance.");
+		}
+
+		std::shared_ptr<Dielectric> material = std::make_shared<Dielectric>(builder.color, builder.refractiveIndex);
+		if (builder.absorptionCoefficient)
+		{
+			material->setAbsorptionCoefficient(*builder.absorptionCoefficient);
+		}
+		if (builder.transmittance)
+		{
+			material->setTransmittance(*builder.transmittance, builder.transmittanceDistance);
+		}
+		return (material);
+	}
+
 	void	parseMaterialProperty(MaterialBuilder& builder, const std::string& line)
 	{
 		std::string key;
@@ -201,6 +230,41 @@ namespace
 		else if (key == "transmission")
 		{
 			builder.transmission = std::stod(value);
+		}
+		else if (key == "ior" || key == "refractiveindex" || key == "refractive_index")
+		{
+			builder.refractiveIndex = std::stod(value);
+		}
+		else if (
+			key == "absorption"
+			|| key == "absorptioncoefficient"
+			|| key == "absorption_coefficient"
+			|| key == "sigma_a"
+			|| key == "sigmaa"
+		)
+		{
+			builder.absorptionCoefficient = SceneFile::internal::_parseColorValue(value, key);
+		}
+		else if (
+			key == "transmittance"
+			|| key == "transmittancecolor"
+			|| key == "transmittance_color"
+			|| key == "attenuation"
+			|| key == "attenuation_color"
+			|| key == "attenuationcolor"
+		)
+		{
+			builder.transmittance = SceneFile::internal::_parseColorValue(value, key);
+		}
+		else if (
+			key == "attenuationdistance"
+			|| key == "attenuation_distance"
+			|| key == "absorptiondistance"
+			|| key == "absorption_distance"
+		)
+		{
+			builder.transmittanceDistance = std::stod(value);
+			builder.hasTransmittanceDistance = true;
 		}
 		else if (key == "alpha")
 		{
@@ -276,7 +340,7 @@ namespace
 		{
 			if (builder.transmission > 0.0 || builder.alpha < 1.0)
 			{
-				std::shared_ptr<Material> material = std::make_shared<Dielectric>(builder.color);
+				std::shared_ptr<Material> material = buildDielectricMaterial(builder);
 				attachTexture(material, builder, baseDirectory);
 				return (material);
 			}
@@ -304,7 +368,7 @@ namespace
 		}
 		if (type == "dielectric")
 		{
-			std::shared_ptr<Material> material = std::make_shared<Dielectric>(builder.color);
+			std::shared_ptr<Material> material = buildDielectricMaterial(builder);
 			attachTexture(material, builder, baseDirectory);
 			return (material);
 		}

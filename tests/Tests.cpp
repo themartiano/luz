@@ -1646,6 +1646,43 @@ namespace
 		std::filesystem::remove(scenePath);
 	}
 
+	void	testSceneFileLoadsAbsorbingDielectricMaterial(void)
+	{
+		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_absorbing_dielectric_test.luz";
+		{
+			std::ofstream sceneStream(scenePath);
+			sceneStream
+				<< "[materials]\n"
+				<< "material glass {\n"
+				<< "type=dielectric\n"
+				<< "color=(1,1,1)\n"
+				<< "ior=1.33\n"
+				<< "transmittance=(0.25,0.5,1)\n"
+				<< "attenuation_distance=2\n"
+				<< "}\n\n"
+				<< "[scene]\n"
+				<< "sphere glass_ball {\n"
+				<< "position=(0,0,0)\n"
+				<< "radius=1\n"
+				<< "material=glass\n"
+				<< "}\n";
+		}
+
+		Scene scene;
+		SceneFile::read(scene, scenePath.string());
+
+		require(scene.getHittables().size() == 1, "Absorbing dielectric scene did not load the sphere.");
+		Dielectric* dielectric = dynamic_cast<Dielectric*>(scene.getHittables()[0]->getMaterial());
+		require(dielectric != nullptr, "Absorbing dielectric material did not produce a dielectric.");
+		requireNear(dielectric->getRefractiveIndex(), 1.33, "Dielectric IOR was not parsed.");
+		const Color coefficient = dielectric->getAbsorptionCoefficient();
+		requireNear(coefficient.getRed(), -std::log(0.25) / 2.0, "Dielectric red transmittance was not parsed.");
+		requireNear(coefficient.getGreen(), -std::log(0.5) / 2.0, "Dielectric green transmittance was not parsed.");
+		requireNear(coefficient.getBlue(), 0.0, "Dielectric blue transmittance was not parsed.");
+
+		std::filesystem::remove(scenePath);
+	}
+
 	void	testSphereUVProjectionModes(void)
 	{
 		const auto material = std::make_shared<Lambertian>(Color(1.0, 1.0, 1.0));
@@ -1707,6 +1744,32 @@ namespace
 			scatterRecord.specularRay.getDirection().getZ() < 0.0,
 			"Glass exit above the critical angle did not total-internally reflect."
 		);
+	}
+
+	void	testDielectricBeerLambertAbsorption(void)
+	{
+		auto glass = std::make_shared<Dielectric>(Color(1.0, 1.0, 1.0), 1.0);
+		glass->setAbsorptionCoefficient(Color(1.0, 0.0, 0.0));
+
+		Scene scene;
+		scene.setMetersPerUnit(2.0);
+		scene.setRenderSky(SKY_NONE);
+		scene.setBackgroundColor(Color(1.0, 1.0, 1.0));
+		scene.setMaxLightBounces(1);
+		scene.addHittable(std::make_shared<Sphere>(Vector3(0.0, 0.0, 0.0), 1.0, glass));
+
+		Ray ray(Vector3(0.0, 0.0, 0.0), Vector3(0.0, 0.0, 1.0));
+		const Color color = Renderer::internal::_calculateLightRaysColor(ray, scene);
+
+		requireNear(color.getRed(), std::exp(-2.0), "Dielectric Beer-Lambert red absorption used the wrong physical distance.");
+		requireNear(color.getGreen(), 1.0, "Dielectric Beer-Lambert green absorption is wrong.");
+		requireNear(color.getBlue(), 1.0, "Dielectric Beer-Lambert blue absorption is wrong.");
+
+		glass->setTransmittance(Color(std::exp(-2.0), std::exp(-4.0), 1.0), 2.0);
+		const Color coefficient = glass->getAbsorptionCoefficient();
+		requireNear(coefficient.getRed(), 1.0, "Dielectric transmittance red coefficient is wrong.");
+		requireNear(coefficient.getGreen(), 2.0, "Dielectric transmittance green coefficient is wrong.");
+		requireNear(coefficient.getBlue(), 0.0, "Dielectric transmittance blue coefficient is wrong.");
 	}
 
 	void	testSceneFileLoadsNamedTexturedSphere(void)
@@ -2580,6 +2643,11 @@ namespace
 		requireThrows([&]() { Atmosphere().setStarsBrightness(std::numeric_limits<double>::quiet_NaN()); }, "Atmosphere accepted non-finite star brightness.");
 		requireThrows([&]() { Atmosphere(0.0, 2.0, 1.0, 1.0, 1.0, 1, 1, 0.0); }, "Atmosphere accepted atmosphere radius smaller than Earth radius.");
 		Atmosphere(0.0, D_ATMOSPHERE_RADIUS * 2.0, D_ATMOSPHERE_RADIUS * 2.0 + 1000.0, D_HR, D_HM, 1, 1, 0.0);
+		requireThrows([&]() { Dielectric(Color(1.0, 1.0, 1.0), 0.0); }, "Dielectric accepted zero refractive index.");
+		Dielectric glass(Color(1.0, 1.0, 1.0));
+		requireThrows([&]() { glass.setAbsorptionCoefficient(Color(-1.0, 0.0, 0.0)); }, "Dielectric accepted negative absorption.");
+		requireThrows([&]() { glass.setTransmittance(Color(1.2, 1.0, 1.0), 1.0); }, "Dielectric accepted transmittance above one.");
+		requireThrows([&]() { glass.setTransmittance(Color(1.0, 1.0, 1.0), 0.0); }, "Dielectric accepted zero transmittance distance.");
 		requireThrows([&]() { HenyeyGreenstein(Color(1.0, 1.0, 1.0), 1.0); }, "Henyey-Greenstein material accepted invalid anisotropy.");
 		requireThrows([&]() {
 			ConstantVolume(
@@ -3158,9 +3226,11 @@ int	main(void)
 		testSceneFilePhysicalLightUnits();
 		testSceneFileMetersPerUnitScalesPhysicalLightArea();
 		testSceneFileSpectralColorValues();
+		testSceneFileLoadsAbsorbingDielectricMaterial();
 		testSphereUVProjectionModes();
 		testSphereHitTracksFrontFace();
 		testDielectricUsesExitRefractionRatio();
+		testDielectricBeerLambertAbsorption();
 		testSceneFileLoadsNamedTexturedSphere();
 		testSceneFileLoadsVolumeBlock();
 		testSceneFileLoadsNonMetallicPrincipledMaterial();

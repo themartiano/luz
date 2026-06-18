@@ -27,6 +27,8 @@ struct	ScatterRecord
 	ONB	cosineBasis;
 	Vector3	phaseDirection;
 	double	phaseAnisotropy = 0.0;
+	bool	hasMediumAbsorption = false;
+	Color	mediumAbsorptionCoefficient = Color(0.0, 0.0, 0.0);
 };
 
 class	Material
