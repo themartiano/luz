@@ -133,10 +133,14 @@ Color	SceneFile::internal::_parseColorValue(const std::string& value, const std:
 	{
 		return (ColorScience::blackbody(parseFunctionArgument("color_temperature", "k")));
 	}
+	if (lower == "solar" || lower == "sun")
+	{
+		return (ColorScience::solar());
+	}
 
 	if (std::sscanf(trimmed.c_str(), "(%lf,%lf,%lf)", &r, &g, &b) != 3)
 	{
-		throw std::runtime_error("Invalid " + label + " color. Use " + label + "=(r,g,b), " + label + "=wavelength(NM), or " + label + "=blackbody(K).");
+		throw std::runtime_error("Invalid " + label + " color. Use " + label + "=(r,g,b), " + label + "=wavelength(NM), " + label + "=blackbody(K), or " + label + "=solar.");
 	}
 
 	return (Color(r, g, b));

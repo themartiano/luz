@@ -34,7 +34,7 @@ const std::string D_RENDER_FILE_NAME = "render";
 
 const double D_VOLUME_DENSITY = 1.42;
 
-const double D_MAX_RAY_COLOR_LUMINANCE = 10.0;
+const double D_MAX_RAY_COLOR_LUMINANCE = 1.0e12;
 
 const double D_EXPOSURE = 0.0; // Default exposure compensation in stops
 const double D_CONTRAST = 1.0; // Default display contrast multiplier

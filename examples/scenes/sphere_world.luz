@@ -6,6 +6,7 @@ gamma=1
 bloom=0
 sky=atmosphere
 atmosphere=0.30,6360000.0,6420000.0,7994.0,1200.0,16,8,0.5
+photographic_exposure=11,0.004,100
 distanceblueness=0
 #outputfilename=cornellBox
 
@@ -16,10 +17,12 @@ objects{
 plane=6360000.0,(0,1,0),material[
 lambertian=(1.0,1.0,1.0)
 ]
-# Light sphere
-sphere=(-110,6360055.0,60),42,material[
-emissive=(5.0,5.0,3.15)
-]
+sphere_light warm_key {
+position=(-110,6360055.0,60)
+radius=42
+color=blackbody(3000K)
+lumens=24000
+}
 # Metal sphere
 sphere=(150,6360075.0,-95),75,material[
 metal=(0.8,0.8,0.8),0.0

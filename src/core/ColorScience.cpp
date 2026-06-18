@@ -1,4 +1,5 @@
 #include "ColorScience.hpp"
+#include "LightUnits.hpp"
 #include <algorithm>
 #include <cmath>
 #include <stdexcept>
@@ -106,4 +107,9 @@ Color	ColorScience::blackbody(double kelvin)
 	}
 
 	return (normalizeVisibleColor(xyzToLinearSRGB(x, y, z)));
+}
+
+Color	ColorScience::solar(void)
+{
+	return (blackbody(LightUnits::SOLAR_TEMPERATURE_K));
 }

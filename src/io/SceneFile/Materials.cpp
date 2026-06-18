@@ -97,15 +97,7 @@ namespace
 		}
 		if (lowerLine.rfind("emissive=", 0) != std::string::npos)
 		{
-			double r, g, b;
-			char extra;
-
-			if (sscanf(lowerLine.c_str(), "emissive=(%lf,%lf,%lf)%c", &r, &g, &b, &extra) != 3)
-			{
-				throw std::runtime_error("Invalid emissive material: " + line);
-			}
-			material = std::make_shared<Emissive>(Color(r, g, b));
-			return (true);
+			throw std::runtime_error("Direct emissive material syntax is not physical. Use type=emissive with radiance or luminance.");
 		}
 		if (lowerLine.rfind("isotropic=", 0) != std::string::npos)
 		{
@@ -163,7 +155,7 @@ namespace
 		{
 			return (std::make_shared<Emissive>(Emissive::fromLuminance(color, *builder.emissionLuminance)));
 		}
-		return (std::make_shared<Emissive>(color));
+		throw std::runtime_error("Emissive material requires radiance or luminance.");
 	}
 
 	std::shared_ptr<Dielectric>	buildDielectricMaterial(const MaterialBuilder& builder)

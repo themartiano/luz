@@ -5,6 +5,7 @@
 #include "EnvironmentMap.hpp"
 #include "FlagsParser.hpp"
 #include "Image.hpp"
+#include "IESProfile.hpp"
 #include "LightUnits.hpp"
 #include "Materials/Lambertian.hpp"
 #include "Materials/Emissive.hpp"
@@ -21,6 +22,7 @@
 #include "Hittables/BVHNode.hpp"
 #include "Hittables/ConstantVolume.hpp"
 #include "Hittables/Cube.hpp"
+#include "Hittables/DirectionalLight.hpp"
 #include "Hittables/Mesh.hpp"
 #include "Hittables/Rectangle.hpp"
 #include "Hittables/Sphere.hpp"
@@ -562,10 +564,65 @@ namespace
 			Color(1.0, 1.0, 1.0),
 			"Directional illuminance conversion"
 		);
+		requireColorNear(
+			LightUnits::sphericalLuminousIntensity(Color(1.0, 1.0, 1.0), LightUnits::LUMENS_PER_RADIANT_WATT, 4.0),
+			Color(1.0, 1.0, 1.0),
+			"Spherical luminous intensity conversion"
+		);
+		requireNear(
+			Utilities::luminance(LightUnits::solarDirectionalIrradiance(ColorScience::solar(), 1.0)),
+			LightUnits::SOLAR_DIRECT_IRRADIANCE_W_M2,
+			"Solar directional irradiance conversion"
+		);
+		requireNear(
+			Utilities::luminance(LightUnits::solarDiskRadiance(ColorScience::solar(), 1.0)),
+			LightUnits::SOLAR_DIRECT_IRRADIANCE_W_M2 / LightUnits::solarSolidAngle(),
+			"Solar disk radiance conversion"
+		);
 		requireThrows(
 			[]() { LightUnits::surfaceRadiance(Color(0.0, 0.0, 0.0), 1.0); },
 			"Physical light units accepted a zero-luminance positive light color."
 		);
+	}
+
+	void	writeTestIESProfile(const std::filesystem::path& path, double nadirCandela, double horizonCandela, double zenithCandela)
+	{
+		std::ofstream stream(path);
+
+		stream << "IESNA:LM-63-1995\n";
+		stream << "TILT=NONE\n";
+		stream << "1 1000 1 3 1 1 1 0 0 0 1 1 100\n";
+		stream << "0 90 180\n";
+		stream << "0\n";
+		stream << nadirCandela << " " << horizonCandela << " " << zenithCandela << "\n";
+	}
+
+	void	testIESProfileLoadsPhysicalLampData(void)
+	{
+		const std::filesystem::path iesPath = std::filesystem::temp_directory_path() / "luz_unit_test.ies";
+
+		writeTestIESProfile(iesPath, 10.0, 10.0, 10.0);
+		const IESProfile uniformProfile = IESProfile::load(iesPath.string());
+		require(
+			std::abs(uniformProfile.totalLumens() - (4.0 * D_PI * 10.0)) < 0.01,
+			"IES profile did not integrate uniform candela to lumens."
+		);
+		requireNear(uniformProfile.candelaAt(45.0, 0.0), 10.0, "IES uniform candela interpolation");
+
+		writeTestIESProfile(iesPath, 20.0, 10.0, 0.0);
+		const IESProfile directionalProfile = IESProfile::load(iesPath.string());
+		require(
+			directionalProfile.relativeIntensity(Vector3(0.0, -1.0, 0.0), Vector3(0.0, -1.0, 0.0), 0.0)
+			> directionalProfile.relativeIntensity(Vector3(1.0, 0.0, 0.0), Vector3(0.0, -1.0, 0.0), 0.0),
+			"IES profile did not preserve stronger nadir intensity."
+		);
+		requireNear(
+			directionalProfile.relativeIntensity(Vector3(0.0, 1.0, 0.0), Vector3(0.0, -1.0, 0.0), 0.0),
+			0.0,
+			"IES profile did not preserve zero zenith intensity."
+		);
+
+		std::filesystem::remove(iesPath);
 	}
 
 	void	testSpectralColorConversions(void)
@@ -1112,7 +1169,11 @@ namespace
 		requireNear(scene.getAtmosphere().getEarthRadius(), 12840000.0, "Atmosphere Earth radius was not parsed.");
 		requireNear(scene.getAtmosphere().getAtmosphereRadius(), 12910000.0, "Atmosphere radius was not parsed.");
 		requireNear(scene.getAtmosphere().getStarsBrightness(), 0.1, "Atmosphere stars brightness was not parsed.");
-		requireColorNear(scene.getAtmosphere().getSunRadiance(), Color(20.0, 20.0, 20.0), "Atmosphere fallback sun radiance");
+		requireColorNear(
+			scene.getAtmosphere().getSunRadiance(),
+			LightUnits::solarDiskRadiance(ColorScience::solar(), 1.0),
+			"Atmosphere fallback sun radiance"
+		);
 		requireNear(scene.getAtmosphere().getSunRadianceScale(), 1.0, "Atmosphere sun scale default was not preserved.");
 
 		std::filesystem::remove(scenePath);
@@ -1526,17 +1587,25 @@ namespace
 				<< "color=(1,1,1)\n"
 				<< "lumens=" << LightUnits::LUMENS_PER_RADIANT_WATT * 4.0 * D_PI * D_PI << "\n"
 				<< "visible=0\n"
+				<< "}\n"
+				<< "point_light candela_point {\n"
+				<< "position=(3,2,1)\n"
+				<< "radius=1\n"
+				<< "color=(1,1,1)\n"
+				<< "candela=" << LightUnits::LUMENS_PER_RADIANT_WATT * D_PI << "\n"
+				<< "visible=0\n"
 				<< "}\n";
 		}
 
 		Scene scene;
 		SceneFile::read(scene, scenePath.string());
 
-		require(scene.getHittables().size() == 4, "Physical unit scene did not load all emitters.");
+		require(scene.getHittables().size() == 5, "Physical unit scene did not load all emitters.");
 		requireColorNear(scene.getHittables()[0]->getMaterial()->emitted(), Color(2.0, 2.0, 2.0), "Material radiance unit");
 		requireColorNear(scene.getHittables()[1]->getMaterial()->emitted(), Color(1.0, 1.0, 1.0), "Area light power unit");
 		requireColorNear(scene.getHittables()[2]->getMaterial()->emitted(), Color(1.0, 1.0, 1.0), "Directional light illuminance unit");
 		requireColorNear(scene.getHittables()[3]->getMaterial()->emitted(), Color(1.0, 1.0, 1.0), "Point light luminous flux unit");
+		requireColorNear(scene.getHittables()[4]->getMaterial()->emitted(), Color(1.0, 1.0, 1.0), "Point light candela unit");
 
 		std::filesystem::remove(scenePath);
 
@@ -1563,6 +1632,99 @@ namespace
 		);
 
 		std::filesystem::remove(scenePath);
+
+		{
+			std::ofstream sceneStream(scenePath);
+			sceneStream
+				<< "[materials]\n"
+				<< "material bad_emitter {\n"
+				<< "type=emissive\n"
+				<< "color=(1,1,1)\n"
+				<< "}\n\n";
+		}
+
+		Scene invalidMaterialScene;
+		requireThrows(
+			[&invalidMaterialScene, &scenePath]()
+			{
+				SceneFile::read(invalidMaterialScene, scenePath.string());
+			},
+			"Scene file accepted an emissive material without a physical unit."
+		);
+
+		std::filesystem::remove(scenePath);
+	}
+
+	void	testSceneFileSolarDirectionalLightPreset(void)
+	{
+		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_solar_directional_test.luz";
+		{
+			std::ofstream sceneStream(scenePath);
+			sceneStream
+				<< "[settings]\n"
+				<< "sky=atmosphere\n"
+				<< "atmosphere=0.25,12840000.0,12910000.0,7994.0,1200.0,12,6,0.1\n\n"
+				<< "[scene]\n"
+				<< "directional_light sun {\n"
+				<< "direction=(0,-2,0)\n"
+				<< "solar=1\n"
+				<< "}\n";
+		}
+
+		Scene scene;
+		SceneFile::read(scene, scenePath.string());
+
+		const std::shared_ptr<DirectionalLight> sun = std::dynamic_pointer_cast<DirectionalLight>(scene.getHittables()[0]);
+		require(sun != nullptr, "Solar preset did not create a directional light.");
+		require(sun->hasAtmosphereSunRadiance(), "Solar preset did not store atmosphere sun radiance.");
+		requireNear(
+			Utilities::luminance(sun->getMaterial()->emitted()),
+			LightUnits::SOLAR_DIRECT_IRRADIANCE_W_M2,
+			"Solar preset did not use calibrated direct irradiance."
+		);
+		requireColorNear(
+			scene.getAtmosphere().getSunRadiance(),
+			LightUnits::solarDiskRadiance(ColorScience::solar(), 1.0),
+			"Solar preset did not drive atmosphere sun radiance."
+		);
+
+		std::filesystem::remove(scenePath);
+	}
+
+	void	testSceneFileLoadsIESPointLight(void)
+	{
+		const std::filesystem::path iesPath = std::filesystem::temp_directory_path() / "luz_scene_light.ies";
+		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_scene_ies_light_test.luz";
+
+		writeTestIESProfile(iesPath, 10.0, 10.0, 10.0);
+		const IESProfile profile = IESProfile::load(iesPath.string());
+		{
+			std::ofstream sceneStream(scenePath);
+			sceneStream << std::setprecision(17);
+			sceneStream
+				<< "[scene]\n"
+				<< "point_light lamp {\n"
+				<< "position=(0,2,0)\n"
+				<< "radius=1\n"
+				<< "color=(1,1,1)\n"
+				<< "ies=" << iesPath.string() << "\n"
+				<< "visible=0\n"
+				<< "}\n";
+		}
+
+		Scene scene;
+		SceneFile::read(scene, scenePath.string());
+
+		require(scene.getHittables().size() == 1, "IES point light scene did not load the light.");
+		const double surfaceArea = 4.0 * D_PI;
+		requireColorNear(
+			scene.getHittables()[0]->getMaterial()->emitted(),
+			LightUnits::surfaceLuminousFlux(Color(1.0, 1.0, 1.0), profile.totalLumens(), surfaceArea),
+			"IES point light did not derive flux from the IES candela table."
+		);
+
+		std::filesystem::remove(scenePath);
+		std::filesystem::remove(iesPath);
 	}
 
 	void	testSceneFileMetersPerUnitScalesPhysicalLightArea(void)
@@ -3282,6 +3444,7 @@ int	main(void)
 		testPhotographicExposureConversion();
 		testBloomExtractionPreservesHighlightColor();
 		testPhysicalLightUnitConversions();
+		testIESProfileLoadsPhysicalLampData();
 		testSpectralColorConversions();
 		testGaussianBlurSupportsInPlaceSmallImages();
 		testGaussianBlurPreservesCenteredEnergyAndEdges();
@@ -3311,6 +3474,8 @@ int	main(void)
 		testSceneFileLoadsTransformedObject();
 		testSceneFileLoadsNamedBlocks();
 		testSceneFilePhysicalLightUnits();
+		testSceneFileSolarDirectionalLightPreset();
+		testSceneFileLoadsIESPointLight();
 		testSceneFileMetersPerUnitScalesPhysicalLightArea();
 		testSceneFileSpectralColorValues();
 		testSceneFileLoadsAbsorbingDielectricMaterial();

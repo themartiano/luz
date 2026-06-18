@@ -360,7 +360,11 @@ void	Scene::syncAtmosphereSunDirection(void)
 		if (directionalLight)
 		{
 			this->_atmosphere.setSunDirection(directionalLight->getDirection() * -1.0);
-			if (directionalLight->getMaterial())
+			if (directionalLight->hasAtmosphereSunRadiance())
+			{
+				this->_atmosphere.setSunRadiance(directionalLight->getAtmosphereSunRadiance());
+			}
+			else if (directionalLight->getMaterial())
 			{
 				this->_atmosphere.setSunRadiance(directionalLight->getMaterial()->emitted());
 			}

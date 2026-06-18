@@ -36,9 +36,11 @@ struct	HitRecord
 struct	HittableLightSample
 {
 	Vector3		direction;
+	Color		emitted = Color(0.0, 0.0, 0.0);
 	double		pdf = 0.0;
 	double		tMax = 0.0;
 	Material*	material = nullptr;
+	bool		hasEmitted = false;
 	bool		valid = false;
 };
 

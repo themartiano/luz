@@ -586,7 +586,9 @@ namespace
 			return (sample);
 		}
 
-		sample.emitted = material->emitted();
+		sample.emitted = surfaceSample.hasEmitted
+			? surfaceSample.emitted
+			: material->emitted();
 		if (maxChannel(sample.emitted) <= 0.0)
 		{
 			return (sample);

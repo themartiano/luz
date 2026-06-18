@@ -13,6 +13,7 @@
 #include "Materials/Lambertian.hpp"
 #include "Materials/Isotropic.hpp"
 #include "Materials/HenyeyGreenstein.hpp"
+#include "ColorScience.hpp"
 #include "LightUnits.hpp"
 #include "Defaults.hpp"
 #include <algorithm>
@@ -286,8 +287,11 @@ namespace
 		std::optional<double>	luminance;
 		std::optional<double>	radiantPower;
 		std::optional<double>	luminousFlux;
+		std::optional<double>	radiantIntensity;
+		std::optional<double>	luminousIntensity;
 		std::optional<double>	irradiance;
 		std::optional<double>	illuminance;
+		std::optional<double>	solarScale;
 	};
 
 	struct AreaLightBlock
@@ -307,6 +311,9 @@ namespace
 		Color	color = Color(1.0, 1.0, 1.0);
 		bool	visible = true;
 		PhysicalLightUnits	units;
+		std::string	iesProfilePath;
+		Vector3	iesDirection = Vector3(0.0, -1.0, 0.0);
+		double	iesRotationDegrees = 0.0;
 	};
 
 	struct SphereBlock
@@ -322,6 +329,7 @@ namespace
 	{
 		Vector3	direction = Vector3(0.0, -1.0, 0.0);
 		Color	color = Color(1.0, 1.0, 1.0);
+		bool	hasColor = false;
 		PhysicalLightUnits	units;
 	};
 
@@ -352,8 +360,11 @@ namespace
 			|| units.luminance
 			|| units.radiantPower
 			|| units.luminousFlux
+			|| units.radiantIntensity
+			|| units.luminousIntensity
 			|| units.irradiance
 			|| units.illuminance
+			|| units.solarScale
 		);
 	}
 
@@ -397,6 +408,35 @@ namespace
 		return (false);
 	}
 
+	bool	parseSphericalLightUnit(PhysicalLightUnits& units, const std::string& key, const std::string& value)
+	{
+		if (parseSurfaceLightUnit(units, key, value))
+		{
+			return (true);
+		}
+		if (
+			key == "radiant_intensity"
+			|| key == "radiantintensity"
+			|| key == "w_sr"
+			|| key == "wsr"
+		)
+		{
+			assignPhysicalLightUnit(units.radiantIntensity, units, value);
+			return (true);
+		}
+		if (
+			key == "candela"
+			|| key == "cd"
+			|| key == "luminous_intensity"
+			|| key == "luminousintensity"
+		)
+		{
+			assignPhysicalLightUnit(units.luminousIntensity, units, value);
+			return (true);
+		}
+		return (false);
+	}
+
 	bool	parseDirectionalLightUnit(PhysicalLightUnits& units, const std::string& key, const std::string& value)
 	{
 		if (key == "irradiance" || key == "w_m2" || key == "wm2")
@@ -407,6 +447,11 @@ namespace
 		if (key == "illuminance" || key == "lux" || key == "lx")
 		{
 			assignPhysicalLightUnit(units.illuminance, units, value);
+			return (true);
+		}
+		if (key == "solar" || key == "sun" || key == "solar_scale" || key == "solarscale")
+		{
+			assignPhysicalLightUnit(units.solarScale, units, value);
 			return (true);
 		}
 		return (false);
@@ -430,7 +475,28 @@ namespace
 		{
 			return (LightUnits::surfaceLuminousFlux(color, *units.luminousFlux, area));
 		}
+		if (units.radiantIntensity)
+		{
+			return (LightUnits::sphericalRadiantIntensity(color, *units.radiantIntensity, area));
+		}
+		if (units.luminousIntensity)
+		{
+			return (LightUnits::sphericalLuminousIntensity(color, *units.luminousIntensity, area));
+		}
 		throw std::runtime_error("Surface light must define radiance, luminance, power, or lumens.");
+	}
+
+	Color	sphericalLightEmission(Color color, const PhysicalLightUnits& units, double area, const std::shared_ptr<IESProfile>& iesProfile)
+	{
+		if (hasPhysicalLightUnit(units))
+		{
+			return (surfaceLightEmission(color, units, area));
+		}
+		if (iesProfile)
+		{
+			return (LightUnits::surfaceLuminousFlux(color, iesProfile->totalLumens(), area));
+		}
+		throw std::runtime_error("Sphere light must define radiance, luminance, power, lumens, candela, radiant_intensity, or ies.");
 	}
 
 	Color	directionalLightEmission(Color color, const PhysicalLightUnits& units)
@@ -443,7 +509,11 @@ namespace
 		{
 			return (LightUnits::directionalIlluminance(color, *units.illuminance));
 		}
-		throw std::runtime_error("Directional light must define irradiance or illuminance.");
+		if (units.solarScale)
+		{
+			return (LightUnits::solarDirectionalIrradiance(color, *units.solarScale));
+		}
+		throw std::runtime_error("Directional light must define irradiance, illuminance, or solar.");
 	}
 
 	SphereUVProjection	parseSphereUVProjection(const std::string& value)
@@ -760,7 +830,7 @@ namespace
 		throw std::runtime_error("Area light '" + lightName + "' is missing a closing }.");
 	}
 
-	void	addSphereLightBlock(Scene& scene, std::ifstream& stream, const std::string& lightName)
+	void	addSphereLightBlock(Scene& scene, std::ifstream& stream, SceneFile::internal::SceneFileContext& context, const std::string& lightName)
 	{
 		std::string line;
 		SphereLightBlock light;
@@ -781,18 +851,31 @@ namespace
 					throw std::runtime_error("Sphere light '" + lightName + "' radius must be positive.");
 				}
 
-				scene.addHittable(std::make_shared<Sphere>(
+				std::shared_ptr<IESProfile> iesProfile;
+				if (!light.iesProfilePath.empty())
+				{
+					iesProfile = std::make_shared<IESProfile>(IESProfile::load(
+						SceneFile::internal::_resolveAssetPath(context.baseDirectory, light.iesProfilePath)
+					));
+				}
+				std::shared_ptr<Sphere> sphere = std::make_shared<Sphere>(
 					light.position,
 					light.radius,
 					std::make_shared<Emissive>(
-						surfaceLightEmission(
+						sphericalLightEmission(
 							light.color,
 							light.units,
-							scene.sceneAreaToSquareMeters(4.0 * D_PI * light.radius * light.radius)
+							scene.sceneAreaToSquareMeters(4.0 * D_PI * light.radius * light.radius),
+							iesProfile
 						)
 					),
 					light.visible
-				));
+				);
+				if (iesProfile)
+				{
+					sphere->setIESProfile(iesProfile, light.iesDirection, light.iesRotationDegrees);
+				}
+				scene.addHittable(sphere);
 				return;
 			}
 
@@ -815,9 +898,21 @@ namespace
 			{
 				light.color = SceneFile::internal::_parseColorValue(value, key);
 			}
-			else if (parseSurfaceLightUnit(light.units, key, value))
+			else if (parseSphericalLightUnit(light.units, key, value))
 			{
 				continue;
+			}
+			else if (key == "ies" || key == "ies_profile" || key == "iesprofile" || key == "profile")
+			{
+				light.iesProfilePath = value;
+			}
+			else if (key == "ies_direction" || key == "iesdirection" || key == "profile_direction" || key == "profiledirection")
+			{
+				light.iesDirection = SceneFile::internal::_parseVector3Value(value, key);
+			}
+			else if (key == "ies_rotation" || key == "iesrotation" || key == "profile_rotation" || key == "profilerotation")
+			{
+				light.iesRotationDegrees = std::stod(value);
 			}
 			else if (key == "visible")
 			{
@@ -859,12 +954,22 @@ namespace
 					throw std::runtime_error("Directional light '" + lightName + "' direction must be non-zero.");
 				}
 
-				scene.addHittable(std::make_shared<DirectionalLight>(
+				const Color color = (light.units.solarScale && !light.hasColor)
+					? ColorScience::solar()
+					: light.color;
+				std::shared_ptr<DirectionalLight> directionalLight = std::make_shared<DirectionalLight>(
 					light.direction,
 					std::make_shared<Emissive>(
-						directionalLightEmission(light.color, light.units)
+						directionalLightEmission(color, light.units)
 					)
-				));
+				);
+				if (light.units.solarScale)
+				{
+					directionalLight->setAtmosphereSunRadiance(
+						LightUnits::solarDiskRadiance(color, *light.units.solarScale)
+					);
+				}
+				scene.addHittable(directionalLight);
 				return;
 			}
 
@@ -882,6 +987,7 @@ namespace
 			else if (key == "color")
 			{
 				light.color = SceneFile::internal::_parseColorValue(value, key);
+				light.hasColor = true;
 			}
 			else if (parseDirectionalLightUnit(light.units, key, value))
 			{
@@ -1014,7 +1120,7 @@ namespace
 			|| SceneFile::internal::_parseNamedBlockHeader(line, "point_light", blockName)
 		)
 		{
-			addSphereLightBlock(scene, stream, blockName);
+			addSphereLightBlock(scene, stream, context, blockName);
 			return (true);
 		}
 

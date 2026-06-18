@@ -7,6 +7,8 @@
 
 namespace
 {
+	const double kDegreesToRadians = D_PI / 180.0;
+
 	void	requireFiniteNonNegative(double value, const std::string& description)
 	{
 		if (!std::isfinite(value) || value < 0.0)
@@ -49,6 +51,13 @@ namespace
 	}
 }
 
+double	LightUnits::solarSolidAngle(void)
+{
+	const double angularRadius = 0.5 * SOLAR_ANGULAR_DIAMETER_DEGREES * kDegreesToRadians;
+
+	return (2.0 * D_PI * (1.0 - std::cos(angularRadius)));
+}
+
 Color	LightUnits::surfaceRadiance(Color color, double radiance)
 {
 	requireFiniteNonNegative(radiance, "Surface radiance");
@@ -75,6 +84,20 @@ Color	LightUnits::surfaceLuminousFlux(Color color, double lumens, double area)
 	return (surfaceLuminance(color, lumens / (D_PI * area)));
 }
 
+Color	LightUnits::sphericalRadiantIntensity(Color color, double wattsPerSteradian, double surfaceArea)
+{
+	requireFiniteNonNegative(wattsPerSteradian, "Radiant intensity");
+	requirePositive(surfaceArea, "Emitter surface area");
+	return (surfaceRadiance(color, 4.0 * wattsPerSteradian / surfaceArea));
+}
+
+Color	LightUnits::sphericalLuminousIntensity(Color color, double candela, double surfaceArea)
+{
+	requireFiniteNonNegative(candela, "Luminous intensity");
+	requirePositive(surfaceArea, "Emitter surface area");
+	return (surfaceLuminance(color, 4.0 * candela / surfaceArea));
+}
+
 Color	LightUnits::directionalIrradiance(Color color, double irradiance)
 {
 	requireFiniteNonNegative(irradiance, "Directional irradiance");
@@ -85,4 +108,16 @@ Color	LightUnits::directionalIlluminance(Color color, double illuminance)
 {
 	requireFiniteNonNegative(illuminance, "Directional illuminance");
 	return (directionalIrradiance(color, illuminance / LUMENS_PER_RADIANT_WATT));
+}
+
+Color	LightUnits::solarDirectionalIrradiance(Color color, double scale)
+{
+	requireFiniteNonNegative(scale, "Solar scale");
+	return (directionalIrradiance(color, SOLAR_DIRECT_IRRADIANCE_W_M2 * scale));
+}
+
+Color	LightUnits::solarDiskRadiance(Color color, double scale)
+{
+	requireFiniteNonNegative(scale, "Solar scale");
+	return (surfaceRadiance(color, (SOLAR_DIRECT_IRRADIANCE_W_M2 * scale) / solarSolidAngle()));
 }

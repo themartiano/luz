@@ -1,5 +1,7 @@
 #include "Atmosphere.hpp"
 #include "Defaults.hpp"
+#include "ColorScience.hpp"
+#include "LightUnits.hpp"
 #include "Utilities.hpp"
 #include "SystemSpecifics.hpp"
 #include <algorithm>
@@ -12,7 +14,6 @@ namespace
 	const double kRayleighPhaseScale = 3.0 / (16.0 * D_PI);
 	const double kMiePhaseScale = 3.0 / (8.0 * D_PI);
 	constexpr double kMieAbsorptionScale = 1.1;
-	constexpr double kFallbackSunRadiance = 20.0;
 
 	Vector3	exponentialAttenuation(const Vector3& tau)
 	{
@@ -73,7 +74,7 @@ Atmosphere::Atmosphere(void)
 	this->_samples = 16;
 	this->_lightSamples = 8;
 	this->_starsBrightness = 0.5;
-	this->_sunRadiance = Color(kFallbackSunRadiance, kFallbackSunRadiance, kFallbackSunRadiance);
+	this->_sunRadiance = LightUnits::solarDiskRadiance(ColorScience::solar(), 1.0);
 	this->_sunRadianceScale = 1.0;
 	this->_metersPerUnit = 1.0;
 	updateSunDirectionVector();
@@ -90,7 +91,7 @@ Atmosphere::Atmosphere(double sunAngle, double earthRadius, double atmosphereRad
 	this->_samples = 16;
 	this->_lightSamples = 8;
 	this->_starsBrightness = 0.5;
-	this->_sunRadiance = Color(kFallbackSunRadiance, kFallbackSunRadiance, kFallbackSunRadiance);
+	this->_sunRadiance = LightUnits::solarDiskRadiance(ColorScience::solar(), 1.0);
 	this->_sunRadianceScale = 1.0;
 	this->_metersPerUnit = 1.0;
 	setSunAngle(sunAngle);

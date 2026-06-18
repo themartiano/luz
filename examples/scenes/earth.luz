@@ -8,6 +8,7 @@ bloom=0
 sky=atmosphere
 # The first atmosphere value is a fallback only; directional_light sun drives atmosphere direction and radiance.
 atmosphere=0.30,6360000.0,6420000.0,7994.0,1200.0,16,8,0.0
+photographic_exposure=16,0.008,100
 distanceblueness=0
 
 [materials]
@@ -25,8 +26,7 @@ texture=../textures/earth_diff_jpg.ppm
 camera=(10260604,0,-28190779),(-0.3420201,0,0.9396926),30,0,30000000
 directional_light sun {
 direction=(-0.9659258,0.0,0.2588190)
-color=(1.0,0.95,0.8)
-irradiance=2.5
+solar=1
 }
 objects{
 # Moon: real mean radius 1,737.4 km, center placed 384,400 km from Earth.

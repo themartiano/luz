@@ -48,7 +48,7 @@ The parser is intentionally strict: unknown lines and malformed values throw an 
 | `environmentstrength` | `environmentstrength=F` | Multiplies environment radiance. Defaults to `1.0`. Aliases: `environment_strength`, `worldstrength`, `world_strength`. |
 | `environmentrotation` | `environmentrotation=DEGREES` | Offsets the equirectangular U coordinate around world Y. Defaults to `0`. Aliases: `environment_rotation`, `worldrotation`, `world_rotation`. |
 | `meters_per_unit` | `meters_per_unit=F` | Physical scale of Luz world coordinates. Defaults to `1.0`. Finite light `power`/`lumens` use physical area in square meters, and atmosphere ray distances are converted through this value. Alias: `metersperunit`. |
-| `atmosphere` | `atmosphere=SUN,EARTH_RADIUS,ATMOSPHERE_RADIUS,HR,HM,SAMPLES,LIGHT_SAMPLES,STARS` | Only valid after `sky=atmosphere`. `SUN` is a fallback sun angle. If the scene has a `directional_light`, the first one drives atmosphere sun direction and radiance instead. |
+| `atmosphere` | `atmosphere=SUN,EARTH_RADIUS,ATMOSPHERE_RADIUS,HR,HM,SAMPLES,LIGHT_SAMPLES,STARS` | Only valid after `sky=atmosphere`. `SUN` is a fallback sun angle. If the scene has a `directional_light`, the first one drives atmosphere sun direction and radiance instead. Without a directional light, atmosphere uses calibrated solar disk radiance. |
 | `atmosphere_sun_scale` | `atmosphere_sun_scale=F` | Multiplies atmosphere sun radiance after it is sourced from the first `directional_light`, or from the fallback atmosphere sun when no directional light exists. Defaults to `1.0`. Aliases: `atmospheresunscale`, `atmosphere_sun_multiplier`, `atmospheresunmultiplier`. |
 | `distanceblueness` | `distanceblueness=0` or `distanceblueness=1` | Enables distance blue tinting when set to `1`. |
 
@@ -164,8 +164,7 @@ lumens=12000
 }
 directional_light sun {
 direction=(0,-1,0)
-color=(1.0,0.95,0.8)
-illuminance=110000
+solar=1
 }
 volume room_fog {
 shape=box
@@ -270,7 +269,6 @@ Each material block must define exactly one material:
 | Lambertian | `lambertian=(r,g,b)` |
 | Metal | `metal=(r,g,b),reflectionFuzziness` |
 | Dielectric | `dielectric=(r,g,b)` |
-| Emissive | `emissive=(r,g,b)` |
 | Isotropic phase | `isotropic=(r,g,b)` |
 | Henyey-Greenstein phase | `henyey_greenstein=(r,g,b),anisotropy` |
 
@@ -281,13 +279,13 @@ temperatures:
 color=(0.8,0.2,0.1)
 color=wavelength(550nm)
 color=blackbody(3000K)
+color=solar
 ```
 
 RGB channels are floating point values. Non-emissive material colors normally
 use the `0.0` to `1.0` range. Spectral colors are converted through CIE 1931
 color matching to normalized scene-linear sRGB chromaticities when the scene
-file is loaded. Emissive direct material colors are emitted surface radiance RGB
-values.
+file is loaded. `solar` is a 5778 K solar chromaticity preset.
 
 Named material blocks can use the direct material lines above, or property syntax:
 
@@ -350,9 +348,8 @@ Dielectric material property blocks support physical glass controls:
 volume blocks. A positive Henyey-Greenstein anisotropy favors forward scattering,
 which is the useful control for fog shafts and godrays.
 
-Emissive material property blocks use `color` as emitted radiance RGB when no
-scalar unit property is present. To use scalar units with `color` as
-chromaticity, use exactly one of:
+Emissive material property blocks require exactly one scalar unit property, with
+`color` as chromaticity:
 
 | Property | Meaning |
 | --- | --- |
@@ -392,30 +389,51 @@ Light blocks must define exactly one unit property:
 | Light | Unit properties |
 | --- | --- |
 | `area_light` | `radiance`, `luminance`/`nits`, `power`/`watts`, `lumens`/`luminous_flux` |
-| `point_light`, `sphere_light` | `radiance`, `luminance`/`nits`, `power`/`watts`, `lumens`/`luminous_flux` |
-| `directional_light` | `irradiance`/`w_m2`, `illuminance`/`lux` |
+| `point_light`, `sphere_light` | `radiance`, `luminance`/`nits`, `power`/`watts`, `lumens`/`luminous_flux`, `radiant_intensity`/`w_sr`, `candela`/`cd`, or `ies` |
+| `directional_light` | `irradiance`/`w_m2`, `illuminance`/`lux`, or `solar=SCALE` |
 
 For Lambertian surface emitters, `power` is converted to radiance with
 `power / (pi * area)`, where `area` is measured in square meters after applying
 `meters_per_unit`. For sphere and point lights, physical area is
 `4 * pi * (radius * meters_per_unit)^2`.
-`lumens` is converted through luminance using 683 lm/W. `color` accepts the same
-RGB, `wavelength(NM)`, and `blackbody(K)` values as material colors and is
-treated as chromaticity for physical unit properties; zero-luminance colors are
-rejected.
+`lumens` and `candela` are converted through luminance using 683 lm/W. `color`
+accepts the same RGB, `wavelength(NM)`, `blackbody(K)`, and `solar` values as
+material colors and is treated as chromaticity for physical unit properties;
+zero-luminance colors are rejected. `radiant_intensity` is W/sr for isotropic
+sphere/point emitters; `candela` is lm/sr.
 
 `directional_light` creates an infinite light whose `direction` is the direction
 light travels, suitable for sun lights. When `sky=atmosphere`, the first
 `directional_light` is also the atmosphere sun source: its opposite direction is
 used for scattering rays toward the sun, and its emitted light value sets the
-atmosphere sun radiance. Use `atmosphere_sun_scale` only when you need an
-artistic atmosphere-only multiplier.
+atmosphere sun radiance. With `solar=SCALE`, Luz uses 1361 W/m^2 direct solar
+irradiance for surfaces and solar disk radiance computed from a 0.533 degree
+sun diameter for atmosphere scattering. Use `atmosphere_sun_scale` only when you
+need an artistic atmosphere-only multiplier.
 If no directional light exists, the first `atmosphere=` value is used as the
 vertical sun-angle fallback with the atmosphere fallback radiance.
 `point_light` and `sphere_light` create emissive spheres. These lights are still
 sampled through Luz's emissive-hittable lighting path. Sphere and point lights
 also accept `visible=0` to hide the light surface from camera and shadow rays
 while keeping it available for direct-light sampling.
+
+Sphere and point lights can use LM-63 IES files:
+
+```text
+point_light lamp {
+position=(0,2,0)
+radius=0.05
+color=blackbody(3000K)
+ies=fixtures/downlight.ies
+ies_direction=(0,-1,0)
+ies_rotation=0
+visible=0
+}
+```
+
+When no scalar light unit is supplied, Luz integrates the IES candela table to
+derive total lumens. If a scalar unit is supplied, the IES profile shapes the
+angular distribution while the scalar unit controls total output.
 
 ## Minimal Example
 

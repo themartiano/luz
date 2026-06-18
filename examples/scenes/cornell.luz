@@ -5,6 +5,7 @@ maxlightbounces=12
 gamma=1
 sky=none
 distanceblueness=0
+meters_per_unit=0.01
 #outputfilename=cornellBox
 
 [scene]
@@ -20,10 +21,13 @@ rectangle=(0,550,0),(0,-1,0),550,560,material[
 lambertian=(1.0,1.0,1.0)
 ]
 
-# Light
-rectangle=(0,550,0),(0,-1,0),130,105,material[
-emissive=(15.0,12.6,6.45)
-]
+area_light ceiling_panel {
+position=(0,550,0)
+normal=(0,-1,0)
+size=(130,105)
+color=blackbody(3000K)
+lumens=12000
+}
 
 # Back Wall
 rectangle=(0,275,280),(0,0,-1),550,550,material[

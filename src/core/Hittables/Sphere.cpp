@@ -6,6 +6,7 @@
 #include "Sampler.hpp"
 #include <algorithm>
 #include <cmath>
+#include <stdexcept>
 
 namespace
 {
@@ -111,6 +112,9 @@ Sphere::Sphere(void)
 	this->_radius = 1.0;
 	this->_visible = true;
 	this->_uvProjection = SphereUVProjection::LatLong;
+	this->_iesProfile = nullptr;
+	this->_iesDirection = Vector3(0.0, -1.0, 0.0);
+	this->_iesRotationDegrees = 0.0;
 }
 
 // Constructs the Sphere with custom values
@@ -121,6 +125,9 @@ Sphere::Sphere(Vector3 position, double radius, std::shared_ptr<Material> materi
 	this->_material = material;
 	this->_visible = true;
 	this->_uvProjection = uvProjection;
+	this->_iesProfile = nullptr;
+	this->_iesDirection = Vector3(0.0, -1.0, 0.0);
+	this->_iesRotationDegrees = 0.0;
 }
 
 Sphere::Sphere(Vector3 position, double radius, std::shared_ptr<Material> material, bool visible, SphereUVProjection uvProjection)
@@ -130,6 +137,9 @@ Sphere::Sphere(Vector3 position, double radius, std::shared_ptr<Material> materi
 	this->_material = material;
 	this->_visible = visible;
 	this->_uvProjection = uvProjection;
+	this->_iesProfile = nullptr;
+	this->_iesDirection = Vector3(0.0, -1.0, 0.0);
+	this->_iesRotationDegrees = 0.0;
 }
 
 // Returns the Sphere's position
@@ -164,6 +174,22 @@ bool	Sphere::isVisible(void) const
 void	Sphere::setVisible(bool visible)
 {
 	this->_visible = visible;
+}
+
+void	Sphere::setIESProfile(std::shared_ptr<IESProfile> iesProfile, Vector3 direction, double rotationDegrees)
+{
+	const double directionLengthSquared = Utilities::vectorLengthSquared(direction);
+	if (iesProfile && (!std::isfinite(directionLengthSquared) || directionLengthSquared <= 0.0))
+	{
+		throw std::invalid_argument("IES profile direction must be non-zero.");
+	}
+	if (!std::isfinite(rotationDegrees))
+	{
+		throw std::invalid_argument("IES profile rotation must be finite.");
+	}
+	this->_iesProfile = iesProfile;
+	this->_iesDirection = direction;
+	this->_iesRotationDegrees = rotationDegrees;
 }
 
 SphereUVProjection	Sphere::getUVProjection(void) const
@@ -398,6 +424,18 @@ bool	Sphere::sampleLight(const Vector3& origin, HittableLightSample& sample) con
 	sample.pdf = 1.0 / solidAngle;
 	sample.tMax = root;
 	sample.material = this->_material.get();
+	if (this->_iesProfile && this->_material)
+	{
+		const Vector3 emissionDirection = sample.direction * -1.0;
+		const double relativeIntensity = this->_iesProfile->relativeIntensity(
+			emissionDirection,
+			this->_iesDirection,
+			this->_iesRotationDegrees
+		);
+
+		sample.emitted = this->_material->emitted() * relativeIntensity;
+		sample.hasEmitted = true;
+	}
 	sample.valid = std::isfinite(sample.pdf) && sample.pdf > 0.0 && sample.tMax > T_MIN;
 	return (sample.valid);
 }
