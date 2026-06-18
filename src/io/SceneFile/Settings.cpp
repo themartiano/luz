@@ -603,7 +603,7 @@ void	SceneFile::internal::_readSettingsSection(Scene& scene, std::ifstream& stre
 			{
 				throw std::runtime_error("Invalid background setting. Use background=(R,G,B).");
 			}
-			scene.setBackgroundColor(_parseColorValue(line.substr(separator + 1), "background", context.baseDirectory));
+			scene.setBackgroundColor(_parseColorValue(line.substr(separator + 1), "background", context));
 		}
 		else if (lowerLine.rfind("atmosphere=", 0) != std::string::npos)
 		{

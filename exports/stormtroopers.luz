@@ -1,0 +1,466 @@
+[settings]
+resolution=3840,2160
+samples=750
+maxlightbounces=8
+meters_per_unit=1
+gamma=1
+bloom=1
+sky=none
+background=(0,0,0)
+outputfilename=/Users/dudas/martiano/luz/exports/stormtroopers_render
+
+[materials]
+material white {
+type=principled
+base_color=(1,1,1)
+metallic=0
+roughness=0.06
+alpha=1
+transmission=0
+}
+material material_001 {
+type=lambertian
+base_color=(0,0,0)
+metallic=0
+roughness=0
+alpha=1
+transmission=0
+}
+material material_002 {
+type=lambertian
+base_color=(0.17335519,0.17335519,0.17335519)
+metallic=0
+roughness=0
+alpha=1
+transmission=0
+}
+material lamps {
+type=emissive
+color=(1,0.8688904,0.86888796)
+radiance=3
+}
+
+[meshes]
+mesh sphere_029_white {
+file=meshes/sphere_029_white.obj
+}
+mesh sphere_028_white {
+file=meshes/sphere_028_white.obj
+}
+mesh sphere_027_white {
+file=meshes/sphere_027_white.obj
+}
+mesh sphere_026_white {
+file=meshes/sphere_026_white.obj
+}
+mesh sphere_025_white {
+file=meshes/sphere_025_white.obj
+}
+mesh sphere_025_material_001 {
+file=meshes/sphere_025_material_001.obj
+}
+mesh cube_material_002 {
+file=meshes/cube_material_002.obj
+}
+mesh sphere_024_white {
+file=meshes/sphere_024_white.obj
+}
+mesh sphere_024_material_001 {
+file=meshes/sphere_024_material_001.obj
+}
+mesh sphere_023_white {
+file=meshes/sphere_023_white.obj
+}
+mesh sphere_022_white {
+file=meshes/sphere_022_white.obj
+}
+mesh sphere_021_white {
+file=meshes/sphere_021_white.obj
+}
+mesh sphere_020_white {
+file=meshes/sphere_020_white.obj
+}
+mesh sphere_015_white {
+file=meshes/sphere_015_white.obj
+}
+mesh sphere_015_material_001 {
+file=meshes/sphere_015_material_001.obj
+}
+mesh sphere_014_white {
+file=meshes/sphere_014_white.obj
+}
+mesh sphere_013_white {
+file=meshes/sphere_013_white.obj
+}
+mesh sphere_012_white {
+file=meshes/sphere_012_white.obj
+}
+mesh sphere_011_white {
+file=meshes/sphere_011_white.obj
+}
+mesh sphere_010_white {
+file=meshes/sphere_010_white.obj
+}
+mesh sphere_009_white {
+file=meshes/sphere_009_white.obj
+}
+mesh plane_002_material_001 {
+file=meshes/plane_002_material_001.obj
+}
+mesh sphere_008_white {
+file=meshes/sphere_008_white.obj
+}
+mesh sphere_008_material_001 {
+file=meshes/sphere_008_material_001.obj
+}
+mesh sphere_003_white {
+file=meshes/sphere_003_white.obj
+}
+mesh sphere_003_material_001 {
+file=meshes/sphere_003_material_001.obj
+}
+mesh plane_001_material_001 {
+file=meshes/plane_001_material_001.obj
+}
+mesh sphere_002_white {
+file=meshes/sphere_002_white.obj
+}
+mesh plane_lamps {
+file=meshes/plane_lamps.obj
+}
+mesh sphere_001_white {
+file=meshes/sphere_001_white.obj
+}
+mesh sphere_white {
+file=meshes/sphere_white.obj
+}
+mesh sphere_031_material_001 {
+file=meshes/sphere_031_material_001.obj
+}
+mesh sphere_030_material_001 {
+file=meshes/sphere_030_material_001.obj
+}
+mesh sphere_019_material_001 {
+file=meshes/sphere_019_material_001.obj
+}
+mesh sphere_018_material_001 {
+file=meshes/sphere_018_material_001.obj
+}
+mesh sphere_017_material_001 {
+file=meshes/sphere_017_material_001.obj
+}
+mesh sphere_016_material_001 {
+file=meshes/sphere_016_material_001.obj
+}
+mesh sphere_007_material_001 {
+file=meshes/sphere_007_material_001.obj
+}
+mesh sphere_006_material_001 {
+file=meshes/sphere_006_material_001.obj
+}
+mesh sphere_005_material_001 {
+file=meshes/sphere_005_material_001.obj
+}
+mesh sphere_004_material_001 {
+file=meshes/sphere_004_material_001.obj
+}
+
+[scene]
+camera main {
+position=(0.28389364,-0.79440486,9.1332712)
+direction=(-0.1028126,0.056890137,-0.99307263)
+up=(0.098740205,0.99401581,0.046721585)
+focal_length_mm=50
+sensor_width_mm=32
+sensor_height_mm=18
+f_stop=0.30000001
+pinhole=0
+focus_distance=7.8197969
+}
+object sphere_029_white {
+mesh=sphere_029_white
+position=(0,0,0)
+rotation=(0,0,0)
+scale=(1,1,1)
+material=white
+}
+object sphere_028_white {
+mesh=sphere_028_white
+position=(0,0,0)
+rotation=(0,0,0)
+scale=(1,1,1)
+material=white
+}
+object sphere_027_white {
+mesh=sphere_027_white
+position=(0,0,0)
+rotation=(0,0,0)
+scale=(1,1,1)
+material=white
+}
+object sphere_026_white {
+mesh=sphere_026_white
+position=(0,0,0)
+rotation=(0,0,0)
+scale=(1,1,1)
+material=white
+}
+object sphere_025_white {
+mesh=sphere_025_white
+position=(0,0,0)
+rotation=(0,0,0)
+scale=(1,1,1)
+material=white
+}
+object sphere_025_material_001 {
+mesh=sphere_025_material_001
+position=(0,0,0)
+rotation=(0,0,0)
+scale=(1,1,1)
+material=material_001
+}
+object cube_material_002 {
+mesh=cube_material_002
+position=(0,0,0)
+rotation=(0,0,0)
+scale=(1,1,1)
+material=material_002
+}
+object sphere_024_white {
+mesh=sphere_024_white
+position=(0,0,0)
+rotation=(0,0,0)
+scale=(1,1,1)
+material=white
+}
+object sphere_024_material_001 {
+mesh=sphere_024_material_001
+position=(0,0,0)
+rotation=(0,0,0)
+scale=(1,1,1)
+material=material_001
+}
+object sphere_023_white {
+mesh=sphere_023_white
+position=(0,0,0)
+rotation=(0,0,0)
+scale=(1,1,1)
+material=white
+}
+object sphere_022_white {
+mesh=sphere_022_white
+position=(0,0,0)
+rotation=(0,0,0)
+scale=(1,1,1)
+material=white
+}
+object sphere_021_white {
+mesh=sphere_021_white
+position=(0,0,0)
+rotation=(0,0,0)
+scale=(1,1,1)
+material=white
+}
+object sphere_020_white {
+mesh=sphere_020_white
+position=(0,0,0)
+rotation=(0,0,0)
+scale=(1,1,1)
+material=white
+}
+object sphere_015_white {
+mesh=sphere_015_white
+position=(0,0,0)
+rotation=(0,0,0)
+scale=(1,1,1)
+material=white
+}
+object sphere_015_material_001 {
+mesh=sphere_015_material_001
+position=(0,0,0)
+rotation=(0,0,0)
+scale=(1,1,1)
+material=material_001
+}
+object sphere_014_white {
+mesh=sphere_014_white
+position=(0,0,0)
+rotation=(0,0,0)
+scale=(1,1,1)
+material=white
+}
+object sphere_013_white {
+mesh=sphere_013_white
+position=(0,0,0)
+rotation=(0,0,0)
+scale=(1,1,1)
+material=white
+}
+object sphere_012_white {
+mesh=sphere_012_white
+position=(0,0,0)
+rotation=(0,0,0)
+scale=(1,1,1)
+material=white
+}
+object sphere_011_white {
+mesh=sphere_011_white
+position=(0,0,0)
+rotation=(0,0,0)
+scale=(1,1,1)
+material=white
+}
+object sphere_010_white {
+mesh=sphere_010_white
+position=(0,0,0)
+rotation=(0,0,0)
+scale=(1,1,1)
+material=white
+}
+object sphere_009_white {
+mesh=sphere_009_white
+position=(0,0,0)
+rotation=(0,0,0)
+scale=(1,1,1)
+material=white
+}
+object plane_002_material_001 {
+mesh=plane_002_material_001
+position=(0,0,0)
+rotation=(0,0,0)
+scale=(1,1,1)
+material=material_001
+}
+object sphere_008_white {
+mesh=sphere_008_white
+position=(0,0,0)
+rotation=(0,0,0)
+scale=(1,1,1)
+material=white
+}
+object sphere_008_material_001 {
+mesh=sphere_008_material_001
+position=(0,0,0)
+rotation=(0,0,0)
+scale=(1,1,1)
+material=material_001
+}
+object sphere_003_white {
+mesh=sphere_003_white
+position=(0,0,0)
+rotation=(0,0,0)
+scale=(1,1,1)
+material=white
+}
+object sphere_003_material_001 {
+mesh=sphere_003_material_001
+position=(0,0,0)
+rotation=(0,0,0)
+scale=(1,1,1)
+material=material_001
+}
+object plane_001_material_001 {
+mesh=plane_001_material_001
+position=(0,0,0)
+rotation=(0,0,0)
+scale=(1,1,1)
+material=material_001
+}
+object sphere_002_white {
+mesh=sphere_002_white
+position=(0,0,0)
+rotation=(0,0,0)
+scale=(1,1,1)
+material=white
+}
+object plane_lamps {
+mesh=plane_lamps
+position=(0,0,0)
+rotation=(0,0,0)
+scale=(1,1,1)
+material=lamps
+}
+object sphere_001_white {
+mesh=sphere_001_white
+position=(0,0,0)
+rotation=(0,0,0)
+scale=(1,1,1)
+material=white
+}
+object sphere_white {
+mesh=sphere_white
+position=(0,0,0)
+rotation=(0,0,0)
+scale=(1,1,1)
+material=white
+}
+object sphere_031_material_001 {
+mesh=sphere_031_material_001
+position=(0,0,0)
+rotation=(0,0,0)
+scale=(1,1,1)
+material=material_001
+}
+object sphere_030_material_001 {
+mesh=sphere_030_material_001
+position=(0,0,0)
+rotation=(0,0,0)
+scale=(1,1,1)
+material=material_001
+}
+object sphere_019_material_001 {
+mesh=sphere_019_material_001
+position=(0,0,0)
+rotation=(0,0,0)
+scale=(1,1,1)
+material=material_001
+}
+object sphere_018_material_001 {
+mesh=sphere_018_material_001
+position=(0,0,0)
+rotation=(0,0,0)
+scale=(1,1,1)
+material=material_001
+}
+object sphere_017_material_001 {
+mesh=sphere_017_material_001
+position=(0,0,0)
+rotation=(0,0,0)
+scale=(1,1,1)
+material=material_001
+}
+object sphere_016_material_001 {
+mesh=sphere_016_material_001
+position=(0,0,0)
+rotation=(0,0,0)
+scale=(1,1,1)
+material=material_001
+}
+object sphere_007_material_001 {
+mesh=sphere_007_material_001
+position=(0,0,0)
+rotation=(0,0,0)
+scale=(1,1,1)
+material=material_001
+}
+object sphere_006_material_001 {
+mesh=sphere_006_material_001
+position=(0,0,0)
+rotation=(0,0,0)
+scale=(1,1,1)
+material=material_001
+}
+object sphere_005_material_001 {
+mesh=sphere_005_material_001
+position=(0,0,0)
+rotation=(0,0,0)
+scale=(1,1,1)
+material=material_001
+}
+object sphere_004_material_001 {
+mesh=sphere_004_material_001
+position=(0,0,0)
+rotation=(0,0,0)
+scale=(1,1,1)
+material=material_001
+}

@@ -3,9 +3,11 @@
 #include "ColorManagement.hpp"
 #include "ColorScience.hpp"
 #include "Utilities.hpp"
+#include <algorithm>
 #include <cctype>
 #include <cstdio>
 #include <filesystem>
+#include <sstream>
 #include <stdexcept>
 
 std::string	SceneFile::internal::_trim(const std::string& input)
@@ -81,10 +83,15 @@ Color	SceneFile::internal::_parseColorValue(const std::string& value, const std:
 	return (_parseColorValue(value, label, std::filesystem::path()));
 }
 
-Color	SceneFile::internal::_parseColorValue(
+namespace SceneFile::internal
+{
+namespace
+{
+Color	parseColorValue(
 	const std::string& value,
 	const std::string& label,
-	const std::filesystem::path& baseDirectory
+	const std::filesystem::path& baseDirectory,
+	const std::unordered_map<std::string, Color>* spectra
 )
 {
 	double r;
@@ -126,7 +133,7 @@ Color	SceneFile::internal::_parseColorValue(
 		}
 		return (scalar);
 	};
-	auto parsePathFunctionArgument = [&](const std::string& functionName) -> std::string
+	auto parseSpectralFunctionArgument = [&](const std::string& functionName) -> std::string
 	{
 		const std::string prefix = functionName + "(";
 		if (lower.rfind(prefix, 0) != 0 || lower.back() != ')')
@@ -147,9 +154,23 @@ Color	SceneFile::internal::_parseColorValue(
 		}
 		if (argument.empty())
 		{
-			throw std::runtime_error("Invalid " + label + " spectral curve path.");
+			throw std::runtime_error("Invalid " + label + " spectral curve reference.");
 		}
-		return (_resolveAssetPath(baseDirectory, argument));
+		return (argument);
+	};
+	auto parseSpectralColor = [&](const std::string& functionName) -> Color
+	{
+		const std::string argument = parseSpectralFunctionArgument(functionName);
+
+		if (spectra)
+		{
+			const auto spectrum = spectra->find(argument);
+			if (spectrum != spectra->end())
+			{
+				return (spectrum->second);
+			}
+		}
+		return (ColorScience::loadReflectanceCurve(_resolveAssetPath(baseDirectory, argument)));
 	};
 	auto parseColorFunction = [&](const std::string& functionName) -> Color
 	{
@@ -189,19 +210,19 @@ Color	SceneFile::internal::_parseColorValue(
 	}
 	if (lower.rfind("reflectance(", 0) == 0)
 	{
-		return (ColorScience::loadReflectanceCurve(parsePathFunctionArgument("reflectance")));
+		return (parseSpectralColor("reflectance"));
 	}
 	if (lower.rfind("reflectance_curve(", 0) == 0)
 	{
-		return (ColorScience::loadReflectanceCurve(parsePathFunctionArgument("reflectance_curve")));
+		return (parseSpectralColor("reflectance_curve"));
 	}
 	if (lower.rfind("spectrum(", 0) == 0)
 	{
-		return (ColorScience::loadReflectanceCurve(parsePathFunctionArgument("spectrum")));
+		return (parseSpectralColor("spectrum"));
 	}
 	if (lower.rfind("spectral(", 0) == 0)
 	{
-		return (ColorScience::loadReflectanceCurve(parsePathFunctionArgument("spectral")));
+		return (parseSpectralColor("spectral"));
 	}
 	if (lower.rfind("acescg(", 0) == 0)
 	{
@@ -246,4 +267,99 @@ Color	SceneFile::internal::_parseColorValue(
 	}
 
 	return (Color(r, g, b));
+}
+}
+}
+
+Color	SceneFile::internal::_parseColorValue(
+	const std::string& value,
+	const std::string& label,
+	const std::filesystem::path& baseDirectory
+)
+{
+	return (parseColorValue(value, label, baseDirectory, nullptr));
+}
+
+Color	SceneFile::internal::_parseColorValue(
+	const std::string& value,
+	const std::string& label,
+	const SceneFile::internal::SceneFileContext& context
+)
+{
+	return (parseColorValue(value, label, context.baseDirectory, &context.spectra));
+}
+
+void	SceneFile::internal::_readNamedSpectraSection(std::ifstream& stream, SceneFileContext& context)
+{
+	std::string line;
+
+	do
+	{
+		getline(stream, line);
+		const std::string trimmedLine = _trim(line);
+
+		if (trimmedLine.empty())
+		{
+			break;
+		}
+		if (trimmedLine.at(0) == '#')
+		{
+			continue;
+		}
+
+		std::string spectrumName;
+		if (!_parseNamedBlockHeader(trimmedLine, "reflectance", spectrumName))
+		{
+			throw std::runtime_error("Invalid spectrum block header: " + line);
+		}
+		if (context.spectra.find(spectrumName) != context.spectra.end())
+		{
+			throw std::runtime_error("Duplicate spectrum name: " + spectrumName);
+		}
+
+		std::vector<ColorScience::SpectralSample> samples;
+		do
+		{
+			getline(stream, line);
+			std::size_t comment = line.find('#');
+			if (comment != std::string::npos)
+			{
+				line = line.substr(0, comment);
+			}
+			std::replace(line.begin(), line.end(), ',', ' ');
+			std::replace(line.begin(), line.end(), ';', ' ');
+			const std::string sampleLine = _trim(line);
+
+			if (sampleLine.empty())
+			{
+				continue;
+			}
+			if (sampleLine == "}")
+			{
+				try
+				{
+					context.spectra[spectrumName] = ColorScience::reflectanceCurve(samples);
+				}
+				catch (const std::exception& exception)
+				{
+					throw std::runtime_error("Invalid spectrum '" + spectrumName + "': " + exception.what());
+				}
+				break;
+			}
+
+			std::stringstream lineStream(sampleLine);
+			ColorScience::SpectralSample sample;
+			std::string trailing;
+			if (!(lineStream >> sample.wavelengthNanometers >> sample.value) || (lineStream >> trailing))
+			{
+				throw std::runtime_error("Invalid spectrum sample in '" + spectrumName + "'. Use wavelength_nm,value.");
+			}
+			samples.push_back(sample);
+		} while (!stream.eof());
+
+		if (context.spectra.find(spectrumName) == context.spectra.end())
+		{
+			throw std::runtime_error("Spectrum block '" + spectrumName + "' is missing a closing }.");
+		}
+	} while (!stream.eof());
 }

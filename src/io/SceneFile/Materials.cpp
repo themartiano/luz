@@ -322,7 +322,7 @@ namespace
 	void	parseMaterialProperty(
 		MaterialBuilder& builder,
 		const std::string& line,
-		const std::filesystem::path& baseDirectory
+		const SceneFile::internal::SceneFileContext& context
 	)
 	{
 		std::string key;
@@ -348,11 +348,11 @@ namespace
 		}
 		else if (key == "color" || key == "basecolor" || key == "base_color")
 		{
-			builder.color = SceneFile::internal::_parseColorValue(value, key, baseDirectory);
+			builder.color = SceneFile::internal::_parseColorValue(value, key, context);
 		}
 		else if (key == "emission" || key == "emissioncolor" || key == "emission_color")
 		{
-			builder.emissionColor = SceneFile::internal::_parseColorValue(value, key, baseDirectory);
+			builder.emissionColor = SceneFile::internal::_parseColorValue(value, key, context);
 			builder.hasEmissionColor = true;
 		}
 		else if (key == "fuzz")
@@ -369,7 +369,7 @@ namespace
 		}
 		else if (key == "eta" || key == "conductor_eta")
 		{
-			builder.conductorEta = SceneFile::internal::_parseColorValue(value, key, baseDirectory);
+			builder.conductorEta = SceneFile::internal::_parseColorValue(value, key, context);
 		}
 		else if (
 			key == "metal_preset"
@@ -389,7 +389,7 @@ namespace
 			|| key == "conductor_k"
 		)
 		{
-			builder.conductorExtinction = SceneFile::internal::_parseColorValue(value, key, baseDirectory);
+			builder.conductorExtinction = SceneFile::internal::_parseColorValue(value, key, context);
 		}
 		else if (key == "transmission")
 		{
@@ -458,7 +458,7 @@ namespace
 			|| key == "sigmaa"
 		)
 		{
-			builder.absorptionCoefficient = SceneFile::internal::_parseColorValue(value, key, baseDirectory);
+			builder.absorptionCoefficient = SceneFile::internal::_parseColorValue(value, key, context);
 		}
 		else if (
 			key == "transmittance"
@@ -469,7 +469,7 @@ namespace
 			|| key == "attenuationcolor"
 		)
 		{
-			builder.transmittance = SceneFile::internal::_parseColorValue(value, key, baseDirectory);
+			builder.transmittance = SceneFile::internal::_parseColorValue(value, key, context);
 		}
 		else if (
 			key == "attenuationdistance"
@@ -703,7 +703,7 @@ namespace
 	std::shared_ptr<Material>	readBraceMaterialBlock(
 		std::ifstream& stream,
 		const std::string& blockDescription,
-		const std::filesystem::path& baseDirectory
+		const SceneFile::internal::SceneFileContext& context
 	)
 	{
 		std::string line;
@@ -720,7 +720,7 @@ namespace
 			}
 			if (trimmedLine == "}")
 			{
-				return (buildMaterial(builder, blockDescription, baseDirectory));
+				return (buildMaterial(builder, blockDescription, context.baseDirectory));
 			}
 
 			std::shared_ptr<Material> directMaterial;
@@ -734,7 +734,7 @@ namespace
 				continue;
 			}
 
-			parseMaterialProperty(builder, trimmedLine, baseDirectory);
+			parseMaterialProperty(builder, trimmedLine, context);
 		} while (!stream.eof());
 
 		throw std::runtime_error(blockDescription + " is missing a closing }.");
@@ -811,7 +811,7 @@ void	SceneFile::internal::_readNamedMaterialsSection(std::ifstream& stream, Scen
 		context.materials[materialName] = readBraceMaterialBlock(
 			stream,
 			"Material block '" + materialName + "'",
-			context.baseDirectory
+			context
 		);
 	} while (!stream.eof());
 }

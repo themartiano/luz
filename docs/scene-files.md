@@ -293,17 +293,19 @@ visible=0
 
 | Object | Format |
 | --- | --- |
-| Sphere | `sphere=(x,y,z),radius,material[` |
+| Sphere | `sphere=(x,y,z),radius,material[` or `sphere=(x,y,z),radius,material=NAME` |
 | Named sphere | `sphere name { position=(x,y,z) radius=R material=name }` |
-| Plane | `plane=y,(ox,oy,oz),material[` |
-| Rectangle | `rectangle=(x,y,z),(ox,oy,oz),width,height,material[` |
-| Triangle | `triangle=(x0,y0,z0),(x1,y1,z1),(x2,y2,z2),material[` |
-| Cube | `cube=(x,y,z),(ox,oy,oz),width,height,depth,material[` |
+| Plane | `plane=y,(ox,oy,oz),material[` or `plane=y,(ox,oy,oz),material=NAME` |
+| Rectangle | `rectangle=(x,y,z),(ox,oy,oz),width,height,material[` or `rectangle=(x,y,z),(ox,oy,oz),width,height,material=NAME` |
+| Triangle | `triangle=(x0,y0,z0),(x1,y1,z1),(x2,y2,z2),material[` or `triangle=(x0,y0,z0),(x1,y1,z1),(x2,y2,z2),material=NAME` |
+| Cube | `cube=(x,y,z),(ox,oy,oz),width,height,depth,material[` or `cube=(x,y,z),(ox,oy,oz),width,height,depth,material=NAME` |
 | OBJ mesh | `obj=path/to/file.obj` |
-| Transformed OBJ mesh | `obj=path/to/file.obj,(x,y,z),material[` |
+| Transformed OBJ mesh | `obj=path/to/file.obj,(x,y,z),material[` or `obj=path/to/file.obj,(x,y,z),material=NAME` |
 | Volume block | `volume name { ... }` |
 
-Objects except plain `obj=path/to/file.obj` must be followed by a material block and a closing `]`. Plain OBJ meshes use the default material.
+Compact primitive lines can either use an inline material block with
+`material[` and a closing `]`, or bind a named material from `[materials]` with
+`material=NAME`. Plain `obj=path/to/file.obj` meshes use the default material.
 
 Named sphere blocks may appear in `[scene]` or inside `objects{}`. Use them
 when an analytic sphere needs a named material, including materials with
@@ -422,6 +424,27 @@ and integrate them to ACEScg. Reflectance files are plain text or CSV with one
 `wavelength_nm,reflectance` sample per line; `#` starts a comment. Wavelengths
 must be unique samples within `360-830 nm`, and reflectance values must be in
 `[0,1]`. Paths are resolved like textures, relative to the scene file first.
+Scene files can also define named reflectance curves inline before `[materials]`:
+
+```text
+[spectra]
+reflectance measured_green {
+400 0.092
+500 0.285
+600 0.160
+700 0.159
+}
+
+[materials]
+material painted_wall {
+type=lambertian
+color=reflectance(measured_green)
+}
+```
+
+For `reflectance(...)`, `reflectance_curve(...)`, `spectrum(...)`, and
+`spectral(...)`, Luz first checks the `[spectra]` names loaded in the current
+scene file. If no name matches, the argument is treated as a file path.
 
 Named material blocks can use the direct material lines above, or property syntax:
 

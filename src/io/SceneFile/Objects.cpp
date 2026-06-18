@@ -151,6 +151,38 @@ namespace
 		return (materialIt->second);
 	}
 
+	std::shared_ptr<Material>	readPrimitiveMaterial(
+		const std::string& line,
+		std::ifstream& stream,
+		SceneFile::internal::SceneFileContext& context,
+		int materialTokenEnd,
+		const std::string& description
+	)
+	{
+		const std::string suffix = SceneFile::internal::_trim(line.substr(materialTokenEnd));
+
+		if (suffix == "[")
+		{
+			return (SceneFile::internal::_readMaterialSubSection(stream));
+		}
+		if (!suffix.empty() && suffix.at(0) == '=')
+		{
+			const std::string materialName = SceneFile::internal::_trim(suffix.substr(1));
+
+			if (materialName.empty() || materialName.find_first_of(" \t{}[]") != std::string::npos)
+			{
+				throw std::runtime_error("Invalid " + description + " material name: " + line);
+			}
+			return (findNamedMaterial(context, materialName));
+		}
+
+		throw std::runtime_error(
+			"Invalid "
+			+ description
+			+ " material. Use material[ for an inline material block or material=NAME for a named material."
+		);
+	}
+
 	std::string	findNamedMeshPath(const SceneFile::internal::SceneFileContext& context, const std::string& meshName)
 	{
 		const auto meshIt = context.meshes.find(meshName);
@@ -892,7 +924,7 @@ namespace
 			}
 			else if (key == "color")
 			{
-				light.color = SceneFile::internal::_parseColorValue(value, key, context.baseDirectory);
+				light.color = SceneFile::internal::_parseColorValue(value, key, context);
 			}
 			else if (parseSurfaceLightUnit(light.units, key, value))
 			{
@@ -973,7 +1005,7 @@ namespace
 			}
 			else if (key == "color")
 			{
-				light.color = SceneFile::internal::_parseColorValue(value, key, context.baseDirectory);
+				light.color = SceneFile::internal::_parseColorValue(value, key, context);
 			}
 			else if (parseSphericalLightUnit(light.units, key, value))
 			{
@@ -1068,7 +1100,7 @@ namespace
 			}
 			else if (key == "color")
 			{
-				light.color = SceneFile::internal::_parseColorValue(value, key, context.baseDirectory);
+				light.color = SceneFile::internal::_parseColorValue(value, key, context);
 				light.hasColor = true;
 			}
 			else if (parseDirectionalLightUnit(light.units, key, value))
@@ -1151,7 +1183,7 @@ namespace
 			}
 			else if (key == "color" || key == "albedo" || key == "scatteringcolor" || key == "scattering_color")
 			{
-				volume.color = SceneFile::internal::_parseColorValue(value, key, context.baseDirectory);
+				volume.color = SceneFile::internal::_parseColorValue(value, key, context);
 				volume.hasColor = true;
 			}
 			else if (key == "anisotropy" || key == "g")
@@ -1175,7 +1207,7 @@ namespace
 				|| key == "scatteringcoefficient"
 			)
 			{
-				volume.scatteringCoefficient = SceneFile::internal::_parseColorValue(value, key, context.baseDirectory);
+				volume.scatteringCoefficient = SceneFile::internal::_parseColorValue(value, key, context);
 			}
 			else if (
 				key == "sigma_a"
@@ -1185,7 +1217,7 @@ namespace
 				|| key == "absorptioncoefficient"
 			)
 			{
-				volume.absorptionCoefficient = SceneFile::internal::_parseColorValue(value, key, context.baseDirectory);
+				volume.absorptionCoefficient = SceneFile::internal::_parseColorValue(value, key, context);
 			}
 			else if (key == "material")
 			{
@@ -1270,34 +1302,41 @@ void	SceneFile::internal::_readObjectsSubSection(Scene& scene, std::ifstream& st
 	do
 	{
 		getline(stream, line);
+		const std::string trimmedLine = SceneFile::internal::_trim(line);
 
-		if (line.length() <= 0 || line.at(0) == '#')
+		if (trimmedLine.empty() || trimmedLine.at(0) == '#')
 		{
 			continue;
 		}
-		if (line == "}")
+		if (trimmedLine == "}")
 		{
 			closed = true;
 			break;
 		}
-		if (addSceneObjectOrLightBlock(scene, stream, context, line))
+		if (addSceneObjectOrLightBlock(scene, stream, context, trimmedLine))
 		{
 			continue;
 		}
-		std::string lowerLine = line;
-		Utilities::toLower(lowerLine);
+		std::string lowerLine = SceneFile::internal::_lowerCopy(trimmedLine);
 
 		if (lowerLine.rfind("sphere=", 0) != std::string::npos)
 		{
 			double pX, pY, pZ, radius;
+			int materialPosition = 0;
 
-			if (sscanf(lowerLine.c_str(), "sphere=(%lf,%lf,%lf),%lf,material[", &pX, &pY, &pZ, &radius) == 4)
+			if (sscanf(lowerLine.c_str(), "sphere=(%lf,%lf,%lf),%lf,material%n", &pX, &pY, &pZ, &radius, &materialPosition) == 4)
 			{
 				Sphere sphere;
 
 				sphere.setPosition(Vector3(pX, pY, pZ));
 				sphere.setRadius(radius);
-				sphere.setMaterial(internal::_readMaterialSubSection(stream));
+				sphere.setMaterial(readPrimitiveMaterial(
+					trimmedLine,
+					stream,
+					context,
+					materialPosition,
+					"sphere object"
+				));
 
 				scene.addHittable(std::make_shared<Sphere>(sphere));
 
@@ -1308,8 +1347,9 @@ void	SceneFile::internal::_readObjectsSubSection(Scene& scene, std::ifstream& st
 		else if (lowerLine.rfind("cube=", 0) != std::string::npos)
 		{
 			double pX, pY, pZ, oX, oY, oZ, width, height, depth;
+			int materialPosition = 0;
 
-			if (sscanf(lowerLine.c_str(), "cube=(%lf,%lf,%lf),(%lf,%lf,%lf),%lf,%lf,%lf,material[", &pX, &pY, &pZ, &oX, &oY, &oZ, &width, &height, &depth) == 9)
+			if (sscanf(lowerLine.c_str(), "cube=(%lf,%lf,%lf),(%lf,%lf,%lf),%lf,%lf,%lf,material%n", &pX, &pY, &pZ, &oX, &oY, &oZ, &width, &height, &depth, &materialPosition) == 9)
 			{
 				Cube cube;
 
@@ -1317,7 +1357,13 @@ void	SceneFile::internal::_readObjectsSubSection(Scene& scene, std::ifstream& st
 				cube.setWidth(width);
 				cube.setHeight(height);
 				cube.setDepth(depth);
-				cube.setMaterial(internal::_readMaterialSubSection(stream));
+				cube.setMaterial(readPrimitiveMaterial(
+					trimmedLine,
+					stream,
+					context,
+					materialPosition,
+					"cube object"
+				));
 
 				scene.addHittable(std::make_shared<Cube>(cube));
 
@@ -1328,14 +1374,21 @@ void	SceneFile::internal::_readObjectsSubSection(Scene& scene, std::ifstream& st
 		else if (lowerLine.rfind("plane=", 0) != std::string::npos)
 		{
 			double y, oX, oY, oZ;
+			int materialPosition = 0;
 
-			if (sscanf(lowerLine.c_str(), "plane=%lf,(%lf,%lf,%lf),material[", &y, &oX, &oY, &oZ) == 4)
+			if (sscanf(lowerLine.c_str(), "plane=%lf,(%lf,%lf,%lf),material%n", &y, &oX, &oY, &oZ, &materialPosition) == 4)
 			{
 				Plane plane;
 
 				plane.setY(y);
 				plane.setOrientation(Vector3(oX, oY, oZ));
-				plane.setMaterial(internal::_readMaterialSubSection(stream));
+				plane.setMaterial(readPrimitiveMaterial(
+					trimmedLine,
+					stream,
+					context,
+					materialPosition,
+					"plane object"
+				));
 
 				scene.addHittable(std::make_shared<Plane>(plane));
 
@@ -1346,15 +1399,22 @@ void	SceneFile::internal::_readObjectsSubSection(Scene& scene, std::ifstream& st
 		else if (lowerLine.rfind("rectangle=", 0) != std::string::npos)
 		{
 			double pX, pY, pZ, oX, oY, oZ, width, height;
+			int materialPosition = 0;
 
-			if (sscanf(lowerLine.c_str(), "rectangle=(%lf,%lf,%lf),(%lf,%lf,%lf),%lf,%lf,material[", &pX, &pY, &pZ, &oX, &oY, &oZ, &width, &height) == 8)
+			if (sscanf(lowerLine.c_str(), "rectangle=(%lf,%lf,%lf),(%lf,%lf,%lf),%lf,%lf,material%n", &pX, &pY, &pZ, &oX, &oY, &oZ, &width, &height, &materialPosition) == 8)
 			{
 				Rectangle rectangle;
 
 				rectangle.setTransform(Transform(Vector3(pX, pY, pZ), Vector3(oX, oY, oZ), Vector3(1.0, 1.0, 1.0)));
 				rectangle.setWidth(width);
 				rectangle.setHeight(height);
-				rectangle.setMaterial(internal::_readMaterialSubSection(stream));
+				rectangle.setMaterial(readPrimitiveMaterial(
+					trimmedLine,
+					stream,
+					context,
+					materialPosition,
+					"rectangle object"
+				));
 
 				scene.addHittable(std::make_shared<Rectangle>(rectangle));
 
@@ -1365,15 +1425,22 @@ void	SceneFile::internal::_readObjectsSubSection(Scene& scene, std::ifstream& st
 		else if (lowerLine.rfind("triangle=", 0) != std::string::npos)
 		{
 			double v0X, v0Y, v0Z, v1X, v1Y, v1Z, v2X, v2Y, v2Z;
+			int materialPosition = 0;
 
-			if (sscanf(lowerLine.c_str(), "triangle=(%lf,%lf,%lf),(%lf,%lf,%lf),(%lf,%lf,%lf),material[", &v0X, &v0Y, &v0Z, &v1X, &v1Y, &v1Z, &v2X, &v2Y, &v2Z) == 9)
+			if (sscanf(lowerLine.c_str(), "triangle=(%lf,%lf,%lf),(%lf,%lf,%lf),(%lf,%lf,%lf),material%n", &v0X, &v0Y, &v0Z, &v1X, &v1Y, &v1Z, &v2X, &v2Y, &v2Z, &materialPosition) == 9)
 			{
 				Triangle triangle;
 
 				triangle.setVertex0(Vector3(v0X, v0Y, v0Z));
 				triangle.setVertex1(Vector3(v1X, v1Y, v1Z));
 				triangle.setVertex2(Vector3(v2X, v2Y, v2Z));
-				triangle.setMaterial(internal::_readMaterialSubSection(stream));
+				triangle.setMaterial(readPrimitiveMaterial(
+					trimmedLine,
+					stream,
+					context,
+					materialPosition,
+					"triangle object"
+				));
 
 				scene.addHittable(std::make_shared<Triangle>(triangle));
 
@@ -1383,11 +1450,12 @@ void	SceneFile::internal::_readObjectsSubSection(Scene& scene, std::ifstream& st
 		}
 		else if (lowerLine.rfind("obj=", 0) != std::string::npos)
 		{
-			std::string strObjFileName = line.substr(std::string("obj=").size());
+			std::string strObjFileName = trimmedLine.substr(std::string("obj=").size());
 			char objFileName[1024];
 			double pX, pY, pZ;
+			int materialPosition = 0;
 
-			if (sscanf(strObjFileName.c_str(), "%1023[^,],(%lf,%lf,%lf),material[", objFileName, &pX, &pY, &pZ) == 4)
+			if (sscanf(strObjFileName.c_str(), "%1023[^,],(%lf,%lf,%lf),material%n", objFileName, &pX, &pY, &pZ, &materialPosition) == 4)
 			{
 				scene.addHittable(scheduleMeshLoad(
 					context,
@@ -1395,7 +1463,13 @@ void	SceneFile::internal::_readObjectsSubSection(Scene& scene, std::ifstream& st
 					Vector3(pX, pY, pZ),
 					Vector3(0.0, 0.0, 0.0),
 					Vector3(1.0, 1.0, 1.0),
-					internal::_readMaterialSubSection(stream)
+					readPrimitiveMaterial(
+						strObjFileName,
+						stream,
+						context,
+						materialPosition,
+						"OBJ object"
+					)
 				));
 
 				continue;
@@ -1418,7 +1492,7 @@ void	SceneFile::internal::_readObjectsSubSection(Scene& scene, std::ifstream& st
 		}
 		else
 		{
-			throw std::runtime_error("Unknown object line: " + line);
+			throw std::runtime_error("Unknown object line: " + trimmedLine);
 		}
 	} while (!stream.eof());
 

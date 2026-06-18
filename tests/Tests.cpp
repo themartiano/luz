@@ -1869,6 +1869,62 @@ namespace
 		std::filesystem::remove(objectPath);
 	}
 
+	void	testSceneFileCompactPrimitivesUseNamedMaterials(void)
+	{
+		const std::filesystem::path objectPath = std::filesystem::temp_directory_path() / "luz_named_material_obj_triangle.obj";
+		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_compact_named_materials_test.luz";
+		{
+			std::ofstream objectStream(objectPath);
+			objectStream
+				<< "v 0.0 0.0 0.0\n"
+				<< "v 1.0 0.0 0.0\n"
+				<< "v 0.0 1.0 0.0\n"
+				<< "f 1 2 3\n";
+		}
+		{
+			std::ofstream sceneStream(scenePath);
+			sceneStream
+				<< "[materials]\n"
+				<< "material matte_green {\n"
+				<< "type=lambertian\n"
+				<< "color=(0.1,0.8,0.2)\n"
+				<< "}\n"
+				<< "material measured_silver {\n"
+				<< "type=metal\n"
+				<< "preset=silver\n"
+				<< "roughness=0.1\n"
+				<< "}\n\n"
+				<< "[scene]\n"
+				<< "objects{\n"
+				<< "sphere=(0,0,0),1,material=matte_green\n"
+				<< "cube=(3,0,0),(0,1,0),1,1,1,material=measured_silver\n"
+				<< "plane=-1,(0,1,0),material=matte_green\n"
+				<< "rectangle=(0,0,2),(0,0,-1),1,1,material=matte_green\n"
+				<< "triangle=(0,0,0),(1,0,0),(0,1,0),material=matte_green\n"
+				<< "obj=" << objectPath.filename().string() << ",(0,0,0),material=matte_green\n"
+				<< "}\n";
+		}
+
+		Scene scene;
+		SceneFile::read(scene, scenePath.string());
+
+		require(scene.getHittables().size() == 6, "Compact primitive named-material scene did not load all hittables.");
+		require(scene.getHittables()[0]->getMaterial()->getType() == LAMBERTIAN, "Named material was not applied to compact sphere.");
+		require(scene.getHittables()[1]->getMaterial()->getType() == METAL, "Named metal material was not applied to compact cube.");
+		require(scene.getHittables()[2]->getMaterial()->getType() == LAMBERTIAN, "Named material was not applied to compact plane.");
+		require(scene.getHittables()[3]->getMaterial()->getType() == LAMBERTIAN, "Named material was not applied to compact rectangle.");
+		require(scene.getHittables()[4]->getMaterial()->getType() == LAMBERTIAN, "Named material was not applied to compact triangle.");
+		require(scene.getHittables()[5]->getMaterial()->getType() == LAMBERTIAN, "Named material was not applied to transformed OBJ.");
+		requireColorNear(
+			scene.getHittables()[4]->getMaterial()->getColor(),
+			Color(0.1, 0.8, 0.2),
+			"Compact triangle named material color is wrong."
+		);
+
+		std::filesystem::remove(scenePath);
+		std::filesystem::remove(objectPath);
+	}
+
 	void	testSceneFilePhysicalLightUnits(void)
 	{
 		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_physical_light_units_test.luz";
@@ -2124,6 +2180,41 @@ namespace
 
 		const Color emission = scene.getHittables()[1]->getMaterial()->emitted();
 		require(emission.getRed() > emission.getBlue(), "Spectral blackbody light was not warm.");
+
+		std::filesystem::remove(scenePath);
+	}
+
+	void	testSceneFileLoadsNamedReflectanceSpectra(void)
+	{
+		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_named_reflectance_spectra_test.luz";
+		{
+			std::ofstream sceneStream(scenePath);
+			sceneStream
+				<< "[spectra]\n"
+				<< "reflectance green_curve {\n"
+				<< "400 0.0\n"
+				<< "550 1.0\n"
+				<< "700 0.0\n"
+				<< "}\n\n"
+				<< "[materials]\n"
+				<< "material measured_green {\n"
+				<< "type=lambertian\n"
+				<< "color=reflectance(green_curve)\n"
+				<< "}\n\n"
+				<< "[scene]\n"
+				<< "sphere painted {\n"
+				<< "position=(0,0,0)\n"
+				<< "radius=1\n"
+				<< "material=measured_green\n"
+				<< "}\n";
+		}
+
+		Scene scene;
+		SceneFile::read(scene, scenePath.string());
+
+		require(scene.getHittables().size() == 1, "Named reflectance spectrum scene did not load the sphere.");
+		const Color paint = scene.getHittables()[0]->getMaterial()->getColor();
+		require(paint.getGreen() > paint.getRed() && paint.getGreen() > paint.getBlue(), "Named reflectance spectrum was not applied to material color.");
 
 		std::filesystem::remove(scenePath);
 	}
@@ -4246,11 +4337,13 @@ int	main(void)
 		testSceneFileLoadsRelativeObject();
 		testSceneFileLoadsTransformedObject();
 		testSceneFileLoadsNamedBlocks();
+		testSceneFileCompactPrimitivesUseNamedMaterials();
 		testSceneFilePhysicalLightUnits();
 		testSceneFileSolarDirectionalLightPreset();
 		testSceneFileLoadsIESPointLight();
 		testSceneFileMetersPerUnitScalesPhysicalLightArea();
 		testSceneFileSpectralColorValues();
+		testSceneFileLoadsNamedReflectanceSpectra();
 		testSceneFileExplicitColorSpaces();
 		testSceneFileLoadsAbsorbingDielectricMaterial();
 		testSceneFileLoadsConductorMetalMaterial();

@@ -89,6 +89,10 @@ void	SceneFile::read(Scene& scene, std::string fileName)
 		{
 			internal::_readSettingsSection(scene, stream, context);
 		}
+		else if (lowerLine.rfind("[spectra]", 0) != std::string::npos)
+		{
+			internal::_readNamedSpectraSection(stream, context);
+		}
 		else if (lowerLine.rfind("[materials]", 0) != std::string::npos)
 		{
 			internal::_readNamedMaterialsSection(stream, context);
