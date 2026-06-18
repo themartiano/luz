@@ -241,6 +241,24 @@ void	Scene::setExposure(double exposure)
 	this->_exposure = exposure;
 }
 
+void	Scene::setPhotographicExposure(double fNumber, double shutterSeconds, double iso)
+{
+	if (!std::isfinite(fNumber) || fNumber <= 0.0)
+	{
+		throw std::invalid_argument("Photographic f-number must be finite and positive.");
+	}
+	if (!std::isfinite(shutterSeconds) || shutterSeconds <= 0.0)
+	{
+		throw std::invalid_argument("Photographic shutter time must be finite and positive.");
+	}
+	if (!std::isfinite(iso) || iso <= 0.0)
+	{
+		throw std::invalid_argument("Photographic ISO must be finite and positive.");
+	}
+
+	this->setExposure(std::log2((shutterSeconds * (iso / 100.0)) / (fNumber * fNumber)));
+}
+
 double	Scene::getContrast(void) const
 {
 	return (this->_contrast);

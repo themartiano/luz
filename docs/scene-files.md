@@ -37,6 +37,7 @@ The parser is intentionally strict: unknown lines and malformed values throw an 
 | `tonemapping` | `tonemapping=0` or `tonemapping=1` | Enables filmic tone mapping when set to `1`. Alias: `tone_mapping`. |
 | `bloom` | `bloom=0` or `bloom=1` | Enables bloom when set to `1`. |
 | `exposure` | `exposure=F` | Exposure compensation in stops. `1.0` doubles light before bloom and tone mapping; `-1.0` halves it. |
+| `photographic_exposure` | `photographic_exposure=F_NUMBER,SHUTTER_SECONDS,ISO` | Sets exposure from physical camera controls using `shutter * ISO / 100 / F_NUMBER^2`. `f/1`, `1s`, `ISO 100` equals `exposure=0`. Aliases: `photographicexposure`, `camera_exposure`, `cameraexposure`. |
 | `contrast` | `contrast=F` | Display contrast multiplier applied after tone mapping and before gamma correction. `1.0` keeps contrast unchanged. |
 | `denoise` | `denoise=0` or `denoise=1` | Toggles the NFOR denoised companion image. Enabled by default. The denoiser runs before exposure, bloom, tone mapping, contrast, and gamma correction. |
 | `denoiseoutputfilename` | `denoiseoutputfilename=PATH` | Optional denoised companion output path. Defaults to `outputfilename` with `_denoised` before the extension. Must use a `.bmp`, `.png`, or `.tiff` suffix. Aliases: `denoiseoutput`, `denoise_output`. |
@@ -106,6 +107,9 @@ Named camera blocks also support an optional `up` vector:
 | `fov` | `fov=DEGREES` | Horizontal field of view. |
 | `aperture` | `aperture=DIAMETER` | Lens diameter in Luz world units. |
 | `focusDistance` | `focusDistance=DISTANCE` | Distance to the focal plane along the camera direction. |
+| `f_stop` | `f_stop=N` | Optional photographic f-number. Requires `shutter` and `iso`, then sets scene exposure from camera controls. Aliases: `fstop`, `f_number`, `fnumber`. |
+| `shutter` | `shutter=SECONDS` | Optional photographic shutter time in seconds. Requires `f_stop` and `iso`. Aliases: `shutter_seconds`, `shutter_speed`. |
+| `iso` | `iso=N` | Optional photographic ISO speed. Requires `f_stop` and `shutter`. |
 
 Objects are placed inside an `objects{` block:
 

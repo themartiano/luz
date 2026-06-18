@@ -503,6 +503,20 @@ namespace
 		requireNear(pixel.getBlue(), 1.0, "Contrast upper endpoint is wrong.");
 	}
 
+	void	testPhotographicExposureConversion(void)
+	{
+		Scene scene;
+
+		scene.setPhotographicExposure(1.0, 1.0, 100.0);
+		requireNear(scene.getExposure(), 0.0, "Reference photographic exposure is wrong.");
+		scene.setPhotographicExposure(2.0, 1.0, 100.0);
+		requireNear(scene.getExposure(), -2.0, "F-number photographic exposure is wrong.");
+		scene.setPhotographicExposure(2.0, 4.0, 100.0);
+		requireNear(scene.getExposure(), 0.0, "Shutter photographic exposure is wrong.");
+		scene.setPhotographicExposure(2.0, 1.0, 400.0);
+		requireNear(scene.getExposure(), 0.0, "ISO photographic exposure is wrong.");
+	}
+
 	void	testBloomExtractionPreservesHighlightColor(void)
 	{
 		Image image(2, 1);
@@ -968,6 +982,50 @@ namespace
 		std::filesystem::remove(scenePath);
 	}
 
+	void	testSceneFilePhotographicExposureSetting(void)
+	{
+		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_scene_photographic_exposure_test.luz";
+		{
+			std::ofstream stream(scenePath);
+			stream
+				<< "[settings]\n"
+				<< "photographic_exposure=2,4,100\n\n";
+		}
+
+		Scene scene;
+		SceneFile::read(scene, scenePath.string());
+		requireNear(scene.getExposure(), 0.0, "Scene photographic exposure setting was not applied.");
+
+		std::filesystem::remove(scenePath);
+	}
+
+	void	testSceneFileCameraPhotographicExposure(void)
+	{
+		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_camera_photographic_exposure_test.luz";
+		{
+			std::ofstream stream(scenePath);
+			stream
+				<< "[scene]\n"
+				<< "camera main {\n"
+				<< "position=(0,0,1)\n"
+				<< "direction=(0,0,-1)\n"
+				<< "fov=45\n"
+				<< "aperture=0\n"
+				<< "focusDistance=1\n"
+				<< "f_stop=4\n"
+				<< "shutter=1\n"
+				<< "iso=100\n"
+				<< "}\n";
+		}
+
+		Scene scene;
+		SceneFile::read(scene, scenePath.string());
+		require(scene.hasCamera(), "Scene camera block with photographic exposure did not load a camera.");
+		requireNear(scene.getExposure(), -4.0, "Camera photographic exposure was not applied.");
+
+		std::filesystem::remove(scenePath);
+	}
+
 	void	requireSceneFileSettingThrows(const std::string& settingLine, const std::string& message)
 	{
 		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_invalid_setting_test.luz";
@@ -1006,6 +1064,10 @@ namespace
 		requireSceneFileSettingThrows("tonemapping=2", "Scene file accepted non-binary tone mapping.");
 		requireSceneFileSettingThrows("bloom=2", "Scene file accepted non-binary bloom.");
 		requireSceneFileSettingThrows("exposure=nan", "Scene file accepted non-finite exposure.");
+		requireSceneFileSettingThrows("photographic_exposure=0,1,100", "Scene file accepted zero photographic f-number.");
+		requireSceneFileSettingThrows("photographic_exposure=2,0,100", "Scene file accepted zero photographic shutter.");
+		requireSceneFileSettingThrows("photographic_exposure=2,1,0", "Scene file accepted zero photographic ISO.");
+		requireSceneFileSettingThrows("photographic_exposure=2,1", "Scene file accepted incomplete photographic exposure.");
 		requireSceneFileSettingThrows("contrast=-1", "Scene file accepted negative contrast.");
 		requireSceneFileSettingThrows("denoise=2", "Scene file accepted non-binary denoise.");
 		requireSceneFileSettingThrows("compression=75", "Scene file accepted removed compression setting.");
@@ -2483,6 +2545,10 @@ namespace
 		requireThrows([&]() { scene.setMetersPerUnit(0.0); }, "Scene accepted zero meters per unit.");
 		requireThrows([&]() { scene.setMetersPerUnit(std::numeric_limits<double>::quiet_NaN()); }, "Scene accepted non-finite meters per unit.");
 		requireThrows([&]() { scene.setExposure(std::numeric_limits<double>::quiet_NaN()); }, "Scene accepted non-finite exposure.");
+		requireThrows([&]() { scene.setPhotographicExposure(0.0, 1.0, 100.0); }, "Scene accepted zero photographic f-number.");
+		requireThrows([&]() { scene.setPhotographicExposure(2.0, 0.0, 100.0); }, "Scene accepted zero photographic shutter.");
+		requireThrows([&]() { scene.setPhotographicExposure(2.0, 1.0, 0.0); }, "Scene accepted zero photographic ISO.");
+		requireThrows([&]() { scene.setPhotographicExposure(std::numeric_limits<double>::quiet_NaN(), 1.0, 100.0); }, "Scene accepted non-finite photographic f-number.");
 		requireThrows([&]() { scene.setContrast(-1.0); }, "Scene accepted negative contrast.");
 		requireThrows([&]() { scene.setContrast(std::numeric_limits<double>::quiet_NaN()); }, "Scene accepted non-finite contrast.");
 		requireThrows([&]() { scene.setEnvironmentStrength(-1.0); }, "Scene accepted negative environment strength.");
@@ -3058,6 +3124,7 @@ int	main(void)
 		testToneMappingCompressesHighlights();
 		testSRGBGammaCorrection();
 		testExposureAndContrast();
+		testPhotographicExposureConversion();
 		testBloomExtractionPreservesHighlightColor();
 		testPhysicalLightUnitConversions();
 		testSpectralColorConversions();
@@ -3074,6 +3141,8 @@ int	main(void)
 		testSceneFileUsesSceneDefaults();
 		testSceneFileAdaptiveSettings();
 		testSceneFilePostProcessSettings();
+		testSceneFilePhotographicExposureSetting();
+		testSceneFileCameraPhotographicExposure();
 		testSceneFileRejectsInvalidSettings();
 		testSceneFileAtmosphereSetting();
 		testSceneFileDirectionalSunDrivesAtmosphere();

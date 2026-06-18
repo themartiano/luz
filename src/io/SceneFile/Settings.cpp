@@ -61,6 +61,22 @@ namespace
 		}
 		return (parts);
 	}
+
+	void	applyPhotographicExposure(Scene& scene, const std::string& value)
+	{
+		const std::vector<std::string> parts = splitCommaList(value);
+
+		if (parts.size() != 3 || parts[0].empty() || parts[1].empty() || parts[2].empty())
+		{
+			throw std::runtime_error("Invalid photographic exposure setting. Use photographic_exposure=F_NUMBER,SHUTTER_SECONDS,ISO.");
+		}
+
+		scene.setPhotographicExposure(
+			parseFiniteDouble(parts[0], "Photographic f-number"),
+			parseFiniteDouble(parts[1], "Photographic shutter time"),
+			parseFiniteDouble(parts[2], "Photographic ISO")
+		);
+	}
 }
 
 // Parses the [settings] section of a Scene file
@@ -217,6 +233,18 @@ void	SceneFile::internal::_readSettingsSection(Scene& scene, std::ifstream& stre
 				throw std::runtime_error("Invalid exposure setting. Use exposure=F.");
 			}
 			scene.setExposure(exposure);
+		}
+		else if (
+			lowerLine.rfind("photographic_exposure=", 0) != std::string::npos
+			|| lowerLine.rfind("photographicexposure=", 0) != std::string::npos
+			|| lowerLine.rfind("camera_exposure=", 0) != std::string::npos
+			|| lowerLine.rfind("cameraexposure=", 0) != std::string::npos
+		)
+		{
+			applyPhotographicExposure(
+				scene,
+				settingValue(line, "Invalid photographic exposure setting. Use photographic_exposure=F_NUMBER,SHUTTER_SECONDS,ISO.")
+			);
 		}
 		else if (lowerLine.rfind("contrast=", 0) != std::string::npos)
 		{

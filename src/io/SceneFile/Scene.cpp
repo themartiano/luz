@@ -1,6 +1,7 @@
 #include "SceneFileInternal.hpp"
 #include "Utilities.hpp"
 #include <fstream>
+#include <optional>
 #include <stdexcept>
 
 namespace
@@ -23,6 +24,9 @@ namespace
 	{
 		std::string line;
 		Camera camera;
+		std::optional<double> fNumber;
+		std::optional<double> shutterSeconds;
+		std::optional<double> iso;
 
 		do
 		{
@@ -35,6 +39,14 @@ namespace
 			}
 			if (blockLine == "}")
 			{
+				if (fNumber || shutterSeconds || iso)
+				{
+					if (!fNumber || !shutterSeconds || !iso)
+					{
+						throw std::runtime_error("Camera block '" + cameraName + "' photographic exposure requires f_stop, shutter, and iso.");
+					}
+					scene.setPhotographicExposure(*fNumber, *shutterSeconds, *iso);
+				}
 				scene.addCamera(camera);
 				return;
 			}
@@ -69,6 +81,18 @@ namespace
 			else if (key == "focusdistance" || key == "focus_distance")
 			{
 				camera.setFocusDistance(std::stod(value));
+			}
+			else if (key == "f_stop" || key == "fstop" || key == "f_number" || key == "fnumber")
+			{
+				fNumber = std::stod(value);
+			}
+			else if (key == "shutter" || key == "shutter_seconds" || key == "shutterseconds" || key == "shutter_speed" || key == "shutterspeed")
+			{
+				shutterSeconds = std::stod(value);
+			}
+			else if (key == "iso")
+			{
+				iso = std::stod(value);
 			}
 			else
 			{

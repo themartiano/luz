@@ -46,6 +46,7 @@ class	Scene
 		void	setToneMapped(bool toneMapped);
 		double	getExposure(void) const;
 		void	setExposure(double exposure);
+		void	setPhotographicExposure(double fNumber, double shutterSeconds, double iso);
 		double	getContrast(void) const;
 		void	setContrast(double contrast);
 		double	getSkyline(void) const;
