@@ -22,7 +22,7 @@ lambertian=(1.0,1.0,1.0)
 
 # Light
 rectangle=(0,550,0),(0,-1,0),130,105,material[
-emissive=(1.0,0.84,0.43),29.73
+emissive=(1.0,0.84,0.43),15
 ]
 
 # Back Wall
