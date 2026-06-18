@@ -10,6 +10,7 @@
 #include "LightUnits.hpp"
 #include "RefractiveIndexes.hpp"
 #include "Utilities.hpp"
+#include <algorithm>
 #include <fstream>
 #include <optional>
 #include <stdexcept>
@@ -28,6 +29,9 @@ namespace
 		double		metallic = 0.0;
 		double		transmission = 0.0;
 		double		refractiveIndex = RI_GLASS;
+		double		clearcoat = 0.0;
+		double		clearcoatRoughness = 0.03;
+		double		sheen = 0.0;
 		double		alpha = 1.0;
 		double		anisotropy = 0.0;
 		std::optional<double>	emissionRadiance;
@@ -169,7 +173,11 @@ namespace
 			throw std::runtime_error("Dielectric attenuation distance requires transmittance.");
 		}
 
-		std::shared_ptr<Dielectric> material = std::make_shared<Dielectric>(builder.color, builder.refractiveIndex);
+		std::shared_ptr<Dielectric> material = std::make_shared<Dielectric>(
+			builder.color,
+			builder.refractiveIndex,
+			builder.roughness
+		);
 		if (builder.absorptionCoefficient)
 		{
 			material->setAbsorptionCoefficient(*builder.absorptionCoefficient);
@@ -238,6 +246,24 @@ namespace
 		else if (key == "transmission")
 		{
 			builder.transmission = std::stod(value);
+		}
+		else if (key == "clearcoat" || key == "clear_coat" || key == "coat")
+		{
+			builder.clearcoat = std::stod(value);
+		}
+		else if (
+			key == "clearcoatroughness"
+			|| key == "clearcoat_roughness"
+			|| key == "clear_coat_roughness"
+			|| key == "coatroughness"
+			|| key == "coat_roughness"
+		)
+		{
+			builder.clearcoatRoughness = std::stod(value);
+		}
+		else if (key == "sheen")
+		{
+			builder.sheen = std::stod(value);
 		}
 		else if (key == "ior" || key == "refractiveindex" || key == "refractive_index")
 		{
@@ -347,6 +373,43 @@ namespace
 		return (std::make_shared<Metal>(builder.color, builder.fuzz >= 0.0 ? builder.fuzz : builder.roughness));
 	}
 
+	std::shared_ptr<Principled>	buildPrincipledMaterial(const MaterialBuilder& builder)
+	{
+		if (builder.conductorEta || builder.conductorExtinction)
+		{
+			throw std::runtime_error("Principled conductor metals use metallic color; use type=metal for eta/k.");
+		}
+		if (builder.absorptionCoefficient && builder.transmittance)
+		{
+			throw std::runtime_error("Principled material defines both absorption and transmittance.");
+		}
+		if (builder.hasTransmittanceDistance && !builder.transmittance)
+		{
+			throw std::runtime_error("Principled attenuation distance requires transmittance.");
+		}
+
+		const double transmission = std::max(builder.transmission, 1.0 - builder.alpha);
+		std::shared_ptr<Principled> material = std::make_shared<Principled>(
+			builder.color,
+			builder.metallic,
+			builder.roughness,
+			transmission,
+			builder.refractiveIndex,
+			builder.clearcoat,
+			builder.clearcoatRoughness,
+			builder.sheen
+		);
+		if (builder.absorptionCoefficient)
+		{
+			material->setAbsorptionCoefficient(*builder.absorptionCoefficient);
+		}
+		if (builder.transmittance)
+		{
+			material->setTransmittance(*builder.transmittance, builder.transmittanceDistance);
+		}
+		return (material);
+	}
+
 	std::shared_ptr<Material>	buildMaterial(
 		const MaterialBuilder& builder,
 		const std::string& blockDescription,
@@ -366,19 +429,7 @@ namespace
 		std::string type = builder.type.empty() ? "lambertian" : builder.type;
 		if (type == "principled")
 		{
-			if (builder.transmission > 0.0 || builder.alpha < 1.0)
-			{
-				std::shared_ptr<Material> material = buildDielectricMaterial(builder);
-				attachTexture(material, builder, baseDirectory);
-				return (material);
-			}
-			if (builder.metallic >= 0.5)
-			{
-				std::shared_ptr<Material> material = buildMetalMaterial(builder);
-				attachTexture(material, builder, baseDirectory);
-				return (material);
-			}
-			std::shared_ptr<Material> material = std::make_shared<Principled>(builder.color, builder.metallic, builder.roughness);
+			std::shared_ptr<Material> material = buildPrincipledMaterial(builder);
 			attachTexture(material, builder, baseDirectory);
 			return (material);
 		}

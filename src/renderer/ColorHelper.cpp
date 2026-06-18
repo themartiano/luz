@@ -33,7 +33,11 @@ namespace
 		bool	valid = false;
 	};
 
-	double	scatterPDFValue(const ScatterRecord& scatterRecord, const Vector3& direction)
+	double	scatterPDFValue(
+		const ScatterRecord& scatterRecord,
+		const HitRecord& hitRecord,
+		const Vector3& direction
+	)
 	{
 		switch (scatterRecord.pdfType)
 		{
@@ -68,9 +72,40 @@ namespace
 
 				return ((1.0 - g2) / (4.0 * D_PI * denominator * std::sqrt(denominator)));
 			}
+			case SCATTER_PDF_BSDF:
+				if (!scatterRecord.bsdfMaterial)
+				{
+					return (0.0);
+				}
+				return (scatterRecord.bsdfMaterial->scatteringPDF(
+					scatterRecord.incidentRay,
+					hitRecord,
+					direction
+				));
 			default:
 				return (0.0);
 		}
+	}
+
+	Color	scatterBSDFCos(
+		const ScatterRecord& scatterRecord,
+		const HitRecord& hitRecord,
+		const Vector3& direction
+	)
+	{
+		if (scatterRecord.pdfType == SCATTER_PDF_BSDF)
+		{
+			if (!scatterRecord.bsdfMaterial)
+			{
+				return (Color(0.0, 0.0, 0.0));
+			}
+			return (scatterRecord.bsdfMaterial->evaluateBSDFCos(
+				scatterRecord.incidentRay,
+				hitRecord,
+				direction
+			));
+		}
+		return (scatterRecord.attenuation * scatterPDFValue(scatterRecord, hitRecord, direction));
 	}
 
 	Vector3	henyeyGreensteinDirection(const ScatterRecord& scatterRecord)
@@ -118,6 +153,8 @@ namespace
 				return (Sampler::sphereDirection(Sampler::DIM_BSDF_DIRECTION));
 			case SCATTER_PDF_HENYEY_GREENSTEIN:
 				return (henyeyGreensteinDirection(scatterRecord));
+			case SCATTER_PDF_BSDF:
+				return (scatterRecord.sampledDirection);
 			default:
 				return (Vector3(0.0, 0.0, 0.0));
 		}
@@ -631,9 +668,13 @@ namespace
 			return (Color(0.0, 0.0, 0.0));
 		}
 
-		const double scatterSamplePDF = scatterPDFValue(scatterRecord, lightSample.direction);
-		const double scatteringPDF = scatterSamplePDF;
-		if (scatteringPDF <= 0.0 || !std::isfinite(scatteringPDF))
+		const double scatterSamplePDF = scatterPDFValue(scatterRecord, hitRecord, lightSample.direction);
+		const Color bsdfCos = scatterBSDFCos(scatterRecord, hitRecord, lightSample.direction);
+		if (
+			scatterSamplePDF <= 0.0
+			|| !std::isfinite(scatterSamplePDF)
+			|| maxChannel(bsdfCos) <= 0.0
+		)
 		{
 			return (Color(0.0, 0.0, 0.0));
 		}
@@ -646,9 +687,9 @@ namespace
 		const double misWeight = powerHeuristic(lightSample.pdf, scatterSamplePDF);
 
 		return (
-			scatterRecord.attenuation
+			bsdfCos
 			* lightSample.emitted
-			* (scatteringPDF * misWeight / (lightSample.pdf * sampleProbability))
+			* (misWeight / (lightSample.pdf * sampleProbability))
 		);
 	}
 
@@ -678,8 +719,13 @@ namespace
 			return (Color(0.0, 0.0, 0.0));
 		}
 
-		const double scatterSamplePDF = scatterPDFValue(scatterRecord, lightSample.direction);
-		if (scatterSamplePDF <= 0.0 || !std::isfinite(scatterSamplePDF))
+		const double scatterSamplePDF = scatterPDFValue(scatterRecord, hitRecord, lightSample.direction);
+		const Color bsdfCos = scatterBSDFCos(scatterRecord, hitRecord, lightSample.direction);
+		if (
+			scatterSamplePDF <= 0.0
+			|| !std::isfinite(scatterSamplePDF)
+			|| maxChannel(bsdfCos) <= 0.0
+		)
 		{
 			return (Color(0.0, 0.0, 0.0));
 		}
@@ -687,9 +733,9 @@ namespace
 		const double misWeight = powerHeuristic(lightSample.pdf, scatterSamplePDF);
 
 		return (
-			scatterRecord.attenuation
+			bsdfCos
 			* lightSample.emitted
-			* (scatterSamplePDF * misWeight / (lightSample.pdf * sampleProbability))
+			* (misWeight / (lightSample.pdf * sampleProbability))
 		);
 	}
 
@@ -852,7 +898,7 @@ namespace
 			}
 
 			Ray scattered = Ray::fromNormalizedDirection(hitRecord.position, scatterPDFGenerate(scatterRecord));
-			const double pdfValue = scatterPDFValue(scatterRecord, scattered.getDirection());
+			const double pdfValue = scatterPDFValue(scatterRecord, hitRecord, scattered.getDirection());
 
 			if (pdfValue <= 0.0 || !std::isfinite(pdfValue))
 			{

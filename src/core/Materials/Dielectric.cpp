@@ -1,4 +1,5 @@
 #include "Materials/Dielectric.hpp"
+#include "Materials/BSDF.hpp"
 #include "Defaults.hpp"
 #include "Utilities.hpp"
 #include "RefractiveIndexes.hpp"
@@ -29,6 +30,15 @@ namespace
 		return (refractiveIndex);
 	}
 
+	double	validRoughness(double roughness)
+	{
+		if (!std::isfinite(roughness) || roughness < 0.0 || roughness > 1.0)
+		{
+			throw std::invalid_argument("Dielectric roughness must be finite and in [0,1].");
+		}
+		return (roughness);
+	}
+
 	double	absorptionFromTransmittance(double transmittance, double distanceMeters)
 	{
 		if (!std::isfinite(transmittance) || transmittance < 0.0 || transmittance > 1.0)
@@ -47,6 +57,7 @@ Dielectric::Dielectric(void)
 {
 	this->_color = Color(0.6, 0.6, 0.6);
 	this->_refractiveIndex = RI_GLASS;
+	this->_roughness = 0.0;
 	this->_absorptionCoefficient = Color(0.0, 0.0, 0.0);
 }
 
@@ -54,6 +65,7 @@ Dielectric::Dielectric(Color color)
 {
 	this->_color = color;
 	this->_refractiveIndex = RI_GLASS;
+	this->_roughness = 0.0;
 	this->_absorptionCoefficient = Color(0.0, 0.0, 0.0);
 }
 
@@ -61,6 +73,15 @@ Dielectric::Dielectric(Color color, double refractiveIndex)
 {
 	this->_color = color;
 	this->_refractiveIndex = validRefractiveIndex(refractiveIndex);
+	this->_roughness = 0.0;
+	this->_absorptionCoefficient = Color(0.0, 0.0, 0.0);
+}
+
+Dielectric::Dielectric(Color color, double refractiveIndex, double roughness)
+{
+	this->_color = color;
+	this->_refractiveIndex = validRefractiveIndex(refractiveIndex);
+	this->_roughness = validRoughness(roughness);
 	this->_absorptionCoefficient = Color(0.0, 0.0, 0.0);
 }
 
@@ -69,9 +90,19 @@ double	Dielectric::getRefractiveIndex(void) const
 	return (this->_refractiveIndex);
 }
 
+double	Dielectric::getRoughness(void) const
+{
+	return (this->_roughness);
+}
+
 Color	Dielectric::getAbsorptionCoefficient(void) const
 {
 	return (this->_absorptionCoefficient);
+}
+
+void	Dielectric::setRoughness(double roughness)
+{
+	this->_roughness = validRoughness(roughness);
 }
 
 void	Dielectric::setAbsorptionCoefficient(Color absorptionCoefficient)
@@ -95,9 +126,6 @@ void	Dielectric::setTransmittance(Color transmittance, double distanceMeters)
 
 bool	Dielectric::scatter(Ray& ray, HitRecord& hitRecord, ScatterRecord& scatterRecord)
 {
-	scatterRecord.isSpecular = true;
-	scatterRecord.pdfType = SCATTER_PDF_NONE;
-	scatterRecord.attenuation = this->colorAt(hitRecord);
 	scatterRecord.hasMediumAbsorption = (
 		this->_absorptionCoefficient.getRed() > 0.0
 		|| this->_absorptionCoefficient.getGreen() > 0.0
@@ -105,31 +133,120 @@ bool	Dielectric::scatter(Ray& ray, HitRecord& hitRecord, ScatterRecord& scatterR
 	);
 	scatterRecord.mediumAbsorptionCoefficient = this->_absorptionCoefficient;
 
-	double	refractionRatio = this->_refractiveIndex;
-	const Vector3&	normalizedDirection = ray.getDirection();
-	if (hitRecord.frontFace)
+	const Vector3& normalizedDirection = ray.getDirection();
+	const Vector3 view = BSDF::safeNormalize(normalizedDirection * -1.0, hitRecord.normal);
+	const double etaI = hitRecord.frontFace ? 1.0 : this->_refractiveIndex;
+	const double etaT = hitRecord.frontFace ? this->_refractiveIndex : 1.0;
+	const double refractionRatio = etaI / etaT;
+	const double alpha = BSDF::roughnessToAlpha(this->_roughness);
+
+	if (this->_roughness <= 1e-4)
 	{
-		refractionRatio = 1.0 / refractionRatio;
+		double cosTheta = fmin(Utilities::dot(view, hitRecord.normal), 1.0);
+		double sinTheta = sqrt(1.0 - cosTheta * cosTheta);
+		bool cannotRefract = refractionRatio * sinTheta > 1.0;
+		Vector3 direction;
+
+		if (
+			cannotRefract
+			|| BSDF::dielectricFresnel(cosTheta, etaI, etaT) > Sampler::sample1D(Sampler::DIM_MATERIAL_DECISION)
+		)
+		{
+			direction = Utilities::reflect(normalizedDirection, hitRecord.normal);
+			scatterRecord.attenuation = Color(1.0, 1.0, 1.0);
+		}
+		else
+		{
+			direction = Utilities::refract(normalizedDirection, hitRecord.normal, refractionRatio);
+			scatterRecord.attenuation = this->colorAt(hitRecord);
+		}
+
+		scatterRecord.isSpecular = true;
+		scatterRecord.pdfType = SCATTER_PDF_NONE;
+		scatterRecord.specularRay = Ray(hitRecord.position, direction);
+		return (true);
 	}
 
-	double	cosTheta = fmin(Utilities::dot(normalizedDirection * -1.0, hitRecord.normal), 1.0);
-	double	sinTheta = sqrt(1.0 - cosTheta * cosTheta);
-
-	bool	cannotRefract = refractionRatio * sinTheta > 1.0;
-
-	Vector3	direction;
-	if (cannotRefract || Utilities::schlick(cosTheta, refractionRatio) > Sampler::sample1D(Sampler::DIM_MATERIAL_DECISION))
+	Vector3 halfVector = BSDF::sampleGGXHalfVector(
+		hitRecord.normal,
+		alpha,
+		Sampler::sample2D(Sampler::DIM_BSDF_DIRECTION)
+	);
+	if (Utilities::dot(view, halfVector) <= 0.0)
 	{
-		direction = Utilities::reflect(normalizedDirection, hitRecord.normal);
+		halfVector = hitRecord.normal;
+	}
+
+	const double fresnel = BSDF::dielectricFresnel(Utilities::dot(view, halfVector), etaI, etaT);
+	Vector3 refractedDirection;
+	const bool canRefract = BSDF::refractDirection(normalizedDirection, halfVector, refractionRatio, refractedDirection);
+	Vector3 direction;
+	if (!canRefract || Sampler::sample1D(Sampler::DIM_MATERIAL_DECISION) < fresnel)
+	{
+		direction = Utilities::reflect(normalizedDirection, halfVector);
 	}
 	else
 	{
-		direction = Utilities::refract(normalizedDirection, hitRecord.normal, refractionRatio);
+		direction = refractedDirection;
 	}
 
-	scatterRecord.specularRay = Ray(hitRecord.position, direction);
+	const double pdf = this->scatteringPDF(ray, hitRecord, direction);
+	const Color bsdfCos = this->evaluateBSDFCos(ray, hitRecord, direction);
+	if (pdf <= 0.0 || !std::isfinite(pdf) || BSDF::maxChannel(bsdfCos) <= 0.0)
+	{
+		return (false);
+	}
+
+	scatterRecord.incidentRay = ray;
+	scatterRecord.sampledDirection = direction;
+	scatterRecord.sampledPDF = pdf;
+	scatterRecord.attenuation = bsdfCos / pdf;
+	scatterRecord.isSpecular = false;
+	scatterRecord.pdfType = SCATTER_PDF_BSDF;
+	scatterRecord.bsdfMaterial = this;
 
 	return (true);
+}
+
+Color	Dielectric::evaluateBSDFCos(
+	const Ray& ray,
+	const HitRecord& hitRecord,
+	const Vector3& scatteredDirection
+	) const
+{
+	const Vector3 view = BSDF::safeNormalize(ray.getDirection() * -1.0, hitRecord.normal);
+	const double etaI = hitRecord.frontFace ? 1.0 : this->_refractiveIndex;
+	const double etaT = hitRecord.frontFace ? this->_refractiveIndex : 1.0;
+
+	return (BSDF::ggxDielectricBSDFCos(
+		this->colorAt(hitRecord),
+		hitRecord.normal,
+		view,
+		scatteredDirection,
+		BSDF::roughnessToAlpha(this->_roughness),
+		etaI,
+		etaT
+	));
+}
+
+double	Dielectric::scatteringPDF(
+	const Ray& ray,
+	const HitRecord& hitRecord,
+	const Vector3& scatteredDirection
+	) const
+{
+	const Vector3 view = BSDF::safeNormalize(ray.getDirection() * -1.0, hitRecord.normal);
+	const double etaI = hitRecord.frontFace ? 1.0 : this->_refractiveIndex;
+	const double etaT = hitRecord.frontFace ? this->_refractiveIndex : 1.0;
+
+	return (BSDF::ggxDielectricPDF(
+		hitRecord.normal,
+		view,
+		scatteredDirection,
+		BSDF::roughnessToAlpha(this->_roughness),
+		etaI,
+		etaT
+	));
 }
 
 MaterialType	Dielectric::getType(void) const

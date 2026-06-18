@@ -7,11 +7,53 @@ class	Principled : public Material
 	public:
 		Principled(void);
 		Principled(Color color, double metallic, double roughness);
+		Principled(
+			Color color,
+			double metallic,
+			double roughness,
+			double transmission,
+			double refractiveIndex,
+			double clearcoat,
+			double clearcoatRoughness,
+			double sheen
+		);
+		double	getMetallic(void) const;
+		double	getRoughness(void) const;
+		double	getTransmission(void) const;
+		double	getRefractiveIndex(void) const;
+		double	getClearcoat(void) const;
+		double	getClearcoatRoughness(void) const;
+		double	getSheen(void) const;
+		Color	getAbsorptionCoefficient(void) const;
+		void	setMetallic(double metallic);
+		void	setRoughness(double roughness);
+		void	setTransmission(double transmission);
+		void	setRefractiveIndex(double refractiveIndex);
+		void	setClearcoat(double clearcoat);
+		void	setClearcoatRoughness(double clearcoatRoughness);
+		void	setSheen(double sheen);
+		void	setAbsorptionCoefficient(Color absorptionCoefficient);
+		void	setTransmittance(Color transmittance, double distanceMeters);
 		bool	scatter(Ray& ray, HitRecord& hitRecord, ScatterRecord& scatterRecord);
-		double	scatteringPDF(Ray& ray, HitRecord& hitRecord);
+		Color	evaluateBSDFCos(
+			const Ray& ray,
+			const HitRecord& hitRecord,
+			const Vector3& scatteredDirection
+		) const;
+		double	scatteringPDF(
+			const Ray& ray,
+			const HitRecord& hitRecord,
+			const Vector3& scatteredDirection
+		) const;
 		MaterialType	getType(void) const;
 
 	private:
 		double	_metallic;
 		double	_roughness;
+		double	_transmission;
+		double	_refractiveIndex;
+		double	_clearcoat;
+		double	_clearcoatRoughness;
+		double	_sheen;
+		Color	_absorptionCoefficient;
 };

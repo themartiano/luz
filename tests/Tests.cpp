@@ -8,6 +8,7 @@
 #include "Image.hpp"
 #include "IESProfile.hpp"
 #include "LightUnits.hpp"
+#include "Materials/BSDF.hpp"
 #include "Materials/Lambertian.hpp"
 #include "Materials/Emissive.hpp"
 #include "Materials/Dielectric.hpp"
@@ -1660,7 +1661,7 @@ namespace
 		require(scene.hasCamera(), "Named-block scene did not load a camera.");
 		requireNear(scene.getActiveCamera().getUpDirection().getY(), 1.0, "Named-block camera up vector was not parsed.");
 		require(scene.getHittables().size() == 4, "Named-block scene did not load object and lights.");
-		require(scene.getHittables()[0]->getMaterial()->getType() == METAL, "Principled material did not map to metal.");
+		require(scene.getHittables()[0]->getMaterial()->getType() == PRINCIPLED, "Metallic principled material did not remain layered principled.");
 		require(scene.getHittables()[1]->getMaterial()->getType() == EMISSIVE, "Area light did not create an emissive hittable.");
 		require(scene.getHittables()[2]->getMaterial()->getType() == EMISSIVE, "Directional light did not create an emissive hittable.");
 		require(scene.getHittables()[3]->getMaterial()->getType() == EMISSIVE, "Point light did not create an emissive hittable.");
@@ -2164,6 +2165,93 @@ namespace
 		requireNear(scatterRecord.attenuation.getBlue(), expectedReflectance, "Conductor Fresnel blue reflectance is wrong.");
 	}
 
+	void	testRoughMetalUsesGGXBSDF(void)
+	{
+		Metal metal(Color(0.8, 0.7, 0.6), 0.45);
+		Ray ray(Vector3(0.0, 0.0, 1.0), Vector3(0.0, 0.0, -1.0));
+		HitRecord hitRecord;
+		ScatterRecord scatterRecord;
+
+		hitRecord.position = Vector3(0.0, 0.0, 0.0);
+		hitRecord.normal = Vector3(0.0, 0.0, 1.0);
+		hitRecord.frontFace = true;
+		Sampler::setRenderSeed(2027);
+		Sampler::beginPixelSample(3, 5, 7);
+		require(metal.scatter(ray, hitRecord, scatterRecord), "Rough metal did not scatter.");
+		Sampler::endPixelSample();
+
+		require(!scatterRecord.isSpecular, "Rough metal used a delta specular scatter.");
+		require(scatterRecord.pdfType == SCATTER_PDF_BSDF, "Rough metal did not use the BSDF PDF path.");
+		require(scatterRecord.bsdfMaterial == &metal, "Rough metal did not store its BSDF material.");
+		require(scatterRecord.sampledPDF > 0.0 && std::isfinite(scatterRecord.sampledPDF), "Rough metal sampled PDF is invalid.");
+		requireFiniteNonNegativeColor(scatterRecord.attenuation, "Rough metal throughput");
+
+		const double materialPDF = metal.scatteringPDF(ray, hitRecord, scatterRecord.sampledDirection);
+		const Color bsdfCos = metal.evaluateBSDFCos(ray, hitRecord, scatterRecord.sampledDirection);
+		requireNear(scatterRecord.sampledPDF, materialPDF, "Rough metal sampled PDF does not match material PDF.");
+		requireFiniteNonNegativeColor(bsdfCos, "Rough metal BSDF cosine");
+		require(BSDF::maxChannel(bsdfCos) > 0.0, "Rough metal BSDF cosine was zero.");
+		requireNear(scatterRecord.attenuation.getRed(), bsdfCos.getRed() / materialPDF, "Rough metal red throughput is wrong.");
+	}
+
+	void	testRoughDielectricUsesGGXBSDF(void)
+	{
+		Dielectric glass(Color(0.9, 0.95, 1.0), 1.5, 0.35);
+		Ray ray(Vector3(0.0, 0.0, 1.0), Vector3(0.0, 0.0, -1.0));
+		HitRecord hitRecord;
+		ScatterRecord scatterRecord;
+
+		hitRecord.position = Vector3(0.0, 0.0, 0.0);
+		hitRecord.normal = Vector3(0.0, 0.0, 1.0);
+		hitRecord.frontFace = true;
+		Sampler::setRenderSeed(2028);
+		Sampler::beginPixelSample(11, 13, 17);
+		require(glass.scatter(ray, hitRecord, scatterRecord), "Rough dielectric did not scatter.");
+		Sampler::endPixelSample();
+
+		require(!scatterRecord.isSpecular, "Rough dielectric used a delta specular scatter.");
+		require(scatterRecord.pdfType == SCATTER_PDF_BSDF, "Rough dielectric did not use the BSDF PDF path.");
+		require(scatterRecord.bsdfMaterial == &glass, "Rough dielectric did not store its BSDF material.");
+		require(scatterRecord.sampledPDF > 0.0 && std::isfinite(scatterRecord.sampledPDF), "Rough dielectric sampled PDF is invalid.");
+		requireFiniteNonNegativeColor(scatterRecord.attenuation, "Rough dielectric throughput");
+
+		const double materialPDF = glass.scatteringPDF(ray, hitRecord, scatterRecord.sampledDirection);
+		const Color bsdfCos = glass.evaluateBSDFCos(ray, hitRecord, scatterRecord.sampledDirection);
+		requireNear(scatterRecord.sampledPDF, materialPDF, "Rough dielectric sampled PDF does not match material PDF.");
+		requireFiniteNonNegativeColor(bsdfCos, "Rough dielectric BSDF cosine");
+		require(BSDF::maxChannel(bsdfCos) > 0.0, "Rough dielectric BSDF cosine was zero.");
+	}
+
+	void	testPrincipledLayeredBSDF(void)
+	{
+		Principled material(Color(0.8, 0.3, 0.1), 0.2, 0.45, 0.35, 1.45, 0.5, 0.12, 0.4);
+		Ray ray(Vector3(0.0, 0.0, 1.0), Vector3(0.0, 0.0, -1.0));
+		HitRecord hitRecord;
+		ScatterRecord scatterRecord;
+
+		hitRecord.position = Vector3(0.0, 0.0, 0.0);
+		hitRecord.normal = Vector3(0.0, 0.0, 1.0);
+		hitRecord.frontFace = true;
+		material.setAbsorptionCoefficient(Color(0.1, 0.2, 0.3));
+		Sampler::setRenderSeed(2029);
+		Sampler::beginPixelSample(19, 23, 29);
+		require(material.scatter(ray, hitRecord, scatterRecord), "Principled material did not scatter.");
+		Sampler::endPixelSample();
+
+		require(!scatterRecord.isSpecular, "Principled material used a delta scatter.");
+		require(scatterRecord.pdfType == SCATTER_PDF_BSDF, "Principled material did not use the BSDF PDF path.");
+		require(scatterRecord.bsdfMaterial == &material, "Principled material did not store its BSDF material.");
+		require(scatterRecord.sampledPDF > 0.0 && std::isfinite(scatterRecord.sampledPDF), "Principled sampled PDF is invalid.");
+		require(scatterRecord.hasMediumAbsorption, "Transmissive principled material did not carry absorption.");
+		requireFiniteNonNegativeColor(scatterRecord.attenuation, "Principled throughput");
+
+		const double materialPDF = material.scatteringPDF(ray, hitRecord, scatterRecord.sampledDirection);
+		const Color bsdfCos = material.evaluateBSDFCos(ray, hitRecord, scatterRecord.sampledDirection);
+		requireNear(scatterRecord.sampledPDF, materialPDF, "Principled sampled PDF does not match material PDF.");
+		requireFiniteNonNegativeColor(bsdfCos, "Principled BSDF cosine");
+		require(BSDF::maxChannel(bsdfCos) > 0.0, "Principled BSDF cosine was zero.");
+	}
+
 	void	testSceneFileLoadsNamedTexturedSphere(void)
 	{
 		const std::filesystem::path directory = std::filesystem::temp_directory_path();
@@ -2336,6 +2424,13 @@ namespace
 				<< "base_color=(0.8,0.8,0.75)\n"
 				<< "metallic=0\n"
 				<< "roughness=0.35\n"
+				<< "transmission=0.25\n"
+				<< "ior=1.45\n"
+				<< "clearcoat=0.6\n"
+				<< "clearcoat_roughness=0.12\n"
+				<< "sheen=0.4\n"
+				<< "transmittance=(0.8,0.9,1)\n"
+				<< "attenuation_distance=2\n"
 				<< "}\n\n"
 				<< "[meshes]\n"
 				<< "mesh triangle_mesh {\n"
@@ -2364,7 +2459,18 @@ namespace
 		SceneFile::read(scene, scenePath.string());
 
 		require(scene.getHittables().size() == 1, "Principled scene did not load the sphere.");
-		require(scene.getHittables()[0]->getMaterial()->getType() == PRINCIPLED, "Non-metallic principled material did not remain principled.");
+		Principled* material = dynamic_cast<Principled*>(scene.getHittables()[0]->getMaterial());
+		require(material != nullptr, "Non-metallic principled material did not remain principled.");
+		requireNear(material->getRoughness(), 0.35, "Principled roughness was not parsed.");
+		requireNear(material->getTransmission(), 0.25, "Principled transmission was not parsed.");
+		requireNear(material->getRefractiveIndex(), 1.45, "Principled IOR was not parsed.");
+		requireNear(material->getClearcoat(), 0.6, "Principled clearcoat was not parsed.");
+		requireNear(material->getClearcoatRoughness(), 0.12, "Principled clearcoat roughness was not parsed.");
+		requireNear(material->getSheen(), 0.4, "Principled sheen was not parsed.");
+		const Color coefficient = material->getAbsorptionCoefficient();
+		requireNear(coefficient.getRed(), -std::log(0.8) / 2.0, "Principled red transmittance was not parsed.");
+		requireNear(coefficient.getGreen(), -std::log(0.9) / 2.0, "Principled green transmittance was not parsed.");
+		requireNear(coefficient.getBlue(), 0.0, "Principled blue transmittance was not parsed.");
 
 		std::filesystem::remove(scenePath);
 		std::filesystem::remove(objectPath);
@@ -3674,6 +3780,9 @@ int	main(void)
 		testDielectricUsesExitRefractionRatio();
 		testDielectricBeerLambertAbsorption();
 		testMetalConductorFresnel();
+		testRoughMetalUsesGGXBSDF();
+		testRoughDielectricUsesGGXBSDF();
+		testPrincipledLayeredBSDF();
 		testSceneFileLoadsNamedTexturedSphere();
 		testSceneFileLoadsVolumeBlock();
 		testSceneFileMetersPerUnitScalesVolumeDensity();

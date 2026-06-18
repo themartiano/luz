@@ -6,6 +6,10 @@ class	Isotropic : public Material
 		Isotropic(void);
 		Isotropic(Color color);
 		bool	scatter(Ray& ray, HitRecord& hitRecord, ScatterRecord& scatterRecord);
-		double	scatteringPDF(Ray& ray, HitRecord& hitRecord);
+		double	scatteringPDF(
+			const Ray& ray,
+			const HitRecord& hitRecord,
+			const Vector3& scatteredDirection
+		) const;
 		MaterialType	getType(void) const;
 };

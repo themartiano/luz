@@ -339,7 +339,7 @@ Each material block must define exactly one material:
 | Material | Format |
 | --- | --- |
 | Lambertian | `lambertian=(r,g,b)` |
-| Metal | `metal=(r,g,b),reflectionFuzziness` |
+| Metal | `metal=(r,g,b),roughness` |
 | Dielectric | `dielectric=(r,g,b)` |
 | Isotropic phase | `isotropic=(r,g,b)` |
 | Henyey-Greenstein phase | `henyey_greenstein=(r,g,b),anisotropy` |
@@ -401,16 +401,33 @@ the material's base color. Data textures such as roughness, metallic, and normal
 maps are not part of the material graph yet; when added, they must be loaded as
 data with no color transform.
 
-`type=principled` is an approximation for Blender exporter output. Exporters
-should write emissive Blender materials as `type=emissive`; metallic materials
-become `metal`, transmissive or alpha-blended materials become `dielectric`, and
-the rest use Luz's rough plastic/specular `principled` approximation.
+`type=principled` is Luz's layered surface model for Blender-style materials.
+It combines energy-conserving diffuse, GGX dielectric reflection, GGX metallic
+reflection, rough dielectric transmission, clearcoat, and sheen. Use
+`type=metal` when you have measured conductor `eta`/`k`; use `type=dielectric`
+for dedicated glass volumes with Beer-Lambert absorption.
+
+Principled material property blocks support:
+
+| Property | Meaning |
+| --- | --- |
+| `base_color=COLOR` | Base diffuse/metal/transmission color. Alias: `color`. |
+| `metallic=F` | Metallic blend in `[0,1]`. Metallic reflection uses GGX and colored Schlick Fresnel from the base color. |
+| `roughness=F` | GGX roughness in `[0,1]`. |
+| `transmission=F` | Rough dielectric transmission layer in `[0,1]`. |
+| `ior=F` | Dielectric refractive index for Fresnel and rough refraction. Alias: `refractive_index`. |
+| `clearcoat=F` | White dielectric clearcoat layer in `[0,1]`. Aliases: `clear_coat`, `coat`. |
+| `clearcoat_roughness=F` | Clearcoat GGX roughness in `[0,1]`. Aliases: `clear_coat_roughness`, `coat_roughness`. |
+| `sheen=F` | Grazing-angle sheen layer in `[0,1]`. |
+| `absorption=(r,g,b)` | Transmission absorption coefficient in `1/m`. Aliases: `absorption_coefficient`, `sigma_a`. |
+| `transmittance=COLOR` | Alternative to `absorption`: desired transmitted color over `attenuation_distance`. |
 
 Metal material property blocks can either use RGB reflectance via `color`, or
 measured conductor parameters:
 
 | Property | Meaning |
 | --- | --- |
+| `roughness=F` | GGX conductor roughness in `[0,1]`; `fuzz` is accepted as an alias from compact metal syntax. |
 | `eta=(r,g,b)` | Real refractive index for conductor Fresnel. Alias: `conductor_eta`. |
 | `k=(r,g,b)` | Extinction coefficient for conductor Fresnel. Aliases: `extinction`, `extinction_coefficient`, `conductor_k`. |
 
@@ -419,6 +436,7 @@ Dielectric material property blocks support physical glass controls:
 | Property | Meaning |
 | --- | --- |
 | `ior=F` | Refractive index. Defaults to ordinary glass. Alias: `refractive_index`. |
+| `roughness=F` | GGX rough glass reflection/transmission roughness in `[0,1]`. |
 | `absorption=(r,g,b)` | Beer-Lambert absorption coefficient in `1/m`, applied by physical path length inside the medium. Aliases: `absorption_coefficient`, `sigma_a`. |
 | `transmittance=COLOR` | Alternative to `absorption`: desired medium transmittance over `attenuation_distance`. Aliases: `transmittance_color`, `attenuation`, `attenuation_color`. |
 | `attenuation_distance=F` | Distance in meters used with `transmittance`. Defaults to `1.0`. Alias: `absorption_distance`. |

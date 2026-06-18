@@ -62,10 +62,15 @@ bool	HenyeyGreenstein::scatter(Ray& ray, HitRecord& hitRecord, ScatterRecord& sc
 	return (true);
 }
 
-double	HenyeyGreenstein::scatteringPDF(Ray& ray, HitRecord& hitRecord)
+double	HenyeyGreenstein::scatteringPDF(
+	const Ray& ray,
+	const HitRecord& hitRecord,
+	const Vector3& scatteredDirection
+	) const
 {
 	(void)ray;
 	(void)hitRecord;
+	(void)scatteredDirection;
 	return (1.0 / (4.0 * D_PI));
 }
 

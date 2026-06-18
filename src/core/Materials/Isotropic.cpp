@@ -23,11 +23,16 @@ bool	Isotropic::scatter(Ray& ray, HitRecord& hitRecord, ScatterRecord& scatterRe
 	(void)hitRecord;
 }
 
-double	Isotropic::scatteringPDF(Ray& ray, HitRecord& hitRecord)
+double	Isotropic::scatteringPDF(
+	const Ray& ray,
+	const HitRecord& hitRecord,
+	const Vector3& scatteredDirection
+	) const
 {
-	return (1.0 / (4.0 * D_PI));
 	(void)ray;
 	(void)hitRecord;
+	(void)scatteredDirection;
+	return (1.0 / (4.0 * D_PI));
 }
 
 MaterialType	Isotropic::getType(void) const

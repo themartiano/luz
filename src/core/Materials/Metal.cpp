@@ -1,4 +1,5 @@
 #include "Materials/Metal.hpp"
+#include "Materials/BSDF.hpp"
 #include "Utilities.hpp"
 #include "Vector3.hpp"
 #include "Sampler.hpp"
@@ -32,33 +33,13 @@ namespace
 		}
 	}
 
-	double	conductorFresnelChannel(double eta, double k, double cosTheta)
+	double	validRoughness(double roughness)
 	{
-		const double cosThetaSquared = cosTheta * cosTheta;
-		const double etaSquared = eta * eta;
-		const double kSquared = k * k;
-		const double etaK = etaSquared + kSquared;
-		const double twoEtaCosTheta = 2.0 * eta * cosTheta;
-		const double rParallel = (
-			(etaK * cosThetaSquared - twoEtaCosTheta + 1.0)
-			/ (etaK * cosThetaSquared + twoEtaCosTheta + 1.0)
-		);
-		const double rPerpendicular = (
-			(etaK - twoEtaCosTheta + cosThetaSquared)
-			/ (etaK + twoEtaCosTheta + cosThetaSquared)
-		);
-
-		return (std::clamp(0.5 * (rParallel + rPerpendicular), 0.0, 1.0));
-	}
-
-	Color	conductorFresnel(Color eta, Color extinctionCoefficient, double cosTheta)
-	{
-		cosTheta = std::clamp(cosTheta, 0.0, 1.0);
-		return (Color(
-			conductorFresnelChannel(eta.getRed(), extinctionCoefficient.getRed(), cosTheta),
-			conductorFresnelChannel(eta.getGreen(), extinctionCoefficient.getGreen(), cosTheta),
-			conductorFresnelChannel(eta.getBlue(), extinctionCoefficient.getBlue(), cosTheta)
-		));
+		if (!std::isfinite(roughness) || roughness < 0.0 || roughness > 1.0)
+		{
+			throw std::invalid_argument("Metal roughness must be finite and in [0,1].");
+		}
+		return (roughness);
 	}
 }
 
@@ -83,7 +64,7 @@ Metal::Metal(Color color)
 Metal::Metal(double reflectionFuzziness)
 {
 	this->_color = Color(0.6, 0.6, 0.6);
-	this->_reflectionFuzziness = reflectionFuzziness;
+	this->_reflectionFuzziness = validRoughness(reflectionFuzziness);
 	this->_useConductorFresnel = false;
 	this->_eta = Color(1.0, 1.0, 1.0);
 	this->_extinctionCoefficient = Color(0.0, 0.0, 0.0);
@@ -92,7 +73,7 @@ Metal::Metal(double reflectionFuzziness)
 Metal::Metal(Color color, double reflectionFuzziness)
 {
 	this->_color = color;
-	this->_reflectionFuzziness = reflectionFuzziness;
+	this->_reflectionFuzziness = validRoughness(reflectionFuzziness);
 	this->_useConductorFresnel = false;
 	this->_eta = Color(1.0, 1.0, 1.0);
 	this->_extinctionCoefficient = Color(0.0, 0.0, 0.0);
@@ -101,7 +82,7 @@ Metal::Metal(Color color, double reflectionFuzziness)
 Metal::Metal(Color eta, Color extinctionCoefficient, double reflectionFuzziness)
 {
 	this->_color = Color(1.0, 1.0, 1.0);
-	this->_reflectionFuzziness = reflectionFuzziness;
+	this->_reflectionFuzziness = validRoughness(reflectionFuzziness);
 	this->_useConductorFresnel = false;
 	this->_eta = Color(1.0, 1.0, 1.0);
 	this->_extinctionCoefficient = Color(0.0, 0.0, 0.0);
@@ -113,6 +94,11 @@ bool	Metal::usesConductorFresnel(void) const
 	return (this->_useConductorFresnel);
 }
 
+double	Metal::getRoughness(void) const
+{
+	return (this->_reflectionFuzziness);
+}
+
 Color	Metal::getEta(void) const
 {
 	return (this->_eta);
@@ -121,6 +107,11 @@ Color	Metal::getEta(void) const
 Color	Metal::getExtinctionCoefficient(void) const
 {
 	return (this->_extinctionCoefficient);
+}
+
+void	Metal::setRoughness(double roughness)
+{
+	this->_reflectionFuzziness = validRoughness(roughness);
 }
 
 void	Metal::setConductorFresnel(Color eta, Color extinctionCoefficient)
@@ -134,17 +125,99 @@ void	Metal::setConductorFresnel(Color eta, Color extinctionCoefficient)
 
 bool	Metal::scatter(Ray& ray, HitRecord& hitRecord, ScatterRecord& scatterRecord)
 {
-	Vector3	reflected = Utilities::reflect(ray.getDirection(), hitRecord.normal);
-	const double cosTheta = std::min(1.0, std::max(0.0, Utilities::dot(ray.getDirection() * -1.0, hitRecord.normal)));
+	const Vector3 view = BSDF::safeNormalize(ray.getDirection() * -1.0, hitRecord.normal);
+	const double cosTheta = std::min(1.0, std::max(0.0, Utilities::dot(view, hitRecord.normal)));
+	const double alpha = BSDF::roughnessToAlpha(this->_reflectionFuzziness);
 
-	scatterRecord.specularRay = Ray(hitRecord.position, reflected + this->_reflectionFuzziness * Sampler::unitBall(Sampler::DIM_MATERIAL_FUZZ));
-	scatterRecord.attenuation = this->_useConductorFresnel
-		? conductorFresnel(this->_eta, this->_extinctionCoefficient, cosTheta)
-		: this->colorAt(hitRecord);
-	scatterRecord.isSpecular = true;
-	scatterRecord.pdfType = SCATTER_PDF_NONE;
+	if (this->_reflectionFuzziness <= 1e-4)
+	{
+		const Vector3 reflected = Utilities::reflect(ray.getDirection(), hitRecord.normal);
+
+		scatterRecord.specularRay = Ray(hitRecord.position, reflected);
+		scatterRecord.attenuation = this->_useConductorFresnel
+			? BSDF::conductorFresnel(this->_eta, this->_extinctionCoefficient, cosTheta)
+			: BSDF::schlickFresnel(BSDF::clampColor01(this->colorAt(hitRecord)), cosTheta);
+		scatterRecord.isSpecular = true;
+		scatterRecord.pdfType = SCATTER_PDF_NONE;
+		return (true);
+	}
+
+	Vector3 halfVector = BSDF::sampleGGXHalfVector(
+		hitRecord.normal,
+		alpha,
+		Sampler::sample2D(Sampler::DIM_BSDF_DIRECTION)
+	);
+	if (Utilities::dot(view, halfVector) <= 0.0)
+	{
+		halfVector = hitRecord.normal;
+	}
+	Vector3 direction = Utilities::reflect(ray.getDirection(), halfVector);
+	if (Utilities::dot(direction, hitRecord.normal) <= 0.0)
+	{
+		direction = Utilities::reflect(ray.getDirection(), hitRecord.normal);
+	}
+
+	const double pdf = this->scatteringPDF(ray, hitRecord, direction);
+	const Color bsdfCos = this->evaluateBSDFCos(ray, hitRecord, direction);
+	if (pdf <= 0.0 || !std::isfinite(pdf) || BSDF::maxChannel(bsdfCos) <= 0.0)
+	{
+		return (false);
+	}
+
+	scatterRecord.incidentRay = ray;
+	scatterRecord.sampledDirection = direction;
+	scatterRecord.sampledPDF = pdf;
+	scatterRecord.attenuation = bsdfCos / pdf;
+	scatterRecord.isSpecular = false;
+	scatterRecord.pdfType = SCATTER_PDF_BSDF;
+	scatterRecord.bsdfMaterial = this;
 
 	return (true);
+}
+
+Color	Metal::evaluateBSDFCos(
+	const Ray& ray,
+	const HitRecord& hitRecord,
+	const Vector3& scatteredDirection
+	) const
+{
+	const Vector3 view = BSDF::safeNormalize(ray.getDirection() * -1.0, hitRecord.normal);
+	const double alpha = BSDF::roughnessToAlpha(this->_reflectionFuzziness);
+
+	if (this->_useConductorFresnel)
+	{
+		return (BSDF::ggxConductorBSDFCos(
+			this->_eta,
+			this->_extinctionCoefficient,
+			hitRecord.normal,
+			view,
+			scatteredDirection,
+			alpha
+		));
+	}
+	return (BSDF::ggxSchlickReflectionBSDFCos(
+		BSDF::clampColor01(this->colorAt(hitRecord)),
+		hitRecord.normal,
+		view,
+		scatteredDirection,
+		alpha
+	));
+}
+
+double	Metal::scatteringPDF(
+	const Ray& ray,
+	const HitRecord& hitRecord,
+	const Vector3& scatteredDirection
+	) const
+{
+	const Vector3 view = BSDF::safeNormalize(ray.getDirection() * -1.0, hitRecord.normal);
+
+	return (BSDF::ggxReflectionPDF(
+		hitRecord.normal,
+		view,
+		scatteredDirection,
+		BSDF::roughnessToAlpha(this->_reflectionFuzziness)
+	));
 }
 
 MaterialType	Metal::getType(void) const

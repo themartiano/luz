@@ -10,7 +10,11 @@ class	HenyeyGreenstein : public Material
 		void	setAnisotropy(double anisotropy);
 		double	getAnisotropy(void) const;
 		bool	scatter(Ray& ray, HitRecord& hitRecord, ScatterRecord& scatterRecord);
-		double	scatteringPDF(Ray& ray, HitRecord& hitRecord);
+		double	scatteringPDF(
+			const Ray& ray,
+			const HitRecord& hitRecord,
+			const Vector3& scatteredDirection
+		) const;
 		MaterialType	getType(void) const;
 
 	private:
