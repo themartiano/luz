@@ -531,6 +531,39 @@ namespace
 		require(center.getRed() > 0.0, "In-place Gaussian blur lost the center sample.");
 	}
 
+	void	testGaussianBlurPreservesCenteredEnergyAndEdges(void)
+	{
+		Image centered(5, 5);
+		Image centeredBlurred(5, 5);
+		centered.initialize();
+		centeredBlurred.initialize();
+		centered.setPixel(2, 2, Color(1.0, 0.5, 0.25));
+
+		Gaussian::blur(centered, centeredBlurred, 3, 1.0);
+		Color sum;
+		for (std::size_t y = 0; y < centeredBlurred.getHeight(); y++)
+		{
+			for (std::size_t x = 0; x < centeredBlurred.getWidth(); x++)
+			{
+				sum += centeredBlurred.getPixel(x, y);
+			}
+		}
+		requireNear(sum.getRed(), 1.0, "Gaussian blur did not preserve centered red energy.");
+		requireNear(sum.getGreen(), 0.5, "Gaussian blur did not preserve centered green energy.");
+		requireNear(sum.getBlue(), 0.25, "Gaussian blur did not preserve centered blue energy.");
+
+		Image edge(3, 3);
+		Image edgeBlurred(3, 3);
+		edge.initialize();
+		edgeBlurred.initialize();
+		edge.setPixel(0, 0, Color(1.0, 1.0, 1.0));
+
+		Gaussian::blur(edge, edgeBlurred, 3, 1.0);
+		const Color corner = edgeBlurred.getPixel(0, 0);
+		require(corner.getRed() > 0.0, "Gaussian blur dropped edge highlights at the image border.");
+		require(std::isfinite(corner.getRed()), "Gaussian blur edge sample produced non-finite red.");
+	}
+
 	void	testTerminalFilePath(void)
 	{
 		require(
@@ -2742,6 +2775,7 @@ int	main(void)
 		testExposureAndContrast();
 		testBloomExtractionPreservesHighlightColor();
 		testGaussianBlurSupportsInPlaceSmallImages();
+		testGaussianBlurPreservesCenteredEnergyAndEdges();
 		testTerminalFilePath();
 		testNonSquareBMP();
 		testNonSquareTIFF();

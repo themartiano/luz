@@ -4,6 +4,43 @@
 #include <numbers>
 #include <stdexcept>
 
+namespace
+{
+	std::size_t	clampIndex(long long value, std::size_t limit)
+	{
+		if (value < 0)
+		{
+			return (0);
+		}
+		if (static_cast<std::size_t>(value) >= limit)
+		{
+			return (limit - 1);
+		}
+		return (static_cast<std::size_t>(value));
+	}
+
+	std::vector<double>	createSeparableKernel(unsigned int diameter, double amount)
+	{
+		const int radius = static_cast<int>(diameter / 2);
+		const double s = 2.0 * amount * amount;
+		std::vector<double> kernel(diameter);
+		double sum = 0.0;
+
+		for (int x = -radius; x <= radius; x++)
+		{
+			const double value = std::exp(-(static_cast<double>(x * x)) / s);
+
+			kernel[static_cast<std::size_t>(x + radius)] = value;
+			sum += value;
+		}
+		for (double& value : kernel)
+		{
+			value /= sum;
+		}
+		return (kernel);
+	}
+}
+
 Gaussian::Kernel	Gaussian::createKernel(unsigned int diameter, double amount)
 {
 	if (diameter == 0 || diameter % 2 == 0)
@@ -61,33 +98,50 @@ void	Gaussian::blur(const Image& image, Image& blurredImage, unsigned int diamet
 		return;
 	}
 
-	Kernel kernel = createKernel(diameter, amount);
-
-	const int radius = static_cast<int>(diameter / 2);
-	const std::size_t radiusSize = static_cast<std::size_t>(radius);
-
-	blurredImage.fill(Color(0.0, 0.0, 0.0));
-	if (image.getWidth() <= radiusSize * 2 || image.getHeight() <= radiusSize * 2)
+	if (diameter == 0 || diameter % 2 == 0)
 	{
-		return;
+		throw std::invalid_argument("Gaussian blur diameter must be a positive odd number.");
+	}
+	if (!std::isfinite(amount) || amount <= 0.0)
+	{
+		throw std::invalid_argument("Gaussian blur amount must be positive.");
 	}
 
-	for (std::size_t y = radiusSize; y + radiusSize < image.getHeight(); y++)
+	const std::vector<double> kernel = createSeparableKernel(diameter, amount);
+
+	const int radius = static_cast<int>(diameter / 2);
+	Image horizontalPass(image.getWidth(), image.getHeight());
+
+	horizontalPass.initialize();
+
+	for (std::size_t y = 0; y < image.getHeight(); y++)
 	{
-		for (std::size_t x = radiusSize; x + radiusSize < image.getWidth(); x++)
+		for (std::size_t x = 0; x < image.getWidth(); x++)
 		{
 			Color result(0.0, 0.0, 0.0);
 
-			for (int bx = -radius; bx <= radius; bx++) {
-				for (int by = -radius; by <= radius; by++) {
-					const std::size_t sampleX = static_cast<std::size_t>(static_cast<std::ptrdiff_t>(x) + bx);
-					const std::size_t sampleY = static_cast<std::size_t>(static_cast<std::ptrdiff_t>(y) + by);
+			for (int offset = -radius; offset <= radius; offset++)
+			{
+				const std::size_t sampleX = clampIndex(static_cast<long long>(x) + offset, image.getWidth());
 
-					result += image.getPixel(sampleX, sampleY)
-						* kernel[static_cast<std::size_t>(bx + radius)][static_cast<std::size_t>(by + radius)];
-				}
+				result += image.getPixel(sampleX, y) * kernel[static_cast<std::size_t>(offset + radius)];
 			}
+			horizontalPass.setPixel(x, y, result);
+		}
+	}
 
+	for (std::size_t y = 0; y < image.getHeight(); y++)
+	{
+		for (std::size_t x = 0; x < image.getWidth(); x++)
+		{
+			Color result(0.0, 0.0, 0.0);
+
+			for (int offset = -radius; offset <= radius; offset++)
+			{
+				const std::size_t sampleY = clampIndex(static_cast<long long>(y) + offset, image.getHeight());
+
+				result += horizontalPass.getPixel(x, sampleY) * kernel[static_cast<std::size_t>(offset + radius)];
+			}
 			blurredImage.setPixel(x, y, result);
 		}
 	}

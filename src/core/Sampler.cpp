@@ -2,6 +2,7 @@
 #include "Defaults.hpp"
 #include "Random.hpp"
 #include <algorithm>
+#include <array>
 #include <atomic>
 #include <cmath>
 #include <cstdint>
@@ -11,6 +12,8 @@ namespace
 	constexpr double	GOLDEN_RATIO_CONJUGATE = 0.6180339887498948;
 	constexpr std::uint32_t	BOUNCE_DIMENSION_STRIDE = 32;
 	constexpr std::uint32_t	AUXILIARY_DIMENSION_OFFSET = 0x10000u;
+	constexpr std::size_t	CACHED_DIMENSION_COUNT = 1024;
+	constexpr std::size_t	CACHED_COMPONENT_COUNT = 2;
 
 	struct	SampleContext
 	{
@@ -56,6 +59,33 @@ namespace
 
 	double	dimensionStep(std::uint32_t dimension, std::uint32_t component)
 	{
+		static const std::array<std::array<double, CACHED_COMPONENT_COUNT>, CACHED_DIMENSION_COUNT> cachedSteps = [] {
+			std::array<std::array<double, CACHED_COMPONENT_COUNT>, CACHED_DIMENSION_COUNT> steps = {};
+
+			for (std::size_t dimensionIndex = 0; dimensionIndex < CACHED_DIMENSION_COUNT; dimensionIndex++)
+			{
+				for (std::size_t componentIndex = 0; componentIndex < CACHED_COMPONENT_COUNT; componentIndex++)
+				{
+					const std::uint64_t key =
+						(static_cast<std::uint64_t>(dimensionIndex) + 1ull) * 0x9e3779b97f4a7c15ull
+						^ (static_cast<std::uint64_t>(componentIndex) + 1ull) * 0xda942042e4dd58b5ull;
+					double step = unitFromHash(hash32(key));
+
+					if (step < 0.05 || step > 0.95)
+					{
+						step = fract(step + GOLDEN_RATIO_CONJUGATE);
+					}
+					steps[dimensionIndex][componentIndex] = step;
+				}
+			}
+			return (steps);
+		}();
+
+		if (dimension < CACHED_DIMENSION_COUNT && component < CACHED_COMPONENT_COUNT)
+		{
+			return (cachedSteps[dimension][component]);
+		}
+
 		const std::uint64_t key =
 			(static_cast<std::uint64_t>(dimension) + 1ull) * 0x9e3779b97f4a7c15ull
 			^ (static_cast<std::uint64_t>(component) + 1ull) * 0xda942042e4dd58b5ull;
