@@ -1,4 +1,5 @@
 #include "ColorScience.hpp"
+#include "ColorManagement.hpp"
 #include "LightUnits.hpp"
 #include <algorithm>
 #include <cmath>
@@ -36,13 +37,9 @@ namespace
 		return (1.217 * gaussian(t1) + 0.681 * gaussian(t2));
 	}
 
-	Color	xyzToLinearSRGB(double x, double y, double z)
+	Color	xyzToACEScg(double x, double y, double z)
 	{
-		return (Color(
-			3.2406 * x - 1.5372 * y - 0.4986 * z,
-			-0.9689 * x + 1.8758 * y + 0.0415 * z,
-			0.0557 * x - 0.2040 * y + 1.0570 * z
-		));
+		return (ColorManagement::acescgFromXYZ(Color(x, y, z)));
 	}
 
 	Color	normalizeVisibleColor(Color color)
@@ -81,7 +78,7 @@ Color	ColorScience::wavelength(double nanometers)
 		throw std::invalid_argument("Wavelength must be finite and within 360-830 nm.");
 	}
 
-	return (normalizeVisibleColor(xyzToLinearSRGB(
+	return (normalizeVisibleColor(xyzToACEScg(
 		cieX(nanometers),
 		cieY(nanometers),
 		cieZ(nanometers)
@@ -106,7 +103,7 @@ Color	ColorScience::blackbody(double kelvin)
 		z += radiance * cieZ(wavelength);
 	}
 
-	return (normalizeVisibleColor(xyzToLinearSRGB(x, y, z)));
+	return (normalizeVisibleColor(xyzToACEScg(x, y, z)));
 }
 
 Color	ColorScience::solar(void)

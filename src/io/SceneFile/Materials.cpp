@@ -322,7 +322,10 @@ namespace
 		if (!builder.texturePath.empty())
 		{
 			material->setTexture(std::make_shared<Texture>(
-				Texture::loadPPM(SceneFile::internal::_resolveAssetPath(baseDirectory, builder.texturePath))
+				Texture::loadPPM(
+					SceneFile::internal::_resolveAssetPath(baseDirectory, builder.texturePath),
+					TextureColorRole::ColorSRGB
+				)
 			));
 		}
 	}

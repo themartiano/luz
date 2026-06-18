@@ -1,6 +1,7 @@
 #include "AABB.hpp"
 #include "Atmosphere.hpp"
 #include "Color.hpp"
+#include "ColorManagement.hpp"
 #include "ColorScience.hpp"
 #include "EnvironmentMap.hpp"
 #include "FlagsParser.hpp"
@@ -69,6 +70,11 @@ namespace
 	void	requireNear(double actual, double expected, const std::string& message)
 	{
 		require(std::abs(actual - expected) < 0.000001, message);
+	}
+
+	void	requireNearTolerance(double actual, double expected, double tolerance, const std::string& message)
+	{
+		require(std::abs(actual - expected) < tolerance, message);
 	}
 
 	void	requireVectorNear(const Vector3& actual, const Vector3& expected, const std::string& message)
@@ -362,6 +368,8 @@ namespace
 		unsigned char				bitDepth = 0;
 		unsigned char				colorType = 0;
 		std::vector<unsigned char>	imageData;
+		bool						hasSRGBChunk = false;
+		std::vector<std::string>	textChunks;
 	};
 
 	PNGData	readPNG(const std::filesystem::path& path)
@@ -403,6 +411,15 @@ namespace
 			else if (type == "IDAT")
 			{
 				png.imageData.insert(png.imageData.end(), bytes.begin() + dataOffset, bytes.begin() + crcOffset);
+			}
+			else if (type == "sRGB")
+			{
+				require(length == 1, "PNG sRGB chunk length is wrong.");
+				png.hasSRGBChunk = true;
+			}
+			else if (type == "tEXt")
+			{
+				png.textChunks.emplace_back(bytes.begin() + dataOffset, bytes.begin() + crcOffset);
 			}
 			else if (type == "IEND")
 			{
@@ -492,14 +509,45 @@ namespace
 	{
 		Image image(1, 1);
 		image.initialize();
+		image.setColorEncoding(ImageColorEncoding::DisplayLinearSRGB);
 		image.setPixel(0, 0, Color(0.0031308, 0.25, -1.0));
 
 		image.gammaCorrect();
 		const Color pixel = image.getPixel(0, 0);
 
+		require(image.getColorEncoding() == ImageColorEncoding::DisplayEncodedSRGB, "Gamma correction did not mark the image as encoded sRGB.");
 		requireNear(pixel.getRed(), 0.040449936, "sRGB gamma linear segment is wrong.");
 		requireNear(pixel.getGreen(), 0.5370987304831942, "sRGB gamma power segment is wrong.");
 		requireNear(pixel.getBlue(), 0.0, "sRGB gamma did not clamp negative values.");
+	}
+
+	void	testColorManagementACEScgContract(void)
+	{
+		const Color displayColor(0.25, 0.5, 0.75);
+		const Color acescg = ColorManagement::acescgFromSRGB(displayColor);
+		const Color roundTrip = ColorManagement::encodedSRGBFromACEScg(acescg);
+		const Color white = ColorManagement::acescgFromSRGB(Color(1.0, 1.0, 1.0));
+
+		require(ColorManagement::workingSpaceName() == std::string("ACEScg scene-linear RGB (AP1 primaries, ACES D60 white)"), "Working space contract changed.");
+		requireNearTolerance(roundTrip.getRed(), displayColor.getRed(), 0.00005, "sRGB to ACEScg round trip red channel is wrong.");
+		requireNearTolerance(roundTrip.getGreen(), displayColor.getGreen(), 0.00005, "sRGB to ACEScg round trip green channel is wrong.");
+		requireNearTolerance(roundTrip.getBlue(), displayColor.getBlue(), 0.00005, "sRGB to ACEScg round trip blue channel is wrong.");
+		requireNear(ColorManagement::luminance(white), 1.0, "ACEScg white luminance is wrong.");
+	}
+
+	void	testACEScgSceneImageEncodesToSRGB(void)
+	{
+		Image image(1, 1);
+		image.initialize();
+		image.setPixel(0, 0, ColorManagement::acescgFromSRGB(Color(0.25, 0.5, 0.75)));
+
+		image.gammaCorrect();
+		const Color pixel = image.getPixel(0, 0);
+
+		require(image.getColorEncoding() == ImageColorEncoding::DisplayEncodedSRGB, "Scene-linear ACEScg gamma path did not produce encoded sRGB.");
+		requireNearTolerance(pixel.getRed(), 0.25, 0.00005, "ACEScg scene image did not encode red to display sRGB.");
+		requireNearTolerance(pixel.getGreen(), 0.5, 0.00005, "ACEScg scene image did not encode green to display sRGB.");
+		requireNearTolerance(pixel.getBlue(), 0.75, 0.00005, "ACEScg scene image did not encode blue to display sRGB.");
 	}
 
 	void	testExposureAndContrast(void)
@@ -817,6 +865,13 @@ namespace
 		require(findTiffTag(bytes, ifdOffset, 278).valueOrOffset == 2, "TIFF rows per strip is wrong.");
 		require(findTiffTag(bytes, ifdOffset, 279).valueOrOffset == 72, "TIFF strip byte count is wrong.");
 		require(findTiffTag(bytes, ifdOffset, 284).valueOrOffset == 1, "TIFF planar configuration is wrong.");
+		const TiffTag imageDescription = findTiffTag(bytes, ifdOffset, 270);
+		require(imageDescription.type == 2 && imageDescription.count > 1, "TIFF ImageDescription tag is wrong.");
+		const std::string description(
+			bytes.begin() + imageDescription.valueOrOffset,
+			bytes.begin() + imageDescription.valueOrOffset + imageDescription.count - 1
+		);
+		require(description.find("scene-linear ACEScg") != std::string::npos, "TIFF output is missing ACEScg color metadata.");
 
 		const std::uint32_t pixelDataOffset = findTiffTag(bytes, ifdOffset, 273).valueOrOffset;
 		requireRGBFloats(bytes, pixelDataOffset + 0, 1.5f, 0.25f, 0.0f, "TIFF top-left pixel");
@@ -834,6 +889,7 @@ namespace
 		Image image(3, 2);
 
 		image.initialize();
+		image.setColorEncoding(ImageColorEncoding::DisplayEncodedSRGB);
 		image.setPixel(0, 0, Color(1.0, 0.0, 0.0));
 		image.setPixel(1, 0, Color(0.0, 1.0, 0.0));
 		image.setPixel(2, 0, Color(0.0, 0.0, 1.0));
@@ -853,6 +909,19 @@ namespace
 		require(png.height == 2, "PNG height is wrong.");
 		require(png.bitDepth == 8, "PNG bit depth is wrong.");
 		require(png.colorType == 2, "PNG color type is wrong.");
+		require(png.hasSRGBChunk, "PNG display output is missing an sRGB color-space chunk.");
+		bool sawColorEncoding = false;
+		for (const std::string& textChunk : png.textChunks)
+		{
+			if (
+				textChunk.rfind("LuzColorEncoding", 0) == 0
+				&& textChunk.find("display-referred sRGB") != std::string::npos
+			)
+			{
+				sawColorEncoding = true;
+			}
+		}
+		require(sawColorEncoding, "PNG output is missing Luz color encoding metadata.");
 		require(scanlines.size() == rowSize * png.height, "PNG scanline byte count is wrong.");
 		require((png.imageData[2] & 0x07) == 0x01, "PNG did not use stored deflate.");
 
@@ -1279,13 +1348,12 @@ namespace
 
 		const EnvironmentMap environmentMap = EnvironmentMap::load(environmentPath.string());
 		const Color color = environmentMap.sampleDirection(Vector3(1.0, 0.0, 0.0));
+		const Color expected = ColorManagement::acescgFromSRGB(Color(0.1, 0.2, 0.3));
 		const EnvironmentMap::Sample sample = environmentMap.sample(0.5, Sampler::Sample2D{0.5, 0.5});
 
 		require(environmentMap.getWidth() == 1, "PPM environment width was not loaded.");
 		require(environmentMap.getHeight() == 1, "PPM environment height was not loaded.");
-		requireNear(color.getRed(), 0.1, "PPM environment red channel was not sampled.");
-		requireNear(color.getGreen(), 0.2, "PPM environment green channel was not sampled.");
-		requireNear(color.getBlue(), 0.3, "PPM environment blue channel was not sampled.");
+		requireColorNear(color, expected, "PPM environment did not convert sRGB input to ACEScg.");
 		require(sample.valid, "PPM environment importance sample was invalid.");
 		require(std::isfinite(sample.pdf) && sample.pdf > 0.0, "PPM environment sample PDF was invalid.");
 
@@ -1308,10 +1376,9 @@ namespace
 
 		const EnvironmentMap environmentMap = EnvironmentMap::load(environmentPath.string());
 		const Color color = environmentMap.sampleDirection(Vector3(0.0, 1.0, 0.0));
+		const Color expected = ColorManagement::acescgFromLinearSRGB(Color(2.0, 1.0, 0.5));
 
-		requireNear(color.getRed(), 2.0, "HDR environment red channel was not decoded.");
-		requireNear(color.getGreen(), 1.0, "HDR environment green channel was not decoded.");
-		requireNear(color.getBlue(), 0.5, "HDR environment blue channel was not decoded.");
+		requireColorNear(color, expected, "HDR environment did not convert linear RGBE input to ACEScg.");
 
 		std::filesystem::remove(environmentPath);
 	}
@@ -1340,11 +1407,10 @@ namespace
 
 		const EnvironmentMap environmentMap = EnvironmentMap::load(environmentPath.string());
 		const Color color = environmentMap.sampleDirection(Vector3(1.0, 0.0, 0.0));
+		const Color expected = ColorManagement::acescgFromLinearSRGB(Color(2.0, 1.0, 0.5));
 
 		require(environmentMap.getWidth() == 8, "RLE HDR environment width was not loaded.");
-		requireNear(color.getRed(), 2.0, "RLE HDR environment red channel was not decoded.");
-		requireNear(color.getGreen(), 1.0, "RLE HDR environment green channel was not decoded.");
-		requireNear(color.getBlue(), 0.5, "RLE HDR environment blue channel was not decoded.");
+		requireColorNear(color, expected, "RLE HDR environment did not convert linear RGBE input to ACEScg.");
 
 		std::filesystem::remove(environmentPath);
 	}
@@ -1879,6 +1945,45 @@ namespace
 		std::filesystem::remove(scenePath);
 	}
 
+	void	testSceneFileExplicitColorSpaces(void)
+	{
+		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_color_space_values_test.luz";
+		{
+			std::ofstream sceneStream(scenePath);
+			sceneStream
+				<< "[settings]\n"
+				<< "sky=none\n"
+				<< "background=srgb(0.25,0.5,0.75)\n\n"
+				<< "[materials]\n"
+				<< "material linear_paint {\n"
+				<< "type=lambertian\n"
+				<< "color=linear_srgb(0.2,0.4,0.6)\n"
+				<< "}\n\n"
+				<< "[scene]\n"
+				<< "sphere painted {\n"
+				<< "position=(0,0,0)\n"
+				<< "radius=1\n"
+				<< "material=linear_paint\n"
+				<< "}\n";
+		}
+
+		Scene scene;
+		SceneFile::read(scene, scenePath.string());
+
+		requireColorNear(
+			scene.getBackgroundColor(),
+			ColorManagement::acescgFromSRGB(Color(0.25, 0.5, 0.75)),
+			"Scene background srgb() value did not convert to ACEScg."
+		);
+		requireColorNear(
+			scene.getHittables()[0]->getMaterial()->getColor(),
+			ColorManagement::acescgFromLinearSRGB(Color(0.2, 0.4, 0.6)),
+			"Scene material linear_srgb() value did not convert to ACEScg."
+		);
+
+		std::filesystem::remove(scenePath);
+	}
+
 	void	testSceneFileLoadsAbsorbingDielectricMaterial(void)
 	{
 		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_absorbing_dielectric_test.luz";
@@ -2117,9 +2222,11 @@ namespace
 		requireNear(hitRecord.u, 0.375, "Sphere cube-cross U was not generated.");
 		requireNear(hitRecord.v, 0.5, "Sphere cube-cross V was not generated.");
 		const Color texturedColor = hitRecord.material->colorAt(hitRecord);
-		requireNear(texturedColor.getRed(), 1.0, "Named sphere texture red channel was not sampled.");
-		requireNear(texturedColor.getGreen(), 0.0, "Named sphere texture green channel was not sampled.");
-		requireNear(texturedColor.getBlue(), 0.0, "Named sphere texture blue channel was not sampled.");
+		requireColorNear(
+			texturedColor,
+			ColorManagement::acescgFromSRGB(Color(1.0, 0.0, 0.0)),
+			"Named sphere texture did not convert sRGB input to ACEScg."
+		);
 
 		std::filesystem::remove(scenePath);
 		std::filesystem::remove(texturePath);
@@ -2531,9 +2638,11 @@ namespace
 		requireNear(hitRecord.u, 0.25, "OBJ reader did not interpolate texture coordinate U.");
 		requireNear(hitRecord.v, 0.25, "OBJ reader did not interpolate texture coordinate V.");
 		const Color texturedColor = hitRecord.material->colorAt(hitRecord);
-		requireNear(texturedColor.getRed(), 1.0, "Texture red channel was not sampled.");
-		requireNear(texturedColor.getGreen(), 0.0, "Texture green channel was not sampled.");
-		requireNear(texturedColor.getBlue(), 0.0, "Texture blue channel was not sampled.");
+		requireColorNear(
+			texturedColor,
+			ColorManagement::acescgFromSRGB(Color(1.0, 0.0, 0.0)),
+			"OBJ texture did not convert sRGB input to ACEScg."
+		);
 
 		std::filesystem::remove(scenePath);
 		std::filesystem::remove(objectPath);
@@ -3388,14 +3497,13 @@ namespace
 		scene.addCamera(testPinholeCamera(Vector3(0.0, 0.0, 1.0), Vector3(0.0, 0.0, -1.0), 1.0));
 
 		require(Renderer::render(scene), "Environment background render failed.");
+		const Color expected = ColorManagement::acescgFromSRGB(Color(0.2, 0.4, 0.6)) * 1.5;
 		for (std::size_t y = 0; y < scene.getImage()->getHeight(); y++)
 		{
 			for (std::size_t x = 0; x < scene.getImage()->getWidth(); x++)
 			{
 				const Color pixel = scene.getImage()->getPixel(x, y);
-				requireNear(pixel.getRed(), 0.3, "Environment render red channel was wrong.");
-				requireNear(pixel.getGreen(), 0.6, "Environment render green channel was wrong.");
-				requireNear(pixel.getBlue(), 0.9, "Environment render blue channel was wrong.");
+				requireColorNear(pixel, expected, "Environment render did not use ACEScg environment radiance.");
 			}
 		}
 
@@ -3517,6 +3625,8 @@ int	main(void)
 		testToneMappingBlackPixel();
 		testToneMappingCompressesHighlights();
 		testSRGBGammaCorrection();
+		testColorManagementACEScgContract();
+		testACEScgSceneImageEncodesToSRGB();
 		testExposureAndContrast();
 		testPhotographicExposureConversion();
 		testBloomExtractionPreservesHighlightColor();
@@ -3556,6 +3666,7 @@ int	main(void)
 		testSceneFileLoadsIESPointLight();
 		testSceneFileMetersPerUnitScalesPhysicalLightArea();
 		testSceneFileSpectralColorValues();
+		testSceneFileExplicitColorSpaces();
 		testSceneFileLoadsAbsorbingDielectricMaterial();
 		testSceneFileLoadsConductorMetalMaterial();
 		testSphereUVProjectionModes();

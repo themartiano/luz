@@ -1,4 +1,5 @@
 #include "Image.hpp"
+#include "ColorManagement.hpp"
 #include "Defaults.hpp"
 #include "ImageFiles/BMP.hpp"
 #include "ImageFiles/PNG.hpp"
@@ -23,34 +24,6 @@ namespace
 		return (value);
 	}
 
-	double	clampNonNegative(double value)
-	{
-		if (!std::isfinite(value) || value <= 0.0)
-		{
-			return (0.0);
-		}
-		return (value);
-	}
-
-	Color	sanitizeLinear(Color color)
-	{
-		return (Color(
-			clampNonNegative(color.getRed()),
-			clampNonNegative(color.getGreen()),
-			clampNonNegative(color.getBlue())
-		));
-	}
-
-	double	linearToSRGB(double value)
-	{
-		value = clampUnit(value);
-		if (value <= 0.0031308)
-		{
-			return (12.92 * value);
-		}
-		return ((1.055 * std::pow(value, 1.0 / 2.4)) - 0.055);
-	}
-
 	Color	scaleColor(Color color, double scale)
 	{
 		return (Color(
@@ -65,6 +38,7 @@ Image::Image(void)
 {
 	this->_width = 0;
 	this->_height = 0;
+	this->_colorEncoding = ImageColorEncoding::SceneLinearACEScg;
 	this->_initialized = false;
 }
 
@@ -72,6 +46,7 @@ Image::Image(std::size_t width, std::size_t height)
 {
 	this->_width = width;
 	this->_height = height;
+	this->_colorEncoding = ImageColorEncoding::SceneLinearACEScg;
 	this->_initialized = false;
 }
 
@@ -147,6 +122,16 @@ void	Image::saveToPNG(const std::string &fileName) const
 	png.writeFile(std::make_unique<Image>(*this));
 }
 
+ImageColorEncoding	Image::getColorEncoding(void) const
+{
+	return (this->_colorEncoding);
+}
+
+void	Image::setColorEncoding(ImageColorEncoding colorEncoding)
+{
+	this->_colorEncoding = colorEncoding;
+}
+
 const SmartArray<Color>&	Image::data(void) const
 {
 	return (this->_pixels);
@@ -175,6 +160,7 @@ Color&	Image::at(std::size_t index)
 void	Image::initialize(void)
 {
 	this->_pixels = SmartArray<Color>(this->_width * this->_height);
+	this->_colorEncoding = ImageColorEncoding::SceneLinearACEScg;
 	this->_initialized = true;
 }
 
@@ -237,7 +223,7 @@ void	Image::applyExposure(double exposure)
 
 	for (std::size_t i = 0; i < this->_pixels.getCapacity(); i++)
 	{
-		this->_pixels[i] = scaleColor(sanitizeLinear(this->_pixels[i]), exposureScale);
+		this->_pixels[i] = scaleColor(ColorManagement::sanitizeSceneLinear(this->_pixels[i]), exposureScale);
 	}
 }
 
@@ -263,26 +249,39 @@ void	Image::applyContrast(double contrast)
 
 void	Image::gammaCorrect(void)
 {
+	if (this->_colorEncoding == ImageColorEncoding::DisplayEncodedSRGB)
+	{
+		return;
+	}
 	for (std::size_t i = 0; i < this->_pixels.getCapacity(); i++)
 	{
 		Color& pixel = this->_pixels[i];
 
-		pixel = Color(
-			linearToSRGB(pixel.getRed()),
-			linearToSRGB(pixel.getGreen()),
-			linearToSRGB(pixel.getBlue())
-		);
+		if (this->_colorEncoding == ImageColorEncoding::SceneLinearACEScg)
+		{
+			pixel = ColorManagement::encodedSRGBFromACEScg(pixel);
+		}
+		else
+		{
+			pixel = ColorManagement::encodeSRGB(pixel);
+		}
 	}
+	this->_colorEncoding = ImageColorEncoding::DisplayEncodedSRGB;
 }
 
 void	Image::toneMap(void)
 {
+	if (this->_colorEncoding != ImageColorEncoding::SceneLinearACEScg)
+	{
+		return;
+	}
 	for (std::size_t i = 0; i < this->_pixels.getCapacity(); i++)
 	{
 		Color& pixel = this->_pixels[i];
 
-		pixel = Utilities::filmicToneMap(sanitizeLinear(pixel));
+		pixel = ColorManagement::displayTransformToLinearSRGB(ColorManagement::sanitizeSceneLinear(pixel));
 	}
+	this->_colorEncoding = ImageColorEncoding::DisplayLinearSRGB;
 }
 
 std::unique_ptr<Image>	Image::extractBloom(double threshold, double softKnee) const
@@ -303,7 +302,7 @@ std::unique_ptr<Image>	Image::extractBloom(double threshold, double softKnee) co
 	{
 		for (std::size_t x = 0; x < brightnessImage->getWidth(); x++)
 		{
-			const Color pixel = sanitizeLinear(this->getPixel(x, y));
+			const Color pixel = ColorManagement::sanitizeSceneLinear(this->getPixel(x, y));
 			const double luminance = Utilities::luminance(pixel);
 			double contribution = std::max(luminance - threshold, 0.0);
 

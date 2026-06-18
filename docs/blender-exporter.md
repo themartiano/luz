@@ -112,7 +112,9 @@ The exporter also works without passing the `.blend` file before `--python`:
   Principled, mix, add, RGB/value, image average color, and color ramp values.
 - Image textures connected directly to Principled BSDF Base Color or Diffuse
   BSDF Color are exported as PPM textures, downscaled by `--texture-max-size`,
-  and referenced from the generated named material with `texture=...`.
+  and referenced from the generated named material with `texture=...`. Luz loads
+  these base-color PPMs as sRGB albedo textures and converts them into its
+  scene-linear ACEScg working space.
 - When a material has multiple Material Output nodes, the exporter prefers the
   output target that matches the scene render engine, such as Cycles or EEVEE.
 - Blender material values are written as named material property blocks for
@@ -126,9 +128,10 @@ The exporter also works without passing the `.blend` file before `--python`:
 - World environment mapping nodes are not exported yet. Environment maps are
   written with Luz's default equirectangular orientation and `0` degrees
   rotation.
-- Image texture export uses Luz's built-in PPM texture loader. When no usable
-  Base Color image texture is found, image colors can still be approximated by
-  averaging a temporary thumbnail, controlled by `--texture-sample-size`.
+- Image texture export uses Luz's built-in PPM texture loader for sRGB base
+  color textures. When no usable Base Color image texture is found, image colors
+  can still be approximated by averaging a temporary thumbnail, controlled by
+  `--texture-sample-size`.
 - Per-face materials are preserved by splitting mesh objects into one OBJ per
   material slot.
 - Instancing is baked into separate OBJ files.

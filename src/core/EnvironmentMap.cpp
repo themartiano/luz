@@ -1,4 +1,5 @@
 #include "EnvironmentMap.hpp"
+#include "ColorManagement.hpp"
 #include "Defaults.hpp"
 #include "Utilities.hpp"
 #include <algorithm>
@@ -116,7 +117,7 @@ namespace
 
 		const double scale = std::ldexp(1.0, static_cast<int>(exponent) - (128 + 8));
 
-		return (sanitizeRadiance(Color(red * scale, green * scale, blue * scale)));
+		return (sanitizeRadiance(ColorManagement::acescgFromLinearSRGB(Color(red * scale, green * scale, blue * scale))));
 	}
 
 	bool	parseResolutionToken(
@@ -273,11 +274,7 @@ namespace
 
 	double	colorLuminance(const Color& color)
 	{
-		return (
-			(std::max(0.0, color.getRed()) * 0.2126)
-			+ (std::max(0.0, color.getGreen()) * 0.7152)
-			+ (std::max(0.0, color.getBlue()) * 0.0722)
-		);
+		return (Utilities::luminance(sanitizeRadiance(color)));
 	}
 }
 
@@ -345,22 +342,22 @@ EnvironmentMap	EnvironmentMap::loadPPM(const std::string& fileName)
 		{
 			unsigned char rgb[3];
 			readExact(stream, rgb, 3, "Truncated PPM environment: " + fileName);
-			pixels.push_back(sanitizeRadiance(Color(
+			pixels.push_back(sanitizeRadiance(ColorManagement::acescgFromSRGB(Color(
 				static_cast<double>(rgb[0]) / maxValue,
 				static_cast<double>(rgb[1]) / maxValue,
 				static_cast<double>(rgb[2]) / maxValue
-			)));
+			))));
 		}
 	}
 	else
 	{
 		for (std::size_t i = 0; i < width * height; i++)
 		{
-			pixels.push_back(sanitizeRadiance(Color(
+			pixels.push_back(sanitizeRadiance(ColorManagement::acescgFromSRGB(Color(
 				std::stod(readPPMToken(stream)) / maxValue,
 				std::stod(readPPMToken(stream)) / maxValue,
 				std::stod(readPPMToken(stream)) / maxValue
-			)));
+			))));
 		}
 	}
 

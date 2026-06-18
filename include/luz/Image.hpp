@@ -2,6 +2,7 @@
 
 #include "SmartArray.hpp"
 #include "Color.hpp"
+#include "ColorManagement.hpp"
 #include <memory>
 
 class	Image
@@ -20,6 +21,8 @@ class	Image
 		void		saveToBMP(const std::string &filename) const;
 		void		saveToTIFF(const std::string &filename) const;
 		void		saveToPNG(const std::string &filename) const;
+		ImageColorEncoding	getColorEncoding(void) const;
+		void		setColorEncoding(ImageColorEncoding colorEncoding);
 		void		initialize(void);
 		Color&		at(std::size_t index);
 		void		fill(Color color);
@@ -38,6 +41,7 @@ class	Image
 		SmartArray<Color>	_pixels;
 		std::size_t			_width;
 		std::size_t			_height;
+		ImageColorEncoding	_colorEncoding;
 		bool				_initialized;
 
 		void	_checkInitialized(void) const;

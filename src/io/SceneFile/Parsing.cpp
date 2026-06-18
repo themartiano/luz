@@ -1,5 +1,6 @@
 #include "SceneFileInternal.hpp"
 #include "AssetPath.hpp"
+#include "ColorManagement.hpp"
 #include "ColorScience.hpp"
 #include "Utilities.hpp"
 #include <cctype>
@@ -116,6 +117,21 @@ Color	SceneFile::internal::_parseColorValue(const std::string& value, const std:
 		}
 		return (scalar);
 	};
+	auto parseColorFunction = [&](const std::string& functionName) -> Color
+	{
+		const std::string prefix = functionName + "(";
+		if (lower.rfind(prefix, 0) != 0 || lower.back() != ')')
+		{
+			throw std::runtime_error("Invalid " + label + " color function.");
+		}
+
+		const std::string argument = _trim(trimmed.substr(prefix.length(), trimmed.length() - prefix.length() - 1));
+		if (std::sscanf(argument.c_str(), "%lf,%lf,%lf", &r, &g, &b) != 3)
+		{
+			throw std::runtime_error("Invalid " + label + " color function. Use " + functionName + "(r,g,b).");
+		}
+		return (Color(r, g, b));
+	};
 
 	if (lower.rfind("wavelength(", 0) == 0)
 	{
@@ -137,10 +153,46 @@ Color	SceneFile::internal::_parseColorValue(const std::string& value, const std:
 	{
 		return (ColorScience::solar());
 	}
+	if (lower.rfind("acescg(", 0) == 0)
+	{
+		return (parseColorFunction("acescg"));
+	}
+	if (
+		lower.rfind("srgb(", 0) == 0
+		|| lower.rfind("display_srgb(", 0) == 0
+		|| lower.rfind("display(", 0) == 0
+	)
+	{
+		if (lower.rfind("srgb(", 0) == 0)
+		{
+			return (ColorManagement::acescgFromSRGB(parseColorFunction("srgb")));
+		}
+		if (lower.rfind("display_srgb(", 0) == 0)
+		{
+			return (ColorManagement::acescgFromSRGB(parseColorFunction("display_srgb")));
+		}
+		return (ColorManagement::acescgFromSRGB(parseColorFunction("display")));
+	}
+	if (
+		lower.rfind("linear_srgb(", 0) == 0
+		|| lower.rfind("linearsrgb(", 0) == 0
+		|| lower.rfind("lin_srgb(", 0) == 0
+	)
+	{
+		if (lower.rfind("linear_srgb(", 0) == 0)
+		{
+			return (ColorManagement::acescgFromLinearSRGB(parseColorFunction("linear_srgb")));
+		}
+		if (lower.rfind("linearsrgb(", 0) == 0)
+		{
+			return (ColorManagement::acescgFromLinearSRGB(parseColorFunction("linearsrgb")));
+		}
+		return (ColorManagement::acescgFromLinearSRGB(parseColorFunction("lin_srgb")));
+	}
 
 	if (std::sscanf(trimmed.c_str(), "(%lf,%lf,%lf)", &r, &g, &b) != 3)
 	{
-		throw std::runtime_error("Invalid " + label + " color. Use " + label + "=(r,g,b), " + label + "=wavelength(NM), " + label + "=blackbody(K), or " + label + "=solar.");
+		throw std::runtime_error("Invalid " + label + " color. Use " + label + "=(r,g,b), acescg(r,g,b), srgb(r,g,b), linear_srgb(r,g,b), wavelength(NM), blackbody(K), or solar.");
 	}
 
 	return (Color(r, g, b));
