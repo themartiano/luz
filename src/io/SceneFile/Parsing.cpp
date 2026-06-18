@@ -1,5 +1,6 @@
 #include "SceneFileInternal.hpp"
 #include "AssetPath.hpp"
+#include "ColorScience.hpp"
 #include "Utilities.hpp"
 #include <cctype>
 #include <cstdio>
@@ -79,10 +80,63 @@ Color	SceneFile::internal::_parseColorValue(const std::string& value, const std:
 	double r;
 	double g;
 	double b;
+	const std::string trimmed = _trim(value);
+	const std::string lower = _lowerCopy(trimmed);
 
-	if (std::sscanf(_trim(value).c_str(), "(%lf,%lf,%lf)", &r, &g, &b) != 3)
+	if (trimmed.empty())
 	{
-		throw std::runtime_error("Invalid " + label + " color. Use " + label + "=(r,g,b).");
+		throw std::runtime_error("Invalid " + label + " color. Color value is empty.");
+	}
+
+	auto parseFunctionArgument = [&](const std::string& functionName, const std::string& suffix) -> double
+	{
+		const std::string prefix = functionName + "(";
+		if (lower.rfind(prefix, 0) != 0 || lower.back() != ')')
+		{
+			throw std::runtime_error("Invalid " + label + " color function.");
+		}
+
+		std::string argument = _trim(trimmed.substr(prefix.length(), trimmed.length() - prefix.length() - 1));
+		std::string lowerArgument = _lowerCopy(argument);
+		if (
+			!suffix.empty()
+			&& lowerArgument.length() > suffix.length()
+			&& lowerArgument.compare(lowerArgument.length() - suffix.length(), suffix.length(), suffix) == 0
+		)
+		{
+			argument = _trim(argument.substr(0, argument.length() - suffix.length()));
+			lowerArgument = _lowerCopy(argument);
+		}
+
+		std::size_t parsed = 0;
+		const double scalar = std::stod(argument, &parsed);
+		if (parsed != argument.length() || !std::isfinite(scalar))
+		{
+			throw std::runtime_error("Invalid " + label + " color function value.");
+		}
+		return (scalar);
+	};
+
+	if (lower.rfind("wavelength(", 0) == 0)
+	{
+		return (ColorScience::wavelength(parseFunctionArgument("wavelength", "nm")));
+	}
+	if (lower.rfind("blackbody(", 0) == 0)
+	{
+		return (ColorScience::blackbody(parseFunctionArgument("blackbody", "k")));
+	}
+	if (lower.rfind("temperature(", 0) == 0)
+	{
+		return (ColorScience::blackbody(parseFunctionArgument("temperature", "k")));
+	}
+	if (lower.rfind("color_temperature(", 0) == 0)
+	{
+		return (ColorScience::blackbody(parseFunctionArgument("color_temperature", "k")));
+	}
+
+	if (std::sscanf(trimmed.c_str(), "(%lf,%lf,%lf)", &r, &g, &b) != 3)
+	{
+		throw std::runtime_error("Invalid " + label + " color. Use " + label + "=(r,g,b), " + label + "=wavelength(NM), or " + label + "=blackbody(K).");
 	}
 
 	return (Color(r, g, b));

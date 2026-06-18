@@ -1,6 +1,7 @@
 #include "AABB.hpp"
 #include "Atmosphere.hpp"
 #include "Color.hpp"
+#include "ColorScience.hpp"
 #include "EnvironmentMap.hpp"
 #include "FlagsParser.hpp"
 #include "Image.hpp"
@@ -550,6 +551,25 @@ namespace
 			[]() { LightUnits::surfaceRadiance(Color(0.0, 0.0, 0.0), 1.0); },
 			"Physical light units accepted a zero-luminance positive light color."
 		);
+	}
+
+	void	testSpectralColorConversions(void)
+	{
+		const Color blue = ColorScience::wavelength(450.0);
+		const Color green = ColorScience::wavelength(550.0);
+		const Color red = ColorScience::wavelength(650.0);
+
+		require(blue.getBlue() > blue.getRed() && blue.getBlue() > blue.getGreen(), "450 nm did not convert to a blue-dominant color.");
+		require(green.getGreen() > green.getRed() && green.getGreen() > green.getBlue(), "550 nm did not convert to a green-dominant color.");
+		require(red.getRed() > red.getGreen() && red.getRed() > red.getBlue(), "650 nm did not convert to a red-dominant color.");
+
+		const Color warm = ColorScience::blackbody(3000.0);
+		const Color cool = ColorScience::blackbody(10000.0);
+
+		require(warm.getRed() > warm.getBlue(), "3000 K blackbody did not convert to a warm color.");
+		require(cool.getBlue() > cool.getRed(), "10000 K blackbody did not convert to a cool color.");
+		requireThrows([]() { ColorScience::wavelength(200.0); }, "Spectral conversion accepted non-visible wavelength.");
+		requireThrows([]() { ColorScience::blackbody(100.0); }, "Spectral conversion accepted invalid blackbody temperature.");
 	}
 
 	void	testGaussianBlurSupportsInPlaceSmallImages(void)
@@ -1516,6 +1536,50 @@ namespace
 		require(scene.getHittables().size() == 2, "Meters-per-unit scene did not load both lights.");
 		requireColorNear(scene.getHittables()[0]->getMaterial()->emitted(), Color(1.0, 1.0, 1.0), "Area light power did not use physical square meters.");
 		requireColorNear(scene.getHittables()[1]->getMaterial()->emitted(), Color(1.0, 1.0, 1.0), "Point light lumens did not use physical square meters.");
+
+		std::filesystem::remove(scenePath);
+	}
+
+	void	testSceneFileSpectralColorValues(void)
+	{
+		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_spectral_color_test.luz";
+		{
+			std::ofstream sceneStream(scenePath);
+			sceneStream
+				<< "[settings]\n"
+				<< "background=blackbody(3000K)\n\n"
+				<< "[materials]\n"
+				<< "material spectral_paint {\n"
+				<< "type=lambertian\n"
+				<< "color=wavelength(550nm)\n"
+				<< "}\n\n"
+				<< "[scene]\n"
+				<< "sphere painted {\n"
+				<< "position=(0,0,0)\n"
+				<< "radius=1\n"
+				<< "material=spectral_paint\n"
+				<< "}\n"
+				<< "area_light warm_key {\n"
+				<< "position=(0,4,0)\n"
+				<< "normal=(0,-1,0)\n"
+				<< "size=(1,1)\n"
+				<< "color=blackbody(3000K)\n"
+				<< "radiance=1\n"
+				<< "}\n";
+		}
+
+		Scene scene;
+		SceneFile::read(scene, scenePath.string());
+
+		const Color background = scene.getBackgroundColor();
+		require(background.getRed() > background.getBlue(), "Spectral blackbody background was not warm.");
+		require(scene.getHittables().size() == 2, "Spectral color scene did not load both hittables.");
+
+		const Color paint = scene.getHittables()[0]->getMaterial()->getColor();
+		require(paint.getGreen() > paint.getRed() && paint.getGreen() > paint.getBlue(), "Spectral wavelength material was not green.");
+
+		const Color emission = scene.getHittables()[1]->getMaterial()->emitted();
+		require(emission.getRed() > emission.getBlue(), "Spectral blackbody light was not warm.");
 
 		std::filesystem::remove(scenePath);
 	}
@@ -2996,6 +3060,7 @@ int	main(void)
 		testExposureAndContrast();
 		testBloomExtractionPreservesHighlightColor();
 		testPhysicalLightUnitConversions();
+		testSpectralColorConversions();
 		testGaussianBlurSupportsInPlaceSmallImages();
 		testGaussianBlurPreservesCenteredEnergyAndEdges();
 		testTerminalFilePath();
@@ -3023,6 +3088,7 @@ int	main(void)
 		testSceneFileLoadsNamedBlocks();
 		testSceneFilePhysicalLightUnits();
 		testSceneFileMetersPerUnitScalesPhysicalLightArea();
+		testSceneFileSpectralColorValues();
 		testSphereUVProjectionModes();
 		testSphereHitTracksFrontFace();
 		testDielectricUsesExitRefractionRatio();

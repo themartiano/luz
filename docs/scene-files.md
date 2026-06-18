@@ -42,7 +42,7 @@ The parser is intentionally strict: unknown lines and malformed values throw an 
 | `denoiseoutputfilename` | `denoiseoutputfilename=PATH` | Optional denoised companion output path. Defaults to `outputfilename` with `_denoised` before the extension. Must use a `.bmp`, `.png`, or `.tiff` suffix. Aliases: `denoiseoutput`, `denoise_output`. |
 | `outputfilename` | `outputfilename=PATH` | `.bmp` is appended if no suffix is present. Explicit suffixes must be `.bmp`, `.png`, or `.tiff`; `.tif` is not accepted. PNG output is 8-bit RGB SDR. TIFF output is uncompressed 32-bit floating-point RGB; disable tone mapping and gamma to preserve scene-linear HDR values above 1.0. |
 | `sky` | `sky=none`, `sky=linear`, `sky=atmosphere`, or `sky=environment` | Selects background rendering. |
-| `background` | `background=(R,G,B)` | Background color used when `sky=none`. Aliases: `backgroundcolor`, `background_color`. |
+| `background` | `background=COLOR` | Background color used when `sky=none`. Aliases: `backgroundcolor`, `background_color`. |
 | `environment` | `environment=PATH[,STRENGTH[,ROTATION_DEGREES]]` | Equirectangular environment map used when `sky=environment`. `environment=...` also enables `sky=environment`. Aliases: `environmentmap`, `environment_map`, `backgroundimage`, `background_image`. |
 | `environmentstrength` | `environmentstrength=F` | Multiplies environment radiance. Defaults to `1.0`. Aliases: `environment_strength`, `worldstrength`, `world_strength`. |
 | `environmentrotation` | `environmentrotation=DEGREES` | Offsets the equirectangular U coordinate around world Y. Defaults to `0`. Aliases: `environment_rotation`, `worldrotation`, `world_rotation`. |
@@ -270,9 +270,20 @@ Each material block must define exactly one material:
 | Isotropic phase | `isotropic=(r,g,b)` |
 | Henyey-Greenstein phase | `henyey_greenstein=(r,g,b),anisotropy` |
 
-Color channels are floating point values. Non-emissive material colors normally
-use the `0.0` to `1.0` range. Emissive direct material colors are emitted
-surface radiance RGB values.
+Color values can be RGB triples, single wavelengths, or blackbody color
+temperatures:
+
+```text
+color=(0.8,0.2,0.1)
+color=wavelength(550nm)
+color=blackbody(3000K)
+```
+
+RGB channels are floating point values. Non-emissive material colors normally
+use the `0.0` to `1.0` range. Spectral colors are converted through CIE 1931
+color matching to normalized scene-linear sRGB chromaticities when the scene
+file is loaded. Emissive direct material colors are emitted surface radiance RGB
+values.
 
 Named material blocks can use the direct material lines above, or property syntax:
 
@@ -367,8 +378,10 @@ For Lambertian surface emitters, `power` is converted to radiance with
 `power / (pi * area)`, where `area` is measured in square meters after applying
 `meters_per_unit`. For sphere and point lights, physical area is
 `4 * pi * (radius * meters_per_unit)^2`.
-`lumens` is converted through luminance using 683 lm/W. RGB color is treated as
-chromaticity for physical unit properties; zero-luminance colors are rejected.
+`lumens` is converted through luminance using 683 lm/W. `color` accepts the same
+RGB, `wavelength(NM)`, and `blackbody(K)` values as material colors and is
+treated as chromaticity for physical unit properties; zero-luminance colors are
+rejected.
 
 `directional_light` creates an infinite light whose `direction` is the direction
 light travels, suitable for sun lights. When `sky=atmosphere`, the first
