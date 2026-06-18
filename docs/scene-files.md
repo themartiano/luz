@@ -329,6 +329,14 @@ should write emissive Blender materials as `type=emissive`; metallic materials
 become `metal`, transmissive or alpha-blended materials become `dielectric`, and
 the rest use Luz's rough plastic/specular `principled` approximation.
 
+Metal material property blocks can either use RGB reflectance via `color`, or
+measured conductor parameters:
+
+| Property | Meaning |
+| --- | --- |
+| `eta=(r,g,b)` | Real refractive index for conductor Fresnel. Alias: `conductor_eta`. |
+| `k=(r,g,b)` | Extinction coefficient for conductor Fresnel. Aliases: `extinction`, `extinction_coefficient`, `conductor_k`. |
+
 Dielectric material property blocks support physical glass controls:
 
 | Property | Meaning |

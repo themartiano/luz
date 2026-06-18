@@ -34,6 +34,8 @@ namespace
 		std::optional<double>	emissionLuminance;
 		std::optional<Color>	absorptionCoefficient;
 		std::optional<Color>	transmittance;
+		std::optional<Color>	conductorEta;
+		std::optional<Color>	conductorExtinction;
 		double		transmittanceDistance = 1.0;
 		bool		hasTransmittanceDistance = false;
 		std::string	texturePath;
@@ -227,6 +229,20 @@ namespace
 		{
 			builder.metallic = std::stod(value);
 		}
+		else if (key == "eta" || key == "conductor_eta")
+		{
+			builder.conductorEta = SceneFile::internal::_parseColorValue(value, key);
+		}
+		else if (
+			key == "k"
+			|| key == "extinction"
+			|| key == "extinctioncoefficient"
+			|| key == "extinction_coefficient"
+			|| key == "conductor_k"
+		)
+		{
+			builder.conductorExtinction = SceneFile::internal::_parseColorValue(value, key);
+		}
 		else if (key == "transmission")
 		{
 			builder.transmission = std::stod(value);
@@ -319,6 +335,23 @@ namespace
 		}
 	}
 
+	std::shared_ptr<Metal>	buildMetalMaterial(const MaterialBuilder& builder)
+	{
+		if (builder.conductorEta || builder.conductorExtinction)
+		{
+			if (!builder.conductorEta || !builder.conductorExtinction)
+			{
+				throw std::runtime_error("Conductor metal requires both eta and k.");
+			}
+			return (std::make_shared<Metal>(
+				*builder.conductorEta,
+				*builder.conductorExtinction,
+				builder.fuzz >= 0.0 ? builder.fuzz : builder.roughness
+			));
+		}
+		return (std::make_shared<Metal>(builder.color, builder.fuzz >= 0.0 ? builder.fuzz : builder.roughness));
+	}
+
 	std::shared_ptr<Material>	buildMaterial(
 		const MaterialBuilder& builder,
 		const std::string& blockDescription,
@@ -346,7 +379,7 @@ namespace
 			}
 			if (builder.metallic >= 0.5)
 			{
-				std::shared_ptr<Material> material = std::make_shared<Metal>(builder.color, builder.fuzz >= 0.0 ? builder.fuzz : builder.roughness);
+				std::shared_ptr<Material> material = buildMetalMaterial(builder);
 				attachTexture(material, builder, baseDirectory);
 				return (material);
 			}
@@ -362,7 +395,7 @@ namespace
 		}
 		if (type == "metal")
 		{
-			std::shared_ptr<Material> material = std::make_shared<Metal>(builder.color, builder.fuzz >= 0.0 ? builder.fuzz : builder.roughness);
+			std::shared_ptr<Material> material = buildMetalMaterial(builder);
 			attachTexture(material, builder, baseDirectory);
 			return (material);
 		}

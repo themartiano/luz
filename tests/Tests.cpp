@@ -9,6 +9,7 @@
 #include "Materials/Lambertian.hpp"
 #include "Materials/Emissive.hpp"
 #include "Materials/Dielectric.hpp"
+#include "Materials/Metal.hpp"
 #include "Materials/Principled.hpp"
 #include "Materials/Isotropic.hpp"
 #include "Materials/HenyeyGreenstein.hpp"
@@ -1683,6 +1684,40 @@ namespace
 		std::filesystem::remove(scenePath);
 	}
 
+	void	testSceneFileLoadsConductorMetalMaterial(void)
+	{
+		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_conductor_metal_test.luz";
+		{
+			std::ofstream sceneStream(scenePath);
+			sceneStream
+				<< "[materials]\n"
+				<< "material measured_gold {\n"
+				<< "type=metal\n"
+				<< "eta=(0.17,0.35,1.5)\n"
+				<< "k=(3.1,2.7,1.9)\n"
+				<< "roughness=0\n"
+				<< "}\n\n"
+				<< "[scene]\n"
+				<< "sphere metal_ball {\n"
+				<< "position=(0,0,0)\n"
+				<< "radius=1\n"
+				<< "material=measured_gold\n"
+				<< "}\n";
+		}
+
+		Scene scene;
+		SceneFile::read(scene, scenePath.string());
+
+		require(scene.getHittables().size() == 1, "Conductor metal scene did not load the sphere.");
+		Metal* metal = dynamic_cast<Metal*>(scene.getHittables()[0]->getMaterial());
+		require(metal != nullptr, "Conductor material did not produce a metal.");
+		require(metal->usesConductorFresnel(), "Conductor metal did not enable Fresnel mode.");
+		requireColorNear(metal->getEta(), Color(0.17, 0.35, 1.5), "Conductor eta was not parsed.");
+		requireColorNear(metal->getExtinctionCoefficient(), Color(3.1, 2.7, 1.9), "Conductor k was not parsed.");
+
+		std::filesystem::remove(scenePath);
+	}
+
 	void	testSphereUVProjectionModes(void)
 	{
 		const auto material = std::make_shared<Lambertian>(Color(1.0, 1.0, 1.0));
@@ -1770,6 +1805,26 @@ namespace
 		requireNear(coefficient.getRed(), 1.0, "Dielectric transmittance red coefficient is wrong.");
 		requireNear(coefficient.getGreen(), 2.0, "Dielectric transmittance green coefficient is wrong.");
 		requireNear(coefficient.getBlue(), 0.0, "Dielectric transmittance blue coefficient is wrong.");
+	}
+
+	void	testMetalConductorFresnel(void)
+	{
+		Metal metal;
+		metal.setConductorFresnel(Color(0.2, 0.2, 0.2), Color(3.0, 3.0, 3.0));
+
+		Ray ray(Vector3(0.0, 0.0, 1.0), Vector3(0.0, 0.0, -1.0));
+		HitRecord hitRecord;
+		ScatterRecord scatterRecord;
+
+		hitRecord.position = Vector3(0.0, 0.0, 0.0);
+		hitRecord.normal = Vector3(0.0, 0.0, 1.0);
+		hitRecord.frontFace = true;
+		require(metal.scatter(ray, hitRecord, scatterRecord), "Conductor metal did not scatter.");
+
+		const double expectedReflectance = ((0.2 - 1.0) * (0.2 - 1.0) + 9.0) / ((0.2 + 1.0) * (0.2 + 1.0) + 9.0);
+		requireNear(scatterRecord.attenuation.getRed(), expectedReflectance, "Conductor Fresnel red reflectance is wrong.");
+		requireNear(scatterRecord.attenuation.getGreen(), expectedReflectance, "Conductor Fresnel green reflectance is wrong.");
+		requireNear(scatterRecord.attenuation.getBlue(), expectedReflectance, "Conductor Fresnel blue reflectance is wrong.");
 	}
 
 	void	testSceneFileLoadsNamedTexturedSphere(void)
@@ -2677,6 +2732,9 @@ namespace
 		requireThrows([&]() { glass.setAbsorptionCoefficient(Color(-1.0, 0.0, 0.0)); }, "Dielectric accepted negative absorption.");
 		requireThrows([&]() { glass.setTransmittance(Color(1.2, 1.0, 1.0), 1.0); }, "Dielectric accepted transmittance above one.");
 		requireThrows([&]() { glass.setTransmittance(Color(1.0, 1.0, 1.0), 0.0); }, "Dielectric accepted zero transmittance distance.");
+		Metal conductor;
+		requireThrows([&]() { conductor.setConductorFresnel(Color(0.0, 1.0, 1.0), Color(1.0, 1.0, 1.0)); }, "Metal accepted zero conductor eta.");
+		requireThrows([&]() { conductor.setConductorFresnel(Color(1.0, 1.0, 1.0), Color(-1.0, 1.0, 1.0)); }, "Metal accepted negative conductor k.");
 		requireThrows([&]() { HenyeyGreenstein(Color(1.0, 1.0, 1.0), 1.0); }, "Henyey-Greenstein material accepted invalid anisotropy.");
 		requireThrows([&]() {
 			ConstantVolume(
@@ -3256,10 +3314,12 @@ int	main(void)
 		testSceneFileMetersPerUnitScalesPhysicalLightArea();
 		testSceneFileSpectralColorValues();
 		testSceneFileLoadsAbsorbingDielectricMaterial();
+		testSceneFileLoadsConductorMetalMaterial();
 		testSphereUVProjectionModes();
 		testSphereHitTracksFrontFace();
 		testDielectricUsesExitRefractionRatio();
 		testDielectricBeerLambertAbsorption();
+		testMetalConductorFresnel();
 		testSceneFileLoadsNamedTexturedSphere();
 		testSceneFileLoadsVolumeBlock();
 		testSceneFileMetersPerUnitScalesVolumeDensity();
