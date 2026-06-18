@@ -10,18 +10,18 @@ outputfilename=named_blocks
 [materials]
 material monkey_matte {
 type=principled
-base_color=(0.55,0.43,0.31)
+base_color=srgb(0.55,0.43,0.31)
 metallic=0
 roughness=0.55
 }
 material floor_matte {
 type=lambertian
-color=(0.62,0.62,0.58)
+color=srgb(0.62,0.62,0.58)
 }
 
 [meshes]
 mesh monkey {
-file=../../assets/objects/blender_monkey.obj
+file=suzanne.obj
 }
 
 [scene]
@@ -45,17 +45,17 @@ area_light key {
 position=(-1.5,4,2)
 normal=(0,-1,-0.35)
 size=(4,4)
-color=(1.0,0.92,0.78)
-radiance=2.5
+color=blackbody(3200K)
+luminance=1800
 }
 point_light rim {
 position=(2.3,2.4,2.2)
 radius=0.08
-color=(0.45,0.55,1.0)
-radiance=0.8
+color=wavelength(465nm)
+lumens=160
 }
 objects{
 plane=0,(0,1,0),material[
-lambertian=(0.62,0.62,0.58)
+lambertian=(0.34,0.34,0.31)
 ]
 }

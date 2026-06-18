@@ -17,6 +17,13 @@ background=(0.012,0.015,0.022)
 distanceblueness=0
 outputfilename=volumetric_godrays.png
 
+[materials]
+material brushed_aluminum {
+type=metal
+preset=aluminum
+roughness=0.18
+}
+
 [scene]
 camera main {
 position=(0,2.0,-8.6)
@@ -30,13 +37,13 @@ focus_distance=8.4
 }
 directional_light low_sun {
 direction=(0.16,-0.14,-1.0)
-color=(1.0,0.82,0.58)
+color=blackbody(5200K)
 irradiance=2.5
 }
 sphere_light cool_fill {
 position=(-3.6,2.3,-2.2)
 radius=0.2
-color=(0.42,0.55,1.0)
+color=wavelength(465nm)
 radiance=1.8
 visible=0
 }
@@ -51,9 +58,8 @@ volume stage_mist {
 shape=sphere
 position=(0,1.8,-0.2)
 radius=11.5
-density=0.085
-color=(0.82,0.88,1.0)
-anisotropy=0.68
+preset=mist
+density_scale=3.0
 }
 objects{
 rectangle=(0,0,0),(0,1,0),16,22,material[
@@ -77,9 +83,11 @@ lambertian=(0.08,0.075,0.07)
 cube=(2.75,2.0,2.1),(0,0,-1),0.3,4.0,0.72,material[
 lambertian=(0.08,0.075,0.07)
 ]
-sphere=(-2.0,0.45,-0.15),0.45,material[
-metal=(0.8,0.76,0.68),0.12
-]
+sphere brushed_sphere {
+position=(-2.0,0.45,-0.15)
+radius=0.45
+material=brushed_aluminum
+}
 sphere=(1.9,0.55,0.35),0.55,material[
 lambertian=(0.58,0.32,0.24)
 ]

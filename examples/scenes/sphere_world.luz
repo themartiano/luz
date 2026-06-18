@@ -10,6 +10,13 @@ photographic_exposure=11,0.004,100
 distanceblueness=0
 #outputfilename=cornellBox
 
+[materials]
+material brushed_silver {
+type=metal
+preset=silver
+roughness=0.12
+}
+
 [scene]
 camera main {
 position=(0,6360120.0,600)
@@ -31,8 +38,9 @@ radius=42
 color=blackbody(3000K)
 lumens=24000
 }
-# Metal sphere
-sphere=(150,6360075.0,-95),75,material[
-metal=(0.8,0.8,0.8),0.0
-]
+sphere metal_ball {
+position=(150,6360075.0,-95)
+radius=75
+material=brushed_silver
+}
 }

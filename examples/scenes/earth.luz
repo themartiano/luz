@@ -8,6 +8,7 @@ bloom=0
 sky=atmosphere
 # The first atmosphere value is a fallback only; directional_light sun drives atmosphere direction and radiance.
 atmosphere=0.30,6360000.0,6420000.0,7994.0,1200.0,16,8,0.0
+meters_per_unit=1
 photographic_exposure=16,0.008,100
 distanceblueness=0
 
@@ -20,6 +21,12 @@ roughness=0.89999998
 alpha=1
 transmission=0
 texture=../textures/earth_diff_jpg.ppm
+}
+material moon_regolith {
+type=principled
+base_color=srgb(0.56,0.55,0.50)
+metallic=0
+roughness=1
 }
 
 [scene]
@@ -37,10 +44,11 @@ direction=(-0.9659258,0.0,0.2588190)
 solar=1
 }
 objects{
-# Moon: real mean radius 1,737.4 km, center placed 384,400 km from Earth.
-sphere=(-35981830,63512260,377405433),1737400,material[
-lambertian=(0.86,0.86,0.82)
-]
+sphere moon {
+position=(-35981830,63512260,377405433)
+radius=1737400
+material=moon_regolith
+}
 }
 sphere earth {
 position=(0,0,0)

@@ -8,6 +8,25 @@ distanceblueness=0
 meters_per_unit=0.01
 #outputfilename=cornellBox
 
+[materials]
+material polished_silver {
+type=metal
+preset=silver
+roughness=0.04
+}
+material bk7_glass {
+type=dielectric
+glass_preset=bk7
+roughness=0.0
+transmittance=(0.96,0.985,1.0)
+attenuation_distance=1.0
+}
+material polished_gold {
+type=metal
+preset=gold
+roughness=0.05
+}
+
 [scene]
 camera main {
 position=(0,275,-1075)
@@ -52,18 +71,21 @@ rectangle=(275,275,0),(-1,0,0),560,550,material[
 lambertian=(1.0,0.0,0.0)
 ]
 
-# Silver sphere
-sphere=(225,50,230),50,material[
-metal=(0.8,0.8,0.8),0.0
-]
+sphere silver_ball {
+position=(225,50,230)
+radius=50
+material=polished_silver
+}
 
-# Glass sphere
-sphere=(0,150,180),100,material[
-dielectric=(1.0,1.0,1.0)
-]
+sphere glass_ball {
+position=(0,150,180)
+radius=100
+material=bk7_glass
+}
 
-# Gold sphere
-sphere=(-225,50,230),50,material[
-metal=(1.0,0.843,0.0),0.0
-]
+sphere gold_ball {
+position=(-225,50,230)
+radius=50
+material=polished_gold
+}
 }
