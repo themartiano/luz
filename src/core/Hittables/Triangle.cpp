@@ -2,6 +2,7 @@
 #include "Utilities.hpp"
 #include "Defaults.hpp"
 #include "Materials/Lambertian.hpp"
+#include "ONB.hpp"
 #include "Sampler.hpp"
 #include <algorithm>
 #include <cmath>
@@ -386,6 +387,47 @@ bool	Triangle::sampleLight(const Vector3& origin, HittableLightSample& sample) c
 	sample.tMax = distance;
 	sample.material = this->_material.get();
 	sample.valid = std::isfinite(sample.pdf) && sample.pdf > 0.0;
+	return (sample.valid);
+}
+
+bool	Triangle::sampleEmission(HittableEmissionSample& sample) const
+{
+	sample = HittableEmissionSample();
+	if (!this->_material || this->_isDegenerate || this->_area <= 0.0)
+	{
+		return (false);
+	}
+
+	const Color emitted = this->_material->emitted();
+	if (Utilities::luminance(emitted) <= 0.0)
+	{
+		return (false);
+	}
+
+	Sampler::Sample2D surfaceSample = Sampler::sample2D(Sampler::DIM_LIGHT_SURFACE_POINT);
+	double u = surfaceSample.x;
+	double v = surfaceSample.y;
+	if (u + v > 1.0)
+	{
+		u = 1.0 - u;
+		v = 1.0 - v;
+	}
+
+	Vector3 normal = this->_faceNormal;
+	if (Sampler::sample1D(Sampler::DIM_LIGHT_EMISSION_SIDE) < 0.5)
+	{
+		normal = normal * -1.0;
+	}
+	const ONB basis(normal);
+
+	sample.position = this->_vertex0
+		+ ((this->_vertex1 - this->_vertex0) * u)
+		+ ((this->_vertex2 - this->_vertex0) * v);
+	sample.normal = normal;
+	sample.direction = Utilities::normalize(basis.local(Sampler::cosineHemisphere(Sampler::DIM_LIGHT_EMISSION_DIRECTION)));
+	sample.emitted = emitted;
+	sample.powerScale = 2.0 * D_PI * this->_area;
+	sample.valid = Utilities::vectorLengthSquared(sample.direction) > 0.0;
 	return (sample.valid);
 }
 

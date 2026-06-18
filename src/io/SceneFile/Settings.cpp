@@ -316,6 +316,63 @@ void	SceneFile::internal::_readSettingsSection(Scene& scene, std::ifstream& stre
 			}
 			scene.setContrast(contrast);
 		}
+		else if (lowerLine.rfind("caustics=", 0) != std::string::npos)
+		{
+			int causticsEnabled;
+
+			if (sscanf(lowerLine.c_str(), "caustics=%d", &causticsEnabled) != 1)
+			{
+				throw std::runtime_error("Invalid caustics setting. Use caustics=0 or caustics=1.");
+			}
+			requireBinarySetting(causticsEnabled, "caustics");
+			scene.setCausticsEnabled(causticsEnabled);
+		}
+		else if (
+			lowerLine.rfind("caustic_photons=", 0) != std::string::npos
+			|| lowerLine.rfind("causticphotons=", 0) != std::string::npos
+		)
+		{
+			int causticPhotons;
+
+			if (sscanf(lowerLine.c_str(), "%*[^=]=%d", &causticPhotons) != 1)
+			{
+				throw std::runtime_error("Invalid caustic photon setting. Use caustic_photons=N.");
+			}
+			scene.setCausticPhotonCount(causticPhotons);
+		}
+		else if (
+			lowerLine.rfind("caustic_passes=", 0) != std::string::npos
+			|| lowerLine.rfind("causticpasses=", 0) != std::string::npos
+		)
+		{
+			int causticPasses;
+
+			if (sscanf(lowerLine.c_str(), "%*[^=]=%d", &causticPasses) != 1)
+			{
+				throw std::runtime_error("Invalid caustic pass setting. Use caustic_passes=N.");
+			}
+			scene.setCausticPassCount(causticPasses);
+		}
+		else if (
+			lowerLine.rfind("caustic_radius=", 0) != std::string::npos
+			|| lowerLine.rfind("causticradius=", 0) != std::string::npos
+		)
+		{
+			scene.setCausticRadiusMeters(parseFiniteDouble(
+				settingValue(line, "Invalid caustic radius setting. Use caustic_radius=METERS."),
+				"Caustic radius"
+			));
+		}
+		else if (
+			lowerLine.rfind("caustic_alpha=", 0) != std::string::npos
+			|| lowerLine.rfind("causticalpha=", 0) != std::string::npos
+		)
+		{
+			scene.setCausticAlpha(parseFiniteDouble(
+				settingValue(line, "Invalid caustic alpha setting. Use caustic_alpha=F."),
+				"Caustic alpha"
+			));
+		}
 		else if (lowerLine.rfind("denoise=", 0) != std::string::npos)
 		{
 			int useDenoise;

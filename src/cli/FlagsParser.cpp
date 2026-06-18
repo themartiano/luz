@@ -63,6 +63,12 @@ namespace
 			<< "  --bloom true|false          Toggle bloom\n"
 			<< "  --exposure EV              Exposure compensation in stops\n"
 			<< "  --contrast F               Display contrast multiplier\n"
+			<< "  --caustics [true|false]     Toggle caustic photon mapping\n"
+			<< "  --no-caustics               Disable caustic photon mapping\n"
+			<< "  --caustic-photons N         Photons emitted for caustic mapping\n"
+			<< "  --caustic-passes N          Progressive caustic radius passes\n"
+			<< "  --caustic-radius METERS     Initial caustic gather radius\n"
+			<< "  --caustic-alpha F           Progressive caustic radius factor\n"
 			<< "  --denoise [true|false]      Toggle denoised companion render (default: true)\n"
 			<< "  --no-denoise                Disable denoising\n"
 			<< "  -o, --output PATH.EXT       Override render output path\n"
@@ -100,6 +106,11 @@ void	FlagsParser::parse(Scene& scene)
 	this->_parseBloom(scene);
 	this->_parseExposure(scene);
 	this->_parseContrast(scene);
+	this->_parseCaustics(scene);
+	this->_parseCausticPhotons(scene);
+	this->_parseCausticPasses(scene);
+	this->_parseCausticRadius(scene);
+	this->_parseCausticAlpha(scene);
 	this->_parseDenoise(scene);
 	this->_parseOutput(scene);
 	this->_parseDenoiseOutput(scene);
@@ -168,12 +179,17 @@ FlagsParser::_iterator	FlagsParser::_findPositionalFile(void)
 		"--bloom",
 		"--exposure",
 		"--contrast",
+		"--caustic-photons",
+		"--caustic-passes",
+		"--caustic-radius",
+		"--caustic-alpha",
 		"--output", "-o",
 		"--denoise-output",
 	};
 	const StringVec optionalBooleanFlags = {
 		"--adaptive",
 		"--denoise",
+		"--caustics",
 	};
 
 	for (auto it = this->_args.begin(); it != this->_args.end(); it++)
@@ -552,6 +568,87 @@ void	FlagsParser::_parseContrast(Scene& scene)
 			throw std::runtime_error("--contrast requires a value.");
 		}
 		scene.setContrast(std::stod(*(it + 1)));
+	}
+}
+
+void	FlagsParser::_parseCaustics(Scene& scene)
+{
+	for (auto it = this->_args.begin(); it != this->_args.end(); it++)
+	{
+		if (*it == "--caustics")
+		{
+			if (it + 1 == this->_args.end() || (it + 1)->rfind("-", 0) == 0)
+			{
+				scene.setCausticsEnabled(true);
+			}
+			else
+			{
+				bool caustics;
+
+				if (!parseOptionalBoolean(*(it + 1), caustics))
+				{
+					throw std::runtime_error("Invalid value for --caustics. Use true, false, 1, or 0.");
+				}
+				scene.setCausticsEnabled(caustics);
+				it++;
+			}
+		}
+		else if (*it == "--no-caustics")
+		{
+			scene.setCausticsEnabled(false);
+		}
+	}
+}
+
+void	FlagsParser::_parseCausticPhotons(Scene& scene)
+{
+	auto it = this->_findFlag("--caustic-photons");
+	if (it != this->_args.end())
+	{
+		if (it + 1 == this->_args.end())
+		{
+			throw std::runtime_error("--caustic-photons requires a value.");
+		}
+		scene.setCausticPhotonCount(std::stoi(*(it + 1)));
+	}
+}
+
+void	FlagsParser::_parseCausticPasses(Scene& scene)
+{
+	auto it = this->_findFlag("--caustic-passes");
+	if (it != this->_args.end())
+	{
+		if (it + 1 == this->_args.end())
+		{
+			throw std::runtime_error("--caustic-passes requires a value.");
+		}
+		scene.setCausticPassCount(std::stoi(*(it + 1)));
+	}
+}
+
+void	FlagsParser::_parseCausticRadius(Scene& scene)
+{
+	auto it = this->_findFlag("--caustic-radius");
+	if (it != this->_args.end())
+	{
+		if (it + 1 == this->_args.end())
+		{
+			throw std::runtime_error("--caustic-radius requires a value.");
+		}
+		scene.setCausticRadiusMeters(std::stod(*(it + 1)));
+	}
+}
+
+void	FlagsParser::_parseCausticAlpha(Scene& scene)
+{
+	auto it = this->_findFlag("--caustic-alpha");
+	if (it != this->_args.end())
+	{
+		if (it + 1 == this->_args.end())
+		{
+			throw std::runtime_error("--caustic-alpha requires a value.");
+		}
+		scene.setCausticAlpha(std::stod(*(it + 1)));
 	}
 }
 

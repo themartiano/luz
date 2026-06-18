@@ -61,6 +61,11 @@ The parser is intentionally strict: unknown lines and malformed values throw an 
 | `environment_illuminance` | `environment_illuminance=F` | Scales the map so upper-hemisphere horizontal illuminance equals `F lux`, converted through 683 lm/W. Alias: `environment_horizontal_illuminance`. |
 | `environmentrotation` | `environmentrotation=DEGREES` | Offsets the equirectangular U coordinate around world Y. Defaults to `0`. Aliases: `environment_rotation`, `worldrotation`, `world_rotation`. |
 | `meters_per_unit` | `meters_per_unit=F` | Physical scale of Luz world coordinates. Defaults to `1.0`. Finite light `power`/`lumens` use physical area in square meters, and atmosphere ray distances are converted through this value. Alias: `metersperunit`. |
+| `caustics` | `caustics=0` or `caustics=1` | Enables progressive caustic photon mapping. Disabled by default because the photon prepass is scene-dependent work. |
+| `caustic_photons` | `caustic_photons=N` | Number of photons emitted in the caustic prepass. Defaults to `100000`. Alias: `causticphotons`. |
+| `caustic_passes` | `caustic_passes=N` | Progressive radius-shrink passes used while building the caustic map. Defaults to `8`. Alias: `causticpasses`. |
+| `caustic_radius` | `caustic_radius=METERS` | Initial caustic gather radius in meters. Luz converts it through `meters_per_unit`; progressive passes shrink the final lookup radius. Defaults to `0.05`. Alias: `causticradius`. |
+| `caustic_alpha` | `caustic_alpha=F` | Progressive radius update factor in `(0,1]`. Lower values shrink faster and are sharper/noisier; higher values are smoother. Defaults to `0.7`. Alias: `causticalpha`. |
 | `atmosphere` | `atmosphere=SUN,EARTH_RADIUS,ATMOSPHERE_RADIUS,HR,HM,SAMPLES,LIGHT_SAMPLES,STARS` | Only valid after `sky=atmosphere`. `SUN` is a fallback sun angle. If the scene has a `directional_light`, the first one drives atmosphere sun direction and radiance instead. Without a directional light, atmosphere uses calibrated solar disk radiance. |
 | `atmosphere_sun_scale` | `atmosphere_sun_scale=F` | Multiplies atmosphere sun radiance after it is sourced from the first `directional_light`, or from the fallback atmosphere sun when no directional light exists. Defaults to `1.0`. Aliases: `atmospheresunscale`, `atmosphere_sun_multiplier`, `atmospheresunmultiplier`. |
 | `distanceblueness` | `distanceblueness=0` or `distanceblueness=1` | Enables distance blue tinting when set to `1`. |
@@ -72,6 +77,17 @@ at least `adaptiveminsamples`, then periodically estimates luminance variance
 and stops a pixel early only when the configured confidence threshold is met.
 Dark pixels that are consistently black can finish quickly, while low-light
 pixels with rare bright contributions continue sampling.
+
+### Caustic Photon Mapping Notes
+
+When `caustics=1`, Luz emits a prepass photon map from finite emissive lights
+and directional lights. Photons are traced through specular, rough metal,
+dielectric, and transmissive principled transport; when they land on diffuse
+receivers, the camera path gathers nearby photons as a caustic radiance estimate.
+The regular path tracer still handles direct light, environment light, BSDF
+sampling, volumes, and emissive-hit MIS. Increase `caustic_photons` for cleaner
+caustics, and tune `caustic_radius` in meters: larger radii are smoother and more
+biased, smaller radii are sharper and noisier.
 
 ### Denoising Notes
 

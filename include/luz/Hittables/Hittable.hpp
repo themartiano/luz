@@ -44,6 +44,16 @@ struct	HittableLightSample
 	bool		valid = false;
 };
 
+struct	HittableEmissionSample
+{
+	Vector3		position;
+	Vector3		normal;
+	Vector3		direction;
+	Color		emitted = Color(0.0, 0.0, 0.0);
+	double		powerScale = 0.0;
+	bool		valid = false;
+};
+
 class   Hittable
 {
 	public:
@@ -56,5 +66,6 @@ class   Hittable
 		virtual double pdfValue(const Vector3& origin, const Vector3& vec) const;
 		virtual Vector3 random(const Vector3& origin) const;
 		virtual bool sampleLight(const Vector3& origin, HittableLightSample& sample) const;
+		virtual bool sampleEmission(HittableEmissionSample& sample) const;
 		virtual double lightSelectionWeight(void) const;
 };

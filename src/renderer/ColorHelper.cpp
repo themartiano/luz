@@ -1,4 +1,5 @@
 #include "RendererInternal.hpp"
+#include "Renderer/CausticPhotonMap.hpp"
 #include "Utilities.hpp"
 #include "Defaults.hpp"
 #include "SkyTypes.hpp"
@@ -844,6 +845,7 @@ namespace
 			&scene.getLightSelectionCumulativeWeights(),
 			scene.getLightSelectionTotalWeight()
 		};
+		const CausticPhotonMap* causticPhotonMap = scene.getCausticPhotonMap().get();
 		//static bool		distanceBlueness = scene.getDistanceBlueness();
 
 		Ray		currentRay = ray;
@@ -941,6 +943,12 @@ namespace
 			if (isTerminatedThroughput(throughput * attenuation))
 			{
 				return (accumulatedColor);
+			}
+			if (causticPhotonMap)
+			{
+				accumulatedColor += clampRayColor(
+					throughput * causticPhotonMap->estimate(hitRecord, scatterRecord)
+				);
 			}
 
 			if (lightCount > 0)

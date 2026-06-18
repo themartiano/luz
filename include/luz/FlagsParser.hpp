@@ -39,6 +39,11 @@ class	FlagsParser
 		void	_parseBloom(Scene& scene);
 		void	_parseExposure(Scene& scene);
 		void	_parseContrast(Scene& scene);
+		void	_parseCaustics(Scene& scene);
+		void	_parseCausticPhotons(Scene& scene);
+		void	_parseCausticPasses(Scene& scene);
+		void	_parseCausticRadius(Scene& scene);
+		void	_parseCausticAlpha(Scene& scene);
 		void	_parseDenoise(Scene& scene);
 		void	_parseOutput(Scene& scene);
 		void	_parseDenoiseOutput(Scene& scene);

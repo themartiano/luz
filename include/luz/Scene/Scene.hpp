@@ -11,6 +11,8 @@
 #include <vector>
 #include <memory>
 
+class	CausticPhotonMap;
+
 struct	SceneRenderStats
 {
 	std::size_t	renderedSamples = 0;
@@ -49,6 +51,18 @@ class	Scene
 		void	setPhotographicExposure(double fNumber, double shutterSeconds, double iso);
 		double	getContrast(void) const;
 		void	setContrast(double contrast);
+		bool	getCausticsEnabled(void) const;
+		void	setCausticsEnabled(bool causticsEnabled);
+		int		getCausticPhotonCount(void) const;
+		void	setCausticPhotonCount(int causticPhotonCount);
+		int		getCausticPassCount(void) const;
+		void	setCausticPassCount(int causticPassCount);
+		double	getCausticRadiusMeters(void) const;
+		void	setCausticRadiusMeters(double causticRadiusMeters);
+		double	getCausticAlpha(void) const;
+		void	setCausticAlpha(double causticAlpha);
+		void	setCausticPhotonMap(std::shared_ptr<CausticPhotonMap> causticPhotonMap);
+		const std::shared_ptr<CausticPhotonMap>&	getCausticPhotonMap(void) const;
 		double	getSkyline(void) const;
 		SkyTypes	getRenderSky(void) const;
 		void	setRenderSky(SkyTypes renderSky);
@@ -131,6 +145,12 @@ class	Scene
 		bool					_toneMapped;
 			double					_exposure;
 			double					_contrast;
+			bool					_causticsEnabled;
+			int						_causticPhotonCount;
+			int						_causticPassCount;
+			double					_causticRadiusMeters;
+			double					_causticAlpha;
+			std::shared_ptr<CausticPhotonMap>	_causticPhotonMap;
 			std::string				_defaultRenderOutputFileName;
 			std::unique_ptr<Image>	_image;
 		double					_skyline;

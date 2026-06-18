@@ -19,6 +19,7 @@
 #include "Materials/HenyeyGreenstein.hpp"
 #include "OBJReader.hpp"
 #include "PDFs/HittablePDF.hpp"
+#include "Renderer/CausticPhotonMap.hpp"
 #include "Renderer/Renderer.hpp"
 #include "Scene/Scene.hpp"
 #include "SceneFile/SceneFile.hpp"
@@ -27,6 +28,7 @@
 #include "Hittables/Cube.hpp"
 #include "Hittables/DirectionalLight.hpp"
 #include "Hittables/Mesh.hpp"
+#include "Hittables/Plane.hpp"
 #include "Hittables/Rectangle.hpp"
 #include "Hittables/Sphere.hpp"
 #include "Hittables/Triangle.hpp"
@@ -1182,6 +1184,31 @@ namespace
 		std::filesystem::remove(scenePath);
 	}
 
+	void	testSceneFileCausticSettings(void)
+	{
+		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_scene_caustic_settings_test.luz";
+		{
+			std::ofstream stream(scenePath);
+			stream
+				<< "[settings]\n"
+				<< "caustics=1\n"
+				<< "caustic_photons=321\n"
+				<< "caustic_passes=5\n"
+				<< "caustic_radius=0.25\n"
+				<< "caustic_alpha=0.6\n\n";
+		}
+
+		Scene scene;
+		SceneFile::read(scene, scenePath.string());
+		require(scene.getCausticsEnabled(), "Scene caustics setting was not applied.");
+		require(scene.getCausticPhotonCount() == 321, "Scene caustic photon count was not parsed.");
+		require(scene.getCausticPassCount() == 5, "Scene caustic pass count was not parsed.");
+		requireNear(scene.getCausticRadiusMeters(), 0.25, "Scene caustic radius was not parsed.");
+		requireNear(scene.getCausticAlpha(), 0.6, "Scene caustic alpha was not parsed.");
+
+		std::filesystem::remove(scenePath);
+	}
+
 	void	testSceneFilePhotographicExposureSetting(void)
 	{
 		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_scene_photographic_exposure_test.luz";
@@ -1270,6 +1297,12 @@ namespace
 		requireSceneFileSettingThrows("photographic_exposure=2,1,0", "Scene file accepted zero photographic ISO.");
 		requireSceneFileSettingThrows("photographic_exposure=2,1", "Scene file accepted incomplete photographic exposure.");
 		requireSceneFileSettingThrows("contrast=-1", "Scene file accepted negative contrast.");
+		requireSceneFileSettingThrows("caustics=2", "Scene file accepted non-binary caustics.");
+		requireSceneFileSettingThrows("caustic_photons=-1", "Scene file accepted negative caustic photons.");
+		requireSceneFileSettingThrows("caustic_passes=0", "Scene file accepted zero caustic passes.");
+		requireSceneFileSettingThrows("caustic_radius=0", "Scene file accepted zero caustic radius.");
+		requireSceneFileSettingThrows("caustic_alpha=0", "Scene file accepted zero caustic alpha.");
+		requireSceneFileSettingThrows("caustic_alpha=1.5", "Scene file accepted caustic alpha above one.");
 		requireSceneFileSettingThrows("denoise=2", "Scene file accepted non-binary denoise.");
 		requireSceneFileSettingThrows("compression=75", "Scene file accepted removed compression setting.");
 		requireSceneFileSettingThrows("outputfilename=render.tif", "Scene file accepted .tif output.");
@@ -2704,6 +2737,54 @@ namespace
 		std::filesystem::remove(scenePath);
 	}
 
+	void	testCausticPhotonMapBuildsAndEstimates(void)
+	{
+		Scene scene;
+		auto lightMaterial = std::make_shared<Emissive>(Color(25.0, 25.0, 25.0));
+		auto glassMaterial = std::make_shared<Dielectric>(Color(1.0, 1.0, 1.0), 1.5);
+		auto floorMaterial = std::make_shared<Lambertian>(Color(0.8, 0.8, 0.8));
+
+		scene.setCausticsEnabled(true);
+		scene.setCausticPhotonCount(3000);
+		scene.setCausticPassCount(4);
+		scene.setCausticRadiusMeters(3.0);
+		scene.setCausticAlpha(0.8);
+		scene.setMaxLightBounces(6);
+		scene.addHittable(std::make_shared<Rectangle>(
+			Transform(Vector3(0.0, 5.0, 0.0), Vector3(0.0, -1.0, 0.0), Vector3(1.0, 1.0, 1.0)),
+			2.0,
+			2.0,
+			lightMaterial
+		));
+		scene.addHittable(std::make_shared<Sphere>(Vector3(0.0, 1.0, 0.0), 2.0, glassMaterial));
+		scene.addHittable(std::make_shared<Plane>(-2.5, Vector3(0.0, 1.0, 0.0), floorMaterial));
+		scene.updateLights();
+		scene.updateAccelerationStructure();
+
+		CausticPhotonMap map;
+		map.build(scene, 424242u);
+		require(map.photonCount() > 0, "Caustic photon map did not store photons after specular transport.");
+		require(map.radiusMeters() < 3.0, "Caustic photon map did not apply progressive radius shrinkage.");
+		requireNear(map.radiusSceneUnits(), map.radiusMeters(), "Caustic radius did not match unit scale.");
+
+		HitRecord receiver;
+		receiver.position = Vector3(0.0, -2.5, 0.0);
+		receiver.normal = Vector3(0.0, 1.0, 0.0);
+		receiver.frontFace = true;
+		receiver.material = floorMaterial.get();
+
+		Ray cameraRay(Vector3(0.0, 0.0, 4.0), Vector3(0.0, -1.0, -1.0));
+		ScatterRecord scatterRecord;
+		require(floorMaterial->scatter(cameraRay, receiver, scatterRecord), "Diffuse receiver did not scatter for caustic lookup.");
+		const Color estimate = map.estimate(receiver, scatterRecord);
+		require(Utilities::luminance(estimate) > 0.0, "Caustic photon map estimate did not contribute radiance.");
+
+		scene.setCausticsEnabled(false);
+		CausticPhotonMap disabledMap;
+		disabledMap.build(scene, 424242u);
+		require(disabledMap.photonCount() == 0, "Disabled caustic photon map still stored photons.");
+	}
+
 	void	testSceneFileLoadsNonMetallicPrincipledMaterial(void)
 	{
 		const std::filesystem::path directory = std::filesystem::temp_directory_path();
@@ -3446,6 +3527,31 @@ namespace
 		require(fileOverrideScene->getDenoise(), "--denoise did not override scene file denoise setting.");
 	}
 
+	void	testFlagsParseCausticOptions(void)
+	{
+		std::unique_ptr<Scene> enabledScene = parseFlags({"--caustics"});
+		require(enabledScene->getCausticsEnabled(), "Bare --caustics did not enable caustics.");
+
+		std::unique_ptr<Scene> falseScene = parseFlags({"--caustics", "false"});
+		require(!falseScene->getCausticsEnabled(), "--caustics false did not disable caustics.");
+
+		std::unique_ptr<Scene> disabledScene = parseFlags({"--caustics", "--no-caustics"});
+		require(!disabledScene->getCausticsEnabled(), "--no-caustics did not override --caustics.");
+
+		std::unique_ptr<Scene> tunedScene = parseFlags({
+			"--caustics",
+			"--caustic-photons", "1234",
+			"--caustic-passes", "6",
+			"--caustic-radius", "0.125",
+			"--caustic-alpha", "0.8"
+		});
+		require(tunedScene->getCausticsEnabled(), "Caustics were not enabled.");
+		require(tunedScene->getCausticPhotonCount() == 1234, "--caustic-photons was not parsed.");
+		require(tunedScene->getCausticPassCount() == 6, "--caustic-passes was not parsed.");
+		requireNear(tunedScene->getCausticRadiusMeters(), 0.125, "--caustic-radius was not parsed.");
+		requireNear(tunedScene->getCausticAlpha(), 0.8, "--caustic-alpha was not parsed.");
+	}
+
 	void	testFlagsParsePNGOutput(void)
 	{
 		std::unique_ptr<Scene> outputScene = parseFlags({"--output", "custom_render.png"});
@@ -3492,6 +3598,12 @@ namespace
 		requireFlagParseThrows({"--exposure", "nan"}, "CLI accepted non-finite exposure.");
 		requireFlagParseThrows({"--contrast"}, "CLI accepted missing contrast.");
 		requireFlagParseThrows({"--contrast", "-1"}, "CLI accepted negative contrast.");
+		requireFlagParseThrows({"--caustics", "maybe"}, "CLI accepted invalid caustics value.");
+		requireFlagParseThrows({"--caustic-photons"}, "CLI accepted missing caustic photon count.");
+		requireFlagParseThrows({"--caustic-photons", "-1"}, "CLI accepted negative caustic photon count.");
+		requireFlagParseThrows({"--caustic-passes", "0"}, "CLI accepted zero caustic pass count.");
+		requireFlagParseThrows({"--caustic-radius", "0"}, "CLI accepted zero caustic radius.");
+		requireFlagParseThrows({"--caustic-alpha", "1.2"}, "CLI accepted caustic alpha above one.");
 		requireFlagParseThrows({"--denoise", "maybe"}, "CLI accepted invalid denoise value.");
 		requireFlagParseThrows({"--compression", "75"}, "CLI accepted removed compression flag.");
 		requireFlagParseThrows({"--compression=75"}, "CLI accepted removed compression assignment.");
@@ -3528,6 +3640,13 @@ namespace
 		requireThrows([&]() { scene.setPhotographicExposure(std::numeric_limits<double>::quiet_NaN(), 1.0, 100.0); }, "Scene accepted non-finite photographic f-number.");
 		requireThrows([&]() { scene.setContrast(-1.0); }, "Scene accepted negative contrast.");
 		requireThrows([&]() { scene.setContrast(std::numeric_limits<double>::quiet_NaN()); }, "Scene accepted non-finite contrast.");
+		requireThrows([&]() { scene.setCausticPhotonCount(-1); }, "Scene accepted negative caustic photon count.");
+		requireThrows([&]() { scene.setCausticPassCount(0); }, "Scene accepted zero caustic pass count.");
+		requireThrows([&]() { scene.setCausticRadiusMeters(0.0); }, "Scene accepted zero caustic radius.");
+		requireThrows([&]() { scene.setCausticRadiusMeters(std::numeric_limits<double>::quiet_NaN()); }, "Scene accepted non-finite caustic radius.");
+		requireThrows([&]() { scene.setCausticAlpha(0.0); }, "Scene accepted zero caustic alpha.");
+		requireThrows([&]() { scene.setCausticAlpha(1.1); }, "Scene accepted caustic alpha above one.");
+		requireThrows([&]() { scene.setCausticAlpha(std::numeric_limits<double>::quiet_NaN()); }, "Scene accepted non-finite caustic alpha.");
 		requireThrows([&]() { scene.setEnvironmentStrength(-1.0); }, "Scene accepted negative environment strength.");
 		requireThrows([&]() { scene.setEnvironmentStrength(std::numeric_limits<double>::quiet_NaN()); }, "Scene accepted non-finite environment strength.");
 		requireThrows([&]() { scene.setEnvironmentRotation(std::numeric_limits<double>::quiet_NaN()); }, "Scene accepted non-finite environment rotation.");
@@ -4108,6 +4227,7 @@ int	main(void)
 		testSceneFileUsesSceneDefaults();
 		testSceneFileAdaptiveSettings();
 		testSceneFilePostProcessSettings();
+		testSceneFileCausticSettings();
 		testSceneFilePhotographicExposureSetting();
 		testSceneFileCameraPhotographicExposure();
 		testSceneFileRejectsInvalidSettings();
@@ -4147,6 +4267,7 @@ int	main(void)
 		testSceneFileLoadsNamedTexturedSphere();
 		testSceneFileLoadsVolumeBlock();
 		testSceneFileMetersPerUnitScalesVolumeDensity();
+		testCausticPhotonMapBuildsAndEstimates();
 		testSceneFileLoadsNonMetallicPrincipledMaterial();
 		testSceneFileRejectsInvalidMaterial();
 		testSceneFileRejectsAmbiguousMeasuredData();
@@ -4167,6 +4288,7 @@ int	main(void)
 		testHittablePDFAveragesMultipleLights();
 		testFlagsParsePostProcessOptions();
 		testFlagsParseDenoiseOptions();
+		testFlagsParseCausticOptions();
 		testFlagsParsePNGOutput();
 		testFlagsParseBenchmarkFileOptions();
 		testFlagsParsePositionalSceneFile();

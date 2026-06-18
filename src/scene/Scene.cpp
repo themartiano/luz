@@ -110,6 +110,11 @@ Scene::Scene(void)
 	this->_toneMapped = true;
 	this->_exposure = D_EXPOSURE;
 	this->_contrast = D_CONTRAST;
+	this->_causticsEnabled = D_CAUSTICS;
+	this->_causticPhotonCount = D_CAUSTIC_PHOTONS;
+	this->_causticPassCount = D_CAUSTIC_PASSES;
+	this->_causticRadiusMeters = D_CAUSTIC_RADIUS_METERS;
+	this->_causticAlpha = D_CAUSTIC_ALPHA;
 	this->_skyline = 0.5;
 	this->_renderSky = SKY_ATMOSPHERE;
 	this->_distanceBlueness = true;
@@ -305,6 +310,82 @@ void	Scene::setContrast(double contrast)
 		throw std::invalid_argument("Contrast must be non-negative.");
 	}
 	this->_contrast = contrast;
+}
+
+bool	Scene::getCausticsEnabled(void) const
+{
+	return (this->_causticsEnabled);
+}
+
+void	Scene::setCausticsEnabled(bool causticsEnabled)
+{
+	this->_causticsEnabled = causticsEnabled;
+}
+
+int	Scene::getCausticPhotonCount(void) const
+{
+	return (this->_causticPhotonCount);
+}
+
+void	Scene::setCausticPhotonCount(int causticPhotonCount)
+{
+	if (causticPhotonCount < 0)
+	{
+		throw std::invalid_argument("Caustic photon count must be non-negative.");
+	}
+	this->_causticPhotonCount = causticPhotonCount;
+}
+
+int	Scene::getCausticPassCount(void) const
+{
+	return (this->_causticPassCount);
+}
+
+void	Scene::setCausticPassCount(int causticPassCount)
+{
+	if (causticPassCount <= 0)
+	{
+		throw std::invalid_argument("Caustic pass count must be positive.");
+	}
+	this->_causticPassCount = causticPassCount;
+}
+
+double	Scene::getCausticRadiusMeters(void) const
+{
+	return (this->_causticRadiusMeters);
+}
+
+void	Scene::setCausticRadiusMeters(double causticRadiusMeters)
+{
+	if (!std::isfinite(causticRadiusMeters) || causticRadiusMeters <= 0.0)
+	{
+		throw std::invalid_argument("Caustic radius must be finite and positive.");
+	}
+	this->_causticRadiusMeters = causticRadiusMeters;
+}
+
+double	Scene::getCausticAlpha(void) const
+{
+	return (this->_causticAlpha);
+}
+
+void	Scene::setCausticAlpha(double causticAlpha)
+{
+	if (!std::isfinite(causticAlpha) || causticAlpha <= 0.0 || causticAlpha > 1.0)
+	{
+		throw std::invalid_argument("Caustic alpha must be finite and in (0,1].");
+	}
+	this->_causticAlpha = causticAlpha;
+}
+
+void	Scene::setCausticPhotonMap(std::shared_ptr<CausticPhotonMap> causticPhotonMap)
+{
+	this->_causticPhotonMap = causticPhotonMap;
+}
+
+const std::shared_ptr<CausticPhotonMap>&	Scene::getCausticPhotonMap(void) const
+{
+	return (this->_causticPhotonMap);
 }
 
 // Returns Skyline (used on sky colors interpolation)

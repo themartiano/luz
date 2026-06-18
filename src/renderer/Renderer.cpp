@@ -3,6 +3,8 @@
 #include "ANSIColors.hpp"
 #include "Clock.hpp"
 #include "Defaults.hpp"
+#include "Renderer/CausticPhotonMap.hpp"
+#include "Random.hpp"
 
 // Renders the image using all the information present on 'scene'. (Objects, cameras, lights, settings, etc)
 bool	Renderer::render(Scene& scene)
@@ -35,6 +37,19 @@ bool	Renderer::render(Scene& scene)
 
 	Clock	clock;
 	clock.start();
+	if (scene.getCausticsEnabled() && scene.getCausticPhotonCount() > 0)
+	{
+		const std::uint32_t renderSeed = hasRandomSeed()
+			? static_cast<std::uint32_t>(randomSeedValue())
+			: randomEngine.integer();
+		auto causticPhotonMap = std::make_shared<CausticPhotonMap>();
+		causticPhotonMap->build(scene, renderSeed);
+		scene.setCausticPhotonMap(causticPhotonMap);
+	}
+	else
+	{
+		scene.setCausticPhotonMap(nullptr);
+	}
 
 	internal::_manageThreads(scene);
 

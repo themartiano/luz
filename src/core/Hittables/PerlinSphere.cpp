@@ -239,6 +239,32 @@ bool	PerlinSphere::sampleLight(const Vector3& origin, HittableLightSample& sampl
 	return (sample.valid);
 }
 
+bool	PerlinSphere::sampleEmission(HittableEmissionSample& sample) const
+{
+	sample = HittableEmissionSample();
+	if (!this->_material || this->_radius <= 0.0)
+	{
+		return (false);
+	}
+
+	const Color emitted = this->_material->emitted();
+	if (Utilities::luminance(emitted) <= 0.0)
+	{
+		return (false);
+	}
+
+	const Vector3 outwardNormal = Utilities::normalize(Sampler::sphereDirection(Sampler::DIM_LIGHT_SURFACE_POINT));
+	const ONB basis(outwardNormal);
+
+	sample.position = this->_position + outwardNormal * this->_radius;
+	sample.normal = outwardNormal;
+	sample.direction = Utilities::normalize(basis.local(Sampler::cosineHemisphere(Sampler::DIM_LIGHT_EMISSION_DIRECTION)));
+	sample.emitted = emitted;
+	sample.powerScale = D_PI * 4.0 * D_PI * this->_radius * this->_radius;
+	sample.valid = Utilities::vectorLengthSquared(sample.direction) > 0.0;
+	return (sample.valid);
+}
+
 double	PerlinSphere::lightSelectionWeight(void) const
 {
 	if (!this->_material)
