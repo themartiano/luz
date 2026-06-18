@@ -15,6 +15,8 @@
 #include "Materials/Dielectric.hpp"
 #include "Materials/Metal.hpp"
 #include "Materials/Principled.hpp"
+#include "Materials/Glossy.hpp"
+#include "Materials/DiffuseGlossy.hpp"
 #include "Materials/Isotropic.hpp"
 #include "Materials/HenyeyGreenstein.hpp"
 #include "OBJReader.hpp"
@@ -604,6 +606,100 @@ namespace
 		requireNear(dark.getRed(), 0.0, "Bloom extraction included sub-threshold red.");
 		requireNear(dark.getGreen(), 0.0, "Bloom extraction included sub-threshold green.");
 		requireNear(dark.getBlue(), 0.0, "Bloom extraction included sub-threshold blue.");
+	}
+
+	void	testBloomExtractionSuppressesIsolatedFireflies(void)
+	{
+		Image isolated(9, 9);
+		isolated.initialize();
+		isolated.setPixel(4, 4, Color(100000.0, 100000.0, 100000.0));
+
+		auto isolatedBloom = isolated.extractBloom(1.0, 0.0);
+		double isolatedBloomMax = 0.0;
+		for (std::size_t y = 0; y < isolatedBloom->getHeight(); y++)
+		{
+			for (std::size_t x = 0; x < isolatedBloom->getWidth(); x++)
+			{
+				isolatedBloomMax = std::max(
+					isolatedBloomMax,
+					Utilities::luminance(isolatedBloom->getPixel(x, y))
+				);
+			}
+		}
+		require(isolatedBloomMax < 0.001, "Bloom extraction kept an isolated firefly.");
+
+		Image clustered(9, 9);
+		clustered.initialize();
+		clustered.setPixel(3, 4, Color(100.0, 100.0, 100.0));
+		clustered.setPixel(4, 4, Color(100.0, 100.0, 100.0));
+		clustered.setPixel(5, 4, Color(100.0, 100.0, 100.0));
+
+		auto clusteredBloom = clustered.extractBloom(1.0, 0.0);
+		require(
+			Utilities::luminance(clusteredBloom->getPixel(4, 4)) > 90.0,
+			"Bloom extraction suppressed a real clustered highlight."
+		);
+	}
+
+	void	testDisplayFireflySuppressionRemovesIsolatedWhitePixels(void)
+	{
+		Image isolated(7, 7);
+		isolated.initialize();
+		isolated.fill(Color(0.1, 0.1, 0.1));
+		isolated.setColorEncoding(ImageColorEncoding::DisplayEncodedSRGB);
+		isolated.setPixel(3, 3, Color(1.0, 1.0, 1.0));
+
+		isolated.suppressIsolatedFireflies();
+		requireNear(isolated.getPixel(3, 3).getRed(), 0.1, "Display firefly suppression did not replace isolated red.");
+		requireNear(isolated.getPixel(3, 3).getGreen(), 0.1, "Display firefly suppression did not replace isolated green.");
+		requireNear(isolated.getPixel(3, 3).getBlue(), 0.1, "Display firefly suppression did not replace isolated blue.");
+
+		Image sceneLinear(7, 7);
+		sceneLinear.initialize();
+		sceneLinear.fill(Color(0.1, 0.1, 0.1));
+		sceneLinear.setPixel(3, 3, Color(1.0, 1.0, 1.0));
+		sceneLinear.suppressIsolatedFireflies();
+		requireNear(sceneLinear.getPixel(3, 3).getRed(), 1.0, "Display firefly suppression changed scene-linear data.");
+
+		Image clustered(7, 7);
+		clustered.initialize();
+		clustered.fill(Color(0.1, 0.1, 0.1));
+		clustered.setColorEncoding(ImageColorEncoding::DisplayEncodedSRGB);
+		for (std::size_t y = 2; y <= 4; y++)
+		{
+			for (std::size_t x = 2; x <= 4; x++)
+			{
+				clustered.setPixel(x, y, Color(1.0, 1.0, 1.0));
+			}
+		}
+
+		clustered.suppressIsolatedFireflies();
+		requireNear(clustered.getPixel(3, 3).getRed(), 1.0, "Display firefly suppression changed clustered highlight center.");
+		requireNear(clustered.getPixel(2, 2).getRed(), 1.0, "Display firefly suppression changed clustered highlight corner.");
+
+		Image clippedEdge(7, 7);
+		clippedEdge.initialize();
+		clippedEdge.fill(Color(0.25, 0.25, 0.25));
+		clippedEdge.setColorEncoding(ImageColorEncoding::DisplayEncodedSRGB);
+		for (std::size_t y = 2; y <= 4; y++)
+		{
+			for (std::size_t x = 2; x <= 4; x++)
+			{
+				clippedEdge.setPixel(x, y, Color(0.88, 0.82, 0.82));
+			}
+		}
+		clippedEdge.setPixel(3, 3, Color(1.0, 1.0, 1.0));
+		clippedEdge.setPixel(4, 3, Color(1.0, 1.0, 1.0));
+
+		clippedEdge.suppressIsolatedFireflies();
+		require(
+			clippedEdge.getPixel(3, 3).getRed() < 0.95,
+			"Display firefly suppression kept unsupported saturated reflection pixel."
+		);
+		require(
+			clippedEdge.getPixel(4, 3).getRed() < 0.95,
+			"Display firefly suppression kept unsupported saturated reflection neighbor."
+		);
 	}
 
 	void	testPhysicalLightUnitConversions(void)
@@ -2238,6 +2334,13 @@ namespace
 				<< "position=(0,0,0)\n"
 				<< "radius=1\n"
 				<< "material=linear_paint\n"
+				<< "}\n"
+				<< "area_light linear_lamp {\n"
+				<< "position=(0,2,0)\n"
+				<< "normal=(0,-1,0)\n"
+				<< "size=(1,1)\n"
+				<< "color=linear_srgb(0.7,0.8,0.9)\n"
+				<< "radiance=1\n"
 				<< "}\n";
 		}
 
@@ -2253,6 +2356,11 @@ namespace
 			scene.getHittables()[0]->getMaterial()->getColor(),
 			ColorManagement::acescgFromLinearSRGB(Color(0.2, 0.4, 0.6)),
 			"Scene material linear_srgb() value did not convert to ACEScg."
+		);
+		requireColorNear(
+			scene.getHittables()[1]->getMaterial()->emitted(),
+			LightUnits::surfaceRadiance(ColorManagement::acescgFromLinearSRGB(Color(0.7, 0.8, 0.9)), 1.0),
+			"Scene light linear_srgb() value did not convert to ACEScg."
 		);
 
 		std::filesystem::remove(scenePath);
@@ -2622,6 +2730,82 @@ namespace
 		requireNear(scatterRecord.attenuation.getRed(), bsdfCos.getRed() / materialPDF, "Rough metal red throughput is wrong.");
 	}
 
+	void	testGlossyUsesGGXBSDF(void)
+	{
+		Glossy glossy(Color(0.9, 0.7, 0.5), 0.25);
+		Ray ray(Vector3(0.0, 0.0, 1.0), Vector3(0.0, 0.0, -1.0));
+		HitRecord hitRecord;
+		ScatterRecord scatterRecord;
+
+		hitRecord.position = Vector3(0.0, 0.0, 0.0);
+		hitRecord.normal = Vector3(0.0, 0.0, 1.0);
+		hitRecord.frontFace = true;
+		Sampler::setRenderSeed(2031);
+		Sampler::beginPixelSample(31, 37, 41);
+		require(glossy.scatter(ray, hitRecord, scatterRecord), "Glossy material did not scatter.");
+		Sampler::endPixelSample();
+
+		require(!scatterRecord.isSpecular, "Rough glossy material used a delta scatter.");
+		require(scatterRecord.pdfType == SCATTER_PDF_BSDF, "Glossy material did not use the BSDF PDF path.");
+		require(scatterRecord.bsdfMaterial == &glossy, "Glossy material did not store its BSDF material.");
+		require(scatterRecord.sampledPDF > 0.0 && std::isfinite(scatterRecord.sampledPDF), "Glossy sampled PDF is invalid.");
+		requireFiniteNonNegativeColor(scatterRecord.attenuation, "Glossy throughput");
+
+		const double materialPDF = glossy.scatteringPDF(ray, hitRecord, scatterRecord.sampledDirection);
+		const Color bsdfCos = glossy.evaluateBSDFCos(ray, hitRecord, scatterRecord.sampledDirection);
+		requireNear(scatterRecord.sampledPDF, materialPDF, "Glossy sampled PDF does not match material PDF.");
+		requireFiniteNonNegativeColor(bsdfCos, "Glossy BSDF cosine");
+		require(BSDF::maxChannel(bsdfCos) > 0.0, "Glossy BSDF cosine was zero.");
+
+		const Vector3 mirrorDirection(0.0, 0.0, 1.0);
+		const Color mirror = glossy.evaluateBSDFCos(ray, hitRecord, mirrorDirection);
+		const Color expected = BSDF::ggxReflectionBSDFCos(
+			Color(0.9, 0.7, 0.5),
+			hitRecord.normal,
+			Vector3(0.0, 0.0, 1.0),
+			mirrorDirection,
+			BSDF::roughnessToAlpha(0.25)
+		);
+		requireColorNear(mirror, expected, "Glossy mirror BSDF does not match GGX reflection.");
+		require(mirror.getRed() > mirror.getGreen() && mirror.getGreen() > mirror.getBlue(), "Glossy color did not tint reflection.");
+	}
+
+	void	testDiffuseGlossyMixPreservesStrongGlossyComponent(void)
+	{
+		DiffuseGlossy material(Color(1.0, 1.0, 1.0), Color(1.0, 1.0, 1.0), 0.6, 0.1);
+		Principled clearcoatProxy(Color(1.0, 1.0, 1.0), 0.0, 0.1, 0.0, 1.5, 0.6, 0.1, 0.0);
+		Ray ray(Vector3(0.0, 0.0, 1.0), Vector3(0.0, 0.0, -1.0));
+		HitRecord hitRecord;
+		ScatterRecord scatterRecord;
+
+		hitRecord.position = Vector3(0.0, 0.0, 0.0);
+		hitRecord.normal = Vector3(0.0, 0.0, 1.0);
+		hitRecord.frontFace = true;
+		Sampler::setRenderSeed(2032);
+		Sampler::beginPixelSample(43, 47, 53);
+		require(material.scatter(ray, hitRecord, scatterRecord), "Diffuse-glossy material did not scatter.");
+		Sampler::endPixelSample();
+
+		require(scatterRecord.pdfType == SCATTER_PDF_BSDF, "Diffuse-glossy material did not use the BSDF PDF path.");
+		require(scatterRecord.bsdfMaterial == &material, "Diffuse-glossy material did not store its BSDF material.");
+		require(scatterRecord.sampledPDF > 0.0 && std::isfinite(scatterRecord.sampledPDF), "Diffuse-glossy sampled PDF is invalid.");
+
+		const Vector3 mirrorDirection(0.0, 0.0, 1.0);
+		const Color mixedMirror = material.evaluateBSDFCos(ray, hitRecord, mirrorDirection);
+		const Color proxyMirror = clearcoatProxy.evaluateBSDFCos(ray, hitRecord, mirrorDirection);
+		require(mixedMirror.getRed() > proxyMirror.getRed() * 10.0, "Diffuse-glossy mix collapsed to weak clearcoat reflection.");
+		requireNear(
+			material.scatteringPDF(ray, hitRecord, mirrorDirection),
+			(0.4 / D_PI) + (0.6 * BSDF::ggxReflectionPDF(
+				hitRecord.normal,
+				Vector3(0.0, 0.0, 1.0),
+				mirrorDirection,
+				BSDF::roughnessToAlpha(0.1)
+			)),
+			"Diffuse-glossy mixture PDF is wrong."
+		);
+	}
+
 	void	testRoughDielectricUsesGGXBSDF(void)
 	{
 		Dielectric glass(Color(0.9, 0.95, 1.0), 1.5, 0.35);
@@ -2952,6 +3136,48 @@ namespace
 		std::filesystem::remove(objectPath);
 	}
 
+	void	testSceneFileLoadsGlossyMaterials(void)
+	{
+		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_glossy_materials_test.luz";
+		{
+			std::ofstream sceneStream(scenePath);
+			sceneStream
+				<< "[materials]\n"
+				<< "material pure_gloss {\n"
+				<< "type=glossy\n"
+				<< "color=(0.8,0.7,0.6)\n"
+				<< "roughness=0.2\n"
+				<< "}\n"
+				<< "material mixed_plastic {\n"
+				<< "type=diffuse_glossy\n"
+				<< "color=(1,1,1)\n"
+				<< "glossy_color=(0.9,0.9,1)\n"
+				<< "glossy_weight=0.6\n"
+				<< "roughness=0.1\n"
+				<< "}\n\n"
+				<< "[scene]\n"
+				<< "objects{\n"
+				<< "sphere=(-1,0,-3),0.5,material=pure_gloss\n"
+				<< "sphere=(1,0,-3),0.5,material=mixed_plastic\n"
+				<< "}\n";
+		}
+
+		Scene scene;
+		SceneFile::read(scene, scenePath.string());
+
+		require(scene.getHittables().size() == 2, "Glossy material scene did not load both objects.");
+		Glossy* glossy = dynamic_cast<Glossy*>(scene.getHittables()[0]->getMaterial());
+		require(glossy != nullptr, "Glossy material did not parse as Glossy.");
+		requireNear(glossy->getRoughness(), 0.2, "Glossy roughness was not parsed.");
+		DiffuseGlossy* mixed = dynamic_cast<DiffuseGlossy*>(scene.getHittables()[1]->getMaterial());
+		require(mixed != nullptr, "Diffuse-glossy material did not parse as DiffuseGlossy.");
+		requireNear(mixed->getGlossyWeight(), 0.6, "Diffuse-glossy weight was not parsed.");
+		requireNear(mixed->getGlossyRoughness(), 0.1, "Diffuse-glossy roughness was not parsed.");
+		requireColorNear(mixed->getGlossyColor(), Color(0.9, 0.9, 1.0), "Diffuse-glossy color was not parsed.");
+
+		std::filesystem::remove(scenePath);
+	}
+
 	void	testSceneFileRejectsInvalidMaterial(void)
 	{
 		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_invalid_material_test.luz";
@@ -3165,6 +3391,34 @@ namespace
 		require(triangle.hit(ray, hitRecord, 0.001, 100.0), "Triangle with vertex normals was not hit.");
 		require(hitRecord.normal.getY() > 0.6, "Triangle did not use interpolated vertex normal Y.");
 		require(hitRecord.normal.getZ() > 0.6, "Triangle did not use interpolated vertex normal Z.");
+		requireVectorNear(hitRecord.geometricNormal, Vector3(0.0, 0.0, 1.0), "Triangle geometric normal");
+	}
+
+	void	testOpaqueSmoothNormalDoesNotReceiveBacksideLight(void)
+	{
+		auto material = std::make_shared<Lambertian>(Color(1.0, 1.0, 1.0));
+		auto light = std::make_shared<Emissive>(Color(1.0, 1.0, 1.0));
+		Scene scene;
+
+		scene.setRenderSky(SKY_NONE);
+		scene.setBackgroundColor(Color(0.0, 0.0, 0.0));
+		scene.setMaxLightBounces(1);
+		scene.addHittable(std::make_shared<Triangle>(
+			Vector3(-1.0, -1.0, 0.0),
+			Vector3(1.0, -1.0, 0.0),
+			Vector3(0.0, 1.0, 0.0),
+			Vector3(0.0, 1.0, 0.0),
+			Vector3(0.0, 1.0, 0.0),
+			Vector3(0.0, 1.0, 0.0),
+			material
+		));
+		scene.addHittable(std::make_shared<DirectionalLight>(Vector3(0.0, -1.0, 0.0), light));
+		scene.updateLights();
+
+		Ray ray(Vector3(0.0, 0.0, 1.0), Vector3(0.0, 0.0, -1.0));
+		const Color color = Renderer::internal::_calculateLightRaysColor(ray, scene);
+
+		requireColorNear(color, Color(0.0, 0.0, 0.0), "Opaque smooth normal accepted backside light");
 	}
 
 	void	testOBJReaderLoadsVertexNormals(void)
@@ -4107,6 +4361,65 @@ namespace
 		std::filesystem::remove(bmpPath);
 	}
 
+	void	testGlossySurfaceReflectsEmissiveLight(void)
+	{
+		setRandomSeed(2026);
+
+		Scene scene;
+		scene.getImage()->setWidth(9);
+		scene.getImage()->setHeight(9);
+		scene.getImage()->initialize();
+		scene.setSampleCount(16);
+		scene.setAdaptiveSampling(false);
+		scene.setMaxLightBounces(2);
+		scene.setGammaCorrected(false);
+		scene.setToneMapped(false);
+		scene.setBloom(false);
+		scene.setDenoise(false);
+		scene.setRenderSky(SKY_NONE);
+		scene.setBackgroundColor(Color(0.0, 0.0, 0.0));
+		scene.setRenderingThreads(1);
+		scene.setBenchmarkMode(true);
+		scene.addCamera(testPinholeCamera(Vector3(0.0, 1.0, 4.0), Vector3(0.0, -0.35, -1.0), 4.0));
+		scene.addHittable(std::make_shared<Plane>(
+			0.0,
+			Vector3(0.0, 1.0, 0.0),
+			std::make_shared<Principled>(
+				Color(1.0, 1.0, 1.0),
+				0.0,
+				0.08,
+				0.0,
+				1.5,
+				1.0,
+				0.08,
+				0.0
+			)
+		));
+		scene.addHittable(std::make_shared<Rectangle>(
+			Transform(Vector3(0.0, 3.0, -7.5), Vector3(0.0, -1.0, 0.0), Vector3(1.0, 0.0, 0.0)),
+			5.0,
+			5.0,
+			std::make_shared<Emissive>(Color(4.0, 4.0, 4.0))
+		));
+
+		require(Renderer::render(scene), "Glossy reflection render failed.");
+		requireImageIsFinite(*scene.getImage(), "Glossy reflection render");
+
+		double brightestLuminance = 0.0;
+		for (std::size_t y = 0; y < scene.getImage()->getHeight(); y++)
+		{
+			for (std::size_t x = 0; x < scene.getImage()->getWidth(); x++)
+			{
+				brightestLuminance = std::max(
+					brightestLuminance,
+					Utilities::luminance(scene.getImage()->getPixel(x, y))
+				);
+			}
+		}
+
+		require(brightestLuminance > 0.05, "Glossy reflected light path lost too much energy.");
+	}
+
 	void	testTinyRender(void)
 	{
 		setRandomSeed(42);
@@ -4301,6 +4614,8 @@ int	main(void)
 		testExposureAndContrast();
 		testPhotographicExposureConversion();
 		testBloomExtractionPreservesHighlightColor();
+		testBloomExtractionSuppressesIsolatedFireflies();
+		testDisplayFireflySuppressionRemovesIsolatedWhitePixels();
 		testPhysicalLightUnitConversions();
 		testIESProfileLoadsPhysicalLampData();
 		testSpectralColorConversions();
@@ -4355,6 +4670,8 @@ int	main(void)
 		testDielectricBeerLambertAbsorption();
 		testMetalConductorFresnel();
 		testRoughMetalUsesGGXBSDF();
+		testGlossyUsesGGXBSDF();
+		testDiffuseGlossyMixPreservesStrongGlossyComponent();
 		testRoughDielectricUsesGGXBSDF();
 		testPrincipledLayeredBSDF();
 		testSceneFileLoadsNamedTexturedSphere();
@@ -4362,6 +4679,7 @@ int	main(void)
 		testSceneFileMetersPerUnitScalesVolumeDensity();
 		testCausticPhotonMapBuildsAndEstimates();
 		testSceneFileLoadsNonMetallicPrincipledMaterial();
+		testSceneFileLoadsGlossyMaterials();
 		testSceneFileRejectsInvalidMaterial();
 		testSceneFileRejectsAmbiguousMeasuredData();
 		testBVHReturnsClosestHit();
@@ -4370,6 +4688,7 @@ int	main(void)
 		testTinyTriangleHitAndNormal();
 		testTrianglePDFAndRandomSampling();
 		testTriangleInterpolatesVertexNormals();
+		testOpaqueSmoothNormalDoesNotReceiveBacksideLight();
 		testOBJReaderLoadsVertexNormals();
 		testSceneFileLoadsTexturedOBJUVs();
 		testMeshPDFAndRandomSampling();
@@ -4397,6 +4716,7 @@ int	main(void)
 		testRenderedSceneHasBasicVisualStructure();
 		testRenderedScenePostProcessingProducesDisplayableImage();
 		testRenderedBMPContainsVisualSignal();
+		testGlossySurfaceReflectsEmissiveLight();
 		testTinyRender();
 		testAtmosphereCompositesEnvironmentBackground();
 		testTinyAdaptiveRender();

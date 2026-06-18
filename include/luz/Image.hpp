@@ -30,6 +30,7 @@ class	Image
 		void		applyContrast(double contrast);
 		void		gammaCorrect(void);
 		void		toneMap(void);
+		void		suppressIsolatedFireflies(void);
 		std::unique_ptr<Image>	extractBloom(double threshold, double softKnee) const;
 		std::unique_ptr<Image>	extractBrightness(void) const;
 

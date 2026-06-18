@@ -15,6 +15,7 @@ struct	HitRecord
 	double		t1 = 0.0;
 	Vector3		position;
 	Vector3		normal;
+	Vector3		geometricNormal;
 	bool		frontFace = true;
 	double		u = 0.0;
 	double		v = 0.0;
@@ -30,6 +31,7 @@ struct	HitRecord
 			+ (direction.getZ() * outwardNormal.getZ())
 		) < 0.0;
 		this->normal = this->frontFace ? outwardNormal : outwardNormal * -1.0;
+		this->geometricNormal = this->normal;
 	}
 };
 

@@ -245,6 +245,9 @@ bool	Triangle::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) c
 		hitRecord.v = 0.0;
 	}
 	hitRecord.setFaceNormal(ray, hitRecord.normal);
+	HitRecord geometricHitRecord;
+	geometricHitRecord.setFaceNormal(ray, this->_faceNormal);
+	hitRecord.geometricNormal = geometricHitRecord.normal;
 	hitRecord.material = this->_material.get();
 	hitRecord.position = ray.pointAtRay(hitRecord.t0);
 

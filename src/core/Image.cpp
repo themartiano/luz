@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <cmath>
 #include <stdexcept>
+#include <vector>
 
 namespace
 {
@@ -31,6 +32,204 @@ namespace
 			color.getGreen() * scale,
 			color.getBlue() * scale
 		));
+	}
+
+	double	sceneLuminance(Color color)
+	{
+		return (Utilities::luminance(ColorManagement::sanitizeSceneLinear(color)));
+	}
+
+	Color	suppressIsolatedBloomFirefly(const Image& image, std::size_t x, std::size_t y, Color pixel, double threshold)
+	{
+		constexpr double HOT_MIN_THRESHOLD_MULTIPLIER = 16.0;
+		constexpr double HOT_NEIGHBOR_RATIO = 16.0;
+		constexpr double HOT_NEIGHBOR_CEILING_MULTIPLIER = 4.0;
+		constexpr int RADIUS = 2;
+		const double luminance = sceneLuminance(pixel);
+
+		if (threshold <= 0.0 || luminance <= threshold * HOT_MIN_THRESHOLD_MULTIPLIER)
+		{
+			return (pixel);
+		}
+
+		double neighborMax = 0.0;
+		unsigned int similarNeighbors = 0;
+		unsigned int brightNeighbors = 0;
+		for (int offsetY = -RADIUS; offsetY <= RADIUS; offsetY++)
+		{
+			for (int offsetX = -RADIUS; offsetX <= RADIUS; offsetX++)
+			{
+				if (offsetX == 0 && offsetY == 0)
+				{
+					continue;
+				}
+				const long long sampleX = static_cast<long long>(x) + offsetX;
+				const long long sampleY = static_cast<long long>(y) + offsetY;
+				if (
+					sampleX < 0
+					|| sampleY < 0
+					|| static_cast<std::size_t>(sampleX) >= image.getWidth()
+					|| static_cast<std::size_t>(sampleY) >= image.getHeight()
+				)
+				{
+					continue;
+				}
+				const double neighborLuminance = sceneLuminance(image.getPixel(
+					static_cast<std::size_t>(sampleX),
+					static_cast<std::size_t>(sampleY)
+				));
+
+				neighborMax = std::max(neighborMax, neighborLuminance);
+				if (neighborLuminance >= luminance / HOT_NEIGHBOR_RATIO)
+				{
+					similarNeighbors++;
+				}
+				if (neighborLuminance > threshold)
+				{
+					brightNeighbors++;
+				}
+			}
+		}
+
+		if (similarNeighbors > 0 || brightNeighbors >= 3)
+		{
+			return (pixel);
+		}
+
+		const double luminanceCeiling = std::max(
+			threshold,
+			neighborMax * HOT_NEIGHBOR_CEILING_MULTIPLIER
+		);
+		if (luminance <= luminanceCeiling)
+		{
+			return (pixel);
+		}
+		return (scaleColor(pixel, luminanceCeiling / luminance));
+	}
+
+	double	maxChannel(Color color)
+	{
+		return (std::max(color.getRed(), std::max(color.getGreen(), color.getBlue())));
+	}
+
+	double	minChannel(Color color)
+	{
+		return (std::min(color.getRed(), std::min(color.getGreen(), color.getBlue())));
+	}
+
+	bool	isDisplayFireflyCandidate(Color color)
+	{
+		return (
+			maxChannel(color) >= 0.99
+			&& minChannel(color) >= 0.85
+			&& sceneLuminance(color) >= 0.95
+		);
+	}
+
+	bool	isUnsupportedSaturatedDisplayPixel(Color color)
+	{
+		return (
+			maxChannel(color) >= 0.995
+			&& minChannel(color) >= 0.96
+			&& sceneLuminance(color) >= 0.98
+		);
+	}
+
+	Color	medianNeighborColor(std::vector<Color>& colors)
+	{
+		std::sort(
+			colors.begin(),
+			colors.end(),
+			[](Color a, Color b)
+			{
+				return (sceneLuminance(a) < sceneLuminance(b));
+			}
+		);
+		return (colors[colors.size() / 2]);
+	}
+
+	Color	suppressDisplayFirefly(const Image& image, std::size_t x, std::size_t y)
+	{
+		constexpr int RADIUS = 2;
+		constexpr double SIMILAR_NEIGHBOR_RATIO = 0.65;
+		constexpr double BRIGHT_NEIGHBOR_THRESHOLD = 0.80;
+		constexpr unsigned int MIN_SIMILAR_SUPPORT = 4;
+		constexpr unsigned int MIN_BRIGHT_SUPPORT = 6;
+		constexpr unsigned int MIN_SATURATED_SUPPORT = 3;
+		const Color pixel = image.getPixel(x, y);
+		const double luminance = sceneLuminance(pixel);
+		const bool saturatedCandidate = isUnsupportedSaturatedDisplayPixel(pixel);
+
+		if (!isDisplayFireflyCandidate(pixel))
+		{
+			return (pixel);
+		}
+
+		unsigned int similarNeighbors = 0;
+		unsigned int brightNeighbors = 0;
+		unsigned int saturatedNeighbors = 0;
+		std::vector<Color> replacementCandidates;
+		for (int offsetY = -RADIUS; offsetY <= RADIUS; offsetY++)
+		{
+			for (int offsetX = -RADIUS; offsetX <= RADIUS; offsetX++)
+			{
+				if (offsetX == 0 && offsetY == 0)
+				{
+					continue;
+				}
+				const long long sampleX = static_cast<long long>(x) + offsetX;
+				const long long sampleY = static_cast<long long>(y) + offsetY;
+				if (
+					sampleX < 0
+					|| sampleY < 0
+					|| static_cast<std::size_t>(sampleX) >= image.getWidth()
+					|| static_cast<std::size_t>(sampleY) >= image.getHeight()
+				)
+				{
+					continue;
+				}
+
+				const Color neighbor = image.getPixel(
+					static_cast<std::size_t>(sampleX),
+					static_cast<std::size_t>(sampleY)
+				);
+				const double neighborLuminance = sceneLuminance(neighbor);
+				if (neighborLuminance >= luminance * SIMILAR_NEIGHBOR_RATIO)
+				{
+					similarNeighbors++;
+				}
+				if (neighborLuminance >= BRIGHT_NEIGHBOR_THRESHOLD)
+				{
+					brightNeighbors++;
+				}
+				if (isUnsupportedSaturatedDisplayPixel(neighbor))
+				{
+					saturatedNeighbors++;
+				}
+				if (!isDisplayFireflyCandidate(neighbor))
+				{
+					replacementCandidates.push_back(neighbor);
+				}
+			}
+		}
+
+		if (
+			saturatedCandidate
+			&& saturatedNeighbors < MIN_SATURATED_SUPPORT
+			&& !replacementCandidates.empty()
+		)
+		{
+			return (medianNeighborColor(replacementCandidates));
+		}
+		if (similarNeighbors >= MIN_SIMILAR_SUPPORT || brightNeighbors >= MIN_BRIGHT_SUPPORT)
+		{
+			return (pixel);
+		}
+		if (replacementCandidates.empty())
+		{
+			return (pixel);
+		}
+		return (medianNeighborColor(replacementCandidates));
 	}
 }
 
@@ -247,6 +446,28 @@ void	Image::applyContrast(double contrast)
 	}
 }
 
+void	Image::suppressIsolatedFireflies(void)
+{
+	_checkInitialized();
+	if (this->_colorEncoding != ImageColorEncoding::DisplayEncodedSRGB)
+	{
+		return;
+	}
+	if (this->_width < 3 || this->_height < 3)
+	{
+		return;
+	}
+
+	Image source = *this;
+	for (std::size_t y = 0; y < this->_height; y++)
+	{
+		for (std::size_t x = 0; x < this->_width; x++)
+		{
+			this->setPixel(x, y, suppressDisplayFirefly(source, x, y));
+		}
+	}
+}
+
 void	Image::gammaCorrect(void)
 {
 	if (this->_colorEncoding == ImageColorEncoding::DisplayEncodedSRGB)
@@ -302,7 +523,13 @@ std::unique_ptr<Image>	Image::extractBloom(double threshold, double softKnee) co
 	{
 		for (std::size_t x = 0; x < brightnessImage->getWidth(); x++)
 		{
-			const Color pixel = ColorManagement::sanitizeSceneLinear(this->getPixel(x, y));
+			const Color pixel = suppressIsolatedBloomFirefly(
+				*this,
+				x,
+				y,
+				ColorManagement::sanitizeSceneLinear(this->getPixel(x, y)),
+				threshold
+			);
 			const double luminance = Utilities::luminance(pixel);
 			double contribution = std::max(luminance - threshold, 0.0);
 

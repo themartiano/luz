@@ -90,6 +90,7 @@ namespace
 		if (scene.getGammaCorrected())
 		{
 			image.gammaCorrect();
+			image.suppressIsolatedFireflies();
 		}
 	}
 

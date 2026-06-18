@@ -43,7 +43,7 @@ The parser is intentionally strict: unknown lines and malformed values throw an 
 | `maxlightbounces` | `maxlightbounces=N` | Maximum recursive light bounces. |
 | `gamma` | `gamma=0` or `gamma=1` | Enables sRGB display encoding when set to `1`. With `tonemapping=0`, scene-linear ACEScg is converted directly to sRGB and clipped for display output. |
 | `tonemapping` | `tonemapping=0` or `tonemapping=1` | Enables the ACES-fitted display transform from scene-linear ACEScg to display-linear sRGB. Alias: `tone_mapping`. |
-| `bloom` | `bloom=0` or `bloom=1` | Enables bloom when set to `1`. |
+| `bloom` | `bloom=0` or `bloom=1` | Enables bloom when set to `1`. Bloom ignores isolated extreme firefly pixels so rare path samples do not expand into square glow blocks; display output also suppresses isolated saturated white fireflies. |
 | `exposure` | `exposure=F` | Exposure compensation in stops. `1.0` doubles light before bloom and tone mapping; `-1.0` halves it. |
 | `photographic_exposure` | `photographic_exposure=F_NUMBER,SHUTTER_SECONDS,ISO` | Sets exposure from physical camera controls using `shutter * ISO / 100 / F_NUMBER^2`. `f/1`, `1s`, `ISO 100` equals `exposure=0`. Aliases: `photographicexposure`, `camera_exposure`, `cameraexposure`. |
 | `contrast` | `contrast=F` | Display contrast multiplier applied after the display transform and before sRGB encoding. `1.0` keeps contrast unchanged. |
@@ -490,6 +490,11 @@ reflection, rough dielectric transmission, clearcoat, and sheen. Use
 `type=metal` when you have measured conductor `eta`/`k`; use `type=dielectric`
 for dedicated glass volumes with Beer-Lambert absorption.
 
+`type=glossy` is a colored GGX reflection lobe, useful for importing Blender
+Glossy BSDF nodes that are not metallic conductors. `type=diffuse_glossy`
+combines Lambertian diffuse with a Glossy BSDF-style reflection lobe; it is used
+by the Blender exporter for Diffuse+Glossy `Mix Shader` materials.
+
 Principled material property blocks support:
 
 | Property | Meaning |
@@ -508,6 +513,22 @@ Principled material property blocks support:
 | `sheen=F` | Grazing-angle sheen layer in `[0,1]`. |
 | `absorption=(r,g,b)` | Transmission absorption coefficient in `1/m`. Aliases: `absorption_coefficient`, `sigma_a`. |
 | `transmittance=COLOR` | Alternative to `absorption`: desired transmitted color over `attenuation_distance`. |
+
+Glossy material property blocks support:
+
+| Property | Meaning |
+| --- | --- |
+| `color=COLOR` / `base_color=COLOR` | GGX reflection color. |
+| `roughness=F` | GGX roughness in `[0,1]`. |
+
+Diffuse-glossy material property blocks support:
+
+| Property | Meaning |
+| --- | --- |
+| `color=COLOR` / `base_color=COLOR` | Diffuse color. |
+| `glossy_color=COLOR` | Glossy reflection color. Defaults to the diffuse color. Aliases: `specular_color`. |
+| `glossy_weight=F` | Mix weight for the glossy lobe in `[0,1]`. |
+| `roughness=F` | Glossy GGX roughness in `[0,1]`. |
 
 Metal material property blocks can either use RGB reflectance via `color`, or
 measured conductor parameters:

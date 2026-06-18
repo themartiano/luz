@@ -38,6 +38,12 @@ class LuzMaterial:
 	roughness: float
 	alpha: float
 	transmission: float
+	refractive_index: float
+	clearcoat: float
+	clearcoat_roughness: float
+	sheen: float
+	glossy_color: tuple[float, float, float]
+	glossy_weight: float
 	emission_color: tuple[float, float, float]
 	emission_strength: float
 	texture_path: str | None = None
@@ -133,7 +139,14 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 	parser.add_argument("--include-hidden", action="store_true", help="Include objects hidden from render.")
 	parser.add_argument("--resolution", help="Override resolution as WIDTHxHEIGHT.")
 	parser.add_argument("--samples", type=int, help="Override Luz samples per pixel.")
+	parser.add_argument("--adaptive", choices=("auto", "on", "off", "true", "false", "1", "0"), default="auto", help="Export Luz adaptive sampling from Blender by default, or force on/off.")
+	parser.add_argument("--adaptive-min-samples", type=int, help="Override exported Luz adaptive minimum samples.")
+	parser.add_argument("--adaptive-threshold", type=float, help="Override exported Luz adaptive noise threshold.")
+	parser.add_argument("--adaptive-check-interval", type=int, help="Override exported Luz adaptive check interval.")
 	parser.add_argument("--max-light-bounces", type=int, help="Override Luz max light bounces.")
+	parser.add_argument("--denoise", choices=("auto", "on", "off", "true", "false", "1", "0"), default="auto", help="Export Luz denoising from Blender by default, or force on/off.")
+	parser.add_argument("--tonemapping", choices=("auto", "on", "off", "true", "false", "1", "0"), default="auto", help="Export Luz tone mapping from Blender's view transform by default, or force on/off.")
+	parser.add_argument("--exposure", type=float, help="Override exported Luz exposure compensation in stops.")
 	parser.add_argument("--sky", choices=("linear", "none", "atmosphere", "environment"), help="Override Luz sky mode.")
 	parser.add_argument("--render-output", help="Luz render output filename. .bmp is appended by Luz when omitted.")
 	parser.add_argument("--global-scale", type=float, default=1.0, help="Scale all exported positions and mesh vertices.")
@@ -154,6 +167,14 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 		parser.error("--min-point-light-radius must be a finite non-negative value.")
 	if args.camera_f_stop is not None and (not math.isfinite(args.camera_f_stop) or args.camera_f_stop <= 0.0):
 		parser.error("--camera-f-stop must be a finite positive value.")
+	if args.exposure is not None and not math.isfinite(args.exposure):
+		parser.error("--exposure must be finite.")
+	if args.adaptive_min_samples is not None and args.adaptive_min_samples <= 0:
+		parser.error("--adaptive-min-samples must be positive.")
+	if args.adaptive_threshold is not None and (not math.isfinite(args.adaptive_threshold) or args.adaptive_threshold <= 0.0):
+		parser.error("--adaptive-threshold must be a finite positive value.")
+	if args.adaptive_check_interval is not None and args.adaptive_check_interval <= 0:
+		parser.error("--adaptive-check-interval must be positive.")
 	return args
 
 
@@ -188,6 +209,10 @@ def fmt_vector(value: Vector) -> str:
 
 def fmt_color(value: tuple[float, float, float]) -> str:
 	return f"({fmt_float(value[0])},{fmt_float(value[1])},{fmt_float(value[2])})"
+
+
+def fmt_blender_color(value: tuple[float, float, float]) -> str:
+	return f"linear_srgb{fmt_color(value)}"
 
 
 def log_profile(args: argparse.Namespace, message: str) -> None:
@@ -620,6 +645,12 @@ def material_defaults(
 	roughness: float,
 	alpha: float,
 	transmission: float,
+	refractive_index: float,
+	clearcoat: float,
+	clearcoat_roughness: float,
+	sheen: float,
+	glossy_color: tuple[float, float, float],
+	glossy_weight: float,
 	emission_color: tuple[float, float, float],
 	emission_strength: float,
 ) -> dict[str, object]:
@@ -630,6 +661,12 @@ def material_defaults(
 		"roughness": roughness,
 		"alpha": alpha,
 		"transmission": transmission,
+		"refractive_index": refractive_index,
+		"clearcoat": clearcoat,
+		"clearcoat_roughness": clearcoat_roughness,
+		"sheen": sheen,
+		"glossy_color": glossy_color,
+		"glossy_weight": glossy_weight,
 		"emission_color": emission_color,
 		"emission_strength": emission_strength,
 	}
@@ -714,13 +751,41 @@ def blend_material_values(
 	second: dict[str, object],
 	factor: float,
 ) -> dict[str, object]:
+	first_type = str(first["material_type"])
+	second_type = str(second["material_type"])
+	if {first_type, second_type} == {"lambertian", "glossy"}:
+		diffuse = first if first_type == "lambertian" else second
+		glossy = first if first_type == "glossy" else second
+		glossy_weight = 1.0 - factor if first_type == "glossy" else factor
+		return {
+			"material_type": "diffuse_glossy",
+			"base_color": diffuse["base_color"],
+			"metallic": 0.0,
+			"roughness": glossy["roughness"],
+			"alpha": blend_scalar(float(first["alpha"]), float(second["alpha"]), factor),
+			"transmission": 0.0,
+			"refractive_index": blend_scalar(float(first["refractive_index"]), float(second["refractive_index"]), factor),
+			"clearcoat": 0.0,
+			"clearcoat_roughness": glossy["roughness"],
+			"sheen": 0.0,
+			"glossy_color": glossy["glossy_color"],
+			"glossy_weight": max(0.0, min(1.0, glossy_weight)),
+			"emission_color": blend_color(first["emission_color"], second["emission_color"], factor),  # type: ignore[arg-type]
+			"emission_strength": blend_scalar(float(first["emission_strength"]), float(second["emission_strength"]), factor),
+		}
 	return {
-		"material_type": first["material_type"] if first["material_type"] == second["material_type"] else "principled",
+		"material_type": first["material_type"] if first_type == second_type else "principled",
 		"base_color": blend_color(first["base_color"], second["base_color"], factor),  # type: ignore[arg-type]
 		"metallic": blend_scalar(float(first["metallic"]), float(second["metallic"]), factor),
 		"roughness": blend_scalar(float(first["roughness"]), float(second["roughness"]), factor),
 		"alpha": blend_scalar(float(first["alpha"]), float(second["alpha"]), factor),
 		"transmission": blend_scalar(float(first["transmission"]), float(second["transmission"]), factor),
+		"refractive_index": blend_scalar(float(first["refractive_index"]), float(second["refractive_index"]), factor),
+		"clearcoat": blend_scalar(float(first["clearcoat"]), float(second["clearcoat"]), factor),
+		"clearcoat_roughness": blend_scalar(float(first["clearcoat_roughness"]), float(second["clearcoat_roughness"]), factor),
+		"sheen": blend_scalar(float(first["sheen"]), float(second["sheen"]), factor),
+		"glossy_color": blend_color(first["glossy_color"], second["glossy_color"], factor),  # type: ignore[arg-type]
+		"glossy_weight": blend_scalar(float(first["glossy_weight"]), float(second["glossy_weight"]), factor),
 		"emission_color": blend_color(first["emission_color"], second["emission_color"], factor),  # type: ignore[arg-type]
 		"emission_strength": blend_scalar(float(first["emission_strength"]), float(second["emission_strength"]), factor),
 	}
@@ -762,6 +827,22 @@ def material_values_from_shader_node(
 			socket_default_value(node, ("Transmission Weight", "Transmission"), values["transmission"]),
 			float(values["transmission"]),
 		)
+		values["refractive_index"] = scalar_from_value(
+			socket_default_value(node, ("IOR",), values["refractive_index"]),
+			float(values["refractive_index"]),
+		)
+		values["clearcoat"] = scalar_from_value(
+			socket_default_value(node, ("Coat Weight", "Clearcoat", "Clearcoat Weight", "Clear Coat Weight", "Coat"), values["clearcoat"]),
+			float(values["clearcoat"]),
+		)
+		values["clearcoat_roughness"] = scalar_from_value(
+			socket_default_value(node, ("Coat Roughness", "Clearcoat Roughness", "Clear Coat Roughness"), values["clearcoat_roughness"]),
+			float(values["clearcoat_roughness"]),
+		)
+		values["sheen"] = scalar_from_value(
+			socket_default_value(node, ("Sheen Weight", "Sheen"), values["sheen"]),
+			float(values["sheen"]),
+		)
 		values["emission_color"] = color_from_value(
 			socket_default_value(node, ("Emission Color", "Emission"), values["emission_color"]),
 			values["emission_color"],  # type: ignore[arg-type]
@@ -779,15 +860,21 @@ def material_values_from_shader_node(
 		return values
 
 	if node_type in {"BSDF_GLOSSY", "BSDF_ANISOTROPIC"}:
-		values["material_type"] = "principled"
+		values["material_type"] = "glossy"
 		values["base_color"] = color_from_value(socket_default_value(node, ("Color",), values["base_color"]), values["base_color"])  # type: ignore[arg-type]
+		values["glossy_color"] = values["base_color"]
 		values["roughness"] = scalar_from_value(socket_default_value(node, ("Roughness",), values["roughness"]), float(values["roughness"]))
+		values["metallic"] = 0.0
+		values["clearcoat"] = 0.0
+		values["clearcoat_roughness"] = values["roughness"]
+		values["glossy_weight"] = 1.0
 		return values
 
 	if node_type in {"BSDF_GLASS", "BSDF_TRANSLUCENT", "BSDF_TRANSPARENT"}:
 		values["material_type"] = "dielectric"
 		values["base_color"] = color_from_value(socket_default_value(node, ("Color",), values["base_color"]), values["base_color"])  # type: ignore[arg-type]
 		values["roughness"] = scalar_from_value(socket_default_value(node, ("Roughness",), values["roughness"]), float(values["roughness"]))
+		values["refractive_index"] = scalar_from_value(socket_default_value(node, ("IOR",), values["refractive_index"]), float(values["refractive_index"]))
 		values["transmission"] = 1.0
 		if node_type == "BSDF_TRANSPARENT":
 			values["alpha"] = 0.0
@@ -874,6 +961,12 @@ def export_material(
 	roughness = 0.5
 	alpha = 1.0
 	transmission = 0.0
+	refractive_index = 1.5
+	clearcoat = 0.0
+	clearcoat_roughness = 0.03
+	sheen = 0.0
+	glossy_color = (1.0, 1.0, 1.0)
+	glossy_weight = 0.0
 	emission_color = (1.0, 1.0, 1.0)
 	emission_strength = 0.0
 	texture_path: str | None = None
@@ -897,6 +990,12 @@ def export_material(
 					roughness,
 					alpha,
 					transmission,
+					refractive_index,
+					clearcoat,
+					clearcoat_roughness,
+					sheen,
+					glossy_color,
+					glossy_weight,
 					emission_color,
 					emission_strength,
 				),
@@ -907,6 +1006,12 @@ def export_material(
 			roughness = float(values["roughness"])
 			alpha = float(values["alpha"])
 			transmission = float(values["transmission"])
+			refractive_index = float(values["refractive_index"])
+			clearcoat = float(values["clearcoat"])
+			clearcoat_roughness = float(values["clearcoat_roughness"])
+			sheen = float(values["sheen"])
+			glossy_color = values["glossy_color"]  # type: ignore[assignment]
+			glossy_weight = float(values["glossy_weight"])
 			emission_color = values["emission_color"]  # type: ignore[assignment]
 			emission_strength = float(values["emission_strength"])
 
@@ -945,6 +1050,12 @@ def export_material(
 		roughness=roughness,
 		alpha=alpha,
 		transmission=transmission,
+		refractive_index=refractive_index,
+		clearcoat=clearcoat,
+		clearcoat_roughness=clearcoat_roughness,
+		sheen=sheen,
+		glossy_color=glossy_color,
+		glossy_weight=glossy_weight,
 		emission_color=emission_color,
 		emission_strength=emission_strength,
 		texture_path=texture_path,
@@ -1559,6 +1670,111 @@ def scene_samples(args: argparse.Namespace) -> int:
 	return 64
 
 
+def bool_from_mode(mode: str, auto_value: bool) -> bool:
+	if mode in {"on", "true", "1"}:
+		return True
+	if mode in {"off", "false", "0"}:
+		return False
+	return auto_value
+
+
+def cycles_bool(name: str, fallback: bool) -> bool:
+	cycles = getattr(bpy.context.scene, "cycles", None)
+	if cycles is None or not hasattr(cycles, name):
+		return fallback
+	try:
+		return bool(getattr(cycles, name))
+	except Exception:
+		return fallback
+
+
+def cycles_positive_int(name: str) -> int | None:
+	cycles = getattr(bpy.context.scene, "cycles", None)
+	if cycles is None or not hasattr(cycles, name):
+		return None
+	try:
+		value = int(getattr(cycles, name))
+	except Exception:
+		return None
+	if value <= 0:
+		return None
+	return value
+
+
+def cycles_positive_float(name: str) -> float | None:
+	cycles = getattr(bpy.context.scene, "cycles", None)
+	if cycles is None or not hasattr(cycles, name):
+		return None
+	try:
+		value = float(getattr(cycles, name))
+	except Exception:
+		return None
+	if not math.isfinite(value) or value <= 0.0:
+		return None
+	return value
+
+
+def scene_adaptive(args: argparse.Namespace) -> bool:
+	return bool_from_mode(args.adaptive, cycles_bool("use_adaptive_sampling", True))
+
+
+def scene_adaptive_min_samples(args: argparse.Namespace, samples: int) -> int:
+	if args.adaptive_min_samples is not None:
+		return args.adaptive_min_samples
+	cycles_min = cycles_positive_int("adaptive_min_samples")
+	if cycles_min is not None:
+		return cycles_min
+	return min(samples, max(16, samples // 4))
+
+
+def scene_adaptive_threshold(args: argparse.Namespace) -> float:
+	if args.adaptive_threshold is not None:
+		return args.adaptive_threshold
+	cycles_threshold = cycles_positive_float("adaptive_threshold")
+	if cycles_threshold is not None:
+		return cycles_threshold
+	return 0.02
+
+
+def scene_adaptive_check_interval(args: argparse.Namespace, adaptive_min_samples: int) -> int:
+	if args.adaptive_check_interval is not None:
+		return args.adaptive_check_interval
+	return min(64, max(8, adaptive_min_samples // 4))
+
+
+def scene_denoise(args: argparse.Namespace) -> bool:
+	return bool_from_mode(args.denoise, cycles_bool("use_denoising", True))
+
+
+def scene_view_settings() -> object | None:
+	return getattr(bpy.context.scene, "view_settings", None)
+
+
+def scene_exposure(args: argparse.Namespace) -> float:
+	if args.exposure is not None:
+		return args.exposure
+	view_settings = scene_view_settings()
+	if view_settings is None:
+		return 0.0
+	try:
+		exposure = float(getattr(view_settings, "exposure", 0.0))
+	except Exception:
+		return 0.0
+	return exposure if math.isfinite(exposure) else 0.0
+
+
+def scene_tonemapping(args: argparse.Namespace) -> bool:
+	view_settings = scene_view_settings()
+	view_transform = ""
+	if view_settings is not None:
+		try:
+			view_transform = str(getattr(view_settings, "view_transform", ""))
+		except Exception:
+			view_transform = ""
+	standard_like_view = view_transform.strip().lower() in {"standard", "raw"}
+	return bool_from_mode(args.tonemapping, not standard_like_view)
+
+
 def scene_bounces(args: argparse.Namespace) -> int:
 	if args.max_light_bounces is not None:
 		return args.max_light_bounces
@@ -1586,6 +1802,9 @@ def write_luz_scene(
 	environment: LuzEnvironment | None,
 ) -> None:
 	width, height = scene_resolution(args)
+	samples = scene_samples(args)
+	adaptive = scene_adaptive(args)
+	adaptive_min_samples = scene_adaptive_min_samples(args, samples)
 	render_output = args.render_output
 	if not render_output:
 		render_output = str(output_path.with_suffix("")) + "_render"
@@ -1596,14 +1815,26 @@ def write_luz_scene(
 		[
 			"[settings]",
 			f"resolution={width},{height}",
-			f"samples={scene_samples(args)}",
+			f"samples={samples}",
+			f"adaptive={1 if adaptive else 0}",
 			f"maxlightbounces={scene_bounces(args)}",
 			f"meters_per_unit={fmt_float(1.0 / args.global_scale)}",
 			"gamma=1",
+			f"tonemapping={1 if scene_tonemapping(args) else 0}",
 			"bloom=1",
+			f"exposure={fmt_float(scene_exposure(args))}",
+			f"denoise={1 if scene_denoise(args) else 0}",
 			f"sky={sky}",
 		]
 	)
+	if adaptive:
+		lines.extend(
+			[
+				f"adaptiveminsamples={adaptive_min_samples}",
+				f"adaptivethreshold={fmt_float(scene_adaptive_threshold(args))}",
+				f"adaptivecheckinterval={scene_adaptive_check_interval(args, adaptive_min_samples)}",
+			]
+		)
 	if sky == "atmosphere":
 		lines.append(
 			f"atmosphere={fmt_float(exported_atmosphere_angle(lights))},"
@@ -1617,7 +1848,7 @@ def write_luz_scene(
 		lines.append(f"environment_scale={fmt_float(environment.strength)}")
 	lines.extend(
 		[
-			f"background={fmt_color(background_color)}",
+			f"background={fmt_blender_color(background_color)}",
 			f"outputfilename={render_output}",
 			"",
 		]
@@ -1630,20 +1861,42 @@ def write_luz_scene(
 			if material.material_type == "emissive":
 				lines.extend(
 					[
-						f"color={fmt_color(material.emission_color)}",
+						f"color={fmt_blender_color(material.emission_color)}",
 						f"radiance={fmt_float(material.emission_strength)}",
 					]
 				)
 			else:
 				lines.extend(
 					[
-						f"base_color={fmt_color(material.base_color)}",
-						f"metallic={fmt_float(material.metallic)}",
+						f"base_color={fmt_blender_color(material.base_color)}",
 						f"roughness={fmt_float(material.roughness)}",
-						f"alpha={fmt_float(material.alpha)}",
-						f"transmission={fmt_float(material.transmission)}",
 					]
 				)
+				if material.material_type == "diffuse_glossy":
+					lines.extend(
+						[
+							f"glossy_color={fmt_blender_color(material.glossy_color)}",
+							f"glossy_weight={fmt_float(material.glossy_weight)}",
+						]
+					)
+				if material.material_type in {"principled", "metal"}:
+					lines.append(f"metallic={fmt_float(material.metallic)}")
+				if material.material_type in {"principled", "dielectric"}:
+					lines.extend(
+						[
+							f"alpha={fmt_float(material.alpha)}",
+							f"transmission={fmt_float(material.transmission)}",
+						]
+					)
+					lines.append(f"ior={fmt_float(material.refractive_index)}")
+				if material.material_type == "principled":
+					lines.extend(
+						[
+							f"clearcoat={fmt_float(material.clearcoat)}",
+							f"clearcoat_roughness={fmt_float(material.clearcoat_roughness)}",
+							f"sheen={fmt_float(material.sheen)}",
+						]
+					)
 			if material.texture_path:
 				lines.append(f"texture={material.texture_path}")
 			lines.append("}")
@@ -1699,7 +1952,7 @@ def write_luz_scene(
 						f"position={fmt_vector(light.position or Vector((0.0, 0.0, 0.0)))}",
 					f"normal={fmt_vector(light.normal or Vector((0.0, -1.0, 0.0)))}",
 					f"size=({fmt_float(light.width)},{fmt_float(light.height)})",
-					f"color={fmt_color(light.color)}",
+					f"color={fmt_blender_color(light.color)}",
 					f"{light.unit_key}={fmt_float(light.quantity)}",
 					"}",
 				]
@@ -1709,7 +1962,7 @@ def write_luz_scene(
 				[
 					f"directional_light {light.name} {{",
 					f"direction={fmt_vector(light.normal or Vector((0.0, -1.0, 0.0)))}",
-					f"color={fmt_color(light.color)}",
+					f"color={fmt_blender_color(light.color)}",
 					f"{light.unit_key}={fmt_float(light.quantity)}",
 					"}",
 				]
@@ -1720,7 +1973,7 @@ def write_luz_scene(
 						f"point_light {light.name} {{",
 						f"position={fmt_vector(light.position or Vector((0.0, 0.0, 0.0)))}",
 					f"radius={fmt_float(light.radius)}",
-					f"color={fmt_color(light.color)}",
+					f"color={fmt_blender_color(light.color)}",
 					f"{light.unit_key}={fmt_float(light.quantity)}",
 					"visible=0",
 					"}",

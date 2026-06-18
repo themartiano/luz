@@ -1,5 +1,6 @@
 #include "RendererInternal.hpp"
 #include "Renderer/CausticPhotonMap.hpp"
+#include "Materials/Principled.hpp"
 #include "Utilities.hpp"
 #include "Defaults.hpp"
 #include "SkyTypes.hpp"
@@ -292,6 +293,48 @@ namespace
 		const double throughputMax = maxChannel(throughput);
 
 		return (!std::isfinite(throughputMax) || throughputMax <= PATH_THROUGHPUT_EPSILON);
+	}
+
+	bool	materialCanTransmitThroughGeometry(const Material* material)
+	{
+		if (!material)
+		{
+			return (false);
+		}
+		if (
+			material->getType() == DIELECTRIC
+			|| material->getType() == ISOTROPIC
+			|| material->getType() == HENYEY_GREENSTEIN
+		)
+		{
+			return (true);
+		}
+		if (material->getType() != PRINCIPLED)
+		{
+			return (false);
+		}
+
+		const Principled* principled = dynamic_cast<const Principled*>(material);
+		return (principled != nullptr && principled->getTransmission() > 0.0);
+	}
+
+	bool	leavesOpaqueGeometricSurface(const HitRecord& hitRecord, const Vector3& direction)
+	{
+		if (materialCanTransmitThroughGeometry(hitRecord.material))
+		{
+			return (true);
+		}
+
+		Vector3 geometricNormal = hitRecord.geometricNormal;
+		if (Utilities::vectorLengthSquared(geometricNormal) <= 1e-12)
+		{
+			geometricNormal = hitRecord.normal;
+		}
+		if (Utilities::vectorLengthSquared(geometricNormal) <= 1e-12)
+		{
+			return (true);
+		}
+		return (Utilities::dot(geometricNormal, direction) > 1e-7);
 	}
 
 	bool	hasEnvironmentLight(Scene& scene)
@@ -719,6 +762,10 @@ namespace
 		{
 			return (Color(0.0, 0.0, 0.0));
 		}
+		if (!leavesOpaqueGeometricSurface(hitRecord, lightSample.direction))
+		{
+			return (Color(0.0, 0.0, 0.0));
+		}
 
 		const double scatterSamplePDF = scatterPDFValue(scatterRecord, hitRecord, lightSample.direction);
 		const Color bsdfCos = scatterBSDFCos(scatterRecord, hitRecord, lightSample.direction);
@@ -767,6 +814,10 @@ namespace
 
 		const LightSample lightSample = sampleEnvironmentLight(scene, hitRecord.position);
 		if (!lightSample.valid)
+		{
+			return (Color(0.0, 0.0, 0.0));
+		}
+		if (!leavesOpaqueGeometricSurface(hitRecord, lightSample.direction))
 		{
 			return (Color(0.0, 0.0, 0.0));
 		}
@@ -928,6 +979,10 @@ namespace
 
 			if (scatterRecord.isSpecular)
 			{
+				if (!leavesOpaqueGeometricSurface(hitRecord, scatterRecord.specularRay.getDirection()))
+				{
+					return (accumulatedColor);
+				}
 				throughput = clampRayColor(throughput * attenuation);
 				if (isTerminatedThroughput(throughput) || !applyRussianRoulette(throughput, bounces))
 				{
@@ -977,6 +1032,10 @@ namespace
 			}
 
 			Ray scattered = Ray::fromNormalizedDirection(hitRecord.position, scatterPDFGenerate(scatterRecord));
+			if (!leavesOpaqueGeometricSurface(hitRecord, scattered.getDirection()))
+			{
+				return (accumulatedColor);
+			}
 			const double pdfValue = scatterPDFValue(scatterRecord, hitRecord, scattered.getDirection());
 
 			if (pdfValue <= 0.0 || !std::isfinite(pdfValue))

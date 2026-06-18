@@ -40,6 +40,13 @@ The exporter also works without passing the `.blend` file before `--python`:
 --include-hidden              Include objects hidden from render.
 --resolution WIDTHxHEIGHT     Override exported render resolution.
 --samples N                   Override samples per pixel.
+--adaptive auto|on|off        Export Blender adaptive sampling by default, or force on/off.
+--adaptive-min-samples N      Override exported adaptive minimum samples.
+--adaptive-threshold N        Override exported adaptive noise threshold.
+--adaptive-check-interval N   Override exported adaptive check interval.
+--denoise auto|on|off         Export Blender denoising by default, or force on/off.
+--tonemapping auto|on|off     Export Blender view transform intent, or force Luz tone mapping.
+--exposure EV                 Override exported display exposure in stops.
 --max-light-bounces N         Override max light bounces.
 --sky linear|none|atmosphere|environment
                              Override exported Luz sky mode.
@@ -121,6 +128,22 @@ The exporter also works without passing the `.blend` file before `--python`:
   output target that matches the scene render engine, such as Cycles or EEVEE.
 - Blender material values are written as named material property blocks for
   Luz's scene parser to approximate.
+- Blender RGB material, light, and world colors are written as
+  `linear_srgb(...)` values so Luz converts Blender's linear RGB values into its
+  ACEScg working space.
+- Blender/Cycles adaptive sampling and denoising settings are written into the
+  generated scene. When Blender leaves adaptive minimum samples unset, the
+  exporter uses a conservative minimum derived from the exported sample count
+  instead of relying on Luz's generic defaults.
+- Blender view exposure is exported as Luz `exposure`. Blender `Standard` and
+  `Raw` view transforms export `tonemapping=0` so Luz uses direct scene-linear
+  to sRGB display encoding instead of its ACES-fitted tone map. Other Blender
+  view transforms keep Luz tone mapping enabled as an approximation.
+- Principled BSDF export includes IOR, coat weight/roughness, and sheen when
+  those Blender sockets are available. Glossy and anisotropic BSDF nodes export
+  as Luz `glossy` materials, and Blender Diffuse+Glossy `Mix Shader` graphs
+  export as `diffuse_glossy` so legacy Cycles glossy plastic keeps its strong
+  reflection without scaling scene lights.
 
 ## Current Limits
 

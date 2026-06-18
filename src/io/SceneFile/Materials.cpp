@@ -4,6 +4,8 @@
 #include "Materials/Dielectric.hpp"
 #include "Materials/Emissive.hpp"
 #include "Materials/Principled.hpp"
+#include "Materials/Glossy.hpp"
+#include "Materials/DiffuseGlossy.hpp"
 #include "Materials/Isotropic.hpp"
 #include "Materials/HenyeyGreenstein.hpp"
 #include "Texture.hpp"
@@ -35,6 +37,9 @@ namespace
 		double		clearcoat = 0.0;
 		double		clearcoatRoughness = 0.03;
 		double		sheen = 0.0;
+		Color		glossyColor = Color(1.0, 1.0, 1.0);
+		double		glossyWeight = 0.5;
+		bool		hasGlossyColor = false;
 		double		alpha = 1.0;
 		double		anisotropy = 0.0;
 		std::optional<double>	emissionRadiance;
@@ -123,6 +128,17 @@ namespace
 				throw std::runtime_error("Invalid metal material: " + line);
 			}
 			material = std::make_shared<Metal>(Color(r, g, b), reflectionFuzziness);
+			return (true);
+		}
+		if (lowerLine.rfind("glossy=", 0) != std::string::npos)
+		{
+			double r, g, b, roughness;
+
+			if (sscanf(lowerLine.c_str(), "glossy=(%lf,%lf,%lf),%lf", &r, &g, &b, &roughness) != 4)
+			{
+				throw std::runtime_error("Invalid glossy material: " + line);
+			}
+			material = std::make_shared<Glossy>(Color(r, g, b), roughness);
 			return (true);
 		}
 		if (lowerLine.rfind("dielectric=", 0) != std::string::npos)
@@ -413,6 +429,20 @@ namespace
 		{
 			builder.sheen = std::stod(value);
 		}
+		else if (key == "glossy_color" || key == "glossycolor" || key == "specular_color" || key == "specularcolor")
+		{
+			builder.glossyColor = SceneFile::internal::_parseColorValue(value, key, context);
+			builder.hasGlossyColor = true;
+		}
+		else if (
+			key == "glossy_weight"
+			|| key == "glossyweight"
+			|| key == "glossy_mix"
+			|| key == "glossymix"
+		)
+		{
+			builder.glossyWeight = std::stod(value);
+		}
 		else if (key == "ior" || key == "refractiveindex" || key == "refractive_index")
 		{
 			builder.refractiveIndex = std::stod(value);
@@ -654,6 +684,23 @@ namespace
 		if (type == "principled")
 		{
 			std::shared_ptr<Material> material = buildPrincipledMaterial(builder);
+			attachTexture(material, builder, baseDirectory);
+			return (material);
+		}
+		if (type == "glossy")
+		{
+			std::shared_ptr<Material> material = std::make_shared<Glossy>(builder.color, builder.roughness);
+			attachTexture(material, builder, baseDirectory);
+			return (material);
+		}
+		if (type == "diffuse_glossy" || type == "diffuseglossy")
+		{
+			std::shared_ptr<Material> material = std::make_shared<DiffuseGlossy>(
+				builder.color,
+				builder.hasGlossyColor ? builder.glossyColor : builder.color,
+				builder.glossyWeight,
+				builder.roughness
+			);
 			attachTexture(material, builder, baseDirectory);
 			return (material);
 		}
