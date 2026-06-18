@@ -4,6 +4,7 @@
 #include "EnvironmentMap.hpp"
 #include "FlagsParser.hpp"
 #include "Image.hpp"
+#include "LightUnits.hpp"
 #include "Materials/Lambertian.hpp"
 #include "Materials/Emissive.hpp"
 #include "Materials/Dielectric.hpp"
@@ -34,6 +35,7 @@
 #include <cstring>
 #include <filesystem>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <iterator>
 #include <limits>
@@ -200,7 +202,7 @@ namespace
 		scene.addHittable(std::make_shared<Sphere>(
 			Vector3(0.0, 0.0, -1.0),
 			0.11,
-			std::make_shared<Emissive>(Color(1.0, 0.12, 0.04), 1.0)
+			std::make_shared<Emissive>(Color(1.0, 0.12, 0.04))
 		));
 	}
 
@@ -518,6 +520,38 @@ namespace
 		requireNear(dark.getBlue(), 0.0, "Bloom extraction included sub-threshold blue.");
 	}
 
+	void	testPhysicalLightUnitConversions(void)
+	{
+		requireColorNear(
+			LightUnits::surfaceRadiantPower(Color(1.0, 1.0, 1.0), 2.0 * D_PI, 2.0),
+			Color(1.0, 1.0, 1.0),
+			"Surface radiant power conversion"
+		);
+		requireColorNear(
+			LightUnits::surfaceLuminousFlux(
+				Color(1.0, 1.0, 1.0),
+				LightUnits::LUMENS_PER_RADIANT_WATT * 2.0 * D_PI,
+				2.0
+			),
+			Color(1.0, 1.0, 1.0),
+			"Surface luminous flux conversion"
+		);
+		requireNear(
+			Utilities::luminance(LightUnits::surfaceRadiance(Color(1.0, 0.0, 0.0), 4.0)),
+			4.0,
+			"Surface radiance did not preserve requested luminance-weighted radiance."
+		);
+		requireColorNear(
+			LightUnits::directionalIlluminance(Color(1.0, 1.0, 1.0), LightUnits::LUMENS_PER_RADIANT_WATT),
+			Color(1.0, 1.0, 1.0),
+			"Directional illuminance conversion"
+		);
+		requireThrows(
+			[]() { LightUnits::surfaceRadiance(Color(0.0, 0.0, 0.0), 1.0); },
+			"Physical light units accepted a zero-luminance positive light color."
+		);
+	}
+
 	void	testGaussianBlurSupportsInPlaceSmallImages(void)
 	{
 		Image image(3, 3);
@@ -750,6 +784,31 @@ namespace
 		require(
 			scene.getDefaultRenderOutputFileName() == outputPath.string() + ".bmp",
 			"Scene outputfilename setting was not applied."
+		);
+
+		std::filesystem::remove(scenePath);
+
+		{
+			std::ofstream stream(scenePath);
+			stream
+				<< "[settings]\n"
+				<< "resolution=2,2\n\n"
+				<< "[scene]\n"
+				<< "camera=(0,0,1),(0,0,-1),45,0,1\n"
+				<< "objects{\n"
+				<< "sphere=(0,0,-1),0.5,material[\n"
+				<< "emissive=(1.0,1.0,1.0),4.0\n"
+				<< "]\n"
+				<< "}\n";
+		}
+
+		Scene oldEmissiveSyntaxScene;
+		requireThrows(
+			[&oldEmissiveSyntaxScene, &scenePath]()
+			{
+				SceneFile::read(oldEmissiveSyntaxScene, scenePath.string());
+			},
+			"Scene file accepted an emissive material scalar."
 		);
 
 		std::filesystem::remove(scenePath);
@@ -988,7 +1047,7 @@ namespace
 				<< "directional_light sun {\n"
 				<< "direction=(2,0,0)\n"
 				<< "color=(1,0.95,0.8)\n"
-				<< "intensity=2\n"
+				<< "irradiance=2\n"
 				<< "}\n";
 		}
 
@@ -1002,7 +1061,7 @@ namespace
 		);
 		requireColorNear(
 			scene.getAtmosphere().getSunRadiance(),
-			Color(2.0, 1.9, 1.6),
+			LightUnits::directionalIrradiance(Color(1.0, 0.95, 0.8), 2.0),
 			"Atmosphere did not use the scene directional light as sun radiance"
 		);
 		requireNear(scene.getAtmosphere().getSunRadianceScale(), 0.5, "Atmosphere sun scale was not parsed.");
@@ -1297,18 +1356,18 @@ namespace
 				<< "normal=(0,-1,0)\n"
 				<< "size=(2,3)\n"
 				<< "color=(1,1,1)\n"
-				<< "intensity=4\n"
+				<< "power=4\n"
 				<< "}\n"
 				<< "directional_light sun {\n"
 				<< "direction=(0,-1,0)\n"
 				<< "color=(1,0.95,0.8)\n"
-				<< "intensity=2\n"
+				<< "irradiance=2\n"
 				<< "}\n"
 				<< "point_light fill {\n"
 				<< "position=(2,2,2)\n"
 				<< "radius=0.25\n"
 				<< "color=(0.5,0.6,1.0)\n"
-				<< "intensity=1.5\n"
+				<< "power=1.5\n"
 				<< "visible=0\n"
 				<< "}\n";
 		}
@@ -1343,6 +1402,82 @@ namespace
 
 		std::filesystem::remove(scenePath);
 		std::filesystem::remove(objectPath);
+	}
+
+	void	testSceneFilePhysicalLightUnits(void)
+	{
+		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_physical_light_units_test.luz";
+		{
+			std::ofstream sceneStream(scenePath);
+			sceneStream << std::setprecision(17);
+			sceneStream
+				<< "[materials]\n"
+				<< "material unit_emitter {\n"
+				<< "type=emissive\n"
+				<< "color=(1,1,1)\n"
+				<< "radiance=2\n"
+				<< "}\n\n"
+				<< "[scene]\n"
+				<< "sphere material_source {\n"
+				<< "position=(0,0,0)\n"
+				<< "radius=1\n"
+				<< "material=unit_emitter\n"
+				<< "}\n"
+				<< "area_light area {\n"
+				<< "position=(0,4,0)\n"
+				<< "normal=(0,-1,0)\n"
+				<< "size=(2,1)\n"
+				<< "color=(1,1,1)\n"
+				<< "power=" << 2.0 * D_PI << "\n"
+				<< "}\n"
+				<< "directional_light sun {\n"
+				<< "direction=(0,-1,0)\n"
+				<< "color=(1,1,1)\n"
+				<< "illuminance=" << LightUnits::LUMENS_PER_RADIANT_WATT << "\n"
+				<< "}\n"
+				<< "point_light point {\n"
+				<< "position=(1,2,3)\n"
+				<< "radius=1\n"
+				<< "color=(1,1,1)\n"
+				<< "lumens=" << LightUnits::LUMENS_PER_RADIANT_WATT * 4.0 * D_PI * D_PI << "\n"
+				<< "visible=0\n"
+				<< "}\n";
+		}
+
+		Scene scene;
+		SceneFile::read(scene, scenePath.string());
+
+		require(scene.getHittables().size() == 4, "Physical unit scene did not load all emitters.");
+		requireColorNear(scene.getHittables()[0]->getMaterial()->emitted(), Color(2.0, 2.0, 2.0), "Material radiance unit");
+		requireColorNear(scene.getHittables()[1]->getMaterial()->emitted(), Color(1.0, 1.0, 1.0), "Area light power unit");
+		requireColorNear(scene.getHittables()[2]->getMaterial()->emitted(), Color(1.0, 1.0, 1.0), "Directional light illuminance unit");
+		requireColorNear(scene.getHittables()[3]->getMaterial()->emitted(), Color(1.0, 1.0, 1.0), "Point light luminous flux unit");
+
+		std::filesystem::remove(scenePath);
+
+		{
+			std::ofstream sceneStream(scenePath);
+			sceneStream
+				<< "[scene]\n"
+				<< "area_light area {\n"
+				<< "position=(0,4,0)\n"
+				<< "normal=(0,-1,0)\n"
+				<< "size=(2,1)\n"
+				<< "color=(1,1,1)\n"
+				<< "intensity=2\n"
+				<< "}\n";
+		}
+
+		Scene invalidScene;
+		requireThrows(
+			[&invalidScene, &scenePath]()
+			{
+				SceneFile::read(invalidScene, scenePath.string());
+			},
+			"Scene file accepted area_light intensity."
+		);
+
+		std::filesystem::remove(scenePath);
 	}
 
 	void	testSphereUVProjectionModes(void)
@@ -1539,8 +1674,6 @@ namespace
 				<< "base_color=(0.8,0.8,0.75)\n"
 				<< "metallic=0\n"
 				<< "roughness=0.35\n"
-				<< "emission=(0,0,0)\n"
-				<< "emissionStrength=1\n"
 				<< "}\n\n"
 				<< "[meshes]\n"
 				<< "mesh triangle_mesh {\n"
@@ -2391,7 +2524,7 @@ namespace
 		scene.addHittable(std::make_shared<Sphere>(
 			Vector3(0.0, 0.0, 0.0),
 			1.0,
-			std::make_shared<Emissive>(surfaceEmission, 1.0)
+			std::make_shared<Emissive>(surfaceEmission)
 		));
 
 		Ray ray(Vector3(0.0, 0.0, -4.0), Vector3(0.0, 0.0, 1.0));
@@ -2415,7 +2548,7 @@ namespace
 		protrudingScene.addHittable(std::make_shared<Sphere>(
 			Vector3(0.0, 0.0, 0.0),
 			1.5,
-			std::make_shared<Emissive>(surfaceEmission, 1.0)
+			std::make_shared<Emissive>(surfaceEmission)
 		));
 
 		const Color protrudingExpected = atmosphereSample.inScattering + (atmosphereSample.transmittance * surfaceEmission);
@@ -2774,6 +2907,7 @@ int	main(void)
 		testSRGBGammaCorrection();
 		testExposureAndContrast();
 		testBloomExtractionPreservesHighlightColor();
+		testPhysicalLightUnitConversions();
 		testGaussianBlurSupportsInPlaceSmallImages();
 		testGaussianBlurPreservesCenteredEnergyAndEdges();
 		testTerminalFilePath();
@@ -2799,6 +2933,7 @@ int	main(void)
 		testSceneFileLoadsRelativeObject();
 		testSceneFileLoadsTransformedObject();
 		testSceneFileLoadsNamedBlocks();
+		testSceneFilePhysicalLightUnits();
 		testSphereUVProjectionModes();
 		testSphereHitTracksFrontFace();
 		testDielectricUsesExitRefractionRatio();

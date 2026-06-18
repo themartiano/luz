@@ -18,8 +18,6 @@ metallic=0
 roughness=0.89999998
 alpha=1
 transmission=0
-emission=(1,1,1)
-emissionStrength=0
 texture=../textures/earth_diff_jpg.ppm
 }
 
@@ -28,7 +26,7 @@ camera=(10260604,0,-28190779),(-0.3420201,0,0.9396926),30,0,30000000
 directional_light sun {
 direction=(-0.9659258,0.0,0.2588190)
 color=(1.0,0.95,0.8)
-intensity=2.5
+irradiance=2.5
 }
 objects{
 # Moon: real mean radius 1,737.4 km, center placed 384,400 km from Earth.

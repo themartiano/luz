@@ -45,9 +45,9 @@ The exporter also works without passing the `.blend` file before `--python`:
                              Override exported Luz sky mode.
 --render-output PATH          Luz render output path.
 --global-scale N              Scale exported positions, meshes, and light sizes.
---light-power-scale N         Extra multiplier after Blender lamp energy conversion. Defaults to 1.0.
+--light-power-scale N         Extra multiplier for exported area/point power. Defaults to 1.0.
 --min-point-light-radius N    Minimum Blender-unit radius for point/spot lights. Defaults to 0.1.
---sun-power-scale N           Convert Blender sun energy to Luz intensity. Defaults to 1.0.
+--sun-power-scale N           Multiplier for exported sun irradiance. Defaults to 1.0.
 --camera-aperture N           Override Luz camera aperture.
 --texture-dir DIR             Texture output directory. Defaults to textures next to the .luz file.
 --texture-max-size N          Maximum exported texture width/height. Defaults to 1024.
@@ -81,28 +81,26 @@ The exporter also works without passing the `.blend` file before `--python`:
 - Blender f-stop DOF is converted to a Luz world-unit lens diameter from
   `camera.lens / aperture_fstop`.
 - Area lights become `area_light` blocks. Blender's area-light energy is treated
-  as total emitted power and converted to Luz surface intensity with
-  `energy / (pi * width * height)`, then multiplied by `--light-power-scale`.
+  as total emitted power and written as `power=energy * --light-power-scale`.
+  Luz converts power to surface radiance from the exported light area.
 - Point and spot lights become small emissive `point_light` sphere blocks.
-  Blender's point-light energy is treated as total emitted power and converted
-  to Luz sphere surface intensity with `energy / (4 * pi^2 * radius^2)`, then
-  multiplied by `--light-power-scale`. When Blender's light softness is zero,
+  Blender's point-light energy is treated as total emitted power and written as
+  `power=energy * --light-power-scale`. Luz converts power to sphere surface
+  radiance from the exported radius. When Blender's light softness is zero,
   `--min-point-light-radius` prevents near-zero export radii from producing
-  extreme surface intensity. Exported point and spot lights use `visible=0` so
-  their emissive sampling spheres do not render as visible bulbs. Use
-  `--min-point-light-radius 0` to preserve the old tiny-light intensity
-  conversion.
+  extreme surface radiance. Exported point and spot lights use `visible=0` so
+  their emissive sampling spheres do not render as visible bulbs.
 - Sun lights become `directional_light` blocks. They use
-  `--sun-power-scale`, not `--light-power-scale`, because Blender SUN energy is
-  directional rather than finite-area power.
+  `irradiance=energy * --sun-power-scale`, not `--light-power-scale`, because
+  Blender SUN energy is directional rather than finite-area power.
 - When `--sky atmosphere` is used, the first exported Blender SUN light becomes
   the source of truth for both surface lighting and atmosphere lighting,
-  including sun direction, color, and intensity. The exporter still writes an
+  including sun direction, color, and irradiance. The exporter still writes an
   `atmosphere=` line for the physical atmosphere parameters; its sun-angle field
-  and legacy atmosphere radiance are only fallbacks when no `directional_light`
+  and atmosphere fallback radiance are only fallbacks when no `directional_light`
   exists in the scene.
-- Emissive mesh materials stay as emissive mesh objects. Luz importance-samples
-  emissive meshes directly.
+- Emissive mesh materials stay as emissive mesh objects and write
+  `radiance=...`. Luz importance-samples emissive meshes directly.
 - Common Blender shader nodes connected to Material Output are mapped into
   Luz material properties, including diffuse, glossy, glass, emission,
   Principled, mix, add, RGB/value, image average color, and color ramp values.

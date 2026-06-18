@@ -147,7 +147,7 @@ int	main(int argc, char *argv[])
 				Transform(Vector3(-15.0, 2.5, 0.0), Vector3(1.0, 0.0, 0.0), Vector3(1.0, 0.0, 0.0)),
 				10.0,
 				5.0,
-				std::make_shared<Emissive>(Color(1.0, 1.0, 1.0), 10.0)
+				std::make_shared<Emissive>(Color(1.0, 1.0, 1.0) * 10.0)
 			));
 
 			// scene.addHittable(std::make_shared<Rectangle>(

@@ -1,35 +1,44 @@
 #include "Materials/Emissive.hpp"
+#include "LightUnits.hpp"
 
 Emissive::Emissive(void)
 {
-	this->_color = Color(0.6, 0.6, 0.6);
+	this->_color = Color(1.0, 1.0, 1.0);
 }
 
-Emissive::Emissive(Color color)
+Emissive::Emissive(Color radiance)
 {
-	this->_color = color;
+	this->_color = radiance;
 }
 
-Emissive::Emissive(double intensity)
+Emissive	Emissive::fromRadiance(Color color, double radiance)
 {
-	this->_color = Color(0.6, 0.6, 0.6);
-	this->_intensity = intensity;
+	return (Emissive(LightUnits::surfaceRadiance(color, radiance)));
 }
 
-Emissive::Emissive(Color color, double intensity)
+Emissive	Emissive::fromLuminance(Color color, double luminance)
 {
-	this->_color = color;
-	this->_intensity = intensity;
+	return (Emissive(LightUnits::surfaceLuminance(color, luminance)));
+}
+
+Emissive	Emissive::fromRadiantPower(Color color, double watts, double area)
+{
+	return (Emissive(LightUnits::surfaceRadiantPower(color, watts, area)));
+}
+
+Emissive	Emissive::fromLuminousFlux(Color color, double lumens, double area)
+{
+	return (Emissive(LightUnits::surfaceLuminousFlux(color, lumens, area)));
 }
 
 Color	Emissive::emitted(void)
 {
-	return (this->_color * this->_intensity);
+	return (this->_color);
 }
 
-void	Emissive::setIntensity(double newIntensity)
+void	Emissive::setRadiance(Color radiance)
 {
-	this->_intensity = newIntensity;
+	this->_color = radiance;
 }
 
 MaterialType	Emissive::getType(void) const

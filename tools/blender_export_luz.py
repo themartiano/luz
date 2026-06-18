@@ -69,7 +69,8 @@ class LuzLight:
 	kind: str
 	name: str
 	color: tuple[float, float, float]
-	intensity: float
+	quantity: float
+	unit_key: str
 	position: Vector | None = None
 	normal: Vector | None = None
 	width: float = 1.0
@@ -133,9 +134,9 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 	parser.add_argument("--sky", choices=("linear", "none", "atmosphere", "environment"), help="Override Luz sky mode.")
 	parser.add_argument("--render-output", help="Luz render output filename. .bmp is appended by Luz when omitted.")
 	parser.add_argument("--global-scale", type=float, default=1.0, help="Scale all exported positions and mesh vertices.")
-	parser.add_argument("--light-power-scale", type=float, default=1.0, help="Additional multiplier after Blender light energy is converted to Luz intensity.")
-	parser.add_argument("--min-point-light-radius", type=float, default=0.1, help="Minimum Blender-unit radius for point and spot lights. Use 0 for legacy tiny-light export. Defaults to 0.1.")
-	parser.add_argument("--sun-power-scale", type=float, default=1.0, help="Multiplier from Blender sun energy to Luz intensity.")
+	parser.add_argument("--light-power-scale", type=float, default=1.0, help="Additional multiplier for exported area and point light power.")
+	parser.add_argument("--min-point-light-radius", type=float, default=0.1, help="Minimum Blender-unit radius for point and spot lights. Defaults to 0.1.")
+	parser.add_argument("--sun-power-scale", type=float, default=1.0, help="Multiplier from Blender sun energy to Luz directional irradiance.")
 	parser.add_argument("--camera-aperture", type=float, help="Override Luz camera lens diameter in world units.")
 	parser.add_argument("--default-focus-distance", type=float, default=10.0, help="Fallback focus distance in Blender units.")
 	parser.add_argument("--no-texture-colors", action="store_false", dest="sample_texture_colors", help="Skip image texture color approximation.")
@@ -925,6 +926,9 @@ def export_material(
 		base_color = (1.0, 1.0, 1.0)
 	if not color_has_energy(emission_color):
 		emission_strength = 0.0
+	if emission_strength > 0.0:
+		material_type = "emissive"
+		base_color = emission_color
 
 	registry[key] = LuzMaterial(
 		name=name,
@@ -1249,14 +1253,12 @@ def light_color(light_data: object) -> tuple[float, float, float]:
 	return color_from_value(getattr(light_data, "color", (1.0, 1.0, 1.0)), (1.0, 1.0, 1.0))
 
 
-def blender_area_light_intensity(energy: float, width: float, height: float, scale: float) -> float:
-	area = max(width * height, 1e-12)
-	return max(energy * scale / (math.pi * area), 0.0)
+def blender_light_power(energy: float, scale: float) -> float:
+	return max(energy * scale, 0.0)
 
 
-def blender_point_light_intensity(energy: float, radius: float, scale: float) -> float:
-	radius = max(radius, 1e-6)
-	return max(energy * scale / (4.0 * math.pi * math.pi * radius * radius), 0.0)
+def blender_sun_irradiance(energy: float, scale: float) -> float:
+	return max(energy * scale, 0.0)
 
 
 def atmosphere_angle_from_sun_direction(direction: Vector) -> float | None:
@@ -1294,11 +1296,11 @@ def export_lights(args: argparse.Namespace, bounds: Bounds) -> list[LuzLight]:
 				blender_height = float(getattr(data, "size_y", blender_width))
 			width = blender_width * args.global_scale
 			height = blender_height * args.global_scale
-			intensity = blender_area_light_intensity(energy, blender_width, blender_height, args.light_power_scale)
+			quantity = blender_light_power(energy, args.light_power_scale)
 			log_profile(
 				args,
 				f"Light '{object_.name}' type={data.type} energy={fmt_float(energy)} "
-				f"intensity={fmt_float(intensity)} direction={fmt_vector(direction)}",
+				f"power={fmt_float(quantity)} direction={fmt_vector(direction)}",
 			)
 			lights.append(
 				LuzLight(
@@ -1309,15 +1311,16 @@ def export_lights(args: argparse.Namespace, bounds: Bounds) -> list[LuzLight]:
 					width=max(width, 1e-6),
 					height=max(height, 1e-6),
 					color=color,
-					intensity=intensity,
+					quantity=quantity,
+					unit_key="power",
 				)
 			)
 		elif data.type == "SUN":
-			intensity = max(energy * args.sun_power_scale, 0.0)
+			quantity = blender_sun_irradiance(energy, args.sun_power_scale)
 			log_profile(
 				args,
 				f"Light '{object_.name}' type={data.type} energy={fmt_float(energy)} "
-				f"intensity={fmt_float(intensity)} direction={fmt_vector(direction)}",
+				f"irradiance={fmt_float(quantity)} direction={fmt_vector(direction)}",
 			)
 			lights.append(
 				LuzLight(
@@ -1325,7 +1328,8 @@ def export_lights(args: argparse.Namespace, bounds: Bounds) -> list[LuzLight]:
 					name=name,
 					normal=direction,
 					color=color,
-					intensity=intensity,
+					quantity=quantity,
+					unit_key="irradiance",
 					atmosphere_angle=atmosphere_angle_from_sun_direction(direction),
 				)
 			)
@@ -1336,11 +1340,11 @@ def export_lights(args: argparse.Namespace, bounds: Bounds) -> list[LuzLight]:
 				1e-6,
 			)
 			radius = max(blender_radius * args.global_scale, 1e-6)
-			intensity = blender_point_light_intensity(energy, blender_radius, args.light_power_scale)
+			quantity = blender_light_power(energy, args.light_power_scale)
 			log_profile(
 				args,
 				f"Light '{object_.name}' type={data.type} energy={fmt_float(energy)} "
-				f"intensity={fmt_float(intensity)} direction={fmt_vector(direction)}",
+				f"power={fmt_float(quantity)} direction={fmt_vector(direction)}",
 			)
 			lights.append(
 				LuzLight(
@@ -1349,7 +1353,8 @@ def export_lights(args: argparse.Namespace, bounds: Bounds) -> list[LuzLight]:
 					position=position,
 					radius=radius,
 					color=color,
-					intensity=intensity,
+					quantity=quantity,
+					unit_key="power",
 				)
 			)
 
@@ -1610,19 +1615,24 @@ def write_luz_scene(
 	if materials:
 		lines.append("[materials]")
 		for material in materials.values():
-			lines.extend(
-				[
-					f"material {material.name} {{",
-					f"type={material.material_type}",
-					f"base_color={fmt_color(material.base_color)}",
-					f"metallic={fmt_float(material.metallic)}",
-					f"roughness={fmt_float(material.roughness)}",
-					f"alpha={fmt_float(material.alpha)}",
-					f"transmission={fmt_float(material.transmission)}",
-					f"emission={fmt_color(material.emission_color)}",
-					f"emissionStrength={fmt_float(material.emission_strength)}",
-				]
-			)
+			lines.extend([f"material {material.name} {{", f"type={material.material_type}"])
+			if material.material_type == "emissive":
+				lines.extend(
+					[
+						f"color={fmt_color(material.emission_color)}",
+						f"radiance={fmt_float(material.emission_strength)}",
+					]
+				)
+			else:
+				lines.extend(
+					[
+						f"base_color={fmt_color(material.base_color)}",
+						f"metallic={fmt_float(material.metallic)}",
+						f"roughness={fmt_float(material.roughness)}",
+						f"alpha={fmt_float(material.alpha)}",
+						f"transmission={fmt_float(material.transmission)}",
+					]
+				)
 			if material.texture_path:
 				lines.append(f"texture={material.texture_path}")
 			lines.append("}")
@@ -1676,7 +1686,7 @@ def write_luz_scene(
 					f"normal={fmt_vector(light.normal or Vector((0.0, -1.0, 0.0)))}",
 					f"size=({fmt_float(light.width)},{fmt_float(light.height)})",
 					f"color={fmt_color(light.color)}",
-					f"intensity={fmt_float(light.intensity)}",
+					f"{light.unit_key}={fmt_float(light.quantity)}",
 					"}",
 				]
 			)
@@ -1686,7 +1696,7 @@ def write_luz_scene(
 					f"directional_light {light.name} {{",
 					f"direction={fmt_vector(light.normal or Vector((0.0, -1.0, 0.0)))}",
 					f"color={fmt_color(light.color)}",
-					f"intensity={fmt_float(light.intensity)}",
+					f"{light.unit_key}={fmt_float(light.quantity)}",
 					"}",
 				]
 			)
@@ -1697,7 +1707,7 @@ def write_luz_scene(
 						f"position={fmt_vector(light.position or Vector((0.0, 0.0, 0.0)))}",
 					f"radius={fmt_float(light.radius)}",
 					f"color={fmt_color(light.color)}",
-					f"intensity={fmt_float(light.intensity)}",
+					f"{light.unit_key}={fmt_float(light.quantity)}",
 					"visible=0",
 					"}",
 				]

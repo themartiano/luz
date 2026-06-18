@@ -18,7 +18,7 @@ lambertian=(1.0,1.0,1.0)
 ]
 # Light sphere
 sphere=(-110,6360055.0,60),42,material[
-emissive=(1.0,1.0,0.63),5
+emissive=(5.0,5.0,3.15)
 ]
 # Metal sphere
 sphere=(150,6360075.0,-95),75,material[

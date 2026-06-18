@@ -7,8 +7,10 @@
 #include "Materials/Isotropic.hpp"
 #include "Materials/HenyeyGreenstein.hpp"
 #include "Texture.hpp"
+#include "LightUnits.hpp"
 #include "Utilities.hpp"
 #include <fstream>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <cstdio>
@@ -25,9 +27,9 @@ namespace
 		double		metallic = 0.0;
 		double		transmission = 0.0;
 		double		alpha = 1.0;
-		double		intensity = 1.0;
-		double		emissionStrength = 0.0;
 		double		anisotropy = 0.0;
+		std::optional<double>	emissionRadiance;
+		std::optional<double>	emissionLuminance;
 		std::string	texturePath;
 		bool		hasProperties = false;
 		bool		hasEmissionColor = false;
@@ -87,13 +89,14 @@ namespace
 		}
 		if (lowerLine.rfind("emissive=", 0) != std::string::npos)
 		{
-			double r, g, b, lightIntensity;
+			double r, g, b;
+			char extra;
 
-			if (sscanf(lowerLine.c_str(), "emissive=(%lf,%lf,%lf),%lf", &r, &g, &b, &lightIntensity) != 4)
+			if (sscanf(lowerLine.c_str(), "emissive=(%lf,%lf,%lf)%c", &r, &g, &b, &extra) != 3)
 			{
 				throw std::runtime_error("Invalid emissive material: " + line);
 			}
-			material = std::make_shared<Emissive>(Color(r, g, b), lightIntensity);
+			material = std::make_shared<Emissive>(Color(r, g, b));
 			return (true);
 		}
 		if (lowerLine.rfind("isotropic=", 0) != std::string::npos)
@@ -126,13 +129,33 @@ namespace
 		return (false);
 	}
 
-	bool	colorHasEnergy(const Color& color)
+	void	assignSingleEmissionQuantity(
+		std::optional<double>& destination,
+		const std::string& value,
+		const MaterialBuilder& builder
+	)
 	{
-		return (
-			color.getRed() > 0.0
-			|| color.getGreen() > 0.0
-			|| color.getBlue() > 0.0
-		);
+		if (builder.emissionRadiance || builder.emissionLuminance)
+		{
+			throw std::runtime_error("Material block defines multiple emission unit quantities.");
+		}
+		destination = std::stod(value);
+	}
+
+	std::shared_ptr<Material>	buildEmissiveMaterial(
+		const Color& color,
+		const MaterialBuilder& builder
+	)
+	{
+		if (builder.emissionRadiance)
+		{
+			return (std::make_shared<Emissive>(Emissive::fromRadiance(color, *builder.emissionRadiance)));
+		}
+		if (builder.emissionLuminance)
+		{
+			return (std::make_shared<Emissive>(Emissive::fromLuminance(color, *builder.emissionLuminance)));
+		}
+		return (std::make_shared<Emissive>(color));
 	}
 
 	void	parseMaterialProperty(MaterialBuilder& builder, const std::string& line)
@@ -183,13 +206,26 @@ namespace
 		{
 			builder.alpha = std::stod(value);
 		}
-		else if (key == "intensity")
+		else if (
+			key == "radiance"
+			|| key == "surfaceradiance"
+			|| key == "surface_radiance"
+			|| key == "emissionradiance"
+			|| key == "emission_radiance"
+		)
 		{
-			builder.intensity = std::stod(value);
+			assignSingleEmissionQuantity(builder.emissionRadiance, value, builder);
 		}
-		else if (key == "emissionstrength" || key == "emission_strength")
+		else if (
+			key == "luminance"
+			|| key == "nits"
+			|| key == "cd_m2"
+			|| key == "cdm2"
+			|| key == "emissionluminance"
+			|| key == "emission_luminance"
+		)
 		{
-			builder.emissionStrength = std::stod(value);
+			assignSingleEmissionQuantity(builder.emissionLuminance, value, builder);
 		}
 		else if (key == "anisotropy" || key == "g")
 		{
@@ -238,11 +274,6 @@ namespace
 		std::string type = builder.type.empty() ? "lambertian" : builder.type;
 		if (type == "principled")
 		{
-			const Color emissionColor = builder.hasEmissionColor ? builder.emissionColor : builder.color;
-			if (builder.emissionStrength > 0.0 && colorHasEnergy(emissionColor))
-			{
-				return (std::make_shared<Emissive>(emissionColor, builder.emissionStrength));
-			}
 			if (builder.transmission > 0.0 || builder.alpha < 1.0)
 			{
 				std::shared_ptr<Material> material = std::make_shared<Dielectric>(builder.color);
@@ -279,9 +310,9 @@ namespace
 		}
 		if (type == "emissive")
 		{
-			return (std::make_shared<Emissive>(
+			return (buildEmissiveMaterial(
 				builder.hasEmissionColor ? builder.emissionColor : builder.color,
-				builder.emissionStrength > 0.0 ? builder.emissionStrength : builder.intensity
+				builder
 			));
 		}
 		if (type == "isotropic")

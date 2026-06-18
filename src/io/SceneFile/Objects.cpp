@@ -13,6 +13,8 @@
 #include "Materials/Lambertian.hpp"
 #include "Materials/Isotropic.hpp"
 #include "Materials/HenyeyGreenstein.hpp"
+#include "LightUnits.hpp"
+#include "Defaults.hpp"
 #include <algorithm>
 #include <cmath>
 #include <condition_variable>
@@ -22,6 +24,7 @@
 #include <functional>
 #include <future>
 #include <mutex>
+#include <optional>
 #include <queue>
 #include <stdexcept>
 #include <memory>
@@ -277,6 +280,16 @@ namespace
 		std::shared_ptr<Material>	material = std::make_shared<Lambertian>(Color(0.6, 0.6, 0.6));
 	};
 
+	struct PhysicalLightUnits
+	{
+		std::optional<double>	radiance;
+		std::optional<double>	luminance;
+		std::optional<double>	radiantPower;
+		std::optional<double>	luminousFlux;
+		std::optional<double>	irradiance;
+		std::optional<double>	illuminance;
+	};
+
 	struct AreaLightBlock
 	{
 		Vector3	position = Vector3(0.0, 0.0, 0.0);
@@ -284,7 +297,7 @@ namespace
 		double	width = 1.0;
 		double	height = 1.0;
 		Color	color = Color(1.0, 1.0, 1.0);
-		double	intensity = 1.0;
+		PhysicalLightUnits	units;
 	};
 
 	struct SphereLightBlock
@@ -292,8 +305,8 @@ namespace
 		Vector3	position = Vector3(0.0, 0.0, 0.0);
 		double	radius = 0.1;
 		Color	color = Color(1.0, 1.0, 1.0);
-		double	intensity = 1.0;
 		bool	visible = true;
+		PhysicalLightUnits	units;
 	};
 
 	struct SphereBlock
@@ -309,7 +322,7 @@ namespace
 	{
 		Vector3	direction = Vector3(0.0, -1.0, 0.0);
 		Color	color = Color(1.0, 1.0, 1.0);
-		double	intensity = 1.0;
+		PhysicalLightUnits	units;
 	};
 
 	struct VolumeBlock
@@ -330,6 +343,107 @@ namespace
 		{
 			throw std::runtime_error(description + " must be finite and positive.");
 		}
+	}
+
+	bool	hasPhysicalLightUnit(const PhysicalLightUnits& units)
+	{
+		return (
+			units.radiance
+			|| units.luminance
+			|| units.radiantPower
+			|| units.luminousFlux
+			|| units.irradiance
+			|| units.illuminance
+		);
+	}
+
+	void	assignPhysicalLightUnit(std::optional<double>& destination, PhysicalLightUnits& units, const std::string& value)
+	{
+		if (hasPhysicalLightUnit(units))
+		{
+			throw std::runtime_error("Light block defines multiple physical light quantities.");
+		}
+		destination = std::stod(value);
+	}
+
+	bool	parseSurfaceLightUnit(PhysicalLightUnits& units, const std::string& key, const std::string& value)
+	{
+		if (key == "radiance" || key == "surface_radiance" || key == "surfaceradiance")
+		{
+			assignPhysicalLightUnit(units.radiance, units, value);
+			return (true);
+		}
+		if (key == "luminance" || key == "nits" || key == "cd_m2" || key == "cdm2")
+		{
+			assignPhysicalLightUnit(units.luminance, units, value);
+			return (true);
+		}
+		if (key == "power" || key == "watts" || key == "radiant_power" || key == "radiantpower")
+		{
+			assignPhysicalLightUnit(units.radiantPower, units, value);
+			return (true);
+		}
+		if (
+			key == "lumens"
+			|| key == "lumen"
+			|| key == "lm"
+			|| key == "luminous_flux"
+			|| key == "luminousflux"
+		)
+		{
+			assignPhysicalLightUnit(units.luminousFlux, units, value);
+			return (true);
+		}
+		return (false);
+	}
+
+	bool	parseDirectionalLightUnit(PhysicalLightUnits& units, const std::string& key, const std::string& value)
+	{
+		if (key == "irradiance" || key == "w_m2" || key == "wm2")
+		{
+			assignPhysicalLightUnit(units.irradiance, units, value);
+			return (true);
+		}
+		if (key == "illuminance" || key == "lux" || key == "lx")
+		{
+			assignPhysicalLightUnit(units.illuminance, units, value);
+			return (true);
+		}
+		return (false);
+	}
+
+	Color	surfaceLightEmission(Color color, const PhysicalLightUnits& units, double area)
+	{
+		if (units.radiance)
+		{
+			return (LightUnits::surfaceRadiance(color, *units.radiance));
+		}
+		if (units.luminance)
+		{
+			return (LightUnits::surfaceLuminance(color, *units.luminance));
+		}
+		if (units.radiantPower)
+		{
+			return (LightUnits::surfaceRadiantPower(color, *units.radiantPower, area));
+		}
+		if (units.luminousFlux)
+		{
+			return (LightUnits::surfaceLuminousFlux(color, *units.luminousFlux, area));
+		}
+		throw std::runtime_error("Surface light must define radiance, luminance, power, or lumens.");
+	}
+
+	Color	directionalLightEmission(Color color, const PhysicalLightUnits& units)
+	{
+		if (units.irradiance)
+		{
+			return (LightUnits::directionalIrradiance(color, *units.irradiance));
+		}
+		if (units.illuminance)
+		{
+			return (LightUnits::directionalIlluminance(color, *units.illuminance));
+		}
+		throw std::runtime_error("Directional light must define irradiance or illuminance.");
 	}
 
 	SphereUVProjection	parseSphereUVProjection(const std::string& value)
@@ -581,7 +695,9 @@ namespace
 					Transform(light.position, light.normal, Vector3(1.0, 1.0, 1.0)),
 					light.width,
 					light.height,
-					std::make_shared<Emissive>(light.color, light.intensity)
+					std::make_shared<Emissive>(
+						surfaceLightEmission(light.color, light.units, light.width * light.height)
+					)
 				));
 				return;
 			}
@@ -619,9 +735,9 @@ namespace
 			{
 				light.color = SceneFile::internal::_parseColorValue(value, key);
 			}
-			else if (key == "intensity")
+			else if (parseSurfaceLightUnit(light.units, key, value))
 			{
-				light.intensity = std::stod(value);
+				continue;
 			}
 			else
 			{
@@ -656,7 +772,13 @@ namespace
 				scene.addHittable(std::make_shared<Sphere>(
 					light.position,
 					light.radius,
-					std::make_shared<Emissive>(light.color, light.intensity),
+					std::make_shared<Emissive>(
+						surfaceLightEmission(
+							light.color,
+							light.units,
+							4.0 * D_PI * light.radius * light.radius
+						)
+					),
 					light.visible
 				));
 				return;
@@ -681,9 +803,9 @@ namespace
 			{
 				light.color = SceneFile::internal::_parseColorValue(value, key);
 			}
-			else if (key == "intensity")
+			else if (parseSurfaceLightUnit(light.units, key, value))
 			{
-				light.intensity = std::stod(value);
+				continue;
 			}
 			else if (key == "visible")
 			{
@@ -727,7 +849,9 @@ namespace
 
 				scene.addHittable(std::make_shared<DirectionalLight>(
 					light.direction,
-					std::make_shared<Emissive>(light.color, light.intensity)
+					std::make_shared<Emissive>(
+						directionalLightEmission(light.color, light.units)
+					)
 				));
 				return;
 			}
@@ -747,9 +871,9 @@ namespace
 			{
 				light.color = SceneFile::internal::_parseColorValue(value, key);
 			}
-			else if (key == "intensity")
+			else if (parseDirectionalLightUnit(light.units, key, value))
 			{
-				light.intensity = std::stod(value);
+				continue;
 			}
 			else
 			{

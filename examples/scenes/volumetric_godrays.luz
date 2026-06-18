@@ -29,13 +29,13 @@ focusDistance=8.4
 directional_light low_sun {
 direction=(0.16,-0.14,-1.0)
 color=(1.0,0.82,0.58)
-intensity=2.5
+irradiance=2.5
 }
 sphere_light cool_fill {
 position=(-3.6,2.3,-2.2)
 radius=0.2
 color=(0.42,0.55,1.0)
-intensity=1.8
+radiance=1.8
 visible=0
 }
 volume stage_mist {
@@ -54,7 +54,7 @@ rectangle=(0,6.2,-1.0),(0,-1,0),10,14,material[
 lambertian=(0.12,0.13,0.15)
 ]
 rectangle=(0,3.0,5.8),(0,0,-1),8.8,4.4,material[
-emissive=(1.0,0.78,0.48),3.2
+emissive=(3.2,2.496,1.536)
 ]
 cube=(-2.9,2.05,2.0),(0,0,-1),0.34,4.1,0.72,material[
 lambertian=(0.08,0.075,0.07)

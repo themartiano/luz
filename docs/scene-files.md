@@ -46,8 +46,8 @@ The parser is intentionally strict: unknown lines and malformed values throw an 
 | `environment` | `environment=PATH[,STRENGTH[,ROTATION_DEGREES]]` | Equirectangular environment map used when `sky=environment`. `environment=...` also enables `sky=environment`. Aliases: `environmentmap`, `environment_map`, `backgroundimage`, `background_image`. |
 | `environmentstrength` | `environmentstrength=F` | Multiplies environment radiance. Defaults to `1.0`. Aliases: `environment_strength`, `worldstrength`, `world_strength`. |
 | `environmentrotation` | `environmentrotation=DEGREES` | Offsets the equirectangular U coordinate around world Y. Defaults to `0`. Aliases: `environment_rotation`, `worldrotation`, `world_rotation`. |
-| `atmosphere` | `atmosphere=SUN,EARTH_RADIUS,ATMOSPHERE_RADIUS,HR,HM,SAMPLES,LIGHT_SAMPLES,STARS` | Only valid after `sky=atmosphere`. `SUN` is the legacy fallback sun angle. If the scene has a `directional_light`, the first one drives atmosphere sun direction and radiance instead. |
-| `atmosphere_sun_scale` | `atmosphere_sun_scale=F` | Multiplies atmosphere sun radiance after it is sourced from the first `directional_light`, or from the legacy fallback when no directional light exists. Defaults to `1.0`. Aliases: `atmospheresunscale`, `atmosphere_sun_multiplier`, `atmospheresunmultiplier`. |
+| `atmosphere` | `atmosphere=SUN,EARTH_RADIUS,ATMOSPHERE_RADIUS,HR,HM,SAMPLES,LIGHT_SAMPLES,STARS` | Only valid after `sky=atmosphere`. `SUN` is a fallback sun angle. If the scene has a `directional_light`, the first one drives atmosphere sun direction and radiance instead. |
+| `atmosphere_sun_scale` | `atmosphere_sun_scale=F` | Multiplies atmosphere sun radiance after it is sourced from the first `directional_light`, or from the fallback atmosphere sun when no directional light exists. Defaults to `1.0`. Aliases: `atmospheresunscale`, `atmosphere_sun_multiplier`, `atmospheresunmultiplier`. |
 | `distanceblueness` | `distanceblueness=0` or `distanceblueness=1` | Enables distance blue tinting when set to `1`. |
 
 ### Adaptive Sampling Notes
@@ -155,12 +155,12 @@ position=(-2.5,11.0,1.5)
 normal=(0,-1,0)
 size=(10,8)
 color=(1.0,0.86,0.62)
-intensity=3.5
+lumens=12000
 }
 directional_light sun {
 direction=(0,-1,0)
 color=(1.0,0.95,0.8)
-intensity=1.0
+illuminance=110000
 }
 volume room_fog {
 shape=box
@@ -174,7 +174,7 @@ point_light fill {
 position=(3,4,5)
 radius=0.1
 color=(0.45,0.55,1.0)
-intensity=1.0
+lumens=500
 visible=0
 }
 ```
@@ -265,11 +265,13 @@ Each material block must define exactly one material:
 | Lambertian | `lambertian=(r,g,b)` |
 | Metal | `metal=(r,g,b),reflectionFuzziness` |
 | Dielectric | `dielectric=(r,g,b)` |
-| Emissive | `emissive=(r,g,b),lightIntensity` |
+| Emissive | `emissive=(r,g,b)` |
 | Isotropic phase | `isotropic=(r,g,b)` |
 | Henyey-Greenstein phase | `henyey_greenstein=(r,g,b),anisotropy` |
 
-Color channels are floating point values. The renderer normally expects values in the `0.0` to `1.0` range, although emissive intensity is separate.
+Color channels are floating point values. Non-emissive material colors normally
+use the `0.0` to `1.0` range. Emissive direct material colors are emitted
+surface radiance RGB values.
 
 Named material blocks can use the direct material lines above, or property syntax:
 
@@ -285,8 +287,11 @@ base_color=(0.8,0.2,0.1)
 texture=textures/albedo.ppm
 metallic=0
 roughness=0.5
-emission=(1.0,0.6,0.3)
-emissionStrength=0
+}
+material measured_panel {
+type=emissive
+color=(1.0,0.86,0.62)
+luminance=1200
 }
 material warm_fog {
 type=phase
@@ -303,14 +308,23 @@ the current working directory, then under common asset directories including
 texture files. Textures are sampled with OBJ UV coordinates and multiplied by
 the material's base color.
 
-`type=principled` is an approximation for Blender exporter output. Emissive
-principled materials become `emissive`, metallic materials become `metal`,
-transmissive or alpha-blended materials become `dielectric`, and the rest use
-Luz's rough plastic/specular `principled` approximation.
+`type=principled` is an approximation for Blender exporter output. Exporters
+should write emissive Blender materials as `type=emissive`; metallic materials
+become `metal`, transmissive or alpha-blended materials become `dielectric`, and
+the rest use Luz's rough plastic/specular `principled` approximation.
 
 `type=isotropic` and `type=phase`/`type=henyey_greenstein` are intended for
 volume blocks. A positive Henyey-Greenstein anisotropy favors forward scattering,
 which is the useful control for fog shafts and godrays.
+
+Emissive material property blocks use `color` as emitted radiance RGB when no
+scalar unit property is present. To use scalar units with `color` as
+chromaticity, use exactly one of:
+
+| Property | Meaning |
+| --- | --- |
+| `radiance=F` | Surface radiance in renderer radiance units, normalized so `luminance(color * scale) == F`. Aliases: `surface_radiance`, `emission_radiance`. |
+| `luminance=F` | Surface luminance in cd/m^2, converted with 683 lm/W. Alias: `nits`. |
 
 ## Named Meshes, Objects, And Lights
 
@@ -340,14 +354,27 @@ material=matte_red
 ```
 
 `area_light` creates an emissive rectangle and supports arbitrary normals.
+Light blocks must define exactly one unit property:
+
+| Light | Unit properties |
+| --- | --- |
+| `area_light` | `radiance`, `luminance`/`nits`, `power`/`watts`, `lumens`/`luminous_flux` |
+| `point_light`, `sphere_light` | `radiance`, `luminance`/`nits`, `power`/`watts`, `lumens`/`luminous_flux` |
+| `directional_light` | `irradiance`/`w_m2`, `illuminance`/`lux` |
+
+For Lambertian surface emitters, `power` is converted to radiance with
+`power / (pi * area)`. For sphere and point lights, `area` is `4 * pi * r^2`.
+`lumens` is converted through luminance using 683 lm/W. RGB color is treated as
+chromaticity for physical unit properties; zero-luminance colors are rejected.
+
 `directional_light` creates an infinite light whose `direction` is the direction
 light travels, suitable for sun lights. When `sky=atmosphere`, the first
 `directional_light` is also the atmosphere sun source: its opposite direction is
-used for scattering rays toward the sun, and its emitted color and `intensity`
-set the atmosphere sun radiance. Use `atmosphere_sun_scale` only when you need
-an artistic atmosphere-only multiplier.
+used for scattering rays toward the sun, and its emitted light value sets the
+atmosphere sun radiance. Use `atmosphere_sun_scale` only when you need an
+artistic atmosphere-only multiplier.
 If no directional light exists, the first `atmosphere=` value is used as the
-legacy vertical sun-angle fallback with the legacy atmosphere radiance.
+vertical sun-angle fallback with the atmosphere fallback radiance.
 `point_light` and `sphere_light` create emissive spheres. These lights are still
 sampled through Luz's emissive-hittable lighting path. Sphere and point lights
 also accept `visible=0` to hide the light surface from camera and shadow rays

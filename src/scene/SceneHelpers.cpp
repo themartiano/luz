@@ -37,7 +37,7 @@ namespace
 			Transform(Vector3(0.0, 6.0, 1.0), Vector3(0.0, -1.0, 0.0), Vector3(1.0, 1.0, 1.0)),
 			5.0,
 			5.0,
-			std::make_shared<Emissive>(Color(1.0, 0.9, 0.72), 12.0)
+			std::make_shared<Emissive>(Color(1.0, 0.9, 0.72) * 12.0)
 		));
 	}
 
@@ -221,7 +221,7 @@ namespace
 			Transform(Vector3(0.0, 2.8, 1.4), Vector3(0.0, -1.0, 0.0), Vector3(1.0, 1.0, 1.0)),
 			4.5,
 			2.5,
-			std::make_shared<Emissive>(Color(1.0, 0.93, 0.72), 24.0)
+			std::make_shared<Emissive>(Color(1.0, 0.93, 0.72) * 24.0)
 		));
 	}
 
@@ -237,7 +237,7 @@ namespace
 		scene.addHittable(std::make_shared<Sphere>(
 			Vector3(-110.0, 6360055.0, 60.0),
 			42.0,
-			std::make_shared<Emissive>(Color(1.0, 1.0, 0.63), 5.0)
+			std::make_shared<Emissive>(Color(1.0, 1.0, 0.63) * 5.0)
 		));
 		scene.addHittable(std::make_shared<Sphere>(
 			Vector3(150.0, 6360075.0, -95.0),
@@ -257,23 +257,23 @@ namespace
 			Transform(Vector3(0.0, 5.1, 1.2), Vector3(0.0, -1.0, 0.0), Vector3(1.0, 1.0, 1.0)),
 			3.4,
 			2.2,
-			std::make_shared<Emissive>(Color(1.0, 0.86, 0.62), 9.0)
+			std::make_shared<Emissive>(Color(1.0, 0.86, 0.62) * 9.0)
 		));
 		scene.addHittable(std::make_shared<Rectangle>(
 			Transform(Vector3(-4.7, 2.7, 2.8), Vector3(1.0, 0.0, 0.0), Vector3(1.0, 1.0, 1.0)),
 			2.6,
 			2.8,
-			std::make_shared<Emissive>(Color(0.45, 0.62, 1.0), 3.5)
+			std::make_shared<Emissive>(Color(0.45, 0.62, 1.0) * 3.5)
 		));
 		scene.addHittable(std::make_shared<Sphere>(
 			Vector3(-1.75, 1.2, -0.3),
 			0.12,
-			std::make_shared<Emissive>(Color(1.0, 0.35, 0.24), 10.0)
+			std::make_shared<Emissive>(Color(1.0, 0.35, 0.24) * 10.0)
 		));
 		scene.addHittable(std::make_shared<Sphere>(
 			Vector3(2.1, 1.0, 2.4),
 			0.16,
-			std::make_shared<Emissive>(Color(0.34, 0.9, 1.0), 7.0)
+			std::make_shared<Emissive>(Color(0.34, 0.9, 1.0) * 7.0)
 		));
 
 		scene.addHittable(std::make_shared<Sphere>(
@@ -300,7 +300,7 @@ namespace
 		scene.addCamera(Camera(Vector3(0.0, 2.2, -6.6), Vector3(0.0, -0.16, 1.0), 48.0, 0.0, 7.0));
 		addBenchmarkBackdrop(scene);
 
-		const auto meshLight = std::make_shared<Emissive>(Color(1.0, 0.74, 0.38), 7.5);
+		const auto meshLight = std::make_shared<Emissive>(Color(1.0, 0.74, 0.38) * 7.5);
 		std::vector<std::shared_ptr<Hittable>> lightTriangles;
 
 		lightTriangles.push_back(std::make_shared<Triangle>(
@@ -324,12 +324,12 @@ namespace
 			Vector3(-2.6, 0.12, 2.8),
 			Vector3(-1.7, 1.55, 2.4),
 			Vector3(-1.1, 0.12, 3.6),
-			std::make_shared<Emissive>(Color(0.38, 0.78, 1.0), 4.2)
+			std::make_shared<Emissive>(Color(0.38, 0.78, 1.0) * 4.2)
 		));
 		scene.addHittable(std::make_shared<Sphere>(
 			Vector3(2.15, 0.45, 2.0),
 			0.45,
-			std::make_shared<Emissive>(Color(1.0, 0.28, 0.48), 4.8)
+			std::make_shared<Emissive>(Color(1.0, 0.28, 0.48) * 4.8)
 		));
 
 		scene.addHittable(std::make_shared<Sphere>(
@@ -365,7 +365,7 @@ namespace
 			Transform(Vector3(0.0, 4.8, 1.2), Vector3(0.0, -1.0, 0.0), Vector3(1.0, 1.0, 1.0)),
 			3.2,
 			2.2,
-			std::make_shared<Emissive>(Color(1.0, 0.88, 0.7), 8.0)
+			std::make_shared<Emissive>(Color(1.0, 0.88, 0.7) * 8.0)
 		));
 		scene.addHittable(std::make_shared<Cube>(
 			Transform(Vector3(-2.0, 0.55, 1.7), Vector3(0.0, 0.0, -1.0), Vector3(1.0, 1.0, 1.0)),
@@ -408,12 +408,12 @@ namespace
 			Transform(Vector3(0.0, 5.1, 1.0), Vector3(0.0, -1.0, 0.0), Vector3(1.0, 1.0, 1.0)),
 			3.6,
 			2.4,
-			std::make_shared<Emissive>(Color(1.0, 0.86, 0.68), 9.5)
+			std::make_shared<Emissive>(Color(1.0, 0.86, 0.68) * 9.5)
 		));
 		scene.addHittable(std::make_shared<Sphere>(
 			Vector3(2.4, 1.8, 4.5),
 			0.22,
-			std::make_shared<Emissive>(Color(0.55, 0.72, 1.0), 12.0)
+			std::make_shared<Emissive>(Color(0.55, 0.72, 1.0) * 12.0)
 		));
 
 		const auto glassBoundary = std::make_shared<Sphere>(
@@ -473,7 +473,7 @@ namespace
 			Transform(Vector3(0.0, 5.0, 1.2), Vector3(0.0, -1.0, 0.0), Vector3(1.0, 1.0, 1.0)),
 			3.4,
 			2.0,
-			std::make_shared<Emissive>(Color(1.0, 0.9, 0.74), 9.5)
+			std::make_shared<Emissive>(Color(1.0, 0.9, 0.74) * 9.5)
 		));
 
 		ObjReadOptions options;
@@ -533,7 +533,7 @@ void	SceneHelpers::cornellBox(Scene& scene, bool cubes)
 	scene.addHittable(std::make_shared<Rectangle>(
 		Transform(Vector3(0.0, 550.0, 0.0), Vector3(0.0, -1.0, 0.0), Vector3(1.0, 1.0, 1.0)),
 		130.0, 105.0,
-		std::make_shared<Emissive>(Color(1.0, 0.84, 0.43), 29.73)
+		std::make_shared<Emissive>(Color(1.0, 0.84, 0.43) * 29.73)
 	));
 
 	// Back wall

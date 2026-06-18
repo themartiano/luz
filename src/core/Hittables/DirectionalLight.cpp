@@ -19,7 +19,7 @@ namespace
 DirectionalLight::DirectionalLight(void)
 {
 	this->_direction = Vector3(0.0, -1.0, 0.0);
-	this->_material = std::make_shared<Emissive>(Color(1.0, 1.0, 1.0), 1.0);
+	this->_material = std::make_shared<Emissive>(Color(1.0, 1.0, 1.0));
 }
 
 DirectionalLight::DirectionalLight(Vector3 direction, std::shared_ptr<Material> material)
