@@ -517,6 +517,14 @@ namespace
 		throw std::runtime_error("Unknown volume shape: " + volume.shape);
 	}
 
+	double	sceneVolumeDensity(const Scene& scene, double density, const std::string& volumeName)
+	{
+		requirePositiveFinite(density, "Volume '" + volumeName + "' density");
+		const double sceneDensity = density * scene.getMetersPerUnit();
+		requirePositiveFinite(sceneDensity, "Volume '" + volumeName + "' scene-unit density");
+		return (sceneDensity);
+	}
+
 	void	addObjectBlock(Scene& scene, std::ifstream& stream, SceneFile::internal::SceneFileContext& context, const std::string& objectName)
 	{
 		std::string line;
@@ -904,11 +912,10 @@ namespace
 			}
 			if (blockLine == "}")
 			{
-				requirePositiveFinite(volume.density, "Volume '" + volumeName + "' density");
 				scene.addHittable(std::make_shared<ConstantVolume>(
 					buildVolumeBoundary(volume, volumeName),
 					buildVolumePhaseFunction(volume),
-					volume.density
+					sceneVolumeDensity(scene, volume.density, volumeName)
 				));
 				return;
 			}

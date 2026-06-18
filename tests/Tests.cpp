@@ -1879,6 +1879,35 @@ namespace
 		std::filesystem::remove(scenePath);
 	}
 
+	void	testSceneFileMetersPerUnitScalesVolumeDensity(void)
+	{
+		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_volume_density_scale_test.luz";
+		{
+			std::ofstream sceneStream(scenePath);
+			sceneStream
+				<< "[settings]\n"
+				<< "meters_per_unit=0.5\n\n"
+				<< "[scene]\n"
+				<< "volume mist {\n"
+				<< "shape=sphere\n"
+				<< "position=(0,0,0)\n"
+				<< "radius=2\n"
+				<< "density=2\n"
+				<< "color=(1,1,1)\n"
+				<< "}\n";
+		}
+
+		Scene scene;
+		SceneFile::read(scene, scenePath.string());
+
+		require(scene.getHittables().size() == 1, "Scaled volume scene did not load one hittable.");
+		auto volume = std::dynamic_pointer_cast<ConstantVolume>(scene.getHittables()[0]);
+		require(volume != nullptr, "Scaled volume block did not create a ConstantVolume.");
+		requireNear(volume->getDensity(), 1.0, "Volume density did not convert from inverse meters to inverse scene units.");
+
+		std::filesystem::remove(scenePath);
+	}
+
 	void	testSceneFileLoadsNonMetallicPrincipledMaterial(void)
 	{
 		const std::filesystem::path directory = std::filesystem::temp_directory_path();
@@ -3233,6 +3262,7 @@ int	main(void)
 		testDielectricBeerLambertAbsorption();
 		testSceneFileLoadsNamedTexturedSphere();
 		testSceneFileLoadsVolumeBlock();
+		testSceneFileMetersPerUnitScalesVolumeDensity();
 		testSceneFileLoadsNonMetallicPrincipledMaterial();
 		testSceneFileRejectsInvalidMaterial();
 		testBVHReturnsClosestHit();

@@ -238,7 +238,7 @@ also add a normal object using the same shape.
 | `position` | `position=(x,y,z)` | Center of the volume. Alias: `center`. |
 | `size` | `size=(width,height,depth)` | Box dimensions. Alias: `dimensions`; `width`, `height`, and `depth` are also accepted. |
 | `radius` | `radius=R` | Sphere radius. |
-| `density` | `density=F` | Extinction density. Higher values create thicker fog. Aliases: `extinction`, `sigma_t`. |
+| `density` | `density=F` | Extinction density in `1/m`; Luz converts it through `meters_per_unit` for sampling. Higher values create thicker fog. Aliases: `extinction`, `sigma_t`. |
 | `color` | `color=(r,g,b)` | Scattering albedo/tint when no named phase material is used. Aliases: `albedo`, `scattering_color`. |
 | `anisotropy` | `anisotropy=G` | Henyey-Greenstein phase parameter in `[-0.99,0.99]`. Positive values create forward-scattering godrays; `0` uses isotropic scattering. Alias: `g`. |
 | `material` | `material=name` | Optional named phase material from `[materials]`. |
