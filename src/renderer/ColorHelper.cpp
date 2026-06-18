@@ -296,10 +296,68 @@ namespace
 	bool	hasEnvironmentLight(Scene& scene)
 	{
 		return (
-			scene.getRenderSky() == SKY_ENVIRONMENT
-			&& scene.hasEnvironmentMap()
+			scene.hasEnvironmentMap()
+			&& scene.getEnvironmentLighting()
 			&& scene.getEnvironmentStrength() > 0.0
 		);
+	}
+
+	bool	hasVisibleEnvironment(Scene& scene)
+	{
+		return (scene.hasEnvironmentMap() && scene.getEnvironmentStrength() > 0.0);
+	}
+
+	Color	sampleEnvironmentRadiance(Scene& scene, const Vector3& direction)
+	{
+		if (!hasVisibleEnvironment(scene))
+		{
+			return (Color(0.0, 0.0, 0.0));
+		}
+		return (
+			scene.getEnvironmentMap()->sampleDirection(
+				direction,
+				scene.getEnvironmentRotation()
+			) * scene.getEnvironmentStrength()
+		);
+	}
+
+	Color	sampleProceduralStars(const Atmosphere& atmosphere, const Color& atmosphereColor)
+	{
+		double random = Sampler::sample1D(Sampler::DIM_ATMOSPHERE);
+		if (random < 0.9996)
+		{
+			return (Color(0.0, 0.0, 0.0));
+		}
+
+		double starSample = Sampler::sample1D(Sampler::DIM_ATMOSPHERE + 1);
+		double diff = (atmosphere.getStarsBrightness() - 0.2 + (0.4 * starSample))
+			- ((atmosphereColor.getRed() + atmosphereColor.getGreen() + atmosphereColor.getBlue()) / 3.0);
+		if (diff < 0.0)
+		{
+			diff = 0.0;
+		}
+		else if (diff > 1.0)
+		{
+			diff = 1.0;
+		}
+		return (Color(diff, diff, diff));
+	}
+
+	Color	sampleAtmosphereSky(Scene& scene, Ray& ray, double environmentMISWeight)
+	{
+		const Atmosphere& atmosphere = scene.getAtmosphere();
+		const AtmosphereSample atmosphereSample = atmosphere.sampleSegment(ray, T_MAX);
+		Color background(0.0, 0.0, 0.0);
+
+		if (hasVisibleEnvironment(scene))
+		{
+			background = sampleEnvironmentRadiance(scene, ray.getDirection()) * environmentMISWeight;
+		}
+		else
+		{
+			background = sampleProceduralStars(atmosphere, atmosphereSample.inScattering);
+		}
+		return (atmosphereSample.inScattering + (atmosphereSample.transmittance * background));
 	}
 
 	Color	sampleSceneSky(Scene& scene, Ray& ray)
@@ -307,19 +365,12 @@ namespace
 		switch(scene.getRenderSky())
 		{
 			case (SKY_ATMOSPHERE):
-				return (Renderer::internal::_computeAtmosphereColor(scene, ray));
+				return (sampleAtmosphereSky(scene, ray, 1.0));
 			case (SKY_LINEAR):
 				return (Renderer::internal::_calculateSkyInterpolation(scene, ray));
 			case (SKY_ENVIRONMENT):
-				if (scene.hasEnvironmentMap())
-				{
-					return (
-						scene.getEnvironmentMap()->sampleDirection(
-							ray.getDirection(),
-							scene.getEnvironmentRotation()
-						) * scene.getEnvironmentStrength()
-					);
-				}
+				if (hasVisibleEnvironment(scene))
+					return (sampleEnvironmentRadiance(scene, ray.getDirection()));
 				return (scene.getBackgroundColor());
 			default:
 				return (scene.getBackgroundColor());
@@ -812,17 +863,37 @@ namespace
 				{
 					*primaryFeatures = primaryMissFeatures(scene, *renderCamera, currentRay, x, y);
 				}
-				const Color	skyColor = sampleSceneSky(scene, currentRay);
-				double skyMISWeight = 1.0;
-				if (skyType == SKY_ENVIRONMENT && bounces > 0 && !previousBounceSpecular && environmentLight)
+				double environmentMISWeight = 1.0;
+				if (
+					(skyType == SKY_ENVIRONMENT || skyType == SKY_ATMOSPHERE)
+					&& bounces > 0
+					&& !previousBounceSpecular
+					&& environmentLight
+				)
 				{
-					skyMISWeight = powerHeuristic(
+					environmentMISWeight = powerHeuristic(
 						previousScatterPDF,
 						environmentPDF(scene, currentRay.getDirection())
 					);
 				}
+				Color skyColor(0.0, 0.0, 0.0);
+				switch (skyType)
+				{
+					case SKY_ATMOSPHERE:
+						skyColor = sampleAtmosphereSky(scene, currentRay, environmentMISWeight);
+						break;
+					case SKY_ENVIRONMENT:
+						skyColor = sampleSceneSky(scene, currentRay) * environmentMISWeight;
+						break;
+					case SKY_LINEAR:
+						skyColor = Renderer::internal::_calculateSkyInterpolation(scene, currentRay);
+						break;
+					default:
+						skyColor = scene.getBackgroundColor();
+						break;
+				}
 
-				return (accumulatedColor + clampRayColor(throughput * skyColor * skyMISWeight));
+				return (accumulatedColor + clampRayColor(throughput * skyColor));
 			}
 			if (bounces == 0 && primaryFeatures != nullptr && renderCamera != nullptr)
 			{

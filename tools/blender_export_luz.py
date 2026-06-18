@@ -1609,12 +1609,12 @@ def write_luz_scene(
 			f"atmosphere={fmt_float(exported_atmosphere_angle(lights))},"
 			"6360000,6420000,7994,1200,16,8,0.5"
 		)
-	if sky == "environment" and environment is not None:
+	if environment is not None:
 		lines.append(
 			f"environment={environment.path},"
-			f"{fmt_float(environment.strength)},"
 			f"{fmt_float(environment.rotation)}"
 		)
+		lines.append(f"environment_scale={fmt_float(environment.strength)}")
 	lines.extend(
 		[
 			f"background={fmt_color(background_color)}",

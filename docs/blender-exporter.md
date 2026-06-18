@@ -71,9 +71,11 @@ The exporter also works without passing the `.blend` file before `--python`:
   overrides the sky mode. Light Path mixes that separate camera rays from
   non-camera rays are handled for the camera background only.
 - Blender World Environment Texture nodes connected to Background Color are
-  exported as `sky=environment` plus `environment=...`. External `.hdr` and
-  `.pic` files are copied through as HDR environment maps; generated, packed, or
-  non-HDR environment images are exported as PPM.
+  exported as `environment=PATH,ROTATION` plus `environment_scale=STRENGTH`.
+  External `.hdr` and `.pic` files are copied through as HDR environment maps;
+  generated, packed, or non-HDR environment images are exported as PPM. If
+  `--sky atmosphere` is used, the HDRI is still exported and lights the scene
+  behind the atmospheric sky.
 - The active camera is exported as a Luz camera block.
 - Blender camera roll is preserved through the named camera `up` vector.
 - The exporter writes `meters_per_unit=1 / --global-scale` so physical light

@@ -4,12 +4,27 @@
 #include <filesystem>
 #include <fstream>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <vector>
 
 namespace
 {
+	enum class	EnvironmentCalibrationType
+	{
+		AverageRadiance,
+		AverageLuminance,
+		HorizontalIrradiance,
+		HorizontalIlluminance
+	};
+
+	struct	EnvironmentCalibrationSetting
+	{
+		EnvironmentCalibrationType	type;
+		double						value;
+	};
+
 	void	requireBinarySetting(int value, const std::string& name)
 	{
 		if (value != 0 && value != 1)
@@ -77,12 +92,57 @@ namespace
 			parseFiniteDouble(parts[2], "Photographic ISO")
 		);
 	}
+
+	void	assignEnvironmentCalibration(
+		std::optional<EnvironmentCalibrationSetting>& calibration,
+		bool environmentScaleSet,
+		EnvironmentCalibrationType type,
+		double value
+	)
+	{
+		if (environmentScaleSet)
+		{
+			throw std::runtime_error("Environment calibration cannot be combined with environment_scale.");
+		}
+		if (calibration)
+		{
+			throw std::runtime_error("Environment can define only one physical calibration setting.");
+		}
+		calibration = EnvironmentCalibrationSetting{type, value};
+	}
+
+	void	applyEnvironmentCalibration(Scene& scene, const EnvironmentCalibrationSetting& calibration)
+	{
+		if (!scene.hasEnvironmentMap())
+		{
+			throw std::runtime_error("Environment calibration requires environment=PATH.");
+		}
+
+		switch (calibration.type)
+		{
+			case EnvironmentCalibrationType::AverageRadiance:
+				scene.calibrateEnvironmentAverageRadiance(calibration.value);
+				return;
+			case EnvironmentCalibrationType::AverageLuminance:
+				scene.calibrateEnvironmentAverageLuminance(calibration.value);
+				return;
+			case EnvironmentCalibrationType::HorizontalIrradiance:
+				scene.calibrateEnvironmentHorizontalIrradiance(calibration.value);
+				return;
+			case EnvironmentCalibrationType::HorizontalIlluminance:
+				scene.calibrateEnvironmentHorizontalIlluminance(calibration.value);
+				return;
+		}
+	}
 }
 
 // Parses the [settings] section of a Scene file
 void	SceneFile::internal::_readSettingsSection(Scene& scene, std::ifstream& stream, SceneFileContext& context)
 {
 	std::string line;
+	bool skySet = false;
+	bool environmentScaleSet = false;
+	std::optional<EnvironmentCalibrationSetting> environmentCalibration;
 	do
 	{
 		getline(stream, line);
@@ -346,6 +406,7 @@ void	SceneFile::internal::_readSettingsSection(Scene& scene, std::ifstream& stre
 			{
 				throw std::runtime_error("Unknown sky setting: " + line);
 			}
+			skySet = true;
 		}
 		else if (
 			lowerLine.rfind("environment=", 0) != std::string::npos
@@ -357,37 +418,109 @@ void	SceneFile::internal::_readSettingsSection(Scene& scene, std::ifstream& stre
 		{
 			const std::vector<std::string> parts = splitCommaList(settingValue(
 				line,
-				"Invalid environment setting. Use environment=PATH[,STRENGTH[,ROTATION_DEGREES]]."
+				"Invalid environment setting. Use environment=PATH[,ROTATION_DEGREES]."
 			));
 
-			if (parts.empty() || parts[0].empty() || parts.size() > 3)
+			if (parts.empty() || parts[0].empty() || parts.size() > 2)
 			{
-				throw std::runtime_error("Invalid environment setting. Use environment=PATH[,STRENGTH[,ROTATION_DEGREES]].");
+				throw std::runtime_error("Invalid environment setting. Use environment=PATH[,ROTATION_DEGREES].");
 			}
 			scene.setEnvironmentMap(std::make_shared<EnvironmentMap>(
 				EnvironmentMap::load(_resolveAssetPath(context.baseDirectory, parts[0]))
 			));
 			if (parts.size() >= 2 && !parts[1].empty())
 			{
-				scene.setEnvironmentStrength(parseFiniteDouble(parts[1], "Environment strength"));
+				scene.setEnvironmentRotation(parseFiniteDouble(parts[1], "Environment rotation"));
 			}
-			if (parts.size() >= 3 && !parts[2].empty())
+			if (!skySet)
 			{
-				scene.setEnvironmentRotation(parseFiniteDouble(parts[2], "Environment rotation"));
+				scene.setRenderSky(SKY_ENVIRONMENT);
 			}
-			scene.setRenderSky(SKY_ENVIRONMENT);
 		}
 		else if (
-			lowerLine.rfind("environmentstrength=", 0) != std::string::npos
-			|| lowerLine.rfind("environment_strength=", 0) != std::string::npos
-			|| lowerLine.rfind("worldstrength=", 0) != std::string::npos
-			|| lowerLine.rfind("world_strength=", 0) != std::string::npos
+			lowerLine.rfind("environment_scale=", 0) != std::string::npos
+			|| lowerLine.rfind("environmentscale=", 0) != std::string::npos
 		)
 		{
+			if (environmentCalibration)
+			{
+				throw std::runtime_error("environment_scale cannot be combined with environment physical calibration.");
+			}
 			scene.setEnvironmentStrength(parseFiniteDouble(
-				settingValue(line, "Invalid environment strength setting. Use environmentstrength=F."),
-				"Environment strength"
+				settingValue(line, "Invalid environment scale setting. Use environment_scale=F."),
+				"Environment scale"
 			));
+			environmentScaleSet = true;
+		}
+		else if (
+			lowerLine.rfind("environment_lighting=", 0) != std::string::npos
+			|| lowerLine.rfind("environmentlighting=", 0) != std::string::npos
+		)
+		{
+			int environmentLighting;
+
+			if (sscanf(lowerLine.c_str(), "%*[^=]=%d", &environmentLighting) != 1)
+			{
+				throw std::runtime_error("Invalid environment_lighting setting. Use environment_lighting=0 or 1.");
+			}
+			requireBinarySetting(environmentLighting, "environment_lighting");
+			scene.setEnvironmentLighting(environmentLighting);
+		}
+		else if (
+			lowerLine.rfind("environment_average_radiance=", 0) != std::string::npos
+			|| lowerLine.rfind("environmentaverageradiance=", 0) != std::string::npos
+			|| lowerLine.rfind("environment_radiance=", 0) != std::string::npos
+			|| lowerLine.rfind("environmentradiance=", 0) != std::string::npos
+		)
+		{
+			assignEnvironmentCalibration(
+				environmentCalibration,
+				environmentScaleSet,
+				EnvironmentCalibrationType::AverageRadiance,
+				parseFiniteDouble(settingValue(line, "Invalid environment radiance setting. Use environment_radiance=F."), "Environment radiance")
+			);
+		}
+		else if (
+			lowerLine.rfind("environment_average_luminance=", 0) != std::string::npos
+			|| lowerLine.rfind("environmentaverageluminance=", 0) != std::string::npos
+			|| lowerLine.rfind("environment_luminance=", 0) != std::string::npos
+			|| lowerLine.rfind("environmentluminance=", 0) != std::string::npos
+		)
+		{
+			assignEnvironmentCalibration(
+				environmentCalibration,
+				environmentScaleSet,
+				EnvironmentCalibrationType::AverageLuminance,
+				parseFiniteDouble(settingValue(line, "Invalid environment luminance setting. Use environment_luminance=F."), "Environment luminance")
+			);
+		}
+		else if (
+			lowerLine.rfind("environment_horizontal_irradiance=", 0) != std::string::npos
+			|| lowerLine.rfind("environmenthorizontalirradiance=", 0) != std::string::npos
+			|| lowerLine.rfind("environment_irradiance=", 0) != std::string::npos
+			|| lowerLine.rfind("environmentirradiance=", 0) != std::string::npos
+		)
+		{
+			assignEnvironmentCalibration(
+				environmentCalibration,
+				environmentScaleSet,
+				EnvironmentCalibrationType::HorizontalIrradiance,
+				parseFiniteDouble(settingValue(line, "Invalid environment irradiance setting. Use environment_irradiance=F."), "Environment irradiance")
+			);
+		}
+		else if (
+			lowerLine.rfind("environment_horizontal_illuminance=", 0) != std::string::npos
+			|| lowerLine.rfind("environmenthorizontalilluminance=", 0) != std::string::npos
+			|| lowerLine.rfind("environment_illuminance=", 0) != std::string::npos
+			|| lowerLine.rfind("environmentilluminance=", 0) != std::string::npos
+		)
+		{
+			assignEnvironmentCalibration(
+				environmentCalibration,
+				environmentScaleSet,
+				EnvironmentCalibrationType::HorizontalIlluminance,
+				parseFiniteDouble(settingValue(line, "Invalid environment illuminance setting. Use environment_illuminance=F."), "Environment illuminance")
+			);
 		}
 		else if (
 			lowerLine.rfind("environmentrotation=", 0) != std::string::npos
@@ -464,4 +597,8 @@ void	SceneFile::internal::_readSettingsSection(Scene& scene, std::ifstream& stre
 			throw std::runtime_error("Unknown scene setting: " + line);
 		}
 	} while (!stream.eof());
+	if (environmentCalibration)
+	{
+		applyEnvironmentCalibration(scene, *environmentCalibration);
+	}
 }

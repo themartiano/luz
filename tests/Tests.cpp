@@ -1279,7 +1279,10 @@ namespace
 		requireSceneFileSettingThrows("denoiseoutputfilename=render_denoised.tif", "Scene file accepted .tif denoise output.");
 		requireSceneFileSettingThrows("denoiseoutputfilename=render_denoised.jpg", "Scene file accepted unsupported denoise output extension.");
 		requireSceneFileSettingThrows("sky=wat", "Scene file accepted unknown sky setting.");
-		requireSceneFileSettingThrows("environmentstrength=-1", "Scene file accepted negative environment strength.");
+		requireSceneFileSettingThrows("environment_scale=-1", "Scene file accepted negative environment scale.");
+		requireSceneFileSettingThrows("environment_lighting=2", "Scene file accepted non-binary environment lighting.");
+		requireSceneFileSettingThrows("environment_radiance=1\nenvironment_scale=2", "Scene file accepted environment calibration plus scale.");
+		requireSceneFileSettingThrows("environment_radiance=1\nenvironment_illuminance=2", "Scene file accepted multiple environment calibrations.");
 		requireSceneFileSettingThrows("environmentrotation=nan", "Scene file accepted non-finite environment rotation.");
 		requireSceneFileSettingThrows("meters_per_unit=0", "Scene file accepted zero meters per unit.");
 		requireSceneFileSettingThrows("meters_per_unit=nan", "Scene file accepted non-finite meters per unit.");
@@ -1390,6 +1393,19 @@ namespace
 			<< red << " " << green << " " << blue << "\n";
 	}
 
+	void	writeUniformPPM(const std::filesystem::path& path, int width, int height, int red, int green, int blue, int maxValue = 10)
+	{
+		std::ofstream textureStream(path);
+		textureStream
+			<< "P3\n"
+			<< width << " " << height << "\n"
+			<< maxValue << "\n";
+		for (int i = 0; i < width * height; i++)
+		{
+			textureStream << red << " " << green << " " << blue << "\n";
+		}
+	}
+
 	void	testEnvironmentMapLoadsPPM(void)
 	{
 		const std::filesystem::path environmentPath = std::filesystem::temp_directory_path() / "luz_environment_ppm_test.ppm";
@@ -1407,6 +1423,40 @@ namespace
 		require(std::isfinite(sample.pdf) && sample.pdf > 0.0, "PPM environment sample PDF was invalid.");
 
 		std::filesystem::remove(environmentPath);
+	}
+
+	void	testEnvironmentMapPhysicalMetrics(void)
+	{
+		std::vector<Color> pixels(4, Color(2.0, 2.0, 2.0));
+		const EnvironmentMap environmentMap(2, 2, pixels);
+
+		requireNear(environmentMap.averageLuminance(), 2.0, "Environment average luminance metric is wrong.");
+		requireNear(
+			environmentMap.horizontalIrradiance(),
+			2.0 * std::sqrt(2.0) * D_PI,
+			"Environment horizontal irradiance metric is wrong."
+		);
+	}
+
+	void	testSceneEnvironmentPhysicalCalibration(void)
+	{
+		std::vector<Color> onePixel(1, Color(2.0, 2.0, 2.0));
+		std::vector<Color> fourPixels(4, Color(1.0, 1.0, 1.0));
+
+		Scene scene;
+		scene.setEnvironmentMap(std::make_shared<EnvironmentMap>(1, 1, onePixel));
+		scene.calibrateEnvironmentAverageRadiance(10.0);
+		requireNear(scene.getEnvironmentStrength(), 5.0, "Environment average radiance calibration is wrong.");
+		scene.calibrateEnvironmentAverageLuminance(683.0);
+		requireNear(scene.getEnvironmentStrength(), 0.5, "Environment average luminance calibration is wrong.");
+
+		const EnvironmentMap horizontalMap(2, 2, fourPixels);
+		const double horizontalIrradiance = horizontalMap.horizontalIrradiance();
+		scene.setEnvironmentMap(std::make_shared<EnvironmentMap>(horizontalMap));
+		scene.calibrateEnvironmentHorizontalIrradiance(horizontalIrradiance * 2.0);
+		requireNear(scene.getEnvironmentStrength(), 2.0, "Environment horizontal irradiance calibration is wrong.");
+		scene.calibrateEnvironmentHorizontalIlluminance(horizontalIrradiance * 683.0 * 3.0);
+		requireNear(scene.getEnvironmentStrength(), 3.0, "Environment horizontal illuminance calibration is wrong.");
 	}
 
 	void	testEnvironmentMapLoadsHDR(void)
@@ -1475,19 +1525,70 @@ namespace
 			std::ofstream sceneStream(scenePath);
 			sceneStream
 				<< "[settings]\n"
-				<< "environment=" << environmentPath.filename().string() << ",2.5,90\n\n";
+				<< "environment_luminance=683\n"
+				<< "environment=" << environmentPath.filename().string() << ",90\n"
+				<< "environment_lighting=0\n\n";
 		}
 
+		const EnvironmentMap expectedEnvironment = EnvironmentMap::load(environmentPath.string());
 		Scene scene;
 		SceneFile::read(scene, scenePath.string());
 
 		require(scene.getRenderSky() == SKY_ENVIRONMENT, "Environment setting did not enable environment sky.");
 		require(scene.hasEnvironmentMap(), "Environment setting did not load an environment map.");
-		requireNear(scene.getEnvironmentStrength(), 2.5, "Environment strength was not parsed.");
+		requireNear(scene.getEnvironmentStrength(), 1.0 / expectedEnvironment.averageLuminance(), "Environment luminance calibration was not parsed.");
+		require(!scene.getEnvironmentLighting(), "Environment lighting setting was not parsed.");
 		requireNear(scene.getEnvironmentRotation(), 90.0, "Environment rotation was not parsed.");
 
 		std::filesystem::remove(scenePath);
 		std::filesystem::remove(environmentPath);
+	}
+
+	void	testSceneFileAtmosphereCombinesWithEnvironment(void)
+	{
+		const std::filesystem::path directory = std::filesystem::temp_directory_path();
+		const std::filesystem::path scenePath = directory / "luz_atmosphere_environment_setting_test.luz";
+		const std::filesystem::path environmentPath = directory / "luz_atmosphere_environment_setting_test.ppm";
+
+		writeUniformPPM(environmentPath, 2, 2, 10, 10, 10);
+		{
+			std::ofstream sceneStream(scenePath);
+			sceneStream
+				<< "[settings]\n"
+				<< "sky=atmosphere\n"
+				<< "atmosphere=0.25,12840000.0,12910000.0,7994.0,1200.0,12,6,0.1\n"
+				<< "environment=" << environmentPath.filename().string() << ",45\n"
+				<< "environment_irradiance=4\n\n";
+		}
+
+		const EnvironmentMap expectedEnvironment = EnvironmentMap::load(environmentPath.string());
+		Scene scene;
+		SceneFile::read(scene, scenePath.string());
+
+		require(scene.getRenderSky() == SKY_ATMOSPHERE, "Environment setting overwrote explicit atmosphere sky.");
+		require(scene.hasEnvironmentMap(), "Atmosphere environment scene did not load an environment map.");
+		requireNear(scene.getEnvironmentRotation(), 45.0, "Atmosphere environment rotation was not parsed.");
+		requireNear(scene.getEnvironmentStrength(), 4.0 / expectedEnvironment.horizontalIrradiance(), "Environment irradiance calibration was not parsed.");
+
+		std::filesystem::remove(scenePath);
+		std::filesystem::remove(environmentPath);
+	}
+
+	void	testAtmosphereCompositesEnvironmentBackground(void)
+	{
+		std::vector<Color> pixels(1, Color(0.2, 0.3, 0.4));
+		Scene scene;
+		scene.setEnvironmentMap(std::make_shared<EnvironmentMap>(1, 1, pixels));
+		scene.setEnvironmentStrength(2.0);
+		scene.setRenderSky(SKY_ATMOSPHERE);
+
+		Ray ray(
+			Vector3(0.0, 0.0, D_ATMOSPHERE_RADIUS + 100000.0),
+			Vector3(0.0, 0.0, 1.0)
+		);
+		const Color color = Renderer::internal::_computeAtmosphereColor(scene, ray);
+
+		requireColorNear(color, Color(0.4, 0.6, 0.8), "Atmosphere did not composite environment background through transmittance.");
 	}
 
 	void	testSceneFileLoadsPhysicalCamera(void)
@@ -4014,9 +4115,12 @@ int	main(void)
 		testSceneFileDirectionalSunDrivesAtmosphere();
 		testSceneFileBackgroundSetting();
 		testEnvironmentMapLoadsPPM();
+		testEnvironmentMapPhysicalMetrics();
+		testSceneEnvironmentPhysicalCalibration();
 		testEnvironmentMapLoadsHDR();
 		testEnvironmentMapLoadsRLEHDR();
 		testSceneFileEnvironmentSetting();
+		testSceneFileAtmosphereCombinesWithEnvironment();
 		testSceneFileLoadsPhysicalCamera();
 		testSceneFileRejectsCompactCameraSyntax();
 		testSceneFileLoadsRelativeObject();
@@ -4079,6 +4183,7 @@ int	main(void)
 		testRenderedScenePostProcessingProducesDisplayableImage();
 		testRenderedBMPContainsVisualSignal();
 		testTinyRender();
+		testAtmosphereCompositesEnvironmentBackground();
 		testTinyAdaptiveRender();
 		testTinyAdaptiveDenoisedRender();
 		testTinyDenoisedRenderProducesCompanionImage();

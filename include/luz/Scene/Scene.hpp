@@ -68,6 +68,12 @@ class	Scene
 		bool	hasEnvironmentMap(void) const;
 		void	setEnvironmentStrength(double environmentStrength);
 		double	getEnvironmentStrength(void) const;
+		void	setEnvironmentLighting(bool environmentLighting);
+		bool	getEnvironmentLighting(void) const;
+		void	calibrateEnvironmentAverageRadiance(double averageRadiance);
+		void	calibrateEnvironmentAverageLuminance(double averageLuminance);
+		void	calibrateEnvironmentHorizontalIrradiance(double horizontalIrradiance);
+		void	calibrateEnvironmentHorizontalIlluminance(double horizontalIlluminance);
 		void	setEnvironmentRotation(double environmentRotation);
 		double	getEnvironmentRotation(void) const;
 		Camera	getActiveCamera(void) const;
@@ -135,6 +141,7 @@ class	Scene
 		Color					_backgroundColor;
 		std::shared_ptr<EnvironmentMap>	_environmentMap;
 		double					_environmentStrength;
+		bool					_environmentLighting;
 		double					_environmentRotation;
 		std::vector<Camera>		_cameras;
 		size_t					_activeCamera;

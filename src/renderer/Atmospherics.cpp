@@ -9,7 +9,18 @@ Color	Renderer::internal::_computeAtmosphereColor(Scene& scene, Ray& ray)
 	Ray atmosphereRay(ray.getOrigin(), ray.getDirection());
 	const Atmosphere& atmosphere = scene.getAtmosphere();
 
-	Color atmosphereColor = atmosphere.sampleSegment(atmosphereRay, T_MAX).inScattering;
+	const AtmosphereSample atmosphereSample = atmosphere.sampleSegment(atmosphereRay, T_MAX);
+	Color atmosphereColor = atmosphereSample.inScattering;
+	Color background(0.0, 0.0, 0.0);
+
+	if (scene.hasEnvironmentMap() && scene.getEnvironmentStrength() > 0.0)
+	{
+		background = scene.getEnvironmentMap()->sampleDirection(
+			ray.getDirection(),
+			scene.getEnvironmentRotation()
+		) * scene.getEnvironmentStrength();
+		return (atmosphereColor + (atmosphereSample.transmittance * background));
+	}
 
 	double random = Sampler::sample1D(Sampler::DIM_ATMOSPHERE);
 	if (random >= 0.9996)
@@ -24,9 +35,9 @@ Color	Renderer::internal::_computeAtmosphereColor(Scene& scene, Ray& ray)
 		{
 			diff = 1.0;
 		}
-		atmosphereColor += Color(diff, diff, diff);
+		background = Color(diff, diff, diff);
 	}
-	return (atmosphereColor);
+	return (atmosphereColor + (atmosphereSample.transmittance * background));
 }
 
 // Calculates the sky interpolation for the background and reflexes

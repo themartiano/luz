@@ -52,8 +52,13 @@ The parser is intentionally strict: unknown lines and malformed values throw an 
 | `outputfilename` | `outputfilename=PATH` | `.bmp` is appended if no suffix is present. Explicit suffixes must be `.bmp`, `.png`, or `.tiff`; `.tif` is not accepted. PNG output is 8-bit RGB SDR with sRGB metadata when display-encoded. TIFF output is uncompressed 32-bit floating-point RGB with Luz color-encoding metadata; disable tone mapping and gamma to preserve scene-linear ACEScg HDR values above `1.0`. |
 | `sky` | `sky=none`, `sky=linear`, `sky=atmosphere`, or `sky=environment` | Selects background rendering. |
 | `background` | `background=COLOR` | Background color used when `sky=none`. Aliases: `backgroundcolor`, `background_color`. |
-| `environment` | `environment=PATH[,STRENGTH[,ROTATION_DEGREES]]` | Equirectangular environment map used when `sky=environment`. `environment=...` also enables `sky=environment`. Aliases: `environmentmap`, `environment_map`, `backgroundimage`, `background_image`. |
-| `environmentstrength` | `environmentstrength=F` | Multiplies environment radiance. Defaults to `1.0`. Aliases: `environment_strength`, `worldstrength`, `world_strength`. |
+| `environment` | `environment=PATH[,ROTATION_DEGREES]` | Equirectangular environment map. If no explicit `sky=` appeared earlier in settings, `environment=...` also selects `sky=environment`. Aliases: `environmentmap`, `environment_map`, `backgroundimage`, `background_image`. |
+| `environment_scale` | `environment_scale=F` | Direct multiplier for already calibrated environment radiance. Defaults to `1.0`. Mutually exclusive with physical environment calibration settings. Alias: `environmentscale`. |
+| `environment_lighting` | `environment_lighting=0` or `1` | Toggles environment-map direct lighting/MIS while leaving visibility controlled by `sky`. Enabled by default. Alias: `environmentlighting`. |
+| `environment_radiance` | `environment_radiance=F` | Scales the map so its solid-angle average luminance channel equals `F` in renderer radiance units. Alias: `environment_average_radiance`. |
+| `environment_luminance` | `environment_luminance=F` | Scales the map so its solid-angle average luminance equals `F cd/m^2`, converted through 683 lm/W. Alias: `environment_average_luminance`. |
+| `environment_irradiance` | `environment_irradiance=F` | Scales the map so upper-hemisphere horizontal irradiance equals `F W/m^2`. Alias: `environment_horizontal_irradiance`. |
+| `environment_illuminance` | `environment_illuminance=F` | Scales the map so upper-hemisphere horizontal illuminance equals `F lux`, converted through 683 lm/W. Alias: `environment_horizontal_illuminance`. |
 | `environmentrotation` | `environmentrotation=DEGREES` | Offsets the equirectangular U coordinate around world Y. Defaults to `0`. Aliases: `environment_rotation`, `worldrotation`, `world_rotation`. |
 | `meters_per_unit` | `meters_per_unit=F` | Physical scale of Luz world coordinates. Defaults to `1.0`. Finite light `power`/`lumens` use physical area in square meters, and atmosphere ray distances are converted through this value. Alias: `metersperunit`. |
 | `atmosphere` | `atmosphere=SUN,EARTH_RADIUS,ATMOSPHERE_RADIUS,HR,HM,SAMPLES,LIGHT_SAMPLES,STARS` | Only valid after `sky=atmosphere`. `SUN` is a fallback sun angle. If the scene has a `directional_light`, the first one drives atmosphere sun direction and radiance instead. Without a directional light, atmosphere uses calibrated solar disk radiance. |
@@ -136,9 +141,21 @@ diffuse illumination.
 Paths are resolved like other assets: relative to the scene file, relative to
 the current working directory, then under common asset directories including
 `textures/` and `assets/textures/`. When `sky=environment`, the map is visible
-to camera rays and specular/refraction misses. Diffuse bounces also sample it as
-an infinite light using luminance-weighted solid-angle importance sampling and
-MIS, which reduces noise with bright HDR maps.
+to camera rays and specular/refraction misses. When `sky=atmosphere` and an
+environment map is loaded, Luz composites the map behind the atmosphere as
+`atmosphere in-scattering + atmosphere transmittance * environment radiance`.
+This allows calibrated HDR horizons, interiors, or space backgrounds to coexist
+with atmospheric scattering.
+
+Environment lighting is independent from visibility. With `environment_lighting=1`
+the map is sampled as an infinite light using luminance-weighted solid-angle
+importance sampling and MIS, even when the visible sky is `atmosphere`. Use
+`environment_lighting=0` when the map should be a camera/reflection backdrop
+only. Use at most one of `environment_scale`, `environment_radiance`,
+`environment_luminance`, `environment_irradiance`, or `environment_illuminance`.
+For real HDRI calibration, horizontal illuminance in lux is usually the most
+useful input because it ties the map to measured incident light at the capture
+location.
 
 ## Scene
 

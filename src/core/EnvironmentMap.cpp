@@ -276,6 +276,13 @@ namespace
 	{
 		return (Utilities::luminance(sanitizeRadiance(color)));
 	}
+
+	double	horizontalCosine(std::size_t y, std::size_t height)
+	{
+		const double v = 1.0 - ((static_cast<double>(y) + 0.5) / static_cast<double>(height));
+
+		return (std::max(0.0, std::sin((v - 0.5) * D_PI)));
+	}
 }
 
 EnvironmentMap::EnvironmentMap(void)
@@ -283,6 +290,7 @@ EnvironmentMap::EnvironmentMap(void)
 	this->_width = 0;
 	this->_height = 0;
 	this->_totalWeight = 0.0;
+	this->_horizontalIrradiance = 0.0;
 }
 
 EnvironmentMap::EnvironmentMap(std::size_t width, std::size_t height, std::vector<Color> pixels)
@@ -295,6 +303,7 @@ EnvironmentMap::EnvironmentMap(std::size_t width, std::size_t height, std::vecto
 	this->_height = height;
 	this->_pixels = std::move(pixels);
 	this->_totalWeight = 0.0;
+	this->_horizontalIrradiance = 0.0;
 	this->buildDistribution();
 }
 
@@ -529,6 +538,24 @@ double	EnvironmentMap::pdf(const Vector3& direction, double rotationDegrees) con
 	return ((this->_weights[index] / this->_totalWeight) / this->_solidAngles[index]);
 }
 
+double	EnvironmentMap::averageLuminance(void) const
+{
+	if (this->empty() || this->_totalWeight <= 0.0 || !std::isfinite(this->_totalWeight))
+	{
+		return (0.0);
+	}
+	return (this->_totalWeight / (4.0 * D_PI));
+}
+
+double	EnvironmentMap::horizontalIrradiance(void) const
+{
+	if (this->empty() || this->_horizontalIrradiance <= 0.0 || !std::isfinite(this->_horizontalIrradiance))
+	{
+		return (0.0);
+	}
+	return (this->_horizontalIrradiance);
+}
+
 std::size_t	EnvironmentMap::getWidth(void) const
 {
 	return (this->_width);
@@ -604,6 +631,7 @@ void	EnvironmentMap::buildDistribution(void)
 	this->_cdf.clear();
 	this->_cdf.reserve(this->_width * this->_height);
 	this->_totalWeight = 0.0;
+	this->_horizontalIrradiance = 0.0;
 
 	const double deltaPhi = 2.0 * D_PI / static_cast<double>(this->_width);
 	for (std::size_t y = 0; y < this->_height; y++)
@@ -611,6 +639,7 @@ void	EnvironmentMap::buildDistribution(void)
 		const double theta0 = D_PI * static_cast<double>(y) / static_cast<double>(this->_height);
 		const double theta1 = D_PI * static_cast<double>(y + 1) / static_cast<double>(this->_height);
 		const double solidAngle = deltaPhi * std::max(0.0, std::cos(theta0) - std::cos(theta1));
+		const double horizonCosine = horizontalCosine(y, this->_height);
 
 		for (std::size_t x = 0; x < this->_width; x++)
 		{
@@ -623,6 +652,7 @@ void	EnvironmentMap::buildDistribution(void)
 			this->_solidAngles[index] = solidAngle;
 			this->_weights[index] = weight;
 			this->_totalWeight += weight;
+			this->_horizontalIrradiance += luminance * horizonCosine * solidAngle;
 			this->_cdf.push_back(this->_totalWeight);
 		}
 	}
@@ -630,7 +660,12 @@ void	EnvironmentMap::buildDistribution(void)
 	if (!std::isfinite(this->_totalWeight) || this->_totalWeight <= 0.0)
 	{
 		this->_totalWeight = 0.0;
+		this->_horizontalIrradiance = 0.0;
 		this->_cdf.clear();
 		this->_weights.assign(this->_width * this->_height, 0.0);
+	}
+	if (!std::isfinite(this->_horizontalIrradiance) || this->_horizontalIrradiance <= 0.0)
+	{
+		this->_horizontalIrradiance = 0.0;
 	}
 }

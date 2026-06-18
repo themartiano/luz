@@ -7,6 +7,7 @@
 #include "ImageFiles/TIFF.hpp"
 #include "Hittables/BVHNode.hpp"
 #include "Hittables/DirectionalLight.hpp"
+#include "LightUnits.hpp"
 #include "Materials/Emissive.hpp"
 #include <limits>
 #include <utility>
@@ -56,6 +57,38 @@ namespace
 			throw std::invalid_argument(settingName + " file name must use .bmp, .png, or .tiff.");
 		}
 	}
+
+	double	validatedEnvironmentCalibrationTarget(double target, const std::string& description)
+	{
+		if (!std::isfinite(target) || target < 0.0)
+		{
+			throw std::invalid_argument(description + " must be finite and non-negative.");
+		}
+		return (target);
+	}
+
+	double	environmentCalibrationScale(
+		const std::shared_ptr<EnvironmentMap>& environmentMap,
+		double currentValue,
+		double targetValue,
+		const std::string& description
+	)
+	{
+		validatedEnvironmentCalibrationTarget(targetValue, description);
+		if (targetValue == 0.0)
+		{
+			return (0.0);
+		}
+		if (!environmentMap || environmentMap->empty())
+		{
+			throw std::invalid_argument(description + " calibration requires an environment map.");
+		}
+		if (!std::isfinite(currentValue) || currentValue <= 0.0)
+		{
+			throw std::invalid_argument(description + " calibration requires an environment map with positive luminance.");
+		}
+		return (targetValue / currentValue);
+	}
 }
 
 /*
@@ -85,6 +118,7 @@ Scene::Scene(void)
 	this->_atmosphere.setMetersPerUnit(this->_metersPerUnit);
 	this->_backgroundColor = Color(0.0, 0.0, 0.0);
 	this->_environmentStrength = 1.0;
+	this->_environmentLighting = true;
 	this->_environmentRotation = 0.0;
 
 	this->_defaultRenderOutputFileName = D_RENDER_FILE_NAME + ".bmp";
@@ -412,6 +446,52 @@ void	Scene::setEnvironmentStrength(double environmentStrength)
 double	Scene::getEnvironmentStrength(void) const
 {
 	return (this->_environmentStrength);
+}
+
+void	Scene::setEnvironmentLighting(bool environmentLighting)
+{
+	this->_environmentLighting = environmentLighting;
+}
+
+bool	Scene::getEnvironmentLighting(void) const
+{
+	return (this->_environmentLighting);
+}
+
+void	Scene::calibrateEnvironmentAverageRadiance(double averageRadiance)
+{
+	this->setEnvironmentStrength(environmentCalibrationScale(
+		this->_environmentMap,
+		this->_environmentMap ? this->_environmentMap->averageLuminance() : 0.0,
+		averageRadiance,
+		"Environment average radiance"
+	));
+}
+
+void	Scene::calibrateEnvironmentAverageLuminance(double averageLuminance)
+{
+	this->calibrateEnvironmentAverageRadiance(
+		validatedEnvironmentCalibrationTarget(averageLuminance, "Environment average luminance")
+		/ LightUnits::LUMENS_PER_RADIANT_WATT
+	);
+}
+
+void	Scene::calibrateEnvironmentHorizontalIrradiance(double horizontalIrradiance)
+{
+	this->setEnvironmentStrength(environmentCalibrationScale(
+		this->_environmentMap,
+		this->_environmentMap ? this->_environmentMap->horizontalIrradiance() : 0.0,
+		horizontalIrradiance,
+		"Environment horizontal irradiance"
+	));
+}
+
+void	Scene::calibrateEnvironmentHorizontalIlluminance(double horizontalIlluminance)
+{
+	this->calibrateEnvironmentHorizontalIrradiance(
+		validatedEnvironmentCalibrationTarget(horizontalIlluminance, "Environment horizontal illuminance")
+		/ LightUnits::LUMENS_PER_RADIANT_WATT
+	);
 }
 
 void	Scene::setEnvironmentRotation(double environmentRotation)
