@@ -191,6 +191,7 @@ test:
 	$(COMPILER) $(COMPILER_FLAGS) $(WWW_FLAGS) $(GENERAL_FLAGS) $(OPT_FLAGS) $(DEBUG_FLAGS) $(INCLUDES) $(TEST_SRCS) $(LINK_FLAGS) -o $(TEST_NAME)
 	@printf "\n[\e[1;34mRunning tests\e[0m]\n\n"
 	./$(TEST_NAME)
+	python3 tests/test_blender_export_luz.py
 
 .PHONY: clean
 clean:

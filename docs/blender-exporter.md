@@ -90,13 +90,13 @@ The exporter also works without passing the `.blend` file before `--python`:
   power, light area, and atmosphere distances preserve Blender-meter scale even
   when exported coordinates are scaled for Luz.
 - Invalid zero camera focus distances are replaced with a scene-based fallback.
-- Blender camera lens, sensor size, f-stop, and focus distance are exported as
-  physical Luz camera properties. Focus distance remains in meters even when
-  `--global-scale` changes exported coordinates; Luz converts it through
-  `meters_per_unit` while rendering.
-- Luz fits the exported physical sensor gate to the render resolution aspect, so
-  rendering a full-frame 36x24 mm camera at 16:9 crops the vertical gate instead
-  of stretching the image.
+- Blender camera lens, effective render gate, f-stop, and focus distance are
+  exported as physical Luz camera properties. Focus distance remains in meters
+  even when `--global-scale` changes exported coordinates; Luz converts it
+  through `meters_per_unit` while rendering.
+- The exporter derives the effective render gate from Blender's camera frame, so
+  Blender `sensor_fit`, sensor size, and render aspect are preserved in Luz's
+  focal-length/sensor model.
 - Blender cameras with DOF disabled are exported as `pinhole=1`. Cameras with
   valid DOF export Blender's `aperture_fstop` as `f_stop`.
 - Area lights become `area_light` blocks. Blender's area-light energy is treated
@@ -123,11 +123,13 @@ The exporter also works without passing the `.blend` file before `--python`:
 - Common Blender shader nodes connected to Material Output are mapped into
   Luz material properties, including diffuse, glossy, glass, emission,
   Principled, mix, add, RGB/value, image average color, and color ramp values.
-- Image textures connected directly to Principled BSDF Base Color or Diffuse
-  BSDF Color are exported as PPM textures, downscaled by `--texture-max-size`,
-  and referenced from the generated named material with `texture=...`. Luz loads
-  these base-color PPMs as sRGB albedo textures and converts them into its
-  scene-linear ACEScg working space.
+- Image textures connected to Principled BSDF Base Color or Diffuse BSDF Color
+  through supported color node chains are exported as PPM textures, downscaled by
+  `--texture-max-size`, and referenced from the generated named material with
+  `texture=...`. Luz loads these base-color PPMs as sRGB albedo textures and
+  converts them into its scene-linear ACEScg working space.
+- Packed roughness/metallic textures feeding scalar sockets through Separate
+  Color/RGB channels are approximated by thumbnail-averaged scalar values.
 - When a material has multiple Material Output nodes, the exporter prefers the
   output target that matches the scene render engine, such as Cycles or EEVEE.
 - Blender material values are written as named material property blocks for
@@ -155,9 +157,12 @@ The exporter also works without passing the `.blend` file before `--python`:
 
 ## Current Limits
 
-- Only direct image textures feeding the selected shader's base color are
-  exported as texture files. Procedural textures, normal maps, bump maps,
-  displacement, and full shader graphs are not exported as texture networks.
+- Only base-color image textures are exported as texture files. Roughness and
+  metallic texture maps are reduced to scalar approximations; procedural
+  textures, normal maps, bump maps, displacement, subsurface scattering, and full
+  shader graphs are not exported as texture networks.
+- Orthographic, panoramic, and lens-shifted cameras are not exported as equivalent
+  Luz cameras yet.
 - World environment mapping nodes are not exported yet. Environment maps are
   written with Luz's default equirectangular orientation and `0` degrees
   rotation.

@@ -22,7 +22,12 @@ try:
 	import bpy
 	from mathutils import Vector
 except ImportError as error:
-	raise SystemExit("This exporter must be run inside Blender with --python.") from error
+	bpy = None
+	_BLENDER_IMPORT_ERROR = error
+
+	class Vector:  # type: ignore[no-redef]
+		def __init__(self, *_args: object, **_kwargs: object) -> None:
+			raise RuntimeError("mathutils.Vector is only available inside Blender.")
 
 
 SAMPLE_TEXTURE_COLORS = True
@@ -242,6 +247,49 @@ def blender_normal_to_luz(normal: Vector) -> Vector:
 	return blender_vector_to_luz(normal)
 
 
+def effective_camera_sensor_mm(
+	camera_data: object,
+	scene: object,
+	focal_length_mm: float,
+	fallback_width_mm: float,
+	fallback_height_mm: float,
+) -> tuple[float, float]:
+	if getattr(camera_data, "type", "PERSP") != "PERSP":
+		return (fallback_width_mm, fallback_height_mm)
+	try:
+		frame = camera_data.view_frame(scene=scene)
+	except Exception:
+		return (fallback_width_mm, fallback_height_mm)
+	if len(frame) < 4:
+		return (fallback_width_mm, fallback_height_mm)
+
+	try:
+		min_x = min(float(point.x) for point in frame)
+		max_x = max(float(point.x) for point in frame)
+		min_y = min(float(point.y) for point in frame)
+		max_y = max(float(point.y) for point in frame)
+		depth = sum(abs(float(point.z)) for point in frame) / len(frame)
+	except (AttributeError, TypeError, ValueError):
+		return (fallback_width_mm, fallback_height_mm)
+
+	frame_width = max_x - min_x
+	frame_height = max_y - min_y
+	if (
+		not math.isfinite(frame_width)
+		or not math.isfinite(frame_height)
+		or not math.isfinite(depth)
+		or frame_width <= 0.0
+		or frame_height <= 0.0
+		or depth <= 1e-12
+	):
+		return (fallback_width_mm, fallback_height_mm)
+
+	return (
+		max(frame_width * focal_length_mm / depth, 1e-6),
+		max(frame_height * focal_length_mm / depth, 1e-6),
+	)
+
+
 def color_from_value(value: object, fallback: tuple[float, float, float]) -> tuple[float, float, float]:
 	try:
 		return (float(value[0]), float(value[1]), float(value[2]))  # type: ignore[index]
@@ -253,6 +301,26 @@ def scalar_from_value(value: object, fallback: float) -> float:
 	try:
 		return float(value)  # type: ignore[arg-type]
 	except (TypeError, ValueError):
+		return fallback
+
+
+def channel_index_from_name(name: str) -> int | None:
+	channel = name.strip().lower()
+	if channel in {"red", "r", "x"}:
+		return 0
+	if channel in {"green", "g", "y"}:
+		return 1
+	if channel in {"blue", "b", "z"}:
+		return 2
+	if channel in {"alpha", "a"}:
+		return 3
+	return None
+
+
+def channel_from_value(value: object, channel_index: int, fallback: float) -> float:
+	try:
+		return float(value[channel_index])  # type: ignore[index]
+	except (TypeError, IndexError, ValueError):
 		return fallback
 
 
@@ -429,6 +497,21 @@ def resolve_output_value(output_socket: object, fallback: object, visited: set[o
 		if not SAMPLE_TEXTURE_COLORS:
 			return socket_default(output_socket, fallback)
 		return average_image_color(getattr(node, "image", None)) or socket_default(output_socket, fallback)
+	if node_type in {"SEPARATE_COLOR", "SEPRGB"}:
+		channel_index = channel_index_from_name(output_name)
+		if channel_index is None:
+			return socket_default(output_socket, fallback)
+		color = resolve_socket_value(
+			node_socket(node, "Color") or node_socket(node, "Image"),
+			fallback,
+			visited,
+			depth + 1,
+		)
+		return channel_from_value(
+			color,
+			channel_index,
+			scalar_from_value(socket_default(output_socket, fallback), scalar_from_value(fallback, 0.0)),
+		)
 	if node_type == "VALTORGB" and output_name == "Color":
 		factor = scalar_from_value(resolve_socket_value(node_socket(node, "Fac") or node_socket(node, "Factor"), 0.5, visited, depth + 1), 0.5)
 		try:
@@ -519,8 +602,23 @@ def texture_image_from_output(output_socket: object, visited: set[object], depth
 	if node_type in {"TEX_IMAGE", "TEX_ENVIRONMENT"} and output_name == "Color":
 		return getattr(node, "image", None)
 	if node_type in {"MIX_RGB", "MIX"} and output_name in {"Color", "Result"}:
+		for input_name in ("Color1", "Color2", "A", "B"):
+			socket = node_socket(node, input_name)
+			if socket is None:
+				continue
+			for link in getattr(socket, "links", []):
+				image = texture_image_from_output(link.from_socket, visited.copy(), depth + 1)
+				if image is not None:
+					return image
 		return None
-	if node_type in {"RGB", "VALUE", "VALTORGB", "MATH"}:
+	if node_type == "VALTORGB" and output_name == "Color":
+		socket = node_socket(node, "Fac") or node_socket(node, "Factor")
+		for link in getattr(socket, "links", []) if socket is not None else []:
+			image = texture_image_from_output(link.from_socket, visited.copy(), depth + 1)
+			if image is not None:
+				return image
+		return None
+	if node_type in {"RGB", "VALUE"}:
 		return None
 	for socket in getattr(node, "inputs", []):
 		for link in getattr(socket, "links", []):
@@ -1393,6 +1491,13 @@ def export_camera(args: argparse.Namespace, bounds: Bounds) -> LuzCamera:
 		focal_length_mm = max(float(getattr(camera_data, "lens", 50.0)), 1e-6)
 		sensor_width_mm = max(float(getattr(camera_data, "sensor_width", 36.0)), 1e-6)
 		sensor_height_mm = max(float(getattr(camera_data, "sensor_height", 20.25)), 1e-6)
+		sensor_width_mm, sensor_height_mm = effective_camera_sensor_mm(
+			camera_data,
+			scene,
+			focal_length_mm,
+			sensor_width_mm,
+			sensor_height_mm,
+		)
 
 		use_dof = getattr(camera_data.dof, "use_dof", False)
 		focus_distance_meters = float(args.default_focus_distance)
@@ -2066,6 +2171,8 @@ def write_luz_scene(
 
 def main() -> None:
 	global SAMPLE_TEXTURE_COLORS, TEXTURE_SAMPLE_SIZE
+	if bpy is None:
+		raise SystemExit("This exporter must be run inside Blender with --python.") from _BLENDER_IMPORT_ERROR
 	start_time = time.perf_counter()
 	args = parse_args(sys.argv)
 	SAMPLE_TEXTURE_COLORS = args.sample_texture_colors
