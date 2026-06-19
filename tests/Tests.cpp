@@ -1,5 +1,6 @@
 #include "AABB.hpp"
 #include "Atmosphere.hpp"
+#include "AssetPath.hpp"
 #include "Color.hpp"
 #include "ColorManagement.hpp"
 #include "ColorScience.hpp"
@@ -1862,6 +1863,27 @@ namespace
 
 		std::filesystem::remove(scenePath);
 		std::filesystem::remove(objectPath);
+	}
+
+	void	testAssetPathUsesProvidedScenePaths(void)
+	{
+		const std::filesystem::path baseDirectory = std::filesystem::temp_directory_path() / "luz_scene_assets";
+		const std::filesystem::path relativePath = std::filesystem::path("objects") / "mesh.obj";
+		const std::filesystem::path expectedRelativePath = (baseDirectory / relativePath).lexically_normal();
+		const std::filesystem::path absolutePath = (baseDirectory / "textures" / "albedo.ppm").lexically_normal();
+
+		require(
+			AssetPath::resolve(baseDirectory, relativePath.string()) == expectedRelativePath.string(),
+			"Relative scene asset path was not resolved from the scene directory."
+		);
+		require(
+			AssetPath::resolve(baseDirectory, absolutePath.string()) == absolutePath.string(),
+			"Absolute scene asset path was not preserved."
+		);
+		require(
+			AssetPath::resolve(relativePath.string()) == relativePath.string(),
+			"Relative asset path without a base directory was not preserved."
+		);
 	}
 
 	void	testSceneFileLoadsTransformedObject(void)
@@ -4690,6 +4712,7 @@ int	main(void)
 		testRenderCameraFitsSensorGateToImageAspect();
 		testSceneFileRejectsCompactCameraSyntax();
 		testSceneFileLoadsRelativeObject();
+		testAssetPathUsesProvidedScenePaths();
 		testSceneFileLoadsTransformedObject();
 		testSceneFileLoadsNamedBlocks();
 		testSceneFileCompactPrimitivesUseNamedMaterials();

@@ -495,7 +495,7 @@ namespace
 
 		ObjReadOptions options;
 		options.quiet = true;
-		const std::string suzannePath = AssetPath::resolve("suzanne.obj");
+		const std::string suzannePath = AssetPath::resolve("examples/objects/suzanne.obj");
 
 		scene.addHittable(std::make_shared<Mesh>(readObj(
 			suzannePath,

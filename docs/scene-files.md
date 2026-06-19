@@ -241,7 +241,7 @@ roughness=0.18
 
 [meshes]
 mesh helmet_mesh {
-file=assets/objects/blender_mandalorian.obj
+file=../objects/blender_mandalorian.obj
 }
 
 [scene]
@@ -383,12 +383,9 @@ anisotropy=0.4
 }
 ```
 
-OBJ paths are resolved in this order:
-
-1. Relative to the scene file.
-2. Relative to the current working directory.
-3. Under `assets/objects/`.
-4. Under `objects/`.
+OBJ paths use the path provided by the scene file. Absolute paths are used
+as-is, and relative paths are resolved from the directory containing the
+`.luz` file.
 
 ## Materials
 
@@ -574,7 +571,7 @@ Named meshes bind a mesh name to an OBJ file:
 ```text
 [meshes]
 mesh suzanne {
-file=assets/objects/suzanne.obj
+file=../objects/suzanne.obj
 }
 ```
 

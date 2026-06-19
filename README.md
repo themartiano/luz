@@ -270,7 +270,7 @@ misleading because each local filter window covers too much of the image.
 
 Example scenes live in `examples/scenes/`. The scene-file format is documented in [`docs/scene-files.md`](docs/scene-files.md).
 
-Object paths in `.luz` files are resolved relative to the scene file first, then relative to the current working directory, then under `assets/objects/`. Keep large or generated OBJ assets local unless they are intentionally reviewed for inclusion.
+Object paths in `.luz` files use the path provided by the scene: absolute paths are used as-is, and relative paths are resolved from the directory containing the `.luz` file. Keep large or generated OBJ assets local unless they are intentionally reviewed for inclusion.
 
 OBJ meshes can be declared, transformed, and assigned named scene materials:
 
@@ -284,7 +284,7 @@ roughness=0.15
 
 [meshes]
 mesh statue_mesh {
-file=assets/objects/statue.obj
+file=objects/statue.obj
 }
 
 [scene]
@@ -317,7 +317,7 @@ src/scene/         Scene model and scene helpers
 src/io/            Scene-file, OBJ, BMP, PNG, and TIFF loading/writing
 src/cli/           Command-line entry point and flags
 examples/scenes/   Example .luz scene files
-assets/objects/    Benchmark OBJ assets and optional local OBJ assets
+examples/objects/  Example OBJ assets
 docs/images/       Compressed showcase images
 tools/             Export and utility scripts
 tests/             Standard-library-only test program
