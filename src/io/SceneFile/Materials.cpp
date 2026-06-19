@@ -37,6 +37,17 @@ namespace
 		double		clearcoat = 0.0;
 		double		clearcoatRoughness = 0.03;
 		double		sheen = 0.0;
+		double		subsurface = 0.0;
+		Color		subsurfaceRadius = Color(1.0, 1.0, 1.0);
+		double		subsurfaceScale = 0.001;
+		Color		subsurfaceColor = Color(1.0, 1.0, 1.0);
+		SubsurfaceMethod	subsurfaceMethod = SUBSURFACE_BURLEY;
+		bool		hasSubsurface = false;
+		bool		hasSubsurfaceRadius = false;
+		bool		hasSubsurfaceScale = false;
+		bool		hasSubsurfaceColor = false;
+		bool		hasSubsurfaceMethod = false;
+		std::string	subsurfaceProfile;
 		Color		glossyColor = Color(1.0, 1.0, 1.0);
 		double		glossyWeight = 0.5;
 		bool		hasGlossyColor = false;
@@ -335,6 +346,26 @@ namespace
 		return (material);
 	}
 
+	SubsurfaceMethod	parseSubsurfaceMethod(const std::string& value)
+	{
+		const std::string method = SceneFile::internal::_lowerCopy(SceneFile::internal::_trim(value));
+
+		if (
+			method == "burley"
+			|| method == "diffusion"
+			|| method == "normalized_diffusion"
+			|| method == "normalizeddiffusion"
+		)
+		{
+			return (SUBSURFACE_BURLEY);
+		}
+		if (method == "thin" || method == "thin_translucent" || method == "thintranslucent")
+		{
+			return (SUBSURFACE_THIN);
+		}
+		throw std::runtime_error("Unknown subsurface method: " + value);
+	}
+
 	void	parseMaterialProperty(
 		MaterialBuilder& builder,
 		const std::string& line,
@@ -428,6 +459,65 @@ namespace
 		else if (key == "sheen")
 		{
 			builder.sheen = std::stod(value);
+		}
+		else if (
+			key == "subsurface"
+			|| key == "subsurface_weight"
+			|| key == "subsurfaceweight"
+			|| key == "sss"
+		)
+		{
+			builder.subsurface = std::stod(value);
+			builder.hasSubsurface = true;
+		}
+		else if (
+			key == "subsurface_radius"
+			|| key == "subsurfaceradius"
+			|| key == "sss_radius"
+			|| key == "sssradius"
+		)
+		{
+			builder.subsurfaceRadius = SceneFile::internal::_parseColorValue(value, key, context);
+			builder.hasSubsurfaceRadius = true;
+		}
+		else if (
+			key == "subsurface_scale"
+			|| key == "subsurfacescale"
+			|| key == "sss_scale"
+			|| key == "sssscale"
+		)
+		{
+			builder.subsurfaceScale = std::stod(value);
+			builder.hasSubsurfaceScale = true;
+		}
+		else if (
+			key == "subsurface_color"
+			|| key == "subsurfacecolor"
+			|| key == "sss_color"
+			|| key == "ssscolor"
+		)
+		{
+			builder.subsurfaceColor = SceneFile::internal::_parseColorValue(value, key, context);
+			builder.hasSubsurfaceColor = true;
+		}
+		else if (
+			key == "subsurface_method"
+			|| key == "subsurfacemethod"
+			|| key == "sss_method"
+			|| key == "sssmethod"
+		)
+		{
+			builder.subsurfaceMethod = parseSubsurfaceMethod(value);
+			builder.hasSubsurfaceMethod = true;
+		}
+		else if (
+			key == "subsurface_profile"
+			|| key == "subsurfaceprofile"
+			|| key == "sss_profile"
+			|| key == "sssprofile"
+		)
+		{
+			builder.subsurfaceProfile = SceneFile::internal::_lowerCopy(SceneFile::internal::_trim(value));
 		}
 		else if (key == "glossy_color" || key == "glossycolor" || key == "specular_color" || key == "specularcolor")
 		{
@@ -634,6 +724,37 @@ namespace
 		{
 			material->setTransmittance(*builder.transmittance, builder.transmittanceDistance);
 		}
+		if (!builder.subsurfaceProfile.empty())
+		{
+			if (builder.subsurfaceProfile == "skin")
+			{
+				material->setSkinSubsurfaceProfile();
+			}
+			else
+			{
+				throw std::runtime_error("Unknown subsurface profile: " + builder.subsurfaceProfile);
+			}
+		}
+		if (builder.hasSubsurfaceMethod)
+		{
+			material->setSubsurfaceMethod(builder.subsurfaceMethod);
+		}
+		if (builder.hasSubsurfaceRadius)
+		{
+			material->setSubsurfaceRadius(builder.subsurfaceRadius);
+		}
+		if (builder.hasSubsurfaceScale)
+		{
+			material->setSubsurfaceScale(builder.subsurfaceScale);
+		}
+		if (builder.hasSubsurfaceColor)
+		{
+			material->setSubsurfaceColor(builder.subsurfaceColor);
+		}
+		if (builder.hasSubsurface)
+		{
+			material->setSubsurface(builder.subsurface);
+		}
 		return (material);
 	}
 
@@ -680,6 +801,20 @@ namespace
 		)
 		{
 			throw std::runtime_error("Glass dispersion properties are only valid for dielectric or principled materials.");
+		}
+		if (
+			(
+				builder.hasSubsurface
+				|| builder.hasSubsurfaceRadius
+				|| builder.hasSubsurfaceScale
+				|| builder.hasSubsurfaceColor
+				|| builder.hasSubsurfaceMethod
+				|| !builder.subsurfaceProfile.empty()
+			)
+			&& type != "principled"
+		)
+		{
+			throw std::runtime_error("Subsurface properties are only valid for principled materials.");
 		}
 		if (type == "principled")
 		{

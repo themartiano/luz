@@ -21,8 +21,8 @@ https://github.com/user-attachments/assets/7dc03485-9418-47af-a7e7-c4c4c53b6b70
 - Spheres, planes, rectangles, triangles, cubes, volumes, and OBJ meshes
 - Scene-linear ACEScg rendering with sRGB input/output transforms
 - Spectral authoring helpers: wavelength, blackbody, solar, and reflectance curves
-- Lambertian, GGX metal, rough dielectric, layered principled, emissive,
-  isotropic, and Henyey-Greenstein phase materials
+- Lambertian, GGX metal, rough dielectric, layered principled with subsurface
+  scattering, emissive, isotropic, and Henyey-Greenstein phase materials
 - Measured conductor, glass, and volume presets, plus IES lamp profiles
 - Area, point, sphere and directional lights with physical units
 - PPM and HDR equirectangular environment maps with calibrated lighting and MIS

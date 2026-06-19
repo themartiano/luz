@@ -35,6 +35,9 @@ struct	ScatterRecord
 	double	phaseAnisotropy = 0.0;
 	bool	hasMediumAbsorption = false;
 	Color	mediumAbsorptionCoefficient = Color(0.0, 0.0, 0.0);
+	bool	hasSubsurface = false;
+	bool	subsurfaceThin = false;
+	Color	subsurfaceRadiusMeters = Color(0.0, 0.0, 0.0);
 };
 
 class	Material

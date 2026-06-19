@@ -2953,6 +2953,51 @@ namespace
 		require(BSDF::maxChannel(bsdfCos) > 0.0, "Principled BSDF cosine was zero.");
 	}
 
+	void	testPrincipledSubsurfaceControls(void)
+	{
+		Principled burley(Color(0.8, 0.42, 0.28), 0.0, 0.5);
+		Principled thin(Color(0.8, 0.42, 0.28), 0.0, 0.5);
+		Ray ray(Vector3(0.0, 0.0, 1.0), Vector3(0.0, 0.0, -1.0));
+		HitRecord hitRecord;
+
+		hitRecord.position = Vector3(0.0, 0.0, 0.0);
+		hitRecord.normal = Vector3(0.0, 0.0, 1.0);
+		hitRecord.geometricNormal = hitRecord.normal;
+		hitRecord.frontFace = true;
+
+		burley.setSkinSubsurfaceProfile();
+		requireNear(burley.getSubsurface(), 0.5, "Skin subsurface profile did not set a useful weight.");
+		require(burley.getSubsurfaceMethod() == SUBSURFACE_BURLEY, "Skin subsurface profile did not use Burley diffusion.");
+		requireColorNear(burley.getSubsurfaceRadius(), Color(1.0, 0.35, 0.18), "Skin subsurface radius is wrong.");
+		requireNear(burley.getSubsurfaceScale(), 0.0012, "Skin subsurface scale is wrong.");
+		requireColorNear(burley.getSubsurfaceColor(), Color(1.0, 0.42, 0.28), "Skin subsurface color is wrong.");
+
+		const Vector3 frontDirection(0.0, 0.0, 1.0);
+		const Vector3 backDirection(0.0, 0.0, -1.0);
+		const Color burleyFront = burley.evaluateBSDFCos(ray, hitRecord, frontDirection);
+		const Color burleyBack = burley.evaluateBSDFCos(ray, hitRecord, backDirection);
+		require(BSDF::maxChannel(burleyFront) > 0.0, "Burley subsurface did not evaluate on the front side.");
+		requireColorNear(burleyBack, Color(0.0, 0.0, 0.0), "Burley subsurface incorrectly transmitted through a surface.");
+
+		thin.setSubsurface(0.8);
+		thin.setSubsurfaceMethod(SUBSURFACE_THIN);
+		thin.setSubsurfaceRadius(Color(1.2, 0.45, 0.2));
+		thin.setSubsurfaceScale(0.002);
+		thin.setSubsurfaceColor(Color(1.0, 0.55, 0.3));
+		require(thin.usesThinSubsurface(), "Thin subsurface was not reported as transmissive.");
+		requireColorNear(thin.getSubsurfaceRadius(), Color(1.2, 0.45, 0.2), "Thin subsurface radius setter failed.");
+		requireNear(thin.getSubsurfaceScale(), 0.002, "Thin subsurface scale setter failed.");
+		requireColorNear(thin.getSubsurfaceColor(), Color(1.0, 0.55, 0.3), "Thin subsurface color setter failed.");
+		require(
+			BSDF::maxChannel(thin.evaluateBSDFCos(ray, hitRecord, backDirection)) > 0.0,
+			"Thin subsurface did not evaluate through the back side."
+		);
+		require(
+			thin.scatteringPDF(ray, hitRecord, backDirection) > 0.0,
+			"Thin subsurface PDF was zero through the back side."
+		);
+	}
+
 	void	testSceneFileLoadsNamedTexturedSphere(void)
 	{
 		const std::filesystem::path directory = std::filesystem::temp_directory_path();
@@ -3178,6 +3223,12 @@ namespace
 				<< "clearcoat=0.6\n"
 				<< "clearcoat_roughness=0.12\n"
 				<< "sheen=0.4\n"
+				<< "subsurface_profile=skin\n"
+				<< "subsurface=0.35\n"
+				<< "subsurface_method=thin\n"
+				<< "subsurface_radius=(1.2,0.45,0.2)\n"
+				<< "subsurface_scale=0.002\n"
+				<< "subsurface_color=(0.95,0.5,0.3)\n"
 				<< "transmittance=(0.8,0.9,1)\n"
 				<< "attenuation_distance=2\n"
 				<< "}\n\n"
@@ -3216,6 +3267,11 @@ namespace
 		requireNear(material->getClearcoat(), 0.6, "Principled clearcoat was not parsed.");
 		requireNear(material->getClearcoatRoughness(), 0.12, "Principled clearcoat roughness was not parsed.");
 		requireNear(material->getSheen(), 0.4, "Principled sheen was not parsed.");
+		requireNear(material->getSubsurface(), 0.35, "Principled subsurface was not parsed.");
+		require(material->getSubsurfaceMethod() == SUBSURFACE_THIN, "Principled subsurface method was not parsed.");
+		requireColorNear(material->getSubsurfaceRadius(), Color(1.2, 0.45, 0.2), "Principled subsurface radius was not parsed.");
+		requireNear(material->getSubsurfaceScale(), 0.002, "Principled subsurface scale was not parsed.");
+		requireColorNear(material->getSubsurfaceColor(), Color(0.95, 0.5, 0.3), "Principled subsurface color was not parsed.");
 		const Color coefficient = material->getAbsorptionCoefficient();
 		requireNear(coefficient.getRed(), -std::log(0.8) / 2.0, "Principled red transmittance was not parsed.");
 		requireNear(coefficient.getGreen(), -std::log(0.9) / 2.0, "Principled green transmittance was not parsed.");
@@ -4841,6 +4897,7 @@ int	main(void)
 		testDiffuseGlossyMixPreservesStrongGlossyComponent();
 		testRoughDielectricUsesGGXBSDF();
 		testPrincipledLayeredBSDF();
+		testPrincipledSubsurfaceControls();
 		testSceneFileLoadsNamedTexturedSphere();
 		testSceneFileLoadsVolumeBlock();
 		testSceneFileMetersPerUnitScalesVolumeDensity();

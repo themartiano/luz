@@ -5,6 +5,7 @@
 #include "Defaults.hpp"
 #include "SkyTypes.hpp"
 #include "Sampler.hpp"
+#include "ONB.hpp"
 #include <cmath>
 #include <memory>
 #include <vector>
@@ -344,7 +345,13 @@ namespace
 		}
 
 		const Principled* principled = dynamic_cast<const Principled*>(material);
-		return (principled != nullptr && principled->getTransmission() > 0.0);
+		return (
+			principled != nullptr
+			&& (
+				principled->getTransmission() > 0.0
+				|| principled->usesThinSubsurface()
+			)
+		);
 	}
 
 	bool	leavesOpaqueGeometricSurface(const HitRecord& hitRecord, const Vector3& direction)
@@ -364,6 +371,136 @@ namespace
 			return (true);
 		}
 		return (Utilities::dot(geometricNormal, direction) > 1e-7);
+	}
+
+	double	subsurfaceSampleRadiusMeters(const ScatterRecord& scatterRecord)
+	{
+		const double diffusionLength = maxChannel(scatterRecord.subsurfaceRadiusMeters);
+		if (!std::isfinite(diffusionLength) || diffusionLength <= 0.0)
+		{
+			return (0.0);
+		}
+
+		const double componentSample = Sampler::sample1D(Sampler::DIM_SUBSURFACE_PROFILE_COMPONENT);
+		const Sampler::Sample2D radiusSample = Sampler::sample2D(Sampler::DIM_SUBSURFACE_SPATIAL);
+		const double u = std::max(1e-12, std::min(1.0 - 1e-12, static_cast<double>(radiusSample.y)));
+		const double exponentialScale = componentSample < 0.25
+			? diffusionLength
+			: 3.0 * diffusionLength;
+
+		return (-exponentialScale * std::log(1.0 - u));
+	}
+
+	bool	refreshSubsurfaceScatterAtExit(HitRecord& hitRecord, ScatterRecord& scatterRecord)
+	{
+		if (!scatterRecord.bsdfMaterial)
+		{
+			return (false);
+		}
+
+		const ONB basis(hitRecord.normal);
+		const Vector3 direction = basis.local(Sampler::cosineHemisphere(Sampler::DIM_BSDF_DIRECTION));
+		const double pdfValue = scatterRecord.bsdfMaterial->scatteringPDF(
+			scatterRecord.incidentRay,
+			hitRecord,
+			direction
+		);
+		const Color bsdfCos = scatterRecord.bsdfMaterial->evaluateBSDFCos(
+			scatterRecord.incidentRay,
+			hitRecord,
+			direction
+		);
+		if (
+			pdfValue <= 0.0
+			|| !std::isfinite(pdfValue)
+			|| maxChannel(bsdfCos) <= 0.0
+		)
+		{
+			return (false);
+		}
+
+		scatterRecord.sampledDirection = direction;
+		scatterRecord.sampledPDF = pdfValue;
+		scatterRecord.attenuation = bsdfCos / pdfValue;
+		return (true);
+	}
+
+	void	relocateSubsurfaceExit(Scene& scene, HitRecord& hitRecord, ScatterRecord& scatterRecord)
+	{
+		if (!scatterRecord.hasSubsurface || scatterRecord.subsurfaceThin || !hitRecord.material)
+		{
+			return;
+		}
+
+		const HitRecord entryHit = hitRecord;
+		const ScatterRecord entryScatter = scatterRecord;
+		const double sampleRadiusMeters = subsurfaceSampleRadiusMeters(scatterRecord);
+		const double metersPerUnit = scene.getMetersPerUnit();
+		if (
+			sampleRadiusMeters <= 0.0
+			|| !std::isfinite(sampleRadiusMeters)
+			|| metersPerUnit <= 0.0
+			|| !std::isfinite(metersPerUnit)
+		)
+		{
+			return;
+		}
+
+		const double sampleRadiusScene = sampleRadiusMeters / metersPerUnit;
+		if (sampleRadiusScene <= T_MIN)
+		{
+			return;
+		}
+
+		Vector3 normal = hitRecord.normal;
+		if (Utilities::vectorLengthSquared(normal) <= 1e-12)
+		{
+			normal = hitRecord.geometricNormal;
+		}
+		if (Utilities::vectorLengthSquared(normal) <= 1e-12)
+		{
+			return;
+		}
+		normal = Utilities::normalize(normal);
+
+		const ONB basis(normal);
+		const Sampler::Sample2D diskSample = Sampler::sample2D(Sampler::DIM_SUBSURFACE_SPATIAL);
+		const double angle = 2.0 * D_PI * static_cast<double>(diskSample.x);
+		const Vector3 offset = basis.local(
+			std::cos(angle) * sampleRadiusScene,
+			std::sin(angle) * sampleRadiusScene,
+			0.0
+		);
+		const Vector3 candidate = hitRecord.position + offset;
+		const double probeDistance = std::max(
+			sampleRadiusScene + (4.0 * maxChannel(scatterRecord.subsurfaceRadiusMeters) / metersPerUnit),
+			16.0 * T_MIN
+		);
+
+		Ray probeRay(
+			candidate + normal * probeDistance,
+			normal * -1.0
+		);
+		HitRecord exitHit;
+		if (!Renderer::internal::_checkHits(scene, probeRay, exitHit))
+		{
+			return;
+		}
+		if (
+			exitHit.material != entryHit.material
+			|| exitHit.t0 <= T_MIN
+			|| exitHit.t0 > (2.0 * probeDistance + T_MIN)
+		)
+		{
+			return;
+		}
+
+		hitRecord = exitHit;
+		if (!refreshSubsurfaceScatterAtExit(hitRecord, scatterRecord))
+		{
+			hitRecord = entryHit;
+			scatterRecord = entryScatter;
+		}
 	}
 
 	bool	hasEnvironmentLight(Scene& scene)
@@ -1098,6 +1235,7 @@ namespace
 
 				return (accumulatedColor + clampRayColor((throughput * emitted) * emissionMISWeight));
 			}
+			relocateSubsurfaceExit(scene, hitRecord, scatterRecord);
 			const Color attenuation = effectiveScatterAttenuation(scene, hitRecord, scatterRecord);
 
 			if (scatterRecord.isSpecular)

@@ -14,6 +14,7 @@ namespace
 	enum Component
 	{
 		COMPONENT_DIFFUSE,
+		COMPONENT_SUBSURFACE,
 		COMPONENT_SHEEN,
 		COMPONENT_DIELECTRIC_SPECULAR,
 		COMPONENT_METAL,
@@ -56,6 +57,15 @@ namespace
 		{
 			throw std::invalid_argument(label + " must have finite non-negative channels.");
 		}
+	}
+
+	bool	hasPositiveChannel(const Color& color)
+	{
+		return (
+			color.getRed() > 0.0
+			|| color.getGreen() > 0.0
+			|| color.getBlue() > 0.0
+		);
 	}
 
 	double	absorptionFromTransmittance(double transmittance, double distanceMeters)
@@ -118,15 +128,23 @@ namespace
 		double transmission,
 		double refractiveIndex,
 		double clearcoat,
-		double sheen
+		double sheen,
+		double subsurface,
+		Color subsurfaceColor
 	)
 	{
 		ComponentWeights result;
 		const double baseLuminance = std::max(0.05, luminanceWeight(baseColor));
 		const double diffuse = diffuseScale(metallic, transmission, refractiveIndex, clearcoat);
 		const double dielectricSpecular = (1.0 - metallic) * std::max(0.03, dielectricF0(refractiveIndex));
+		const double subsurfaceWeight = diffuse * subsurface;
+		const double surfaceDiffuse = diffuse * (1.0 - subsurface);
 
-		result.weights[COMPONENT_DIFFUSE] = diffuse * baseLuminance;
+		result.weights[COMPONENT_DIFFUSE] = surfaceDiffuse * baseLuminance;
+		result.weights[COMPONENT_SUBSURFACE] = subsurfaceWeight * std::max(
+			0.05,
+			luminanceWeight(baseColor * subsurfaceColor)
+		);
 		result.weights[COMPONENT_SHEEN] = diffuse * sheen * 0.35;
 		result.weights[COMPONENT_DIELECTRIC_SPECULAR] = dielectricSpecular * (1.0 - 0.5 * transmission);
 		result.weights[COMPONENT_METAL] = metallic * std::max(0.05, baseLuminance);
@@ -178,6 +196,43 @@ namespace
 			return (Color(0.0, 0.0, 0.0));
 		}
 		return (baseColor * (scale * noL / D_PI));
+	}
+
+	double	subsurfaceCosinePDF(
+		const Vector3& normal,
+		const Vector3& direction,
+		SubsurfaceMethod method
+	)
+	{
+		const double cosine = Utilities::dot(normal, direction);
+
+		if (method == SUBSURFACE_THIN)
+		{
+			return (std::fabs(cosine) / (2.0 * D_PI));
+		}
+		return (cosine <= 0.0 ? 0.0 : cosine / D_PI);
+	}
+
+	Color	subsurfaceBSDFCos(
+		Color baseColor,
+		Color subsurfaceColor,
+		const Vector3& normal,
+		const Vector3& direction,
+		double scale,
+		SubsurfaceMethod method
+	)
+	{
+		double noL = Utilities::dot(normal, direction);
+
+		if (method == SUBSURFACE_THIN)
+		{
+			noL = std::fabs(noL);
+		}
+		if (noL <= 0.0 || scale <= 0.0)
+		{
+			return (Color(0.0, 0.0, 0.0));
+		}
+		return ((baseColor * subsurfaceColor) * (scale * noL / D_PI));
 	}
 
 	Color	sheenBSDFCos(
@@ -320,6 +375,11 @@ Principled::Principled(void)
 	this->_clearcoat = 0.0;
 	this->_clearcoatRoughness = 0.03;
 	this->_sheen = 0.0;
+	this->_subsurface = 0.0;
+	this->_subsurfaceRadius = Color(1.0, 1.0, 1.0);
+	this->_subsurfaceScale = 0.001;
+	this->_subsurfaceColor = Color(1.0, 1.0, 1.0);
+	this->_subsurfaceMethod = SUBSURFACE_BURLEY;
 	this->_absorptionCoefficient = Color(0.0, 0.0, 0.0);
 }
 
@@ -347,6 +407,11 @@ Principled::Principled(
 	this->_clearcoat = validUnit(clearcoat, "Principled clearcoat");
 	this->_clearcoatRoughness = validUnit(clearcoatRoughness, "Principled clearcoat roughness");
 	this->_sheen = validUnit(sheen, "Principled sheen");
+	this->_subsurface = 0.0;
+	this->_subsurfaceRadius = Color(1.0, 1.0, 1.0);
+	this->_subsurfaceScale = 0.001;
+	this->_subsurfaceColor = Color(1.0, 1.0, 1.0);
+	this->_subsurfaceMethod = SUBSURFACE_BURLEY;
 	this->_absorptionCoefficient = Color(0.0, 0.0, 0.0);
 }
 
@@ -383,6 +448,39 @@ double	Principled::getClearcoatRoughness(void) const
 double	Principled::getSheen(void) const
 {
 	return (this->_sheen);
+}
+
+double	Principled::getSubsurface(void) const
+{
+	return (this->_subsurface);
+}
+
+Color	Principled::getSubsurfaceRadius(void) const
+{
+	return (this->_subsurfaceRadius);
+}
+
+double	Principled::getSubsurfaceScale(void) const
+{
+	return (this->_subsurfaceScale);
+}
+
+Color	Principled::getSubsurfaceColor(void) const
+{
+	return (this->_subsurfaceColor);
+}
+
+SubsurfaceMethod	Principled::getSubsurfaceMethod(void) const
+{
+	return (this->_subsurfaceMethod);
+}
+
+bool	Principled::usesThinSubsurface(void) const
+{
+	return (
+		this->_subsurface > 0.0
+		&& this->_subsurfaceMethod == SUBSURFACE_THIN
+	);
 }
 
 Color	Principled::getAbsorptionCoefficient(void) const
@@ -425,6 +523,57 @@ void	Principled::setSheen(double sheen)
 	this->_sheen = validUnit(sheen, "Principled sheen");
 }
 
+void	Principled::setSubsurface(double subsurface)
+{
+	this->_subsurface = validUnit(subsurface, "Principled subsurface");
+}
+
+void	Principled::setSubsurfaceRadius(Color radius)
+{
+	requireFiniteNonNegativeColor(radius, "Principled subsurface radius");
+	if (!hasPositiveChannel(radius))
+	{
+		throw std::invalid_argument("Principled subsurface radius must have at least one positive channel.");
+	}
+	this->_subsurfaceRadius = radius;
+}
+
+void	Principled::setSubsurfaceScale(double scaleMeters)
+{
+	if (!std::isfinite(scaleMeters) || scaleMeters <= 0.0)
+	{
+		throw std::invalid_argument("Principled subsurface scale must be finite and positive.");
+	}
+	this->_subsurfaceScale = scaleMeters;
+}
+
+void	Principled::setSubsurfaceColor(Color color)
+{
+	requireFiniteNonNegativeColor(color, "Principled subsurface color");
+	this->_subsurfaceColor = color;
+}
+
+void	Principled::setSubsurfaceMethod(SubsurfaceMethod method)
+{
+	if (method != SUBSURFACE_BURLEY && method != SUBSURFACE_THIN)
+	{
+		throw std::invalid_argument("Unknown principled subsurface method.");
+	}
+	this->_subsurfaceMethod = method;
+}
+
+void	Principled::setSkinSubsurfaceProfile(void)
+{
+	this->_subsurfaceMethod = SUBSURFACE_BURLEY;
+	this->_subsurfaceRadius = Color(1.0, 0.35, 0.18);
+	this->_subsurfaceScale = 0.0012;
+	this->_subsurfaceColor = Color(1.0, 0.42, 0.28);
+	if (this->_subsurface <= 0.0)
+	{
+		this->_subsurface = 0.5;
+	}
+}
+
 void	Principled::setAbsorptionCoefficient(Color absorptionCoefficient)
 {
 	requireFiniteNonNegativeColor(absorptionCoefficient, "Principled absorption coefficient");
@@ -454,16 +603,35 @@ bool	Principled::scatter(Ray& ray, HitRecord& hitRecord, ScatterRecord& scatterR
 		this->_transmission,
 		this->_refractiveIndex,
 		this->_clearcoat,
-		this->_sheen
+		this->_sheen,
+		this->_subsurface,
+		BSDF::clampColor01(this->_subsurfaceColor)
 	);
 	const Component component = selectComponent(weights);
 	Vector3 direction;
 
-	if (component == COMPONENT_DIFFUSE || component == COMPONENT_SHEEN)
+	if (
+		component == COMPONENT_DIFFUSE
+		|| component == COMPONENT_SHEEN
+		|| component == COMPONENT_SUBSURFACE
+	)
 	{
 		const ONB basis(hitRecord.normal);
+		Vector3 localDirection = Sampler::cosineHemisphere(Sampler::DIM_BSDF_DIRECTION);
 
-		direction = basis.local(Sampler::cosineHemisphere(Sampler::DIM_BSDF_DIRECTION));
+		if (
+			component == COMPONENT_SUBSURFACE
+			&& this->_subsurfaceMethod == SUBSURFACE_THIN
+			&& Sampler::sample1D(Sampler::DIM_SUBSURFACE_THIN_SIDE) < 0.5
+		)
+		{
+			localDirection = Vector3(
+				localDirection.getX(),
+				localDirection.getY(),
+				-localDirection.getZ()
+			);
+		}
+		direction = basis.local(localDirection);
 	}
 	else if (component == COMPONENT_TRANSMISSION)
 	{
@@ -501,6 +669,10 @@ bool	Principled::scatter(Ray& ray, HitRecord& hitRecord, ScatterRecord& scatterR
 	scatterRecord.isSpecular = false;
 	scatterRecord.pdfType = SCATTER_PDF_BSDF;
 	scatterRecord.bsdfMaterial = this;
+	scatterRecord.hasSubsurface = component == COMPONENT_SUBSURFACE;
+	scatterRecord.subsurfaceThin = scatterRecord.hasSubsurface
+		&& this->_subsurfaceMethod == SUBSURFACE_THIN;
+	scatterRecord.subsurfaceRadiusMeters = this->_subsurfaceRadius * this->_subsurfaceScale;
 	return (true);
 }
 
@@ -521,7 +693,21 @@ Color	Principled::evaluateBSDFCos(
 		this->_refractiveIndex,
 		this->_clearcoat
 	);
-	Color result = diffuseBSDFCos(baseColor, hitRecord.normal, scatteredDirection, diffuse);
+	Color result = diffuseBSDFCos(
+		baseColor,
+		hitRecord.normal,
+		scatteredDirection,
+		diffuse * (1.0 - this->_subsurface)
+	);
+
+	result += subsurfaceBSDFCos(
+		baseColor,
+		BSDF::clampColor01(this->_subsurfaceColor),
+		hitRecord.normal,
+		scatteredDirection,
+		diffuse * this->_subsurface,
+		this->_subsurfaceMethod
+	);
 
 	result += sheenBSDFCos(
 		baseColor,
@@ -596,7 +782,9 @@ double	Principled::scatteringPDF(
 		this->_transmission,
 		this->_refractiveIndex,
 		this->_clearcoat,
-		this->_sheen
+		this->_sheen,
+		this->_subsurface,
+		BSDF::clampColor01(this->_subsurfaceColor)
 	);
 	const Vector3 view = viewDirection(ray, hitRecord);
 	const double alpha = BSDF::roughnessToAlpha(this->_roughness);
@@ -606,6 +794,11 @@ double	Principled::scatteringPDF(
 	std::array<double, COMPONENT_COUNT> pdfs = {};
 
 	pdfs[COMPONENT_DIFFUSE] = cosineHemispherePDF(hitRecord.normal, scatteredDirection);
+	pdfs[COMPONENT_SUBSURFACE] = subsurfaceCosinePDF(
+		hitRecord.normal,
+		scatteredDirection,
+		this->_subsurfaceMethod
+	);
 	pdfs[COMPONENT_SHEEN] = pdfs[COMPONENT_DIFFUSE];
 	pdfs[COMPONENT_DIELECTRIC_SPECULAR] = reflectionPDF(
 		this->_roughness,

@@ -2,6 +2,12 @@
 
 #include "Materials/Material.hpp"
 
+enum	SubsurfaceMethod
+{
+	SUBSURFACE_BURLEY,
+	SUBSURFACE_THIN
+};
+
 class	Principled : public Material
 {
 	public:
@@ -24,6 +30,12 @@ class	Principled : public Material
 		double	getClearcoat(void) const;
 		double	getClearcoatRoughness(void) const;
 		double	getSheen(void) const;
+		double	getSubsurface(void) const;
+		Color	getSubsurfaceRadius(void) const;
+		double	getSubsurfaceScale(void) const;
+		Color	getSubsurfaceColor(void) const;
+		SubsurfaceMethod	getSubsurfaceMethod(void) const;
+		bool	usesThinSubsurface(void) const;
 		Color	getAbsorptionCoefficient(void) const;
 		void	setMetallic(double metallic);
 		void	setRoughness(double roughness);
@@ -32,6 +44,12 @@ class	Principled : public Material
 		void	setClearcoat(double clearcoat);
 		void	setClearcoatRoughness(double clearcoatRoughness);
 		void	setSheen(double sheen);
+		void	setSubsurface(double subsurface);
+		void	setSubsurfaceRadius(Color radius);
+		void	setSubsurfaceScale(double scaleMeters);
+		void	setSubsurfaceColor(Color color);
+		void	setSubsurfaceMethod(SubsurfaceMethod method);
+		void	setSkinSubsurfaceProfile(void);
 		void	setAbsorptionCoefficient(Color absorptionCoefficient);
 		void	setTransmittance(Color transmittance, double distanceMeters);
 		bool	scatter(Ray& ray, HitRecord& hitRecord, ScatterRecord& scatterRecord);
@@ -55,5 +73,10 @@ class	Principled : public Material
 		double	_clearcoat;
 		double	_clearcoatRoughness;
 		double	_sheen;
+		double	_subsurface;
+		Color	_subsurfaceRadius;
+		double	_subsurfaceScale;
+		Color	_subsurfaceColor;
+		SubsurfaceMethod	_subsurfaceMethod;
 		Color	_absorptionCoefficient;
 };

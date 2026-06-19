@@ -483,7 +483,8 @@ data with no color transform.
 
 `type=principled` is Luz's layered surface model for Blender-style materials.
 It combines energy-conserving diffuse, GGX dielectric reflection, GGX metallic
-reflection, rough dielectric transmission, clearcoat, and sheen. Use
+reflection, rough dielectric transmission, Burley-style subsurface scattering,
+thin translucency, clearcoat, and sheen. Use
 `type=metal` when you have measured conductor `eta`/`k`; use `type=dielectric`
 for dedicated glass volumes with Beer-Lambert absorption.
 
@@ -508,6 +509,12 @@ Principled material property blocks support:
 | `clearcoat=F` | White dielectric clearcoat layer in `[0,1]`. Aliases: `clear_coat`, `coat`. |
 | `clearcoat_roughness=F` | Clearcoat GGX roughness in `[0,1]`. Aliases: `clear_coat_roughness`, `coat_roughness`. |
 | `sheen=F` | Grazing-angle sheen layer in `[0,1]`. |
+| `subsurface=F` | Subsurface blend in `[0,1]`. It moves energy from surface diffuse into the selected SSS profile. Aliases: `subsurface_weight`, `sss`. |
+| `subsurface_method=NAME` | SSS model. `burley`/`normalized_diffusion` samples a nearby same-material exit point; `thin` uses two-sided local translucency for thin surfaces. Alias: `sss_method`. |
+| `subsurface_radius=COLOR` | Per-channel relative diffusion radius. Red normally scatters farthest for skin. Alias: `sss_radius`. |
+| `subsurface_scale=F` | Physical scale in meters applied to `subsurface_radius`. Use millimeter-scale values for skin. Alias: `sss_scale`. |
+| `subsurface_color=COLOR` | Tint for the subsurface layer. Alias: `sss_color`. |
+| `subsurface_profile=skin` | Skin defaults: Burley diffusion, radius `(1,0.35,0.18)`, scale `0.0012`, color `(1,0.42,0.28)`, and `subsurface=0.5` when no explicit value is provided. Alias: `sss_profile`. |
 | `absorption=(r,g,b)` | Transmission absorption coefficient in `1/m`. Aliases: `absorption_coefficient`, `sigma_a`. |
 | `transmittance=COLOR` | Alternative to `absorption`: desired transmitted color over `attenuation_distance`. |
 
