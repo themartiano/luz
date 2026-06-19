@@ -74,7 +74,7 @@ Atmosphere::Atmosphere(void)
 	this->_samples = 16;
 	this->_lightSamples = 8;
 	this->_starsBrightness = 0.5;
-	this->_sunRadiance = LightUnits::solarDiskRadiance(ColorScience::solar(), 1.0);
+	this->_sunRadiance = LightUnits::solarDirectionalIrradiance(ColorScience::solar(), 1.0);
 	this->_sunRadianceScale = 1.0;
 	this->_metersPerUnit = 1.0;
 	updateSunDirectionVector();
@@ -91,7 +91,7 @@ Atmosphere::Atmosphere(double sunAngle, double earthRadius, double atmosphereRad
 	this->_samples = 16;
 	this->_lightSamples = 8;
 	this->_starsBrightness = 0.5;
-	this->_sunRadiance = LightUnits::solarDiskRadiance(ColorScience::solar(), 1.0);
+	this->_sunRadiance = LightUnits::solarDirectionalIrradiance(ColorScience::solar(), 1.0);
 	this->_sunRadianceScale = 1.0;
 	this->_metersPerUnit = 1.0;
 	setSunAngle(sunAngle);

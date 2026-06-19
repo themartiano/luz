@@ -30,6 +30,21 @@ namespace
 		}
 		return (viewUp);
 	}
+
+	void	fitViewportToImageAspect(double& viewportWidth, double& viewportHeight, double imageWidth, double imageHeight)
+	{
+		const double imageAspect = imageWidth / imageHeight;
+		const double viewportAspect = viewportWidth / viewportHeight;
+
+		if (imageAspect > viewportAspect)
+		{
+			viewportHeight = viewportWidth / imageAspect;
+		}
+		else if (imageAspect < viewportAspect)
+		{
+			viewportWidth = viewportHeight * imageAspect;
+		}
+	}
 }
 
 Renderer::internal::RenderCamera	Renderer::internal::_prepareRenderCamera(Scene& scene)
@@ -47,8 +62,9 @@ Renderer::internal::RenderCamera	Renderer::internal::_prepareRenderCamera(Scene&
 	const Vector3	cameraLookDirection = camera.getDirection();
 
 	const double	focusDistance = camera.getFocusDistanceMeters() / scene.getMetersPerUnit();
-	const double	viewportWidth = focusDistance * camera.getSensorWidthMeters() / camera.getFocalLengthMeters();
-	const double	viewportHeight = focusDistance * camera.getSensorHeightMeters() / camera.getFocalLengthMeters();
+	double	viewportWidth = focusDistance * camera.getSensorWidthMeters() / camera.getFocalLengthMeters();
+	double	viewportHeight = focusDistance * camera.getSensorHeightMeters() / camera.getFocalLengthMeters();
+	fitViewportToImageAspect(viewportWidth, viewportHeight, renderCamera.width, renderCamera.height);
 
 	const Vector3	w = Utilities::normalize(cameraLookDirection);
 	const Vector3	viewUp = cameraUpOrFallback(camera.getUpDirection(), w);

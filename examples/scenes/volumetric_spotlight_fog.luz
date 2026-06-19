@@ -1,0 +1,45 @@
+[settings]
+resolution=640,360
+samples=384
+adaptive=1
+adaptiveminsamples=96
+adaptivethreshold=0.04
+adaptivecheckinterval=16
+maxlightbounces=8
+gamma=1
+tonemapping=1
+bloom=1
+denoise=0
+exposure=-1.4
+contrast=1.25
+sky=none
+background=(0,0,0)
+distanceblueness=0
+outputfilename=volumetric_spotlight_fog.png
+
+[scene]
+camera main {
+position=(0,1.25,-6.4)
+direction=(0.82,0.13,1)
+up=(0,1,0)
+focal_length_mm=42
+sensor_width_mm=36
+sensor_height_mm=20.25
+f_stop=2.8
+focus_distance=7.5
+}
+area_light square_spot {
+position=(7.2,5.6,7.2)
+normal=(-0.55,-0.55,-1.0)
+size=(1.0,1.0)
+color=(0.94,0.98,1.0)
+luminance=4500000
+}
+volume spotlight_fog {
+shape=box
+position=(7.0,1.2,-1.2)
+size=(4.8,3.7,10.8)
+density=0.078
+color=(0.78,0.83,0.88)
+anisotropy=0.88
+}

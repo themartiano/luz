@@ -66,8 +66,8 @@ The parser is intentionally strict: unknown lines and malformed values throw an 
 | `caustic_passes` | `caustic_passes=N` | Progressive radius-shrink passes used while building the caustic map. Defaults to `8`. Alias: `causticpasses`. |
 | `caustic_radius` | `caustic_radius=METERS` | Initial caustic gather radius in meters. Luz converts it through `meters_per_unit`; progressive passes shrink the final lookup radius. Defaults to `0.05`. Alias: `causticradius`. |
 | `caustic_alpha` | `caustic_alpha=F` | Progressive radius update factor in `(0,1]`. Lower values shrink faster and are sharper/noisier; higher values are smoother. Defaults to `0.7`. Alias: `causticalpha`. |
-| `atmosphere` | `atmosphere=SUN,EARTH_RADIUS,ATMOSPHERE_RADIUS,HR,HM,SAMPLES,LIGHT_SAMPLES,STARS` | Only valid after `sky=atmosphere`. `SUN` is a fallback sun angle. If the scene has a `directional_light`, the first one drives atmosphere sun direction and radiance instead. Without a directional light, atmosphere uses calibrated solar disk radiance. |
-| `atmosphere_sun_scale` | `atmosphere_sun_scale=F` | Multiplies atmosphere sun radiance after it is sourced from the first `directional_light`, or from the fallback atmosphere sun when no directional light exists. Defaults to `1.0`. Aliases: `atmospheresunscale`, `atmosphere_sun_multiplier`, `atmospheresunmultiplier`. |
+| `atmosphere` | `atmosphere=SUN,EARTH_RADIUS,ATMOSPHERE_RADIUS,HR,HM,SAMPLES,LIGHT_SAMPLES,STARS` | Only valid after `sky=atmosphere`. `SUN` is a fallback sun angle. If the scene has a `directional_light`, the first one drives atmosphere sun direction and source intensity instead. Without a directional light, atmosphere uses calibrated direct solar irradiance. |
+| `atmosphere_sun_scale` | `atmosphere_sun_scale=F` | Multiplies atmosphere sun source intensity after it is sourced from the first `directional_light`, or from the fallback atmosphere sun when no directional light exists. Defaults to `1.0`. Aliases: `atmospheresunscale`, `atmosphere_sun_multiplier`, `atmospheresunmultiplier`. |
 | `distanceblueness` | `distanceblueness=0` or `distanceblueness=1` | Enables distance blue tinting when set to `1`. |
 
 ### Adaptive Sampling Notes
@@ -193,8 +193,9 @@ Camera position is in Luz world coordinates. Physical lens and focus quantities
 are in meters, or in millimeters for fields ending in `_mm`. At render time Luz
 converts `focus_distance` and lens aperture through `meters_per_unit`, so the
 same camera behaves consistently when exported coordinates are scaled. Sensor
-width and height define the captured gate; keep the sensor aspect ratio aligned
-with the image resolution for square-pixel framing.
+width and height define the captured gate; Luz fits that gate to the render
+resolution aspect for square-pixel output. Wider renders preserve sensor width
+and crop gate height; taller renders preserve sensor height and crop gate width.
 
 | Camera Property | Format | Notes |
 | --- | --- | --- |
@@ -616,12 +617,12 @@ sphere/point emitters; `candela` is lm/sr.
 light travels, suitable for sun lights. When `sky=atmosphere`, the first
 `directional_light` is also the atmosphere sun source: its opposite direction is
 used for scattering rays toward the sun, and its emitted light value sets the
-atmosphere sun radiance. With `solar=SCALE`, Luz uses 1361 W/m^2 direct solar
-irradiance for surfaces and solar disk radiance computed from a 0.533 degree
-sun diameter for atmosphere scattering. Use `atmosphere_sun_scale` only when you
-need an artistic atmosphere-only multiplier.
+atmosphere source intensity. With `solar=SCALE`, Luz uses 1361 W/m^2 direct
+solar irradiance for both surfaces and atmosphere scattering. Use
+`atmosphere_sun_scale` only when you need an artistic atmosphere-only
+multiplier.
 If no directional light exists, the first `atmosphere=` value is used as the
-vertical sun-angle fallback with the atmosphere fallback radiance.
+vertical sun-angle fallback with the atmosphere fallback source intensity.
 `point_light` and `sphere_light` create emissive spheres. These lights are still
 sampled through Luz's emissive-hittable lighting path. Sphere and point lights
 also accept `visible=0` to hide the light surface from camera and shadow rays

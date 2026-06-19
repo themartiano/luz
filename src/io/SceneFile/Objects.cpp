@@ -1080,7 +1080,7 @@ namespace
 				if (light.units.solarScale)
 				{
 					directionalLight->setAtmosphereSunRadiance(
-						LightUnits::solarDiskRadiance(color, *light.units.solarScale)
+						LightUnits::solarDirectionalIrradiance(color, *light.units.solarScale)
 					);
 				}
 				scene.addHittable(directionalLight);

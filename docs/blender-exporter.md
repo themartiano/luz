@@ -40,12 +40,12 @@ The exporter also works without passing the `.blend` file before `--python`:
 --include-hidden              Include objects hidden from render.
 --resolution WIDTHxHEIGHT     Override exported render resolution.
 --samples N                   Override samples per pixel.
---adaptive auto|on|off        Export Blender adaptive sampling by default, or force on/off.
+--adaptive auto|on|off        Enable adaptive sampling by default, mirror Blender with auto, or force off.
 --adaptive-min-samples N      Override exported adaptive minimum samples.
 --adaptive-threshold N        Override exported adaptive noise threshold.
 --adaptive-check-interval N   Override exported adaptive check interval.
---denoise auto|on|off         Export Blender denoising by default, or force on/off.
---tonemapping auto|on|off     Export Blender view transform intent, or force Luz tone mapping.
+--denoise auto|on|off         Enable denoising by default, mirror Blender with auto, or force off.
+--tonemapping auto|on|off     Enable tone mapping by default, mirror Blender with auto, or force off.
 --exposure EV                 Override exported display exposure in stops.
 --max-light-bounces N         Override max light bounces.
 --sky linear|none|atmosphere|environment
@@ -93,6 +93,9 @@ The exporter also works without passing the `.blend` file before `--python`:
   physical Luz camera properties. Focus distance remains in meters even when
   `--global-scale` changes exported coordinates; Luz converts it through
   `meters_per_unit` while rendering.
+- Luz fits the exported physical sensor gate to the render resolution aspect, so
+  rendering a full-frame 36x24 mm camera at 16:9 crops the vertical gate instead
+  of stretching the image.
 - Blender cameras with DOF disabled are exported as `pinhole=1`. Cameras with
   valid DOF export Blender's `aperture_fstop` as `f_stop`.
 - Area lights become `area_light` blocks. Blender's area-light energy is treated
@@ -131,14 +134,17 @@ The exporter also works without passing the `.blend` file before `--python`:
 - Blender RGB material, light, and world colors are written as
   `linear_srgb(...)` values so Luz converts Blender's linear RGB values into its
   ACEScg working space.
-- Blender/Cycles adaptive sampling and denoising settings are written into the
-  generated scene. When Blender leaves adaptive minimum samples unset, the
-  exporter uses a conservative minimum derived from the exported sample count
-  instead of relying on Luz's generic defaults.
-- Blender view exposure is exported as Luz `exposure`. Blender `Standard` and
-  `Raw` view transforms export `tonemapping=0` so Luz uses direct scene-linear
-  to sRGB display encoding instead of its ACES-fitted tone map. Other Blender
-  view transforms keep Luz tone mapping enabled as an approximation.
+- Adaptive sampling, denoising, and tone mapping are enabled in the generated
+  scene by default. Pass `--adaptive auto`, `--denoise auto`, or
+  `--tonemapping auto` to mirror Blender's corresponding setting, or pass `off`
+  to disable a feature explicitly.
+- When Blender leaves adaptive minimum samples unset, the exporter uses a
+  conservative minimum derived from the exported sample count instead of relying
+  on Luz's generic defaults.
+- Blender view exposure is exported as Luz `exposure`. With
+  `--tonemapping auto`, Blender `Standard` and `Raw` view transforms export
+  `tonemapping=0` so Luz uses direct scene-linear to sRGB display encoding
+  instead of its ACES-fitted tone map.
 - Principled BSDF export includes IOR, coat weight/roughness, and sheen when
   those Blender sockets are available. Glossy and anisotropic BSDF nodes export
   as Luz `glossy` materials, and Blender Diffuse+Glossy `Mix Shader` graphs

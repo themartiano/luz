@@ -1446,7 +1446,7 @@ namespace
 		requireNear(scene.getAtmosphere().getStarsBrightness(), 0.1, "Atmosphere stars brightness was not parsed.");
 		requireColorNear(
 			scene.getAtmosphere().getSunRadiance(),
-			LightUnits::solarDiskRadiance(ColorScience::solar(), 1.0),
+			LightUnits::solarDirectionalIrradiance(ColorScience::solar(), 1.0),
 			"Atmosphere fallback sun radiance"
 		);
 		requireNear(scene.getAtmosphere().getSunRadianceScale(), 1.0, "Atmosphere sun scale default was not preserved.");
@@ -1756,6 +1756,45 @@ namespace
 		requireNear(Utilities::vectorLength(renderCamera.horizontal), 144.0, "Camera sensor width did not project through physical focal length.");
 
 		std::filesystem::remove(scenePath);
+	}
+
+	void	testRenderCameraFitsSensorGateToImageAspect(void)
+	{
+		Scene wideScene;
+		wideScene.getImage()->setWidth(768);
+		wideScene.getImage()->setHeight(432);
+		wideScene.getImage()->initialize();
+		wideScene.addCamera(Camera(
+			Vector3(0.0, 0.0, 1.0),
+			Vector3(0.0, 0.0, -1.0),
+			0.05,
+			0.036,
+			0.024,
+			8.0,
+			1.0
+		));
+
+		Renderer::internal::RenderCamera wideCamera = Renderer::internal::_prepareRenderCamera(wideScene);
+		requireNear(Utilities::vectorLength(wideCamera.horizontal), 0.72, "Wide render changed horizontal camera gate.");
+		requireNear(Utilities::vectorLength(wideCamera.vertical), 0.405, "Wide render did not crop vertical camera gate to image aspect.");
+
+		Scene tallScene;
+		tallScene.getImage()->setWidth(600);
+		tallScene.getImage()->setHeight(800);
+		tallScene.getImage()->initialize();
+		tallScene.addCamera(Camera(
+			Vector3(0.0, 0.0, 1.0),
+			Vector3(0.0, 0.0, -1.0),
+			0.05,
+			0.036,
+			0.024,
+			8.0,
+			1.0
+		));
+
+		Renderer::internal::RenderCamera tallCamera = Renderer::internal::_prepareRenderCamera(tallScene);
+		requireNear(Utilities::vectorLength(tallCamera.horizontal), 0.36, "Tall render did not crop horizontal camera gate to image aspect.");
+		requireNear(Utilities::vectorLength(tallCamera.vertical), 0.48, "Tall render changed vertical camera gate.");
 	}
 
 	void	testSceneFileRejectsCompactCameraSyntax(void)
@@ -2155,7 +2194,7 @@ namespace
 		);
 		requireColorNear(
 			scene.getAtmosphere().getSunRadiance(),
-			LightUnits::solarDiskRadiance(ColorScience::solar(), 1.0),
+			LightUnits::solarDirectionalIrradiance(ColorScience::solar(), 1.0),
 			"Solar preset did not drive atmosphere sun radiance."
 		);
 
@@ -4648,6 +4687,7 @@ int	main(void)
 		testSceneFileEnvironmentSetting();
 		testSceneFileAtmosphereCombinesWithEnvironment();
 		testSceneFileLoadsPhysicalCamera();
+		testRenderCameraFitsSensorGateToImageAspect();
 		testSceneFileRejectsCompactCameraSyntax();
 		testSceneFileLoadsRelativeObject();
 		testSceneFileLoadsTransformedObject();

@@ -1,7 +1,7 @@
 [settings]
 resolution=600,400
-samples=32
-maxlightbounces=8
+samples=64
+maxlightbounces=4
 gamma=1
 bloom=1
 sky=linear
@@ -38,7 +38,7 @@ object suzanne {
 mesh=suzanne
 position=(0,1.25,0)
 rotation=(0,20,0)
-scale=(0.008,0.008,0.008)
+scale=(1,1,1)
 material=suzanne_matte
 }
 area_light key {

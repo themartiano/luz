@@ -27,6 +27,7 @@ except ImportError as error:
 
 SAMPLE_TEXTURE_COLORS = True
 TEXTURE_SAMPLE_SIZE = 64
+DEFAULT_QUALITY_MODE = "on"
 
 
 @dataclass
@@ -139,13 +140,13 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 	parser.add_argument("--include-hidden", action="store_true", help="Include objects hidden from render.")
 	parser.add_argument("--resolution", help="Override resolution as WIDTHxHEIGHT.")
 	parser.add_argument("--samples", type=int, help="Override Luz samples per pixel.")
-	parser.add_argument("--adaptive", choices=("auto", "on", "off", "true", "false", "1", "0"), default="auto", help="Export Luz adaptive sampling from Blender by default, or force on/off.")
+	parser.add_argument("--adaptive", choices=("auto", "on", "off", "true", "false", "1", "0"), default=DEFAULT_QUALITY_MODE, help="Enable Luz adaptive sampling by default; use auto to mirror Blender or off to disable.")
 	parser.add_argument("--adaptive-min-samples", type=int, help="Override exported Luz adaptive minimum samples.")
 	parser.add_argument("--adaptive-threshold", type=float, help="Override exported Luz adaptive noise threshold.")
 	parser.add_argument("--adaptive-check-interval", type=int, help="Override exported Luz adaptive check interval.")
 	parser.add_argument("--max-light-bounces", type=int, help="Override Luz max light bounces.")
-	parser.add_argument("--denoise", choices=("auto", "on", "off", "true", "false", "1", "0"), default="auto", help="Export Luz denoising from Blender by default, or force on/off.")
-	parser.add_argument("--tonemapping", choices=("auto", "on", "off", "true", "false", "1", "0"), default="auto", help="Export Luz tone mapping from Blender's view transform by default, or force on/off.")
+	parser.add_argument("--denoise", choices=("auto", "on", "off", "true", "false", "1", "0"), default=DEFAULT_QUALITY_MODE, help="Enable Luz denoising by default; use auto to mirror Blender or off to disable.")
+	parser.add_argument("--tonemapping", choices=("auto", "on", "off", "true", "false", "1", "0"), default=DEFAULT_QUALITY_MODE, help="Enable Luz tone mapping by default; use auto to mirror Blender's view transform or off to disable.")
 	parser.add_argument("--exposure", type=float, help="Override exported Luz exposure compensation in stops.")
 	parser.add_argument("--sky", choices=("linear", "none", "atmosphere", "environment"), help="Override Luz sky mode.")
 	parser.add_argument("--render-output", help="Luz render output filename. .bmp is appended by Luz when omitted.")

@@ -6,10 +6,10 @@ gamma=1
 tonemapping=1
 bloom=0
 sky=atmosphere
-# The first atmosphere value is a fallback only; directional_light sun drives atmosphere direction and radiance.
+# The first atmosphere value is a fallback only; directional_light sun drives atmosphere direction and intensity.
 atmosphere=0.30,6360000.0,6420000.0,7994.0,1200.0,16,8,0.0
 meters_per_unit=1
-photographic_exposure=16,0.008,100
+photographic_exposure=2,0.008,100
 distanceblueness=0
 
 [materials]

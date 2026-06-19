@@ -327,7 +327,7 @@ material=polished_silver
 }
 
 sphere glass_ball {
-position=(0,100,45)
+position=(0,142,45)
 radius=100
 material=bk7_glass
 }

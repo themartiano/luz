@@ -59,7 +59,7 @@ shape=sphere
 position=(0,1.8,-0.2)
 radius=11.5
 preset=mist
-density_scale=3.0
+density_scale=0.5
 }
 objects{
 rectangle=(0,0,0),(0,1,0),16,22,material[
