@@ -8,7 +8,8 @@ scene files, and a Blender-to-Luz exporter.
 
 https://github.com/user-attachments/assets/7dc03485-9418-47af-a7e7-c4c4c53b6b70
 
-<img src="./docs/images/bust-statue.jpg" />
+<img width="1920" height="1080" alt="bust-statue" src="https://github.com/user-attachments/assets/3173b5c1-f81f-404a-8740-20635b583e5c" />
+
 
 ## Features
 
@@ -327,9 +328,10 @@ docker/            Benchmark container
 
 ## Showcase
 
-<img src="./docs/images/stormtroopers.jpg" />
-<img src="./docs/images/cornell.jpg" />
-<img src="./docs/images/earth-atmosphere-and-moon.jpg" />
+<img width="1920" height="1080" alt="stormtroopers" src="https://github.com/user-attachments/assets/8ccda949-9107-4211-be9d-a0daa55e3dd9" />
+<img width="1920" height="1920" alt="cornell" src="https://github.com/user-attachments/assets/11d3b842-879e-4e30-b523-bed9678d43d8" />
+<img width="1920" height="1920" alt="atmosphere" src="https://github.com/user-attachments/assets/b918af83-6c9a-4d31-a0f5-e5df7a01f2df" />
+<img width="1920" height="1080" alt="rtionw" src="https://github.com/user-attachments/assets/6a215186-6b6a-4bff-b66a-822262e1d4dc" />
 
 ## Personal Note
 
