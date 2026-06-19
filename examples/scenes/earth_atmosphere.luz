@@ -2,7 +2,7 @@
 resolution=500,500
 samples=64
 maxlightbounces=0
-view_transform=agx
+view_transform=aces
 bloom=0
 sky=atmosphere
 # The first atmosphere value is a fallback only; directional_light sun drives atmosphere direction and intensity.
