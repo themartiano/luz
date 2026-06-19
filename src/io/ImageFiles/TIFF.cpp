@@ -1,5 +1,6 @@
 #include "ImageFiles/TIFF.hpp"
 #include "ANSIColors.hpp"
+#include "ColorManagement.hpp"
 #include "Defaults.hpp"
 #include "Utilities.hpp"
 #include <cmath>
@@ -23,14 +24,11 @@ namespace
 	};
 
 	constexpr std::uint16_t	TIFF_VERSION = 42;
+	constexpr std::uint16_t	TYPE_ASCII = 2;
 	constexpr std::uint16_t	TYPE_SHORT = 3;
 	constexpr std::uint16_t	TYPE_LONG = 4;
-	constexpr std::uint16_t	TAG_COUNT = 11;
+	constexpr std::uint16_t	TAG_COUNT = 12;
 	constexpr std::uint32_t	IFD_OFFSET = 8;
-	constexpr std::uint32_t	IFD_BYTE_COUNT = sizeof(std::uint16_t) + (TAG_COUNT * 12) + sizeof(std::uint32_t);
-	constexpr std::uint32_t	BITS_PER_SAMPLE_OFFSET = IFD_OFFSET + IFD_BYTE_COUNT;
-	constexpr std::uint32_t	SAMPLE_FORMAT_OFFSET = BITS_PER_SAMPLE_OFFSET + (3 * sizeof(std::uint16_t));
-	constexpr std::uint32_t	PIXEL_DATA_OFFSET = SAMPLE_FORMAT_OFFSET + (3 * sizeof(std::uint16_t)) + 2;
 	constexpr std::uint16_t	SAMPLE_FORMAT_IEEE_FLOAT = 3;
 
 	static_assert(sizeof(float) == 4 && std::numeric_limits<float>::is_iec559, "TIFF HDR output requires IEEE 754 32-bit floats.");
@@ -151,19 +149,31 @@ void	TIFF::writeFile(const std::unique_ptr<Image>& image, bool insideDir, std::s
 	const std::uint32_t width = checkedU32(image->getWidth(), "width");
 	const std::uint32_t height = checkedU32(image->getHeight(), "height");
 	const std::vector<float> pixelData = buildPixelData(image);
+	std::string description = ColorManagement::imageEncodingDescription(image->getColorEncoding());
+	std::vector<unsigned char> descriptionBytes(description.begin(), description.end());
+
+	descriptionBytes.push_back(0);
 	const std::uint32_t stripByteCount = checkedU32(pixelData.size() * sizeof(float), "pixel data");
+	const std::uint32_t ifdByteCount = sizeof(std::uint16_t) + (TAG_COUNT * 12) + sizeof(std::uint32_t);
+	const std::uint32_t bitsPerSampleOffset = IFD_OFFSET + ifdByteCount;
+	const std::uint32_t sampleFormatOffset = bitsPerSampleOffset + (3 * sizeof(std::uint16_t));
+	const std::uint32_t descriptionOffset = sampleFormatOffset + (3 * sizeof(std::uint16_t));
+	const std::uint32_t descriptionByteCount = checkedU32(descriptionBytes.size(), "description");
+	const std::uint32_t unalignedPixelDataOffset = descriptionOffset + descriptionByteCount;
+	const std::uint32_t pixelDataOffset = unalignedPixelDataOffset + (unalignedPixelDataOffset % 2);
 	const TiffTag tags[TAG_COUNT] = {
 		{256, TYPE_LONG, 1, width},
 		{257, TYPE_LONG, 1, height},
-		{258, TYPE_SHORT, 3, BITS_PER_SAMPLE_OFFSET},
+		{258, TYPE_SHORT, 3, bitsPerSampleOffset},
 		{259, TYPE_SHORT, 1, 1},
 		{262, TYPE_SHORT, 1, 2},
-		{273, TYPE_LONG, 1, PIXEL_DATA_OFFSET},
+		{270, TYPE_ASCII, descriptionByteCount, descriptionOffset},
+		{273, TYPE_LONG, 1, pixelDataOffset},
 		{277, TYPE_SHORT, 1, 3},
 		{278, TYPE_LONG, 1, height},
 		{279, TYPE_LONG, 1, stripByteCount},
 		{284, TYPE_SHORT, 1, 1},
-		{339, TYPE_SHORT, 3, SAMPLE_FORMAT_OFFSET}
+		{339, TYPE_SHORT, 3, sampleFormatOffset}
 	};
 
 	std::cout << CLR_YELLOW << "Writing render to " << CLR_BLUE_BRIGHT << Utilities::terminalFilePath(filePath) << "\n" << CLR_RESET;
@@ -189,7 +199,11 @@ void	TIFF::writeFile(const std::unique_ptr<Image>& image, bool insideDir, std::s
 	writeU16(stream, SAMPLE_FORMAT_IEEE_FLOAT);
 	writeU16(stream, SAMPLE_FORMAT_IEEE_FLOAT);
 	writeU16(stream, SAMPLE_FORMAT_IEEE_FLOAT);
-	writeU16(stream, 0);
+	stream.write(reinterpret_cast<const char*>(descriptionBytes.data()), descriptionBytes.size());
+	if (descriptionBytes.size() % 2 != 0)
+	{
+		stream.put(0);
+	}
 	for (float value : pixelData)
 	{
 		writeF32(stream, value);

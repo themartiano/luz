@@ -25,6 +25,7 @@ SRCS := $(LIB_SRCS) $(MAIN_SRC)
 TEST_SRCS := $(LIB_SRCS) tests/Tests.cpp
 OBJS := $(patsubst $(SRCS_DIR)/%.cpp, $(OBJS_DIR)/%.o, $(SRCS))
 DPND := $(OBJS:.o=.d)
+BUILD_FLAGS_FILE := $(OBJS_DIR)/.build-flags
 
 COMPILER = clang++
 INCLUDES := -Iinclude/luz
@@ -135,13 +136,41 @@ endif
 .PHONY: all
 all:
 	@printf "[\e[1;34mPreparing objects\e[0m]\n\n"
-	@$(MAKE) $(NAME) --no-print-directory
+	@marker="$$(mktemp "$${TMPDIR:-/tmp}/luz-build.XXXXXX")"; \
+	trap 'rm -f "$$marker"' EXIT; \
+	$(MAKE) $(NAME) --no-print-directory; \
+	status=$$?; \
+	if [[ "$$status" -eq 0 && -f "$(NAME)" && ! "$(NAME)" -nt "$$marker" ]]; then \
+		printf "[\e[0;32mNo changes. $(NAME) is up to date.\e[0m]\n"; \
+	fi; \
+	exit "$$status"
+
+.PHONY: FORCE
+FORCE:
+
+$(BUILD_FLAGS_FILE): FORCE
+	@mkdir -p $(@D)
+	@tmp="$@.tmp"; \
+	{ \
+		printf '%s\n' 'COMPILER=$(COMPILER)'; \
+		printf '%s\n' 'COMPILER_FLAGS=$(COMPILER_FLAGS)'; \
+		printf '%s\n' 'WWW_FLAGS=$(WWW_FLAGS)'; \
+		printf '%s\n' 'GENERAL_FLAGS=$(GENERAL_FLAGS)'; \
+		printf '%s\n' 'OPT_FLAGS=$(OPT_FLAGS)'; \
+		printf '%s\n' 'INC_FLAGS=$(INC_FLAGS)'; \
+		printf '%s\n' 'DEBUG_FLAGS=$(DEBUG_FLAGS)'; \
+		printf '%s\n' 'INCLUDES=$(INCLUDES)'; \
+		printf '%s\n' 'LINK_FLAGS=$(LINK_FLAGS)'; \
+	} > "$$tmp"; \
+	if ! cmp -s "$$tmp" "$@"; then mv "$$tmp" "$@"; else rm -f "$$tmp"; fi
+
+$(OBJS): $(BUILD_FLAGS_FILE)
 
 $(OBJS_DIR)/%.o: $(SRCS_DIR)/%.cpp
-	$(shell [ ! -d $(@D) ] && mkdir -p $(@D))
+	@mkdir -p $(@D)
 	$(COMPILER) $(COMPILER_FLAGS) $(WWW_FLAGS) $(GENERAL_FLAGS) $(OPT_FLAGS) $(INC_FLAGS) $(DEBUG_FLAGS) $(INCLUDES) -c $< -o $@
 
-$(NAME): $(OBJS)
+$(NAME): $(OBJS) $(BUILD_FLAGS_FILE)
 	@printf "\n[\e[1;34mCompiling $(NAME)\e[0m]\n\n"
 	$(COMPILER) $(COMPILER_FLAGS) $(WWW_FLAGS) $(GENERAL_FLAGS) $(OPT_FLAGS) $(INC_FLAGS) $(DEBUG_FLAGS) $(INCLUDES) $(OBJS) $(LINK_FLAGS) -o $(NAME)
 
@@ -168,6 +197,7 @@ clean:
 	@printf "[\e[1;33mCleaning\e[0m]\n\n"
 	rm -f $(OBJS)
 	rm -f $(DPND)
+	rm -f $(BUILD_FLAGS_FILE)
 	@if [[ -d "$(OBJS_DIR)" && "$$(find $(OBJS_DIR) -type f | wc -l)" -eq "0" ]]; then rm -rf $(OBJS_DIR); fi;
 
 .PHONY: fclean

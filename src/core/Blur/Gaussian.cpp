@@ -110,39 +110,44 @@ void	Gaussian::blur(const Image& image, Image& blurredImage, unsigned int diamet
 	const std::vector<double> kernel = createSeparableKernel(diameter, amount);
 
 	const int radius = static_cast<int>(diameter / 2);
+	const std::size_t width = image.getWidth();
+	const std::size_t height = image.getHeight();
+	const Color* sourcePixels = image.pixels();
 	Image horizontalPass(image.getWidth(), image.getHeight());
 
 	horizontalPass.initialize();
+	Color* horizontalPixels = horizontalPass.pixels();
+	Color* blurredPixels = blurredImage.pixels();
 
-	for (std::size_t y = 0; y < image.getHeight(); y++)
+	for (std::size_t y = 0; y < height; y++)
 	{
-		for (std::size_t x = 0; x < image.getWidth(); x++)
+		for (std::size_t x = 0; x < width; x++)
 		{
 			Color result(0.0, 0.0, 0.0);
 
 			for (int offset = -radius; offset <= radius; offset++)
 			{
-				const std::size_t sampleX = clampIndex(static_cast<long long>(x) + offset, image.getWidth());
+				const std::size_t sampleX = clampIndex(static_cast<long long>(x) + offset, width);
 
-				result += image.getPixel(sampleX, y) * kernel[static_cast<std::size_t>(offset + radius)];
+				result += sourcePixels[y * width + sampleX] * kernel[static_cast<std::size_t>(offset + radius)];
 			}
-			horizontalPass.setPixel(x, y, result);
+			horizontalPixels[y * width + x] = result;
 		}
 	}
 
-	for (std::size_t y = 0; y < image.getHeight(); y++)
+	for (std::size_t y = 0; y < height; y++)
 	{
-		for (std::size_t x = 0; x < image.getWidth(); x++)
+		for (std::size_t x = 0; x < width; x++)
 		{
 			Color result(0.0, 0.0, 0.0);
 
 			for (int offset = -radius; offset <= radius; offset++)
 			{
-				const std::size_t sampleY = clampIndex(static_cast<long long>(y) + offset, image.getHeight());
+				const std::size_t sampleY = clampIndex(static_cast<long long>(y) + offset, height);
 
-				result += horizontalPass.getPixel(x, sampleY) * kernel[static_cast<std::size_t>(offset + radius)];
+				result += horizontalPixels[sampleY * width + x] * kernel[static_cast<std::size_t>(offset + radius)];
 			}
-			blurredImage.setPixel(x, y, result);
+			blurredPixels[y * width + x] = result;
 		}
 	}
 }

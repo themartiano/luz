@@ -244,6 +244,17 @@ namespace
 		return (result);
 	}
 
+	std::vector<double>	averageFeatureVarianceMap(const std::vector<Denoise::FeatureVector>& featureVariance)
+	{
+		std::vector<double> result(featureVariance.size());
+
+		for (std::size_t i = 0; i < featureVariance.size(); i++)
+		{
+			result[i] = averageFeatureVariance(featureVariance[i]);
+		}
+		return (result);
+	}
+
 	Denoise::FeatureVector	featureBlend(
 		const Denoise::FeatureVector& a,
 		const Denoise::FeatureVector& b,
@@ -263,7 +274,7 @@ namespace
 	std::vector<Denoise::FeatureVector>	prefilterFeatures(
 		const std::vector<Denoise::FeatureVector>& image,
 		const std::vector<Denoise::FeatureVector>& guide,
-		const std::vector<Denoise::FeatureVector>& featureVariance,
+		const std::vector<double>& featureVarianceAverage,
 		std::size_t width,
 		std::size_t height,
 		unsigned int radius,
@@ -283,6 +294,7 @@ namespace
 					Denoise::FeatureVector sum;
 					double totalWeight = 0.0;
 					const std::size_t center = y * width + x;
+					const double centerVariance = featureVarianceAverage[center];
 
 					for (long long offsetY = -filterRadius; offsetY <= filterRadius; offsetY++)
 					{
@@ -291,8 +303,8 @@ namespace
 							const std::size_t sampleX = clampCoordinate(static_cast<long long>(x) + offsetX, width);
 							const std::size_t sampleY = clampCoordinate(static_cast<long long>(y) + offsetY, height);
 							const std::size_t sample = sampleY * width + sampleX;
-							const double localVariance = averageFeatureVariance(featureVariance[center])
-								+ averageFeatureVariance(featureVariance[sample])
+							const double localVariance = centerVariance
+								+ featureVarianceAverage[sample]
 								+ minVariance;
 							const double distance = featureDistanceSquared(guide[center], guide[sample]) / localVariance;
 							const double spatialDistance = static_cast<double>((offsetX * offsetX) + (offsetY * offsetY));
@@ -853,11 +865,12 @@ std::unique_ptr<Image>	Denoise::applyNFOR(const NFORBuffers& buffers, const NFOR
 
 	const std::vector<Color> color = averageColorBuffers(buffers);
 	const std::vector<double> regressionVariance = doubledVariance(buffers.colorVariance);
+	const std::vector<double> featureVarianceAverage = averageFeatureVarianceMap(buffers.featureVariance);
 	reportProgress(settings, 5);
 	const std::vector<FeatureVector> filteredFeaturesA = prefilterFeatures(
 		buffers.featuresA,
 		buffers.featuresB,
-		buffers.featureVariance,
+		featureVarianceAverage,
 		buffers.width,
 		buffers.height,
 		settings.featurePrefilterRadius,
@@ -868,7 +881,7 @@ std::unique_ptr<Image>	Denoise::applyNFOR(const NFORBuffers& buffers, const NFOR
 	const std::vector<FeatureVector> filteredFeaturesB = prefilterFeatures(
 		buffers.featuresB,
 		buffers.featuresA,
-		buffers.featureVariance,
+		featureVarianceAverage,
 		buffers.width,
 		buffers.height,
 		settings.featurePrefilterRadius,
@@ -946,11 +959,12 @@ std::unique_ptr<Image>	Denoise::applyNFOR(const NFORBuffers& buffers, const NFOR
 
 	reportProgress(settings, 98);
 	image->initialize();
+	Color* imagePixels = image->pixels();
 	for (std::size_t y = 0; y < buffers.height; y++)
 	{
 		for (std::size_t x = 0; x < buffers.width; x++)
 		{
-			image->setPixel(x, y, finalColor[y * buffers.width + x]);
+			imagePixels[y * buffers.width + x] = finalColor[y * buffers.width + x];
 		}
 	}
 	reportProgress(settings, 100);

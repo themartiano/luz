@@ -1,0 +1,61 @@
+[settings]
+resolution=600,400
+samples=64
+maxlightbounces=4
+view_transform=standard
+bloom=1
+sky=linear
+outputfilename=suzanne
+
+[materials]
+material suzanne_matte {
+type=principled
+base_color=srgb(0.55,0.43,0.31)
+metallic=0
+roughness=0.55
+}
+material floor_matte {
+type=lambertian
+color=srgb(0.62,0.62,0.58)
+}
+
+[meshes]
+mesh suzanne {
+file=../objects/suzanne.obj
+}
+
+[scene]
+camera main {
+position=(0,1.35,5.2)
+direction=(0,-0.05,-1)
+focal_length_mm=46.892
+sensor_width_mm=36
+sensor_height_mm=24
+pinhole=1
+focus_distance=5
+}
+object suzanne {
+mesh=suzanne
+position=(0,1.25,0)
+rotation=(0,20,0)
+scale=(1,1,1)
+material=suzanne_matte
+}
+area_light key {
+position=(-1.5,4,2)
+normal=(0,-1,-0.35)
+size=(4,4)
+color=blackbody(3200K)
+luminance=1800
+}
+point_light rim {
+position=(2.3,2.4,2.2)
+radius=0.08
+color=wavelength(465nm)
+lumens=160
+}
+objects{
+plane=0,(0,1,0),material[
+lambertian=(0.34,0.34,0.31)
+]
+}

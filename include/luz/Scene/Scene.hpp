@@ -11,6 +11,8 @@
 #include <vector>
 #include <memory>
 
+class	CausticPhotonMap;
+
 struct	SceneRenderStats
 {
 	std::size_t	renderedSamples = 0;
@@ -40,14 +42,25 @@ class	Scene
 		void	setAdaptiveThreshold(double adaptiveThreshold);
 		int		getMaxLightBounces(void) const;
 		void	setMaxLightBounces(const int maxLightBounces);
-		bool	getGammaCorrected(void) const;
-		void	setGammaCorrected(bool gamma);
-		bool	getToneMapped(void) const;
-		void	setToneMapped(bool toneMapped);
+		ViewTransform	getViewTransform(void) const;
+		void	setViewTransform(ViewTransform viewTransform);
 		double	getExposure(void) const;
 		void	setExposure(double exposure);
+		void	setPhotographicExposure(double fNumber, double shutterSeconds, double iso);
 		double	getContrast(void) const;
 		void	setContrast(double contrast);
+		bool	getCausticsEnabled(void) const;
+		void	setCausticsEnabled(bool causticsEnabled);
+		int		getCausticPhotonCount(void) const;
+		void	setCausticPhotonCount(int causticPhotonCount);
+		int		getCausticPassCount(void) const;
+		void	setCausticPassCount(int causticPassCount);
+		double	getCausticRadiusMeters(void) const;
+		void	setCausticRadiusMeters(double causticRadiusMeters);
+		double	getCausticAlpha(void) const;
+		void	setCausticAlpha(double causticAlpha);
+		void	setCausticPhotonMap(std::shared_ptr<CausticPhotonMap> causticPhotonMap);
+		const std::shared_ptr<CausticPhotonMap>&	getCausticPhotonMap(void) const;
 		double	getSkyline(void) const;
 		SkyTypes	getRenderSky(void) const;
 		void	setRenderSky(SkyTypes renderSky);
@@ -55,6 +68,10 @@ class	Scene
 		void	setDistanceBlueness(bool distanceBlueness);
 		void	setAtmosphere(Atmosphere atmosphere);
 		const Atmosphere&	getAtmosphere(void) const;
+		double	getMetersPerUnit(void) const;
+		void	setMetersPerUnit(double metersPerUnit);
+		double	sceneUnitsToMeters(double sceneUnits) const;
+		double	sceneAreaToSquareMeters(double sceneArea) const;
 		void	syncAtmosphereSunDirection(void);
 		Color	getBackgroundColor(void) const;
 		void	setBackgroundColor(Color backgroundColor);
@@ -63,6 +80,12 @@ class	Scene
 		bool	hasEnvironmentMap(void) const;
 		void	setEnvironmentStrength(double environmentStrength);
 		double	getEnvironmentStrength(void) const;
+		void	setEnvironmentLighting(bool environmentLighting);
+		bool	getEnvironmentLighting(void) const;
+		void	calibrateEnvironmentAverageRadiance(double averageRadiance);
+		void	calibrateEnvironmentAverageLuminance(double averageLuminance);
+		void	calibrateEnvironmentHorizontalIrradiance(double horizontalIrradiance);
+		void	calibrateEnvironmentHorizontalIlluminance(double horizontalIlluminance);
 		void	setEnvironmentRotation(double environmentRotation);
 		double	getEnvironmentRotation(void) const;
 		Camera	getActiveCamera(void) const;
@@ -116,19 +139,26 @@ class	Scene
 		int						_adaptiveCheckInterval;
 		double					_adaptiveThreshold;
 		int						_maxLightBounces;
-		bool					_gammaCorrected;
-		bool					_toneMapped;
+		ViewTransform			_viewTransform;
 			double					_exposure;
 			double					_contrast;
+			bool					_causticsEnabled;
+			int						_causticPhotonCount;
+			int						_causticPassCount;
+			double					_causticRadiusMeters;
+			double					_causticAlpha;
+			std::shared_ptr<CausticPhotonMap>	_causticPhotonMap;
 			std::string				_defaultRenderOutputFileName;
 			std::unique_ptr<Image>	_image;
 		double					_skyline;
 		SkyTypes				_renderSky;
 		bool					_distanceBlueness;
+		double					_metersPerUnit;
 		Atmosphere				_atmosphere;
 		Color					_backgroundColor;
 		std::shared_ptr<EnvironmentMap>	_environmentMap;
 		double					_environmentStrength;
+		bool					_environmentLighting;
 		double					_environmentRotation;
 		std::vector<Camera>		_cameras;
 		size_t					_activeCamera;

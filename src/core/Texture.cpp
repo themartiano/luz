@@ -1,4 +1,5 @@
 #include "Texture.hpp"
+#include "ColorManagement.hpp"
 #include <algorithm>
 #include <cctype>
 #include <cmath>
@@ -53,6 +54,20 @@ namespace
 		}
 		return (value);
 	}
+
+	Color	convertPPMColor(Color color, TextureColorRole colorRole)
+	{
+		switch (colorRole)
+		{
+			case TextureColorRole::ColorSRGB:
+				return (ColorManagement::acescgFromSRGB(color));
+			case TextureColorRole::LinearSRGB:
+				return (ColorManagement::acescgFromLinearSRGB(color));
+			case TextureColorRole::Data:
+				return (color);
+		}
+		return (color);
+	}
 }
 
 Texture::Texture(void)
@@ -68,7 +83,7 @@ Texture::Texture(std::size_t width, std::size_t height, std::vector<Color> pixel
 	this->_pixels = std::move(pixels);
 }
 
-Texture	Texture::loadPPM(const std::string& fileName)
+Texture	Texture::loadPPM(const std::string& fileName, TextureColorRole colorRole)
 {
 	std::ifstream stream(fileName, std::ios::binary);
 
@@ -102,22 +117,22 @@ Texture	Texture::loadPPM(const std::string& fileName)
 			{
 				throw std::runtime_error("Truncated PPM texture: " + fileName);
 			}
-			pixels.emplace_back(
+			pixels.push_back(convertPPMColor(Color(
 				static_cast<double>(rgb[0]) / maxValue,
 				static_cast<double>(rgb[1]) / maxValue,
 				static_cast<double>(rgb[2]) / maxValue
-			);
+			), colorRole));
 		}
 	}
 	else
 	{
 		for (std::size_t i = 0; i < width * height; i++)
 		{
-			pixels.emplace_back(
+			pixels.push_back(convertPPMColor(Color(
 				std::stod(readPPMToken(stream)) / maxValue,
 				std::stod(readPPMToken(stream)) / maxValue,
 				std::stod(readPPMToken(stream)) / maxValue
-			);
+			), colorRole));
 		}
 	}
 

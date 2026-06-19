@@ -76,6 +76,12 @@ bool Hittable::sampleLight(const Vector3& origin, HittableLightSample& sample) c
 	return (true);
 }
 
+bool	Hittable::sampleEmission(HittableEmissionSample& sample) const
+{
+	sample = HittableEmissionSample();
+	return (false);
+}
+
 double Hittable::lightSelectionWeight(void) const
 {
 	Material* material = this->getMaterial();

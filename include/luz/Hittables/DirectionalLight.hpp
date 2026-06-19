@@ -18,8 +18,13 @@ class	DirectionalLight : public Hittable
 		virtual Vector3	random(const Vector3& origin) const override;
 		virtual bool	sampleLight(const Vector3& origin, HittableLightSample& sample) const override;
 		virtual double	lightSelectionWeight(void) const override;
+		void	setAtmosphereSunRadiance(Color radiance);
+		bool	hasAtmosphereSunRadiance(void) const;
+		Color	getAtmosphereSunRadiance(void) const;
 
 	private:
 		Vector3	_direction;
 		std::shared_ptr<Material>	_material;
+		bool	_hasAtmosphereSunRadiance;
+		Color	_atmosphereSunRadiance;
 };

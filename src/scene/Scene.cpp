@@ -7,6 +7,7 @@
 #include "ImageFiles/TIFF.hpp"
 #include "Hittables/BVHNode.hpp"
 #include "Hittables/DirectionalLight.hpp"
+#include "LightUnits.hpp"
 #include "Materials/Emissive.hpp"
 #include <limits>
 #include <utility>
@@ -56,6 +57,38 @@ namespace
 			throw std::invalid_argument(settingName + " file name must use .bmp, .png, or .tiff.");
 		}
 	}
+
+	double	validatedEnvironmentCalibrationTarget(double target, const std::string& description)
+	{
+		if (!std::isfinite(target) || target < 0.0)
+		{
+			throw std::invalid_argument(description + " must be finite and non-negative.");
+		}
+		return (target);
+	}
+
+	double	environmentCalibrationScale(
+		const std::shared_ptr<EnvironmentMap>& environmentMap,
+		double currentValue,
+		double targetValue,
+		const std::string& description
+	)
+	{
+		validatedEnvironmentCalibrationTarget(targetValue, description);
+		if (targetValue == 0.0)
+		{
+			return (0.0);
+		}
+		if (!environmentMap || environmentMap->empty())
+		{
+			throw std::invalid_argument(description + " calibration requires an environment map.");
+		}
+		if (!std::isfinite(currentValue) || currentValue <= 0.0)
+		{
+			throw std::invalid_argument(description + " calibration requires an environment map with positive luminance.");
+		}
+		return (targetValue / currentValue);
+	}
 }
 
 /*
@@ -73,16 +106,23 @@ Scene::Scene(void)
 	this->_adaptiveCheckInterval = D_ADAPTIVE_CHECK_INTERVAL;
 	this->_adaptiveThreshold = D_ADAPTIVE_THRESHOLD;
 	this->_maxLightBounces = D_MAX_LIGHT_BOUNCES;
-	this->_gammaCorrected = true;
-	this->_toneMapped = true;
+	this->_viewTransform = ViewTransform::AgX;
 	this->_exposure = D_EXPOSURE;
 	this->_contrast = D_CONTRAST;
+	this->_causticsEnabled = D_CAUSTICS;
+	this->_causticPhotonCount = D_CAUSTIC_PHOTONS;
+	this->_causticPassCount = D_CAUSTIC_PASSES;
+	this->_causticRadiusMeters = D_CAUSTIC_RADIUS_METERS;
+	this->_causticAlpha = D_CAUSTIC_ALPHA;
 	this->_skyline = 0.5;
 	this->_renderSky = SKY_ATMOSPHERE;
 	this->_distanceBlueness = true;
+	this->_metersPerUnit = 1.0;
 	this->_atmosphere = Atmosphere();
+	this->_atmosphere.setMetersPerUnit(this->_metersPerUnit);
 	this->_backgroundColor = Color(0.0, 0.0, 0.0);
 	this->_environmentStrength = 1.0;
+	this->_environmentLighting = true;
 	this->_environmentRotation = 0.0;
 
 	this->_defaultRenderOutputFileName = D_RENDER_FILE_NAME + ".bmp";
@@ -203,26 +243,14 @@ void	Scene::setMaxLightBounces(const int maxLightBounces)
 	this->_maxLightBounces = maxLightBounces;
 }
 
-// Returns Gamma Correction (whether or not the render should be gamma corrected)
-bool	Scene::getGammaCorrected(void) const
+ViewTransform	Scene::getViewTransform(void) const
 {
-	return (this->_gammaCorrected);
+	return (this->_viewTransform);
 }
 
-// Sets Gamma Correction (whether or not the render should be gamma corrected)
-void	Scene::setGammaCorrected(bool gammaCorrected)
+void	Scene::setViewTransform(ViewTransform viewTransform)
 {
-	this->_gammaCorrected = gammaCorrected;
-}
-
-bool	Scene::getToneMapped(void) const
-{
-	return (this->_toneMapped);
-}
-
-void	Scene::setToneMapped(bool toneMapped)
-{
-	this->_toneMapped = toneMapped;
+	this->_viewTransform = viewTransform;
 }
 
 double	Scene::getExposure(void) const
@@ -239,6 +267,24 @@ void	Scene::setExposure(double exposure)
 	this->_exposure = exposure;
 }
 
+void	Scene::setPhotographicExposure(double fNumber, double shutterSeconds, double iso)
+{
+	if (!std::isfinite(fNumber) || fNumber <= 0.0)
+	{
+		throw std::invalid_argument("Photographic f-number must be finite and positive.");
+	}
+	if (!std::isfinite(shutterSeconds) || shutterSeconds <= 0.0)
+	{
+		throw std::invalid_argument("Photographic shutter time must be finite and positive.");
+	}
+	if (!std::isfinite(iso) || iso <= 0.0)
+	{
+		throw std::invalid_argument("Photographic ISO must be finite and positive.");
+	}
+
+	this->setExposure(std::log2((shutterSeconds * (iso / 100.0)) / (fNumber * fNumber)));
+}
+
 double	Scene::getContrast(void) const
 {
 	return (this->_contrast);
@@ -251,6 +297,82 @@ void	Scene::setContrast(double contrast)
 		throw std::invalid_argument("Contrast must be non-negative.");
 	}
 	this->_contrast = contrast;
+}
+
+bool	Scene::getCausticsEnabled(void) const
+{
+	return (this->_causticsEnabled);
+}
+
+void	Scene::setCausticsEnabled(bool causticsEnabled)
+{
+	this->_causticsEnabled = causticsEnabled;
+}
+
+int	Scene::getCausticPhotonCount(void) const
+{
+	return (this->_causticPhotonCount);
+}
+
+void	Scene::setCausticPhotonCount(int causticPhotonCount)
+{
+	if (causticPhotonCount < 0)
+	{
+		throw std::invalid_argument("Caustic photon count must be non-negative.");
+	}
+	this->_causticPhotonCount = causticPhotonCount;
+}
+
+int	Scene::getCausticPassCount(void) const
+{
+	return (this->_causticPassCount);
+}
+
+void	Scene::setCausticPassCount(int causticPassCount)
+{
+	if (causticPassCount <= 0)
+	{
+		throw std::invalid_argument("Caustic pass count must be positive.");
+	}
+	this->_causticPassCount = causticPassCount;
+}
+
+double	Scene::getCausticRadiusMeters(void) const
+{
+	return (this->_causticRadiusMeters);
+}
+
+void	Scene::setCausticRadiusMeters(double causticRadiusMeters)
+{
+	if (!std::isfinite(causticRadiusMeters) || causticRadiusMeters <= 0.0)
+	{
+		throw std::invalid_argument("Caustic radius must be finite and positive.");
+	}
+	this->_causticRadiusMeters = causticRadiusMeters;
+}
+
+double	Scene::getCausticAlpha(void) const
+{
+	return (this->_causticAlpha);
+}
+
+void	Scene::setCausticAlpha(double causticAlpha)
+{
+	if (!std::isfinite(causticAlpha) || causticAlpha <= 0.0 || causticAlpha > 1.0)
+	{
+		throw std::invalid_argument("Caustic alpha must be finite and in (0,1].");
+	}
+	this->_causticAlpha = causticAlpha;
+}
+
+void	Scene::setCausticPhotonMap(std::shared_ptr<CausticPhotonMap> causticPhotonMap)
+{
+	this->_causticPhotonMap = causticPhotonMap;
+}
+
+const std::shared_ptr<CausticPhotonMap>&	Scene::getCausticPhotonMap(void) const
+{
+	return (this->_causticPhotonMap);
 }
 
 // Returns Skyline (used on sky colors interpolation)
@@ -284,6 +406,7 @@ void	Scene::setDistanceBlueness(bool distanceBlueness)
 // Sets the Atmosphere object
 void	Scene::setAtmosphere(Atmosphere atmosphere)
 {
+	atmosphere.setMetersPerUnit(this->_metersPerUnit);
 	this->_atmosphere = atmosphere;
 }
 
@@ -291,6 +414,44 @@ void	Scene::setAtmosphere(Atmosphere atmosphere)
 const Atmosphere&	Scene::getAtmosphere(void) const
 {
 	return (this->_atmosphere);
+}
+
+double	Scene::getMetersPerUnit(void) const
+{
+	return (this->_metersPerUnit);
+}
+
+void	Scene::setMetersPerUnit(double metersPerUnit)
+{
+	if (!std::isfinite(metersPerUnit) || metersPerUnit <= 0.0)
+	{
+		throw std::invalid_argument("Scene meters per unit must be finite and positive.");
+	}
+	this->_metersPerUnit = metersPerUnit;
+	this->_atmosphere.setMetersPerUnit(metersPerUnit);
+}
+
+double	Scene::sceneUnitsToMeters(double sceneUnits) const
+{
+	if (!std::isfinite(sceneUnits))
+	{
+		return (sceneUnits);
+	}
+	const double maxSceneUnits = T_MAX / this->_metersPerUnit;
+	if (sceneUnits >= maxSceneUnits)
+	{
+		return (T_MAX);
+	}
+	if (sceneUnits <= -maxSceneUnits)
+	{
+		return (-T_MAX);
+	}
+	return (sceneUnits * this->_metersPerUnit);
+}
+
+double	Scene::sceneAreaToSquareMeters(double sceneArea) const
+{
+	return (sceneArea * this->_metersPerUnit * this->_metersPerUnit);
 }
 
 void	Scene::syncAtmosphereSunDirection(void)
@@ -301,7 +462,11 @@ void	Scene::syncAtmosphereSunDirection(void)
 		if (directionalLight)
 		{
 			this->_atmosphere.setSunDirection(directionalLight->getDirection() * -1.0);
-			if (directionalLight->getMaterial())
+			if (directionalLight->hasAtmosphereSunRadiance())
+			{
+				this->_atmosphere.setSunRadiance(directionalLight->getAtmosphereSunRadiance());
+			}
+			else if (directionalLight->getMaterial())
 			{
 				this->_atmosphere.setSunRadiance(directionalLight->getMaterial()->emitted());
 			}
@@ -349,6 +514,52 @@ void	Scene::setEnvironmentStrength(double environmentStrength)
 double	Scene::getEnvironmentStrength(void) const
 {
 	return (this->_environmentStrength);
+}
+
+void	Scene::setEnvironmentLighting(bool environmentLighting)
+{
+	this->_environmentLighting = environmentLighting;
+}
+
+bool	Scene::getEnvironmentLighting(void) const
+{
+	return (this->_environmentLighting);
+}
+
+void	Scene::calibrateEnvironmentAverageRadiance(double averageRadiance)
+{
+	this->setEnvironmentStrength(environmentCalibrationScale(
+		this->_environmentMap,
+		this->_environmentMap ? this->_environmentMap->averageLuminance() : 0.0,
+		averageRadiance,
+		"Environment average radiance"
+	));
+}
+
+void	Scene::calibrateEnvironmentAverageLuminance(double averageLuminance)
+{
+	this->calibrateEnvironmentAverageRadiance(
+		validatedEnvironmentCalibrationTarget(averageLuminance, "Environment average luminance")
+		/ LightUnits::LUMENS_PER_RADIANT_WATT
+	);
+}
+
+void	Scene::calibrateEnvironmentHorizontalIrradiance(double horizontalIrradiance)
+{
+	this->setEnvironmentStrength(environmentCalibrationScale(
+		this->_environmentMap,
+		this->_environmentMap ? this->_environmentMap->horizontalIrradiance() : 0.0,
+		horizontalIrradiance,
+		"Environment horizontal irradiance"
+	));
+}
+
+void	Scene::calibrateEnvironmentHorizontalIlluminance(double horizontalIlluminance)
+{
+	this->calibrateEnvironmentHorizontalIrradiance(
+		validatedEnvironmentCalibrationTarget(horizontalIlluminance, "Environment horizontal illuminance")
+		/ LightUnits::LUMENS_PER_RADIANT_WATT
+	);
 }
 
 void	Scene::setEnvironmentRotation(double environmentRotation)

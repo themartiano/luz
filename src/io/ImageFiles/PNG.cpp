@@ -1,5 +1,6 @@
 #include "ImageFiles/PNG.hpp"
 #include "ANSIColors.hpp"
+#include "ColorManagement.hpp"
 #include "Defaults.hpp"
 #include "Utilities.hpp"
 #include <cmath>
@@ -159,6 +160,24 @@ namespace
 		crcData.insert(crcData.end(), data.begin(), data.end());
 		writeU32BE(stream, crc32(crcData.data(), crcData.size()));
 	}
+
+	std::vector<unsigned char>	textChunkData(const std::string& keyword, const std::string& text)
+	{
+		std::vector<unsigned char> data;
+
+		data.insert(data.end(), keyword.begin(), keyword.end());
+		data.push_back(0);
+		data.insert(data.end(), text.begin(), text.end());
+		return (data);
+	}
+
+	std::vector<unsigned char>	gammaChunkData(std::uint32_t gamma)
+	{
+		std::vector<unsigned char> data;
+
+		appendU32BE(data, gamma);
+		return (data);
+	}
 }
 
 PNG::PNG(void)
@@ -215,6 +234,16 @@ void	PNG::writeFile(const std::unique_ptr<Image>& image, bool insideDir, std::st
 
 	stream.write(reinterpret_cast<const char*>(PNG_SIGNATURE), sizeof(PNG_SIGNATURE));
 	writeChunk(stream, "IHDR", ihdr);
+	if (image->getColorEncoding() == ImageColorEncoding::DisplayEncodedSRGB)
+	{
+		writeChunk(stream, "sRGB", {0});
+		writeChunk(stream, "gAMA", gammaChunkData(45455));
+	}
+	writeChunk(
+		stream,
+		"tEXt",
+		textChunkData("LuzColorEncoding", ColorManagement::imageEncodingDescription(image->getColorEncoding()))
+	);
 	writeChunk(stream, "IDAT", imageData);
 	writeChunk(stream, "IEND", {});
 

@@ -9,24 +9,32 @@
 #include <memory>
 
 struct	HitRecord;
+class	Material;
 
 enum	ScatterPDFType
 {
 	SCATTER_PDF_NONE,
 	SCATTER_PDF_COSINE,
 	SCATTER_PDF_SPHERE,
-	SCATTER_PDF_HENYEY_GREENSTEIN
+	SCATTER_PDF_HENYEY_GREENSTEIN,
+	SCATTER_PDF_BSDF
 };
 
 struct	ScatterRecord
 {
 	Ray	specularRay;
+	Ray	incidentRay;
 	bool	isSpecular = false;
 	Color	attenuation;
 	ScatterPDFType	pdfType = SCATTER_PDF_NONE;
+	const Material*	bsdfMaterial = nullptr;
+	Vector3	sampledDirection;
+	double	sampledPDF = 0.0;
 	ONB	cosineBasis;
 	Vector3	phaseDirection;
 	double	phaseAnisotropy = 0.0;
+	bool	hasMediumAbsorption = false;
+	Color	mediumAbsorptionCoefficient = Color(0.0, 0.0, 0.0);
 };
 
 class	Material
@@ -41,7 +49,16 @@ class	Material
 		virtual void	setTexture(std::shared_ptr<Texture> texture);
 		virtual bool	scatter(Ray& ray, HitRecord& hitRecord, ScatterRecord& scatterRecord);
 		virtual Color	emitted(void);
-		virtual double	scatteringPDF(Ray& ray, HitRecord& hitRecord);
+		virtual Color	evaluateBSDFCos(
+			const Ray& ray,
+			const HitRecord& hitRecord,
+			const Vector3& scatteredDirection
+		) const;
+		virtual double	scatteringPDF(
+			const Ray& ray,
+			const HitRecord& hitRecord,
+			const Vector3& scatteredDirection
+		) const;
 		virtual MaterialType	getType(void) const;
 
 	protected:

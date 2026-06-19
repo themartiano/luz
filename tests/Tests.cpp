@@ -1,24 +1,37 @@
 #include "AABB.hpp"
 #include "Atmosphere.hpp"
+#include "AssetPath.hpp"
 #include "Color.hpp"
+#include "ColorManagement.hpp"
+#include "ColorScience.hpp"
 #include "EnvironmentMap.hpp"
 #include "FlagsParser.hpp"
 #include "Image.hpp"
+#include "IESProfile.hpp"
+#include "LightUnits.hpp"
+#include "MeasuredMaterials.hpp"
+#include "Materials/BSDF.hpp"
 #include "Materials/Lambertian.hpp"
 #include "Materials/Emissive.hpp"
 #include "Materials/Dielectric.hpp"
+#include "Materials/Metal.hpp"
 #include "Materials/Principled.hpp"
+#include "Materials/Glossy.hpp"
+#include "Materials/DiffuseGlossy.hpp"
 #include "Materials/Isotropic.hpp"
 #include "Materials/HenyeyGreenstein.hpp"
 #include "OBJReader.hpp"
 #include "PDFs/HittablePDF.hpp"
+#include "Renderer/CausticPhotonMap.hpp"
 #include "Renderer/Renderer.hpp"
 #include "Scene/Scene.hpp"
 #include "SceneFile/SceneFile.hpp"
 #include "Hittables/BVHNode.hpp"
 #include "Hittables/ConstantVolume.hpp"
 #include "Hittables/Cube.hpp"
+#include "Hittables/DirectionalLight.hpp"
 #include "Hittables/Mesh.hpp"
+#include "Hittables/Plane.hpp"
 #include "Hittables/Rectangle.hpp"
 #include "Hittables/Sphere.hpp"
 #include "Hittables/Triangle.hpp"
@@ -34,6 +47,7 @@
 #include <cstring>
 #include <filesystem>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <iterator>
 #include <limits>
@@ -63,6 +77,11 @@ namespace
 	void	requireNear(double actual, double expected, const std::string& message)
 	{
 		require(std::abs(actual - expected) < 0.000001, message);
+	}
+
+	void	requireNearTolerance(double actual, double expected, double tolerance, const std::string& message)
+	{
+		require(std::abs(actual - expected) < tolerance, message);
 	}
 
 	void	requireVectorNear(const Vector3& actual, const Vector3& expected, const std::string& message)
@@ -180,6 +199,22 @@ namespace
 		);
 	}
 
+	Camera	testPinholeCamera(Vector3 position, Vector3 direction, double focusDistanceMeters)
+	{
+		Camera camera(
+			position,
+			direction,
+			D_CAMERA_FOCAL_LENGTH_METERS,
+			D_CAMERA_SENSOR_WIDTH_METERS,
+			D_CAMERA_SENSOR_HEIGHT_METERS,
+			D_CAMERA_F_NUMBER,
+			focusDistanceMeters
+		);
+
+		camera.setPinhole(true);
+		return (camera);
+	}
+
 	void	configureVisualRenderScene(Scene& scene, std::size_t width, std::size_t height)
 	{
 		scene.getImage()->setWidth(width);
@@ -188,19 +223,18 @@ namespace
 		scene.setSampleCount(1);
 		scene.setAdaptiveSampling(false);
 		scene.setMaxLightBounces(1);
-		scene.setGammaCorrected(false);
-		scene.setToneMapped(false);
+		scene.setViewTransform(ViewTransform::Raw);
 		scene.setBloom(false);
 		scene.setDenoise(false);
 		scene.setRenderSky(SKY_NONE);
 		scene.setBackgroundColor(Color(0.02, 0.04, 0.08));
 		scene.setRenderingThreads(1);
 		scene.setBenchmarkMode(true);
-		scene.addCamera(Camera(Vector3(0.0, 0.0, 0.0), Vector3(0.0, 0.0, -1.0), 20, 0.0, 1.0));
+		scene.addCamera(testPinholeCamera(Vector3(0.0, 0.0, 0.0), Vector3(0.0, 0.0, -1.0), 1.0));
 		scene.addHittable(std::make_shared<Sphere>(
 			Vector3(0.0, 0.0, -1.0),
 			0.11,
-			std::make_shared<Emissive>(Color(1.0, 0.12, 0.04), 1.0)
+			std::make_shared<Emissive>(Color(1.0, 0.12, 0.04))
 		));
 	}
 
@@ -340,6 +374,8 @@ namespace
 		unsigned char				bitDepth = 0;
 		unsigned char				colorType = 0;
 		std::vector<unsigned char>	imageData;
+		bool						hasSRGBChunk = false;
+		std::vector<std::string>	textChunks;
 	};
 
 	PNGData	readPNG(const std::filesystem::path& path)
@@ -381,6 +417,15 @@ namespace
 			else if (type == "IDAT")
 			{
 				png.imageData.insert(png.imageData.end(), bytes.begin() + dataOffset, bytes.begin() + crcOffset);
+			}
+			else if (type == "sRGB")
+			{
+				require(length == 1, "PNG sRGB chunk length is wrong.");
+				png.hasSRGBChunk = true;
+			}
+			else if (type == "tEXt")
+			{
+				png.textChunks.emplace_back(bytes.begin() + dataOffset, bytes.begin() + crcOffset);
 			}
 			else if (type == "IEND")
 			{
@@ -432,52 +477,112 @@ namespace
 		requireNear(result.getBlue(), 2.0, "Color blue channel math failed.");
 	}
 
-	void	testToneMappingBlackPixel(void)
+	void	testViewTransformBlackPixel(void)
 	{
 		Image image(1, 1);
 		image.initialize();
 		image.setPixel(0, 0, Color(0.0, 0.0, 0.0));
 
-		image.toneMap();
+		image.applyViewTransform(ViewTransform::ACES);
 		const Color pixel = image.getPixel(0, 0);
 
-		require(std::isfinite(pixel.getRed()), "Tone mapping black produced non-finite red value.");
-		require(std::isfinite(pixel.getGreen()), "Tone mapping black produced non-finite green value.");
-		require(std::isfinite(pixel.getBlue()), "Tone mapping black produced non-finite blue value.");
-		requireNear(pixel.getRed(), 0.0, "Tone mapping black changed red value.");
-		requireNear(pixel.getGreen(), 0.0, "Tone mapping black changed green value.");
-		requireNear(pixel.getBlue(), 0.0, "Tone mapping black changed blue value.");
+		require(std::isfinite(pixel.getRed()), "View transform black produced non-finite red value.");
+		require(std::isfinite(pixel.getGreen()), "View transform black produced non-finite green value.");
+		require(std::isfinite(pixel.getBlue()), "View transform black produced non-finite blue value.");
+		requireNear(pixel.getRed(), 0.0, "View transform black changed red value.");
+		requireNear(pixel.getGreen(), 0.0, "View transform black changed green value.");
+		requireNear(pixel.getBlue(), 0.0, "View transform black changed blue value.");
 	}
 
-	void	testToneMappingCompressesHighlights(void)
+	void	testACESViewTransformCompressesHighlights(void)
 	{
 		Image image(1, 1);
 		image.initialize();
 		image.setPixel(0, 0, Color(4.0, 2.0, 1.0));
 
-		image.toneMap();
+		image.applyViewTransform(ViewTransform::ACES);
 		const Color pixel = image.getPixel(0, 0);
 
-		require(pixel.getRed() > pixel.getGreen(), "Tone mapping did not preserve channel order.");
-		require(pixel.getGreen() > pixel.getBlue(), "Tone mapping did not preserve highlight color.");
-		require(pixel.getRed() <= 1.0, "Tone mapping did not compress red highlight.");
-		require(pixel.getGreen() <= 1.0, "Tone mapping did not compress green highlight.");
-		require(pixel.getBlue() <= 1.0, "Tone mapping did not compress blue highlight.");
-		require(pixel.getRed() > 0.0, "Tone mapping crushed red highlight.");
+		require(pixel.getRed() > pixel.getGreen(), "ACES view transform did not preserve channel order.");
+		require(pixel.getGreen() > pixel.getBlue(), "ACES view transform did not preserve highlight color.");
+		require(pixel.getRed() <= 1.0, "ACES view transform did not compress red highlight.");
+		require(pixel.getGreen() <= 1.0, "ACES view transform did not compress green highlight.");
+		require(pixel.getBlue() <= 1.0, "ACES view transform did not compress blue highlight.");
+		require(pixel.getRed() > 0.0, "ACES view transform crushed red highlight.");
+	}
+
+	void	testStandardViewTransformClipsForDisplay(void)
+	{
+		Image image(1, 1);
+		image.initialize();
+		image.setPixel(0, 0, ColorManagement::acescgFromLinearSRGB(Color(2.0, 0.5, 0.25)));
+
+		image.applyViewTransform(ViewTransform::Standard);
+		const Color pixel = image.getPixel(0, 0);
+
+		requireNear(pixel.getRed(), 1.0, "Standard view transform did not clip red to display range.");
+		requireNearTolerance(pixel.getGreen(), 0.5, 0.0001, "Standard view transform changed display-linear green.");
+		requireNearTolerance(pixel.getBlue(), 0.25, 0.0001, "Standard view transform changed display-linear blue.");
+	}
+
+	void	testRawViewTransformKeepsSceneLinearData(void)
+	{
+		Image image(1, 1);
+		image.initialize();
+		image.setPixel(0, 0, Color(4.0, 2.0, 1.0));
+
+		image.applyViewTransformAndEncodeSRGB(ViewTransform::Raw);
+		const Color pixel = image.getPixel(0, 0);
+
+		require(image.getColorEncoding() == ImageColorEncoding::SceneLinearACEScg, "Raw view transform changed image encoding.");
+		requireNear(pixel.getRed(), 4.0, "Raw view transform changed scene-linear red.");
+		requireNear(pixel.getGreen(), 2.0, "Raw view transform changed scene-linear green.");
+		requireNear(pixel.getBlue(), 1.0, "Raw view transform changed scene-linear blue.");
 	}
 
 	void	testSRGBGammaCorrection(void)
 	{
 		Image image(1, 1);
 		image.initialize();
+		image.setColorEncoding(ImageColorEncoding::DisplayLinearSRGB);
 		image.setPixel(0, 0, Color(0.0031308, 0.25, -1.0));
 
 		image.gammaCorrect();
 		const Color pixel = image.getPixel(0, 0);
 
+		require(image.getColorEncoding() == ImageColorEncoding::DisplayEncodedSRGB, "Gamma correction did not mark the image as encoded sRGB.");
 		requireNear(pixel.getRed(), 0.040449936, "sRGB gamma linear segment is wrong.");
 		requireNear(pixel.getGreen(), 0.5370987304831942, "sRGB gamma power segment is wrong.");
 		requireNear(pixel.getBlue(), 0.0, "sRGB gamma did not clamp negative values.");
+	}
+
+	void	testColorManagementACEScgContract(void)
+	{
+		const Color displayColor(0.25, 0.5, 0.75);
+		const Color acescg = ColorManagement::acescgFromSRGB(displayColor);
+		const Color roundTrip = ColorManagement::encodedSRGBFromACEScg(acescg);
+		const Color white = ColorManagement::acescgFromSRGB(Color(1.0, 1.0, 1.0));
+
+		require(ColorManagement::workingSpaceName() == std::string("ACEScg scene-linear RGB (AP1 primaries, ACES D60 white)"), "Working space contract changed.");
+		requireNearTolerance(roundTrip.getRed(), displayColor.getRed(), 0.00005, "sRGB to ACEScg round trip red channel is wrong.");
+		requireNearTolerance(roundTrip.getGreen(), displayColor.getGreen(), 0.00005, "sRGB to ACEScg round trip green channel is wrong.");
+		requireNearTolerance(roundTrip.getBlue(), displayColor.getBlue(), 0.00005, "sRGB to ACEScg round trip blue channel is wrong.");
+		requireNear(ColorManagement::luminance(white), 1.0, "ACEScg white luminance is wrong.");
+	}
+
+	void	testACEScgSceneImageEncodesToSRGB(void)
+	{
+		Image image(1, 1);
+		image.initialize();
+		image.setPixel(0, 0, ColorManagement::acescgFromSRGB(Color(0.25, 0.5, 0.75)));
+
+		image.gammaCorrect();
+		const Color pixel = image.getPixel(0, 0);
+
+		require(image.getColorEncoding() == ImageColorEncoding::DisplayEncodedSRGB, "Scene-linear ACEScg gamma path did not produce encoded sRGB.");
+		requireNearTolerance(pixel.getRed(), 0.25, 0.00005, "ACEScg scene image did not encode red to display sRGB.");
+		requireNearTolerance(pixel.getGreen(), 0.5, 0.00005, "ACEScg scene image did not encode green to display sRGB.");
+		requireNearTolerance(pixel.getBlue(), 0.75, 0.00005, "ACEScg scene image did not encode blue to display sRGB.");
 	}
 
 	void	testExposureAndContrast(void)
@@ -500,6 +605,20 @@ namespace
 		requireNear(pixel.getBlue(), 1.0, "Contrast upper endpoint is wrong.");
 	}
 
+	void	testPhotographicExposureConversion(void)
+	{
+		Scene scene;
+
+		scene.setPhotographicExposure(1.0, 1.0, 100.0);
+		requireNear(scene.getExposure(), 0.0, "Reference photographic exposure is wrong.");
+		scene.setPhotographicExposure(2.0, 1.0, 100.0);
+		requireNear(scene.getExposure(), -2.0, "F-number photographic exposure is wrong.");
+		scene.setPhotographicExposure(2.0, 4.0, 100.0);
+		requireNear(scene.getExposure(), 0.0, "Shutter photographic exposure is wrong.");
+		scene.setPhotographicExposure(2.0, 1.0, 400.0);
+		requireNear(scene.getExposure(), 0.0, "ISO photographic exposure is wrong.");
+	}
+
 	void	testBloomExtractionPreservesHighlightColor(void)
 	{
 		Image image(2, 1);
@@ -516,6 +635,253 @@ namespace
 		requireNear(dark.getRed(), 0.0, "Bloom extraction included sub-threshold red.");
 		requireNear(dark.getGreen(), 0.0, "Bloom extraction included sub-threshold green.");
 		requireNear(dark.getBlue(), 0.0, "Bloom extraction included sub-threshold blue.");
+	}
+
+	void	testBloomExtractionSuppressesIsolatedFireflies(void)
+	{
+		Image isolated(9, 9);
+		isolated.initialize();
+		isolated.setPixel(4, 4, Color(100000.0, 100000.0, 100000.0));
+
+		auto isolatedBloom = isolated.extractBloom(1.0, 0.0);
+		double isolatedBloomMax = 0.0;
+		for (std::size_t y = 0; y < isolatedBloom->getHeight(); y++)
+		{
+			for (std::size_t x = 0; x < isolatedBloom->getWidth(); x++)
+			{
+				isolatedBloomMax = std::max(
+					isolatedBloomMax,
+					Utilities::luminance(isolatedBloom->getPixel(x, y))
+				);
+			}
+		}
+		require(isolatedBloomMax < 0.001, "Bloom extraction kept an isolated firefly.");
+
+		Image clustered(9, 9);
+		clustered.initialize();
+		clustered.setPixel(3, 4, Color(100.0, 100.0, 100.0));
+		clustered.setPixel(4, 4, Color(100.0, 100.0, 100.0));
+		clustered.setPixel(5, 4, Color(100.0, 100.0, 100.0));
+
+		auto clusteredBloom = clustered.extractBloom(1.0, 0.0);
+		require(
+			Utilities::luminance(clusteredBloom->getPixel(4, 4)) > 90.0,
+			"Bloom extraction suppressed a real clustered highlight."
+		);
+	}
+
+	void	testDisplayFireflySuppressionRemovesIsolatedWhitePixels(void)
+	{
+		Image isolated(7, 7);
+		isolated.initialize();
+		isolated.fill(Color(0.1, 0.1, 0.1));
+		isolated.setColorEncoding(ImageColorEncoding::DisplayEncodedSRGB);
+		isolated.setPixel(3, 3, Color(1.0, 1.0, 1.0));
+
+		isolated.suppressIsolatedFireflies();
+		requireNear(isolated.getPixel(3, 3).getRed(), 0.1, "Display firefly suppression did not replace isolated red.");
+		requireNear(isolated.getPixel(3, 3).getGreen(), 0.1, "Display firefly suppression did not replace isolated green.");
+		requireNear(isolated.getPixel(3, 3).getBlue(), 0.1, "Display firefly suppression did not replace isolated blue.");
+
+		Image sceneLinear(7, 7);
+		sceneLinear.initialize();
+		sceneLinear.fill(Color(0.1, 0.1, 0.1));
+		sceneLinear.setPixel(3, 3, Color(1.0, 1.0, 1.0));
+		sceneLinear.suppressIsolatedFireflies();
+		requireNear(sceneLinear.getPixel(3, 3).getRed(), 1.0, "Display firefly suppression changed scene-linear data.");
+
+		Image clustered(7, 7);
+		clustered.initialize();
+		clustered.fill(Color(0.1, 0.1, 0.1));
+		clustered.setColorEncoding(ImageColorEncoding::DisplayEncodedSRGB);
+		for (std::size_t y = 2; y <= 4; y++)
+		{
+			for (std::size_t x = 2; x <= 4; x++)
+			{
+				clustered.setPixel(x, y, Color(1.0, 1.0, 1.0));
+			}
+		}
+
+		clustered.suppressIsolatedFireflies();
+		requireNear(clustered.getPixel(3, 3).getRed(), 1.0, "Display firefly suppression changed clustered highlight center.");
+		requireNear(clustered.getPixel(2, 2).getRed(), 1.0, "Display firefly suppression changed clustered highlight corner.");
+
+		Image clippedEdge(7, 7);
+		clippedEdge.initialize();
+		clippedEdge.fill(Color(0.25, 0.25, 0.25));
+		clippedEdge.setColorEncoding(ImageColorEncoding::DisplayEncodedSRGB);
+		for (std::size_t y = 2; y <= 4; y++)
+		{
+			for (std::size_t x = 2; x <= 4; x++)
+			{
+				clippedEdge.setPixel(x, y, Color(0.88, 0.82, 0.82));
+			}
+		}
+		clippedEdge.setPixel(3, 3, Color(1.0, 1.0, 1.0));
+		clippedEdge.setPixel(4, 3, Color(1.0, 1.0, 1.0));
+
+		clippedEdge.suppressIsolatedFireflies();
+		require(
+			clippedEdge.getPixel(3, 3).getRed() < 0.95,
+			"Display firefly suppression kept unsupported saturated reflection pixel."
+		);
+		require(
+			clippedEdge.getPixel(4, 3).getRed() < 0.95,
+			"Display firefly suppression kept unsupported saturated reflection neighbor."
+		);
+	}
+
+	void	testPhysicalLightUnitConversions(void)
+	{
+		requireColorNear(
+			LightUnits::surfaceRadiantPower(Color(1.0, 1.0, 1.0), 2.0 * D_PI, 2.0),
+			Color(1.0, 1.0, 1.0),
+			"Surface radiant power conversion"
+		);
+		requireColorNear(
+			LightUnits::surfaceLuminousFlux(
+				Color(1.0, 1.0, 1.0),
+				LightUnits::LUMENS_PER_RADIANT_WATT * 2.0 * D_PI,
+				2.0
+			),
+			Color(1.0, 1.0, 1.0),
+			"Surface luminous flux conversion"
+		);
+		requireNear(
+			Utilities::luminance(LightUnits::surfaceRadiance(Color(1.0, 0.0, 0.0), 4.0)),
+			4.0,
+			"Surface radiance did not preserve requested luminance-weighted radiance."
+		);
+		requireColorNear(
+			LightUnits::directionalIlluminance(Color(1.0, 1.0, 1.0), LightUnits::LUMENS_PER_RADIANT_WATT),
+			Color(1.0, 1.0, 1.0),
+			"Directional illuminance conversion"
+		);
+		requireColorNear(
+			LightUnits::sphericalLuminousIntensity(Color(1.0, 1.0, 1.0), LightUnits::LUMENS_PER_RADIANT_WATT, 4.0),
+			Color(1.0, 1.0, 1.0),
+			"Spherical luminous intensity conversion"
+		);
+		requireNear(
+			Utilities::luminance(LightUnits::solarDirectionalIrradiance(ColorScience::solar(), 1.0)),
+			LightUnits::SOLAR_DIRECT_IRRADIANCE_W_M2,
+			"Solar directional irradiance conversion"
+		);
+		requireNear(
+			Utilities::luminance(LightUnits::solarDiskRadiance(ColorScience::solar(), 1.0)),
+			LightUnits::SOLAR_DIRECT_IRRADIANCE_W_M2 / LightUnits::solarSolidAngle(),
+			"Solar disk radiance conversion"
+		);
+		requireThrows(
+			[]() { LightUnits::surfaceRadiance(Color(0.0, 0.0, 0.0), 1.0); },
+			"Physical light units accepted a zero-luminance positive light color."
+		);
+	}
+
+	void	writeTestIESProfile(const std::filesystem::path& path, double nadirCandela, double horizonCandela, double zenithCandela)
+	{
+		std::ofstream stream(path);
+
+		stream << "IESNA:LM-63-1995\n";
+		stream << "TILT=NONE\n";
+		stream << "1 1000 1 3 1 1 1 0 0 0 1 1 100\n";
+		stream << "0 90 180\n";
+		stream << "0\n";
+		stream << nadirCandela << " " << horizonCandela << " " << zenithCandela << "\n";
+	}
+
+	void	writeFlatReflectanceCurve(const std::filesystem::path& path, double reflectance)
+	{
+		std::ofstream stream(path);
+
+		stream << "360," << reflectance << "\n";
+		stream << "830," << reflectance << "\n";
+	}
+
+	void	writeRedReflectanceCurve(const std::filesystem::path& path)
+	{
+		std::ofstream stream(path);
+
+		stream << "# wavelength_nm,reflectance\n";
+		stream << "360,0.02\n";
+		stream << "450,0.03\n";
+		stream << "550,0.08\n";
+		stream << "650,0.75\n";
+		stream << "830,0.80\n";
+	}
+
+	void	testIESProfileLoadsPhysicalLampData(void)
+	{
+		const std::filesystem::path iesPath = std::filesystem::temp_directory_path() / "luz_unit_test.ies";
+
+		writeTestIESProfile(iesPath, 10.0, 10.0, 10.0);
+		const IESProfile uniformProfile = IESProfile::load(iesPath.string());
+		require(
+			std::abs(uniformProfile.totalLumens() - (4.0 * D_PI * 10.0)) < 0.01,
+			"IES profile did not integrate uniform candela to lumens."
+		);
+		requireNear(uniformProfile.candelaAt(45.0, 0.0), 10.0, "IES uniform candela interpolation");
+
+		writeTestIESProfile(iesPath, 20.0, 10.0, 0.0);
+		const IESProfile directionalProfile = IESProfile::load(iesPath.string());
+		require(
+			directionalProfile.relativeIntensity(Vector3(0.0, -1.0, 0.0), Vector3(0.0, -1.0, 0.0), 0.0)
+			> directionalProfile.relativeIntensity(Vector3(1.0, 0.0, 0.0), Vector3(0.0, -1.0, 0.0), 0.0),
+			"IES profile did not preserve stronger nadir intensity."
+		);
+		requireNear(
+			directionalProfile.relativeIntensity(Vector3(0.0, 1.0, 0.0), Vector3(0.0, -1.0, 0.0), 0.0),
+			0.0,
+			"IES profile did not preserve zero zenith intensity."
+		);
+
+		std::filesystem::remove(iesPath);
+	}
+
+	void	testSpectralColorConversions(void)
+	{
+		const Color blue = ColorScience::wavelength(450.0);
+		const Color green = ColorScience::wavelength(550.0);
+		const Color red = ColorScience::wavelength(650.0);
+
+		require(blue.getBlue() > blue.getRed() && blue.getBlue() > blue.getGreen(), "450 nm did not convert to a blue-dominant color.");
+		require(green.getGreen() > green.getRed() && green.getGreen() > green.getBlue(), "550 nm did not convert to a green-dominant color.");
+		require(red.getRed() > red.getGreen() && red.getRed() > red.getBlue(), "650 nm did not convert to a red-dominant color.");
+
+		const Color warm = ColorScience::blackbody(3000.0);
+		const Color cool = ColorScience::blackbody(10000.0);
+
+		require(warm.getRed() > warm.getBlue(), "3000 K blackbody did not convert to a warm color.");
+		require(cool.getBlue() > cool.getRed(), "10000 K blackbody did not convert to a cool color.");
+		requireThrows([]() { ColorScience::wavelength(200.0); }, "Spectral conversion accepted non-visible wavelength.");
+		requireThrows([]() { ColorScience::blackbody(100.0); }, "Spectral conversion accepted invalid blackbody temperature.");
+	}
+
+	void	testSpectralReflectanceCurveConversion(void)
+	{
+		const std::filesystem::path flatPath = std::filesystem::temp_directory_path() / "luz_flat_reflectance.spd";
+		const std::filesystem::path redPath = std::filesystem::temp_directory_path() / "luz_red_reflectance.spd";
+
+		writeFlatReflectanceCurve(flatPath, 0.5);
+		const Color flat = ColorScience::loadReflectanceCurve(flatPath.string());
+		requireColorNear(flat, Color(0.5, 0.5, 0.5), "Flat spectral reflectance did not preserve neutral reflectance.");
+
+		writeRedReflectanceCurve(redPath);
+		const Color red = ColorScience::loadReflectanceCurve(redPath.string());
+		require(red.getRed() > red.getGreen() && red.getRed() > red.getBlue(), "Spectral reflectance curve did not produce red-dominant color.");
+		requireThrows(
+			[]()
+			{
+				ColorScience::reflectanceCurve(std::vector<ColorScience::SpectralSample>{
+					{360.0, 0.5},
+					{361.0, 1.5}
+				});
+			},
+			"Spectral reflectance accepted reflectance above one."
+		);
+
+		std::filesystem::remove(flatPath);
+		std::filesystem::remove(redPath);
 	}
 
 	void	testGaussianBlurSupportsInPlaceSmallImages(void)
@@ -675,6 +1041,13 @@ namespace
 		require(findTiffTag(bytes, ifdOffset, 278).valueOrOffset == 2, "TIFF rows per strip is wrong.");
 		require(findTiffTag(bytes, ifdOffset, 279).valueOrOffset == 72, "TIFF strip byte count is wrong.");
 		require(findTiffTag(bytes, ifdOffset, 284).valueOrOffset == 1, "TIFF planar configuration is wrong.");
+		const TiffTag imageDescription = findTiffTag(bytes, ifdOffset, 270);
+		require(imageDescription.type == 2 && imageDescription.count > 1, "TIFF ImageDescription tag is wrong.");
+		const std::string description(
+			bytes.begin() + imageDescription.valueOrOffset,
+			bytes.begin() + imageDescription.valueOrOffset + imageDescription.count - 1
+		);
+		require(description.find("scene-linear ACEScg") != std::string::npos, "TIFF output is missing ACEScg color metadata.");
 
 		const std::uint32_t pixelDataOffset = findTiffTag(bytes, ifdOffset, 273).valueOrOffset;
 		requireRGBFloats(bytes, pixelDataOffset + 0, 1.5f, 0.25f, 0.0f, "TIFF top-left pixel");
@@ -692,6 +1065,7 @@ namespace
 		Image image(3, 2);
 
 		image.initialize();
+		image.setColorEncoding(ImageColorEncoding::DisplayEncodedSRGB);
 		image.setPixel(0, 0, Color(1.0, 0.0, 0.0));
 		image.setPixel(1, 0, Color(0.0, 1.0, 0.0));
 		image.setPixel(2, 0, Color(0.0, 0.0, 1.0));
@@ -711,6 +1085,19 @@ namespace
 		require(png.height == 2, "PNG height is wrong.");
 		require(png.bitDepth == 8, "PNG bit depth is wrong.");
 		require(png.colorType == 2, "PNG color type is wrong.");
+		require(png.hasSRGBChunk, "PNG display output is missing an sRGB color-space chunk.");
+		bool sawColorEncoding = false;
+		for (const std::string& textChunk : png.textChunks)
+		{
+			if (
+				textChunk.rfind("LuzColorEncoding", 0) == 0
+				&& textChunk.find("display-referred sRGB") != std::string::npos
+			)
+			{
+				sawColorEncoding = true;
+			}
+		}
+		require(sawColorEncoding, "PNG output is missing Luz color encoding metadata.");
 		require(scanlines.size() == rowSize * png.height, "PNG scanline byte count is wrong.");
 		require((png.imageData[2] & 0x07) == 0x01, "PNG did not use stored deflate.");
 
@@ -750,6 +1137,39 @@ namespace
 		require(
 			scene.getDefaultRenderOutputFileName() == outputPath.string() + ".bmp",
 			"Scene outputfilename setting was not applied."
+		);
+
+		std::filesystem::remove(scenePath);
+
+		{
+			std::ofstream stream(scenePath);
+			stream
+				<< "[settings]\n"
+				<< "resolution=2,2\n\n"
+				<< "[scene]\n"
+				<< "camera main {\n"
+				<< "position=(0,0,1)\n"
+				<< "direction=(0,0,-1)\n"
+				<< "focal_length_mm=50\n"
+				<< "sensor_width_mm=36\n"
+				<< "sensor_height_mm=20.25\n"
+				<< "pinhole=1\n"
+				<< "focus_distance=1\n"
+				<< "}\n"
+				<< "objects{\n"
+				<< "sphere=(0,0,-1),0.5,material[\n"
+				<< "emissive=(1.0,1.0,1.0),4.0\n"
+				<< "]\n"
+				<< "}\n";
+		}
+
+		Scene oldEmissiveSyntaxScene;
+		requireThrows(
+			[&oldEmissiveSyntaxScene, &scenePath]()
+			{
+				SceneFile::read(oldEmissiveSyntaxScene, scenePath.string());
+			},
+			"Scene file accepted an emissive material scalar."
 		);
 
 		std::filesystem::remove(scenePath);
@@ -871,8 +1291,7 @@ namespace
 			std::ofstream stream(scenePath);
 			stream
 				<< "[settings]\n"
-				<< "gamma=0\n"
-				<< "tonemapping=0\n"
+				<< "view_transform=raw\n"
 				<< "bloom=0\n"
 				<< "exposure=1.5\n"
 				<< "contrast=1.25\n\n";
@@ -880,11 +1299,80 @@ namespace
 
 		Scene scene;
 		SceneFile::read(scene, scenePath.string());
-		require(!scene.getGammaCorrected(), "Scene gamma setting was not applied.");
-		require(!scene.getToneMapped(), "Scene tonemapping setting was not applied.");
+		require(scene.getViewTransform() == ViewTransform::Raw, "Scene view_transform setting was not applied.");
 		require(!scene.getBloom(), "Scene bloom setting was not applied.");
 		requireNear(scene.getExposure(), 1.5, "Scene exposure setting was not applied.");
 		requireNear(scene.getContrast(), 1.25, "Scene contrast setting was not applied.");
+
+		std::filesystem::remove(scenePath);
+	}
+
+	void	testSceneFileCausticSettings(void)
+	{
+		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_scene_caustic_settings_test.luz";
+		{
+			std::ofstream stream(scenePath);
+			stream
+				<< "[settings]\n"
+				<< "caustics=1\n"
+				<< "caustic_photons=321\n"
+				<< "caustic_passes=5\n"
+				<< "caustic_radius=0.25\n"
+				<< "caustic_alpha=0.6\n\n";
+		}
+
+		Scene scene;
+		SceneFile::read(scene, scenePath.string());
+		require(scene.getCausticsEnabled(), "Scene caustics setting was not applied.");
+		require(scene.getCausticPhotonCount() == 321, "Scene caustic photon count was not parsed.");
+		require(scene.getCausticPassCount() == 5, "Scene caustic pass count was not parsed.");
+		requireNear(scene.getCausticRadiusMeters(), 0.25, "Scene caustic radius was not parsed.");
+		requireNear(scene.getCausticAlpha(), 0.6, "Scene caustic alpha was not parsed.");
+
+		std::filesystem::remove(scenePath);
+	}
+
+	void	testSceneFilePhotographicExposureSetting(void)
+	{
+		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_scene_photographic_exposure_test.luz";
+		{
+			std::ofstream stream(scenePath);
+			stream
+				<< "[settings]\n"
+				<< "photographic_exposure=2,4,100\n\n";
+		}
+
+		Scene scene;
+		SceneFile::read(scene, scenePath.string());
+		requireNear(scene.getExposure(), 0.0, "Scene photographic exposure setting was not applied.");
+
+		std::filesystem::remove(scenePath);
+	}
+
+	void	testSceneFileCameraPhotographicExposure(void)
+	{
+		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_camera_photographic_exposure_test.luz";
+		{
+			std::ofstream stream(scenePath);
+			stream
+				<< "[scene]\n"
+				<< "camera main {\n"
+				<< "position=(0,0,1)\n"
+				<< "direction=(0,0,-1)\n"
+				<< "focal_length_mm=50\n"
+				<< "sensor_width_mm=36\n"
+				<< "sensor_height_mm=20.25\n"
+				<< "focus_distance=1\n"
+				<< "f_stop=4\n"
+				<< "shutter=1\n"
+				<< "iso=100\n"
+				<< "}\n";
+		}
+
+		Scene scene;
+		SceneFile::read(scene, scenePath.string());
+		require(scene.hasCamera(), "Scene camera block with photographic exposure did not load a camera.");
+		requireNear(scene.getExposure(), -4.0, "Camera photographic exposure was not applied.");
 
 		std::filesystem::remove(scenePath);
 	}
@@ -923,11 +1411,23 @@ namespace
 		requireSceneFileSettingThrows("adaptivethreshold=0", "Scene file accepted zero adaptive threshold.");
 		requireSceneFileSettingThrows("adaptivecheckinterval=0", "Scene file accepted zero adaptive check interval.");
 		requireSceneFileSettingThrows("maxlightbounces=-1", "Scene file accepted negative max light bounces.");
-		requireSceneFileSettingThrows("gamma=2", "Scene file accepted non-binary gamma.");
-		requireSceneFileSettingThrows("tonemapping=2", "Scene file accepted non-binary tone mapping.");
+		requireSceneFileSettingThrows("gamma=1", "Scene file accepted removed gamma setting.");
+		requireSceneFileSettingThrows("tonemapping=1", "Scene file accepted removed tone mapping setting.");
+		requireSceneFileSettingThrows("viewtransform=raw", "Scene file accepted view_transform alias.");
+		requireSceneFileSettingThrows("view_transform=display", "Scene file accepted invalid view transform.");
 		requireSceneFileSettingThrows("bloom=2", "Scene file accepted non-binary bloom.");
 		requireSceneFileSettingThrows("exposure=nan", "Scene file accepted non-finite exposure.");
+		requireSceneFileSettingThrows("photographic_exposure=0,1,100", "Scene file accepted zero photographic f-number.");
+		requireSceneFileSettingThrows("photographic_exposure=2,0,100", "Scene file accepted zero photographic shutter.");
+		requireSceneFileSettingThrows("photographic_exposure=2,1,0", "Scene file accepted zero photographic ISO.");
+		requireSceneFileSettingThrows("photographic_exposure=2,1", "Scene file accepted incomplete photographic exposure.");
 		requireSceneFileSettingThrows("contrast=-1", "Scene file accepted negative contrast.");
+		requireSceneFileSettingThrows("caustics=2", "Scene file accepted non-binary caustics.");
+		requireSceneFileSettingThrows("caustic_photons=-1", "Scene file accepted negative caustic photons.");
+		requireSceneFileSettingThrows("caustic_passes=0", "Scene file accepted zero caustic passes.");
+		requireSceneFileSettingThrows("caustic_radius=0", "Scene file accepted zero caustic radius.");
+		requireSceneFileSettingThrows("caustic_alpha=0", "Scene file accepted zero caustic alpha.");
+		requireSceneFileSettingThrows("caustic_alpha=1.5", "Scene file accepted caustic alpha above one.");
 		requireSceneFileSettingThrows("denoise=2", "Scene file accepted non-binary denoise.");
 		requireSceneFileSettingThrows("compression=75", "Scene file accepted removed compression setting.");
 		requireSceneFileSettingThrows("outputfilename=render.tif", "Scene file accepted .tif output.");
@@ -937,8 +1437,13 @@ namespace
 		requireSceneFileSettingThrows("denoiseoutputfilename=render_denoised.tif", "Scene file accepted .tif denoise output.");
 		requireSceneFileSettingThrows("denoiseoutputfilename=render_denoised.jpg", "Scene file accepted unsupported denoise output extension.");
 		requireSceneFileSettingThrows("sky=wat", "Scene file accepted unknown sky setting.");
-		requireSceneFileSettingThrows("environmentstrength=-1", "Scene file accepted negative environment strength.");
+		requireSceneFileSettingThrows("environment_scale=-1", "Scene file accepted negative environment scale.");
+		requireSceneFileSettingThrows("environment_lighting=2", "Scene file accepted non-binary environment lighting.");
+		requireSceneFileSettingThrows("environment_radiance=1\nenvironment_scale=2", "Scene file accepted environment calibration plus scale.");
+		requireSceneFileSettingThrows("environment_radiance=1\nenvironment_illuminance=2", "Scene file accepted multiple environment calibrations.");
 		requireSceneFileSettingThrows("environmentrotation=nan", "Scene file accepted non-finite environment rotation.");
+		requireSceneFileSettingThrows("meters_per_unit=0", "Scene file accepted zero meters per unit.");
+		requireSceneFileSettingThrows("meters_per_unit=nan", "Scene file accepted non-finite meters per unit.");
 		requireSceneFileSettingThrows("sky=atmosphere\natmosphere=0,1,2,3,4,0,1,0", "Scene file accepted zero atmosphere samples.");
 		requireSceneFileSettingThrows("sky=atmosphere\natmosphere=0,2,1,3,4,1,1,0", "Scene file accepted atmosphere radius smaller than Earth radius.");
 		requireSceneFileSettingThrows("sky=atmosphere\natmosphere_sun_scale=-1", "Scene file accepted negative atmosphere sun scale.");
@@ -968,7 +1473,11 @@ namespace
 		requireNear(scene.getAtmosphere().getEarthRadius(), 12840000.0, "Atmosphere Earth radius was not parsed.");
 		requireNear(scene.getAtmosphere().getAtmosphereRadius(), 12910000.0, "Atmosphere radius was not parsed.");
 		requireNear(scene.getAtmosphere().getStarsBrightness(), 0.1, "Atmosphere stars brightness was not parsed.");
-		requireColorNear(scene.getAtmosphere().getSunRadiance(), Color(20.0, 20.0, 20.0), "Atmosphere fallback sun radiance");
+		requireColorNear(
+			scene.getAtmosphere().getSunRadiance(),
+			LightUnits::solarDirectionalIrradiance(ColorScience::solar(), 1.0),
+			"Atmosphere fallback sun radiance"
+		);
 		requireNear(scene.getAtmosphere().getSunRadianceScale(), 1.0, "Atmosphere sun scale default was not preserved.");
 
 		std::filesystem::remove(scenePath);
@@ -988,7 +1497,7 @@ namespace
 				<< "directional_light sun {\n"
 				<< "direction=(2,0,0)\n"
 				<< "color=(1,0.95,0.8)\n"
-				<< "intensity=2\n"
+				<< "irradiance=2\n"
 				<< "}\n";
 		}
 
@@ -1002,7 +1511,7 @@ namespace
 		);
 		requireColorNear(
 			scene.getAtmosphere().getSunRadiance(),
-			Color(2.0, 1.9, 1.6),
+			LightUnits::directionalIrradiance(Color(1.0, 0.95, 0.8), 2.0),
 			"Atmosphere did not use the scene directional light as sun radiance"
 		);
 		requireNear(scene.getAtmosphere().getSunRadianceScale(), 0.5, "Atmosphere sun scale was not parsed.");
@@ -1042,6 +1551,19 @@ namespace
 			<< red << " " << green << " " << blue << "\n";
 	}
 
+	void	writeUniformPPM(const std::filesystem::path& path, int width, int height, int red, int green, int blue, int maxValue = 10)
+	{
+		std::ofstream textureStream(path);
+		textureStream
+			<< "P3\n"
+			<< width << " " << height << "\n"
+			<< maxValue << "\n";
+		for (int i = 0; i < width * height; i++)
+		{
+			textureStream << red << " " << green << " " << blue << "\n";
+		}
+	}
+
 	void	testEnvironmentMapLoadsPPM(void)
 	{
 		const std::filesystem::path environmentPath = std::filesystem::temp_directory_path() / "luz_environment_ppm_test.ppm";
@@ -1049,17 +1571,50 @@ namespace
 
 		const EnvironmentMap environmentMap = EnvironmentMap::load(environmentPath.string());
 		const Color color = environmentMap.sampleDirection(Vector3(1.0, 0.0, 0.0));
+		const Color expected = ColorManagement::acescgFromSRGB(Color(0.1, 0.2, 0.3));
 		const EnvironmentMap::Sample sample = environmentMap.sample(0.5, Sampler::Sample2D{0.5, 0.5});
 
 		require(environmentMap.getWidth() == 1, "PPM environment width was not loaded.");
 		require(environmentMap.getHeight() == 1, "PPM environment height was not loaded.");
-		requireNear(color.getRed(), 0.1, "PPM environment red channel was not sampled.");
-		requireNear(color.getGreen(), 0.2, "PPM environment green channel was not sampled.");
-		requireNear(color.getBlue(), 0.3, "PPM environment blue channel was not sampled.");
+		requireColorNear(color, expected, "PPM environment did not convert sRGB input to ACEScg.");
 		require(sample.valid, "PPM environment importance sample was invalid.");
 		require(std::isfinite(sample.pdf) && sample.pdf > 0.0, "PPM environment sample PDF was invalid.");
 
 		std::filesystem::remove(environmentPath);
+	}
+
+	void	testEnvironmentMapPhysicalMetrics(void)
+	{
+		std::vector<Color> pixels(4, Color(2.0, 2.0, 2.0));
+		const EnvironmentMap environmentMap(2, 2, pixels);
+
+		requireNear(environmentMap.averageLuminance(), 2.0, "Environment average luminance metric is wrong.");
+		requireNear(
+			environmentMap.horizontalIrradiance(),
+			2.0 * std::sqrt(2.0) * D_PI,
+			"Environment horizontal irradiance metric is wrong."
+		);
+	}
+
+	void	testSceneEnvironmentPhysicalCalibration(void)
+	{
+		std::vector<Color> onePixel(1, Color(2.0, 2.0, 2.0));
+		std::vector<Color> fourPixels(4, Color(1.0, 1.0, 1.0));
+
+		Scene scene;
+		scene.setEnvironmentMap(std::make_shared<EnvironmentMap>(1, 1, onePixel));
+		scene.calibrateEnvironmentAverageRadiance(10.0);
+		requireNear(scene.getEnvironmentStrength(), 5.0, "Environment average radiance calibration is wrong.");
+		scene.calibrateEnvironmentAverageLuminance(683.0);
+		requireNear(scene.getEnvironmentStrength(), 0.5, "Environment average luminance calibration is wrong.");
+
+		const EnvironmentMap horizontalMap(2, 2, fourPixels);
+		const double horizontalIrradiance = horizontalMap.horizontalIrradiance();
+		scene.setEnvironmentMap(std::make_shared<EnvironmentMap>(horizontalMap));
+		scene.calibrateEnvironmentHorizontalIrradiance(horizontalIrradiance * 2.0);
+		requireNear(scene.getEnvironmentStrength(), 2.0, "Environment horizontal irradiance calibration is wrong.");
+		scene.calibrateEnvironmentHorizontalIlluminance(horizontalIrradiance * 683.0 * 3.0);
+		requireNear(scene.getEnvironmentStrength(), 3.0, "Environment horizontal illuminance calibration is wrong.");
 	}
 
 	void	testEnvironmentMapLoadsHDR(void)
@@ -1078,10 +1633,9 @@ namespace
 
 		const EnvironmentMap environmentMap = EnvironmentMap::load(environmentPath.string());
 		const Color color = environmentMap.sampleDirection(Vector3(0.0, 1.0, 0.0));
+		const Color expected = ColorManagement::acescgFromLinearSRGB(Color(2.0, 1.0, 0.5));
 
-		requireNear(color.getRed(), 2.0, "HDR environment red channel was not decoded.");
-		requireNear(color.getGreen(), 1.0, "HDR environment green channel was not decoded.");
-		requireNear(color.getBlue(), 0.5, "HDR environment blue channel was not decoded.");
+		requireColorNear(color, expected, "HDR environment did not convert linear RGBE input to ACEScg.");
 
 		std::filesystem::remove(environmentPath);
 	}
@@ -1110,11 +1664,10 @@ namespace
 
 		const EnvironmentMap environmentMap = EnvironmentMap::load(environmentPath.string());
 		const Color color = environmentMap.sampleDirection(Vector3(1.0, 0.0, 0.0));
+		const Color expected = ColorManagement::acescgFromLinearSRGB(Color(2.0, 1.0, 0.5));
 
 		require(environmentMap.getWidth() == 8, "RLE HDR environment width was not loaded.");
-		requireNear(color.getRed(), 2.0, "RLE HDR environment red channel was not decoded.");
-		requireNear(color.getGreen(), 1.0, "RLE HDR environment green channel was not decoded.");
-		requireNear(color.getBlue(), 0.5, "RLE HDR environment blue channel was not decoded.");
+		requireColorNear(color, expected, "RLE HDR environment did not convert linear RGBE input to ACEScg.");
 
 		std::filesystem::remove(environmentPath);
 	}
@@ -1130,36 +1683,167 @@ namespace
 			std::ofstream sceneStream(scenePath);
 			sceneStream
 				<< "[settings]\n"
-				<< "environment=" << environmentPath.filename().string() << ",2.5,90\n\n";
+				<< "environment_luminance=683\n"
+				<< "environment=" << environmentPath.filename().string() << ",90\n"
+				<< "environment_lighting=0\n\n";
 		}
 
+		const EnvironmentMap expectedEnvironment = EnvironmentMap::load(environmentPath.string());
 		Scene scene;
 		SceneFile::read(scene, scenePath.string());
 
 		require(scene.getRenderSky() == SKY_ENVIRONMENT, "Environment setting did not enable environment sky.");
 		require(scene.hasEnvironmentMap(), "Environment setting did not load an environment map.");
-		requireNear(scene.getEnvironmentStrength(), 2.5, "Environment strength was not parsed.");
+		requireNear(scene.getEnvironmentStrength(), 1.0 / expectedEnvironment.averageLuminance(), "Environment luminance calibration was not parsed.");
+		require(!scene.getEnvironmentLighting(), "Environment lighting setting was not parsed.");
 		requireNear(scene.getEnvironmentRotation(), 90.0, "Environment rotation was not parsed.");
 
 		std::filesystem::remove(scenePath);
 		std::filesystem::remove(environmentPath);
 	}
 
-	void	testSceneFileLegacyCameraPreservesDecimalFOV(void)
+	void	testSceneFileAtmosphereCombinesWithEnvironment(void)
 	{
-		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_legacy_camera_fov_test.luz";
+		const std::filesystem::path directory = std::filesystem::temp_directory_path();
+		const std::filesystem::path scenePath = directory / "luz_atmosphere_environment_setting_test.luz";
+		const std::filesystem::path environmentPath = directory / "luz_atmosphere_environment_setting_test.ppm";
+
+		writeUniformPPM(environmentPath, 2, 2, 10, 10, 10);
 		{
 			std::ofstream sceneStream(scenePath);
 			sceneStream
+				<< "[settings]\n"
+				<< "sky=atmosphere\n"
+				<< "atmosphere=0.25,12840000.0,12910000.0,7994.0,1200.0,12,6,0.1\n"
+				<< "environment=" << environmentPath.filename().string() << ",45\n"
+				<< "environment_irradiance=4\n\n";
+		}
+
+		const EnvironmentMap expectedEnvironment = EnvironmentMap::load(environmentPath.string());
+		Scene scene;
+		SceneFile::read(scene, scenePath.string());
+
+		require(scene.getRenderSky() == SKY_ATMOSPHERE, "Environment setting overwrote explicit atmosphere sky.");
+		require(scene.hasEnvironmentMap(), "Atmosphere environment scene did not load an environment map.");
+		requireNear(scene.getEnvironmentRotation(), 45.0, "Atmosphere environment rotation was not parsed.");
+		requireNear(scene.getEnvironmentStrength(), 4.0 / expectedEnvironment.horizontalIrradiance(), "Environment irradiance calibration was not parsed.");
+
+		std::filesystem::remove(scenePath);
+		std::filesystem::remove(environmentPath);
+	}
+
+	void	testAtmosphereCompositesEnvironmentBackground(void)
+	{
+		std::vector<Color> pixels(1, Color(0.2, 0.3, 0.4));
+		Scene scene;
+		scene.setEnvironmentMap(std::make_shared<EnvironmentMap>(1, 1, pixels));
+		scene.setEnvironmentStrength(2.0);
+		scene.setRenderSky(SKY_ATMOSPHERE);
+
+		Ray ray(
+			Vector3(0.0, 0.0, D_ATMOSPHERE_RADIUS + 100000.0),
+			Vector3(0.0, 0.0, 1.0)
+		);
+		const Color color = Renderer::internal::_computeAtmosphereColor(scene, ray);
+
+		requireColorNear(color, Color(0.4, 0.6, 0.8), "Atmosphere did not composite environment background through transmittance.");
+	}
+
+	void	testSceneFileLoadsPhysicalCamera(void)
+	{
+		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_physical_camera_test.luz";
+		{
+			std::ofstream sceneStream(scenePath);
+			sceneStream
+				<< "[settings]\n"
+				<< "meters_per_unit=0.01\n\n"
 				<< "[scene]\n"
-				<< "camera=(0,0,1),(0,0,-1),35.489342,0,1\n\n";
+				<< "camera main {\n"
+				<< "position=(0,0,100)\n"
+				<< "direction=(0,0,-1)\n"
+				<< "focal_length_mm=50\n"
+				<< "sensor_width_mm=36\n"
+				<< "sensor_height_mm=24\n"
+				<< "f_stop=5\n"
+				<< "focus_distance=2\n"
+				<< "}\n";
 		}
 
 		Scene scene;
 		SceneFile::read(scene, scenePath.string());
 
-		require(scene.hasCamera(), "Legacy camera scene did not load a camera.");
-		requireNear(scene.getActiveCamera().getFOV(), 35.489342, "Legacy camera FOV lost decimal precision.");
+		require(scene.hasCamera(), "Physical camera scene did not load a camera.");
+		const Camera camera = scene.getActiveCamera();
+		requireNear(camera.getFocalLengthMeters(), 0.05, "Camera focal length was not parsed as meters.");
+		requireNear(camera.getSensorWidthMeters(), 0.036, "Camera sensor width was not parsed as meters.");
+		requireNear(camera.getSensorHeightMeters(), 0.024, "Camera sensor height was not parsed as meters.");
+		requireNear(camera.getFNumber(), 5.0, "Camera f-stop was not parsed.");
+		requireNear(camera.getFocusDistanceMeters(), 2.0, "Camera focus distance was not parsed as meters.");
+
+		Renderer::internal::RenderCamera renderCamera = Renderer::internal::_prepareRenderCamera(scene);
+		requireNear(renderCamera.lensRadius, 0.5, "Camera lens radius did not convert through meters_per_unit.");
+		requireNear(Utilities::vectorLength(renderCamera.horizontal), 144.0, "Camera sensor width did not project through physical focal length.");
+
+		std::filesystem::remove(scenePath);
+	}
+
+	void	testRenderCameraFitsSensorGateToImageAspect(void)
+	{
+		Scene wideScene;
+		wideScene.getImage()->setWidth(768);
+		wideScene.getImage()->setHeight(432);
+		wideScene.getImage()->initialize();
+		wideScene.addCamera(Camera(
+			Vector3(0.0, 0.0, 1.0),
+			Vector3(0.0, 0.0, -1.0),
+			0.05,
+			0.036,
+			0.024,
+			8.0,
+			1.0
+		));
+
+		Renderer::internal::RenderCamera wideCamera = Renderer::internal::_prepareRenderCamera(wideScene);
+		requireNear(Utilities::vectorLength(wideCamera.horizontal), 0.72, "Wide render changed horizontal camera gate.");
+		requireNear(Utilities::vectorLength(wideCamera.vertical), 0.405, "Wide render did not crop vertical camera gate to image aspect.");
+
+		Scene tallScene;
+		tallScene.getImage()->setWidth(600);
+		tallScene.getImage()->setHeight(800);
+		tallScene.getImage()->initialize();
+		tallScene.addCamera(Camera(
+			Vector3(0.0, 0.0, 1.0),
+			Vector3(0.0, 0.0, -1.0),
+			0.05,
+			0.036,
+			0.024,
+			8.0,
+			1.0
+		));
+
+		Renderer::internal::RenderCamera tallCamera = Renderer::internal::_prepareRenderCamera(tallScene);
+		requireNear(Utilities::vectorLength(tallCamera.horizontal), 0.36, "Tall render did not crop horizontal camera gate to image aspect.");
+		requireNear(Utilities::vectorLength(tallCamera.vertical), 0.48, "Tall render changed vertical camera gate.");
+	}
+
+	void	testSceneFileRejectsCompactCameraSyntax(void)
+	{
+		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_compact_camera_rejected_test.luz";
+		{
+			std::ofstream sceneStream(scenePath);
+			sceneStream
+				<< "[scene]\n"
+				<< "camera=(0,0,1),(0,0,-1),45,0,1\n\n";
+		}
+
+		Scene scene;
+		requireThrows(
+			[&scene, &scenePath]()
+			{
+				SceneFile::read(scene, scenePath.string());
+			},
+			"Scene file accepted compact camera syntax."
+		);
 
 		std::filesystem::remove(scenePath);
 	}
@@ -1188,9 +1872,11 @@ namespace
 				<< "camera main {\n"
 				<< "position=(0,0,5)\n"
 				<< "direction=(0,0,-1)\n"
-				<< "fov=45\n"
-				<< "aperture=0\n"
-				<< "focusDistance=5\n"
+				<< "focal_length_mm=50\n"
+				<< "sensor_width_mm=36\n"
+				<< "sensor_height_mm=20.25\n"
+				<< "pinhole=1\n"
+				<< "focus_distance=5\n"
 				<< "}\n"
 				<< "object triangle {\n"
 				<< "mesh=triangle_mesh\n"
@@ -1205,6 +1891,27 @@ namespace
 
 		std::filesystem::remove(scenePath);
 		std::filesystem::remove(objectPath);
+	}
+
+	void	testAssetPathUsesProvidedScenePaths(void)
+	{
+		const std::filesystem::path baseDirectory = std::filesystem::temp_directory_path() / "luz_scene_assets";
+		const std::filesystem::path relativePath = std::filesystem::path("objects") / "mesh.obj";
+		const std::filesystem::path expectedRelativePath = (baseDirectory / relativePath).lexically_normal();
+		const std::filesystem::path absolutePath = (baseDirectory / "textures" / "albedo.ppm").lexically_normal();
+
+		require(
+			AssetPath::resolve(baseDirectory, relativePath.string()) == expectedRelativePath.string(),
+			"Relative scene asset path was not resolved from the scene directory."
+		);
+		require(
+			AssetPath::resolve(baseDirectory, absolutePath.string()) == absolutePath.string(),
+			"Absolute scene asset path was not preserved."
+		);
+		require(
+			AssetPath::resolve(relativePath.string()) == relativePath.string(),
+			"Relative asset path without a base directory was not preserved."
+		);
 	}
 
 	void	testSceneFileLoadsTransformedObject(void)
@@ -1281,9 +1988,11 @@ namespace
 				<< "position=(0,0,5)\n"
 				<< "direction=(0,0,-1)\n"
 				<< "up=(0,1,0)\n"
-				<< "fov=45\n"
-				<< "aperture=0\n"
-				<< "focusDistance=5\n"
+				<< "focal_length_mm=50\n"
+				<< "sensor_width_mm=36\n"
+				<< "sensor_height_mm=20.25\n"
+				<< "pinhole=1\n"
+				<< "focus_distance=5\n"
 				<< "}\n"
 				<< "object triangle {\n"
 				<< "mesh=triangle_mesh\n"
@@ -1297,18 +2006,18 @@ namespace
 				<< "normal=(0,-1,0)\n"
 				<< "size=(2,3)\n"
 				<< "color=(1,1,1)\n"
-				<< "intensity=4\n"
+				<< "power=4\n"
 				<< "}\n"
 				<< "directional_light sun {\n"
 				<< "direction=(0,-1,0)\n"
 				<< "color=(1,0.95,0.8)\n"
-				<< "intensity=2\n"
+				<< "irradiance=2\n"
 				<< "}\n"
 				<< "point_light fill {\n"
 				<< "position=(2,2,2)\n"
 				<< "radius=0.25\n"
 				<< "color=(0.5,0.6,1.0)\n"
-				<< "intensity=1.5\n"
+				<< "power=1.5\n"
 				<< "visible=0\n"
 				<< "}\n";
 		}
@@ -1319,7 +2028,7 @@ namespace
 		require(scene.hasCamera(), "Named-block scene did not load a camera.");
 		requireNear(scene.getActiveCamera().getUpDirection().getY(), 1.0, "Named-block camera up vector was not parsed.");
 		require(scene.getHittables().size() == 4, "Named-block scene did not load object and lights.");
-		require(scene.getHittables()[0]->getMaterial()->getType() == METAL, "Principled material did not map to metal.");
+		require(scene.getHittables()[0]->getMaterial()->getType() == PRINCIPLED, "Metallic principled material did not remain layered principled.");
 		require(scene.getHittables()[1]->getMaterial()->getType() == EMISSIVE, "Area light did not create an emissive hittable.");
 		require(scene.getHittables()[2]->getMaterial()->getType() == EMISSIVE, "Directional light did not create an emissive hittable.");
 		require(scene.getHittables()[3]->getMaterial()->getType() == EMISSIVE, "Point light did not create an emissive hittable.");
@@ -1343,6 +2052,633 @@ namespace
 
 		std::filesystem::remove(scenePath);
 		std::filesystem::remove(objectPath);
+	}
+
+	void	testSceneFileCompactPrimitivesUseNamedMaterials(void)
+	{
+		const std::filesystem::path objectPath = std::filesystem::temp_directory_path() / "luz_named_material_obj_triangle.obj";
+		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_compact_named_materials_test.luz";
+		{
+			std::ofstream objectStream(objectPath);
+			objectStream
+				<< "v 0.0 0.0 0.0\n"
+				<< "v 1.0 0.0 0.0\n"
+				<< "v 0.0 1.0 0.0\n"
+				<< "f 1 2 3\n";
+		}
+		{
+			std::ofstream sceneStream(scenePath);
+			sceneStream
+				<< "[materials]\n"
+				<< "material matte_green {\n"
+				<< "type=lambertian\n"
+				<< "color=(0.1,0.8,0.2)\n"
+				<< "}\n"
+				<< "material measured_silver {\n"
+				<< "type=metal\n"
+				<< "preset=silver\n"
+				<< "roughness=0.1\n"
+				<< "}\n\n"
+				<< "[scene]\n"
+				<< "objects{\n"
+				<< "sphere=(0,0,0),1,material=matte_green\n"
+				<< "cube=(3,0,0),(0,1,0),1,1,1,material=measured_silver\n"
+				<< "plane=-1,(0,1,0),material=matte_green\n"
+				<< "rectangle=(0,0,2),(0,0,-1),1,1,material=matte_green\n"
+				<< "triangle=(0,0,0),(1,0,0),(0,1,0),material=matte_green\n"
+				<< "obj=" << objectPath.filename().string() << ",(0,0,0),material=matte_green\n"
+				<< "}\n";
+		}
+
+		Scene scene;
+		SceneFile::read(scene, scenePath.string());
+
+		require(scene.getHittables().size() == 6, "Compact primitive named-material scene did not load all hittables.");
+		require(scene.getHittables()[0]->getMaterial()->getType() == LAMBERTIAN, "Named material was not applied to compact sphere.");
+		require(scene.getHittables()[1]->getMaterial()->getType() == METAL, "Named metal material was not applied to compact cube.");
+		require(scene.getHittables()[2]->getMaterial()->getType() == LAMBERTIAN, "Named material was not applied to compact plane.");
+		require(scene.getHittables()[3]->getMaterial()->getType() == LAMBERTIAN, "Named material was not applied to compact rectangle.");
+		require(scene.getHittables()[4]->getMaterial()->getType() == LAMBERTIAN, "Named material was not applied to compact triangle.");
+		require(scene.getHittables()[5]->getMaterial()->getType() == LAMBERTIAN, "Named material was not applied to transformed OBJ.");
+		requireColorNear(
+			scene.getHittables()[4]->getMaterial()->getColor(),
+			Color(0.1, 0.8, 0.2),
+			"Compact triangle named material color is wrong."
+		);
+
+		std::filesystem::remove(scenePath);
+		std::filesystem::remove(objectPath);
+	}
+
+	void	testSceneFilePhysicalLightUnits(void)
+	{
+		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_physical_light_units_test.luz";
+		{
+			std::ofstream sceneStream(scenePath);
+			sceneStream << std::setprecision(17);
+			sceneStream
+				<< "[materials]\n"
+				<< "material unit_emitter {\n"
+				<< "type=emissive\n"
+				<< "color=(1,1,1)\n"
+				<< "radiance=2\n"
+				<< "}\n\n"
+				<< "[scene]\n"
+				<< "sphere material_source {\n"
+				<< "position=(0,0,0)\n"
+				<< "radius=1\n"
+				<< "material=unit_emitter\n"
+				<< "}\n"
+				<< "area_light area {\n"
+				<< "position=(0,4,0)\n"
+				<< "normal=(0,-1,0)\n"
+				<< "size=(2,1)\n"
+				<< "color=(1,1,1)\n"
+				<< "power=" << 2.0 * D_PI << "\n"
+				<< "}\n"
+				<< "directional_light sun {\n"
+				<< "direction=(0,-1,0)\n"
+				<< "color=(1,1,1)\n"
+				<< "illuminance=" << LightUnits::LUMENS_PER_RADIANT_WATT << "\n"
+				<< "}\n"
+				<< "point_light point {\n"
+				<< "position=(1,2,3)\n"
+				<< "radius=1\n"
+				<< "color=(1,1,1)\n"
+				<< "lumens=" << LightUnits::LUMENS_PER_RADIANT_WATT * 4.0 * D_PI * D_PI << "\n"
+				<< "visible=0\n"
+				<< "}\n"
+				<< "point_light candela_point {\n"
+				<< "position=(3,2,1)\n"
+				<< "radius=1\n"
+				<< "color=(1,1,1)\n"
+				<< "candela=" << LightUnits::LUMENS_PER_RADIANT_WATT * D_PI << "\n"
+				<< "visible=0\n"
+				<< "}\n";
+		}
+
+		Scene scene;
+		SceneFile::read(scene, scenePath.string());
+
+		require(scene.getHittables().size() == 5, "Physical unit scene did not load all emitters.");
+		requireColorNear(scene.getHittables()[0]->getMaterial()->emitted(), Color(2.0, 2.0, 2.0), "Material radiance unit");
+		requireColorNear(scene.getHittables()[1]->getMaterial()->emitted(), Color(1.0, 1.0, 1.0), "Area light power unit");
+		requireColorNear(scene.getHittables()[2]->getMaterial()->emitted(), Color(1.0, 1.0, 1.0), "Directional light illuminance unit");
+		requireColorNear(scene.getHittables()[3]->getMaterial()->emitted(), Color(1.0, 1.0, 1.0), "Point light luminous flux unit");
+		requireColorNear(scene.getHittables()[4]->getMaterial()->emitted(), Color(1.0, 1.0, 1.0), "Point light candela unit");
+
+		std::filesystem::remove(scenePath);
+
+		{
+			std::ofstream sceneStream(scenePath);
+			sceneStream
+				<< "[scene]\n"
+				<< "area_light area {\n"
+				<< "position=(0,4,0)\n"
+				<< "normal=(0,-1,0)\n"
+				<< "size=(2,1)\n"
+				<< "color=(1,1,1)\n"
+				<< "intensity=2\n"
+				<< "}\n";
+		}
+
+		Scene invalidScene;
+		requireThrows(
+			[&invalidScene, &scenePath]()
+			{
+				SceneFile::read(invalidScene, scenePath.string());
+			},
+			"Scene file accepted area_light intensity."
+		);
+
+		std::filesystem::remove(scenePath);
+
+		{
+			std::ofstream sceneStream(scenePath);
+			sceneStream
+				<< "[materials]\n"
+				<< "material bad_emitter {\n"
+				<< "type=emissive\n"
+				<< "color=(1,1,1)\n"
+				<< "}\n\n";
+		}
+
+		Scene invalidMaterialScene;
+		requireThrows(
+			[&invalidMaterialScene, &scenePath]()
+			{
+				SceneFile::read(invalidMaterialScene, scenePath.string());
+			},
+			"Scene file accepted an emissive material without a physical unit."
+		);
+
+		std::filesystem::remove(scenePath);
+	}
+
+	void	testSceneFileSolarDirectionalLightPreset(void)
+	{
+		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_solar_directional_test.luz";
+		{
+			std::ofstream sceneStream(scenePath);
+			sceneStream
+				<< "[settings]\n"
+				<< "sky=atmosphere\n"
+				<< "atmosphere=0.25,12840000.0,12910000.0,7994.0,1200.0,12,6,0.1\n\n"
+				<< "[scene]\n"
+				<< "directional_light sun {\n"
+				<< "direction=(0,-2,0)\n"
+				<< "solar=1\n"
+				<< "}\n";
+		}
+
+		Scene scene;
+		SceneFile::read(scene, scenePath.string());
+
+		const std::shared_ptr<DirectionalLight> sun = std::dynamic_pointer_cast<DirectionalLight>(scene.getHittables()[0]);
+		require(sun != nullptr, "Solar preset did not create a directional light.");
+		require(sun->hasAtmosphereSunRadiance(), "Solar preset did not store atmosphere sun radiance.");
+		requireNear(
+			Utilities::luminance(sun->getMaterial()->emitted()),
+			LightUnits::SOLAR_DIRECT_IRRADIANCE_W_M2,
+			"Solar preset did not use calibrated direct irradiance."
+		);
+		requireColorNear(
+			scene.getAtmosphere().getSunRadiance(),
+			LightUnits::solarDirectionalIrradiance(ColorScience::solar(), 1.0),
+			"Solar preset did not drive atmosphere sun radiance."
+		);
+
+		std::filesystem::remove(scenePath);
+	}
+
+	void	testSceneFileLoadsIESPointLight(void)
+	{
+		const std::filesystem::path iesPath = std::filesystem::temp_directory_path() / "luz_scene_light.ies";
+		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_scene_ies_light_test.luz";
+
+		writeTestIESProfile(iesPath, 10.0, 10.0, 10.0);
+		const IESProfile profile = IESProfile::load(iesPath.string());
+		{
+			std::ofstream sceneStream(scenePath);
+			sceneStream << std::setprecision(17);
+			sceneStream
+				<< "[scene]\n"
+				<< "point_light lamp {\n"
+				<< "position=(0,2,0)\n"
+				<< "radius=1\n"
+				<< "color=(1,1,1)\n"
+				<< "ies=" << iesPath.string() << "\n"
+				<< "visible=0\n"
+				<< "}\n";
+		}
+
+		Scene scene;
+		SceneFile::read(scene, scenePath.string());
+
+		require(scene.getHittables().size() == 1, "IES point light scene did not load the light.");
+		const double surfaceArea = 4.0 * D_PI;
+		requireColorNear(
+			scene.getHittables()[0]->getMaterial()->emitted(),
+			LightUnits::surfaceLuminousFlux(Color(1.0, 1.0, 1.0), profile.totalLumens(), surfaceArea),
+			"IES point light did not derive flux from the IES candela table."
+		);
+
+		std::filesystem::remove(scenePath);
+		std::filesystem::remove(iesPath);
+	}
+
+	void	testSceneFileMetersPerUnitScalesPhysicalLightArea(void)
+	{
+		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_meters_per_unit_test.luz";
+		{
+			std::ofstream sceneStream(scenePath);
+			sceneStream << std::setprecision(17);
+			sceneStream
+				<< "[settings]\n"
+				<< "meters_per_unit=0.5\n\n"
+				<< "[scene]\n"
+				<< "area_light area {\n"
+				<< "position=(0,4,0)\n"
+				<< "normal=(0,-1,0)\n"
+				<< "size=(4,2)\n"
+				<< "color=(1,1,1)\n"
+				<< "power=" << 2.0 * D_PI << "\n"
+				<< "}\n"
+				<< "point_light point {\n"
+				<< "position=(1,2,3)\n"
+				<< "radius=2\n"
+				<< "color=(1,1,1)\n"
+				<< "lumens=" << LightUnits::LUMENS_PER_RADIANT_WATT * 4.0 * D_PI * D_PI << "\n"
+				<< "visible=0\n"
+				<< "}\n";
+		}
+
+		Scene scene;
+		SceneFile::read(scene, scenePath.string());
+
+		requireNear(scene.getMetersPerUnit(), 0.5, "Scene meters_per_unit was not parsed.");
+		requireNear(scene.getAtmosphere().getMetersPerUnit(), 0.5, "Scene atmosphere did not inherit meters_per_unit.");
+		require(scene.getHittables().size() == 2, "Meters-per-unit scene did not load both lights.");
+		requireColorNear(scene.getHittables()[0]->getMaterial()->emitted(), Color(1.0, 1.0, 1.0), "Area light power did not use physical square meters.");
+		requireColorNear(scene.getHittables()[1]->getMaterial()->emitted(), Color(1.0, 1.0, 1.0), "Point light lumens did not use physical square meters.");
+
+		std::filesystem::remove(scenePath);
+	}
+
+	void	testSceneFileSpectralColorValues(void)
+	{
+		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_spectral_color_test.luz";
+		{
+			std::ofstream sceneStream(scenePath);
+			sceneStream
+				<< "[settings]\n"
+				<< "background=blackbody(3000K)\n\n"
+				<< "[materials]\n"
+				<< "material spectral_paint {\n"
+				<< "type=lambertian\n"
+				<< "color=wavelength(550nm)\n"
+				<< "}\n\n"
+				<< "[scene]\n"
+				<< "sphere painted {\n"
+				<< "position=(0,0,0)\n"
+				<< "radius=1\n"
+				<< "material=spectral_paint\n"
+				<< "}\n"
+				<< "area_light warm_key {\n"
+				<< "position=(0,4,0)\n"
+				<< "normal=(0,-1,0)\n"
+				<< "size=(1,1)\n"
+				<< "color=blackbody(3000K)\n"
+				<< "radiance=1\n"
+				<< "}\n";
+		}
+
+		Scene scene;
+		SceneFile::read(scene, scenePath.string());
+
+		const Color background = scene.getBackgroundColor();
+		require(background.getRed() > background.getBlue(), "Spectral blackbody background was not warm.");
+		require(scene.getHittables().size() == 2, "Spectral color scene did not load both hittables.");
+
+		const Color paint = scene.getHittables()[0]->getMaterial()->getColor();
+		require(paint.getGreen() > paint.getRed() && paint.getGreen() > paint.getBlue(), "Spectral wavelength material was not green.");
+
+		const Color emission = scene.getHittables()[1]->getMaterial()->emitted();
+		require(emission.getRed() > emission.getBlue(), "Spectral blackbody light was not warm.");
+
+		std::filesystem::remove(scenePath);
+	}
+
+	void	testSceneFileLoadsNamedReflectanceSpectra(void)
+	{
+		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_named_reflectance_spectra_test.luz";
+		{
+			std::ofstream sceneStream(scenePath);
+			sceneStream
+				<< "[spectra]\n"
+				<< "reflectance green_curve {\n"
+				<< "400 0.0\n"
+				<< "550 1.0\n"
+				<< "700 0.0\n"
+				<< "}\n\n"
+				<< "[materials]\n"
+				<< "material measured_green {\n"
+				<< "type=lambertian\n"
+				<< "color=reflectance(green_curve)\n"
+				<< "}\n\n"
+				<< "[scene]\n"
+				<< "sphere painted {\n"
+				<< "position=(0,0,0)\n"
+				<< "radius=1\n"
+				<< "material=measured_green\n"
+				<< "}\n";
+		}
+
+		Scene scene;
+		SceneFile::read(scene, scenePath.string());
+
+		require(scene.getHittables().size() == 1, "Named reflectance spectrum scene did not load the sphere.");
+		const Color paint = scene.getHittables()[0]->getMaterial()->getColor();
+		require(paint.getGreen() > paint.getRed() && paint.getGreen() > paint.getBlue(), "Named reflectance spectrum was not applied to material color.");
+
+		std::filesystem::remove(scenePath);
+	}
+
+	void	testSceneFileExplicitColorSpaces(void)
+	{
+		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_color_space_values_test.luz";
+		{
+			std::ofstream sceneStream(scenePath);
+			sceneStream
+				<< "[settings]\n"
+				<< "sky=none\n"
+				<< "background=srgb(0.25,0.5,0.75)\n\n"
+				<< "[materials]\n"
+				<< "material linear_paint {\n"
+				<< "type=lambertian\n"
+				<< "color=linear_srgb(0.2,0.4,0.6)\n"
+				<< "}\n\n"
+				<< "[scene]\n"
+				<< "sphere painted {\n"
+				<< "position=(0,0,0)\n"
+				<< "radius=1\n"
+				<< "material=linear_paint\n"
+				<< "}\n"
+				<< "area_light linear_lamp {\n"
+				<< "position=(0,2,0)\n"
+				<< "normal=(0,-1,0)\n"
+				<< "size=(1,1)\n"
+				<< "color=linear_srgb(0.7,0.8,0.9)\n"
+				<< "radiance=1\n"
+				<< "}\n";
+		}
+
+		Scene scene;
+		SceneFile::read(scene, scenePath.string());
+
+		requireColorNear(
+			scene.getBackgroundColor(),
+			ColorManagement::acescgFromSRGB(Color(0.25, 0.5, 0.75)),
+			"Scene background srgb() value did not convert to ACEScg."
+		);
+		requireColorNear(
+			scene.getHittables()[0]->getMaterial()->getColor(),
+			ColorManagement::acescgFromLinearSRGB(Color(0.2, 0.4, 0.6)),
+			"Scene material linear_srgb() value did not convert to ACEScg."
+		);
+		requireColorNear(
+			scene.getHittables()[1]->getMaterial()->emitted(),
+			LightUnits::surfaceRadiance(ColorManagement::acescgFromLinearSRGB(Color(0.7, 0.8, 0.9)), 1.0),
+			"Scene light linear_srgb() value did not convert to ACEScg."
+		);
+
+		std::filesystem::remove(scenePath);
+	}
+
+	void	testSceneFileLoadsAbsorbingDielectricMaterial(void)
+	{
+		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_absorbing_dielectric_test.luz";
+		{
+			std::ofstream sceneStream(scenePath);
+			sceneStream
+				<< "[materials]\n"
+				<< "material glass {\n"
+				<< "type=dielectric\n"
+				<< "color=(1,1,1)\n"
+				<< "ior=1.33\n"
+				<< "transmittance=(0.25,0.5,1)\n"
+				<< "attenuation_distance=2\n"
+				<< "}\n\n"
+				<< "[scene]\n"
+				<< "sphere glass_ball {\n"
+				<< "position=(0,0,0)\n"
+				<< "radius=1\n"
+				<< "material=glass\n"
+				<< "}\n";
+		}
+
+		Scene scene;
+		SceneFile::read(scene, scenePath.string());
+
+		require(scene.getHittables().size() == 1, "Absorbing dielectric scene did not load the sphere.");
+		Dielectric* dielectric = dynamic_cast<Dielectric*>(scene.getHittables()[0]->getMaterial());
+		require(dielectric != nullptr, "Absorbing dielectric material did not produce a dielectric.");
+		requireNear(dielectric->getRefractiveIndex(), 1.33, "Dielectric IOR was not parsed.");
+		const Color coefficient = dielectric->getAbsorptionCoefficient();
+		requireNear(coefficient.getRed(), -std::log(0.25) / 2.0, "Dielectric red transmittance was not parsed.");
+		requireNear(coefficient.getGreen(), -std::log(0.5) / 2.0, "Dielectric green transmittance was not parsed.");
+		requireNear(coefficient.getBlue(), 0.0, "Dielectric blue transmittance was not parsed.");
+
+		std::filesystem::remove(scenePath);
+	}
+
+	void	testSceneFileLoadsConductorMetalMaterial(void)
+	{
+		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_conductor_metal_test.luz";
+		{
+			std::ofstream sceneStream(scenePath);
+			sceneStream
+				<< "[materials]\n"
+				<< "material measured_gold {\n"
+				<< "type=metal\n"
+				<< "eta=(0.17,0.35,1.5)\n"
+				<< "k=(3.1,2.7,1.9)\n"
+				<< "roughness=0\n"
+				<< "}\n\n"
+				<< "[scene]\n"
+				<< "sphere metal_ball {\n"
+				<< "position=(0,0,0)\n"
+				<< "radius=1\n"
+				<< "material=measured_gold\n"
+				<< "}\n";
+		}
+
+		Scene scene;
+		SceneFile::read(scene, scenePath.string());
+
+		require(scene.getHittables().size() == 1, "Conductor metal scene did not load the sphere.");
+		Metal* metal = dynamic_cast<Metal*>(scene.getHittables()[0]->getMaterial());
+		require(metal != nullptr, "Conductor material did not produce a metal.");
+		require(metal->usesConductorFresnel(), "Conductor metal did not enable Fresnel mode.");
+		requireColorNear(metal->getEta(), Color(0.17, 0.35, 1.5), "Conductor eta was not parsed.");
+		requireColorNear(metal->getExtinctionCoefficient(), Color(3.1, 2.7, 1.9), "Conductor k was not parsed.");
+
+		std::filesystem::remove(scenePath);
+	}
+
+	void	testSceneFileLoadsMeasuredMaterialPresets(void)
+	{
+		const std::filesystem::path curvePath = std::filesystem::temp_directory_path() / "luz_measured_red_reflectance.spd";
+		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_measured_materials_test.luz";
+		const MeasuredMaterials::Conductor gold = MeasuredMaterials::conductorPreset("gold");
+		const MeasuredMaterials::Glass bk7 = MeasuredMaterials::glassPreset("bk7");
+
+		writeRedReflectanceCurve(curvePath);
+		{
+			std::ofstream sceneStream(scenePath);
+			sceneStream << std::setprecision(17);
+			sceneStream
+				<< "[materials]\n"
+				<< "material measured_paint {\n"
+				<< "type=lambertian\n"
+				<< "color=reflectance(" << curvePath.string() << ")\n"
+				<< "}\n"
+				<< "material measured_gold {\n"
+				<< "type=metal\n"
+				<< "preset=gold\n"
+				<< "roughness=0.15\n"
+				<< "}\n"
+				<< "material bk7_glass {\n"
+				<< "type=dielectric\n"
+				<< "glass_preset=bk7\n"
+				<< "ior_wavelength=486.1327nm\n"
+				<< "}\n"
+				<< "material custom_glass {\n"
+				<< "type=dielectric\n"
+				<< "ior=1.5168\n"
+				<< "abbe_number=64.17\n"
+				<< "ior_wavelength=656.2725nm\n"
+				<< "}\n\n"
+				<< "[scene]\n"
+				<< "sphere paint {\n"
+				<< "position=(-3,0,0)\n"
+				<< "radius=1\n"
+				<< "material=measured_paint\n"
+				<< "}\n"
+				<< "sphere metal {\n"
+				<< "position=(-1,0,0)\n"
+				<< "radius=1\n"
+				<< "material=measured_gold\n"
+				<< "}\n"
+				<< "sphere glass {\n"
+				<< "position=(1,0,0)\n"
+				<< "radius=1\n"
+				<< "material=bk7_glass\n"
+				<< "}\n"
+				<< "sphere custom {\n"
+				<< "position=(3,0,0)\n"
+				<< "radius=1\n"
+				<< "material=custom_glass\n"
+				<< "}\n";
+		}
+
+		Scene scene;
+		SceneFile::read(scene, scenePath.string());
+
+		require(scene.getHittables().size() == 4, "Measured material scene did not load all spheres.");
+		const Color paint = scene.getHittables()[0]->getMaterial()->getColor();
+		require(paint.getRed() > paint.getGreen() && paint.getRed() > paint.getBlue(), "Scene spectral reflectance curve was not red-dominant.");
+
+		Metal* metal = dynamic_cast<Metal*>(scene.getHittables()[1]->getMaterial());
+		require(metal != nullptr, "Measured metal preset did not create a metal material.");
+		require(metal->usesConductorFresnel(), "Measured metal preset did not enable conductor Fresnel.");
+		requireColorNear(metal->getEta(), gold.eta, "Measured gold eta preset is wrong.");
+		requireColorNear(metal->getExtinctionCoefficient(), gold.extinctionCoefficient, "Measured gold k preset is wrong.");
+		requireNear(metal->getRoughness(), 0.15, "Measured metal roughness was not preserved.");
+
+		Dielectric* presetGlass = dynamic_cast<Dielectric*>(scene.getHittables()[2]->getMaterial());
+		require(presetGlass != nullptr, "BK7 preset did not create a dielectric.");
+		requireNear(
+			presetGlass->getRefractiveIndex(),
+			MeasuredMaterials::refractiveIndexFromSellmeier(bk7.sellmeierB, bk7.sellmeierC, 486.1327),
+			"BK7 Sellmeier preset did not evaluate at requested wavelength."
+		);
+
+		Dielectric* customGlass = dynamic_cast<Dielectric*>(scene.getHittables()[3]->getMaterial());
+		require(customGlass != nullptr, "Custom Abbe glass did not create a dielectric.");
+		requireNear(
+			customGlass->getRefractiveIndex(),
+			MeasuredMaterials::refractiveIndexFromAbbe(1.5168, 64.17, 656.2725),
+			"Custom Abbe dispersion did not evaluate at requested wavelength."
+		);
+
+		std::filesystem::remove(scenePath);
+		std::filesystem::remove(curvePath);
+	}
+
+	void	testSceneFileLoadsMeasuredVolumeData(void)
+	{
+		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_measured_volumes_test.luz";
+		const MeasuredMaterials::Volume haze = MeasuredMaterials::volumePreset("haze");
+		const Color manualSigmaS(0.05, 0.02, 0.01);
+		const Color manualSigmaA(0.01, 0.02, 0.04);
+
+		{
+			std::ofstream sceneStream(scenePath);
+			sceneStream << std::setprecision(17);
+			sceneStream
+				<< "[scene]\n"
+				<< "volume measured_haze {\n"
+				<< "shape=sphere\n"
+				<< "position=(0,0,0)\n"
+				<< "radius=1\n"
+				<< "preset=haze\n"
+				<< "density_scale=2\n"
+				<< "}\n"
+				<< "volume measured_coefficients {\n"
+				<< "shape=box\n"
+				<< "position=(3,0,0)\n"
+				<< "size=(1,1,1)\n"
+				<< "sigma_s=(0.05,0.02,0.01)\n"
+				<< "sigma_a=(0.01,0.02,0.04)\n"
+				<< "anisotropy=0.4\n"
+				<< "}\n";
+		}
+
+		Scene scene;
+		SceneFile::read(scene, scenePath.string());
+
+		require(scene.getHittables().size() == 2, "Measured volume scene did not load both volumes.");
+		const std::shared_ptr<ConstantVolume> hazeVolume = std::dynamic_pointer_cast<ConstantVolume>(scene.getHittables()[0]);
+		const std::shared_ptr<ConstantVolume> manualVolume = std::dynamic_pointer_cast<ConstantVolume>(scene.getHittables()[1]);
+		require(hazeVolume != nullptr, "Measured haze preset did not create a ConstantVolume.");
+		require(manualVolume != nullptr, "Measured sigma coefficients did not create a ConstantVolume.");
+
+		const Color scaledHazeSigmaS(haze.scatteringCoefficient.getRed() * 2.0, haze.scatteringCoefficient.getGreen() * 2.0, haze.scatteringCoefficient.getBlue() * 2.0);
+		const Color scaledHazeSigmaA(haze.absorptionCoefficient.getRed() * 2.0, haze.absorptionCoefficient.getGreen() * 2.0, haze.absorptionCoefficient.getBlue() * 2.0);
+		const double hazeDensity = MeasuredMaterials::volumeDensity(scaledHazeSigmaS, scaledHazeSigmaA);
+		requireNear(hazeVolume->getDensity(), hazeDensity, "Measured volume preset density is wrong.");
+		requireColorNear(
+			hazeVolume->getMaterial()->getColor(),
+			MeasuredMaterials::volumeScatteringAlbedo(scaledHazeSigmaS, hazeDensity),
+			"Measured volume preset albedo is wrong."
+		);
+		HenyeyGreenstein* hazePhase = dynamic_cast<HenyeyGreenstein*>(hazeVolume->getMaterial());
+		require(hazePhase != nullptr, "Measured haze preset did not create an anisotropic phase function.");
+		requireNear(hazePhase->getAnisotropy(), haze.anisotropy, "Measured haze anisotropy is wrong.");
+
+		const double manualDensity = MeasuredMaterials::volumeDensity(manualSigmaS, manualSigmaA);
+		requireNear(manualVolume->getDensity(), manualDensity, "Measured sigma volume density is wrong.");
+		requireColorNear(
+			manualVolume->getMaterial()->getColor(),
+			MeasuredMaterials::volumeScatteringAlbedo(manualSigmaS, manualDensity),
+			"Measured sigma volume albedo is wrong."
+		);
+		HenyeyGreenstein* manualPhase = dynamic_cast<HenyeyGreenstein*>(manualVolume->getMaterial());
+		require(manualPhase != nullptr, "Measured sigma volume did not create an anisotropic phase function.");
+		requireNear(manualPhase->getAnisotropy(), 0.4, "Measured sigma volume anisotropy is wrong.");
+
+		std::filesystem::remove(scenePath);
 	}
 
 	void	testSphereUVProjectionModes(void)
@@ -1408,6 +2744,215 @@ namespace
 		);
 	}
 
+	void	testDielectricBeerLambertAbsorption(void)
+	{
+		auto glass = std::make_shared<Dielectric>(Color(1.0, 1.0, 1.0), 1.0);
+		glass->setAbsorptionCoefficient(Color(1.0, 0.0, 0.0));
+
+		Scene scene;
+		scene.setMetersPerUnit(2.0);
+		scene.setRenderSky(SKY_NONE);
+		scene.setBackgroundColor(Color(1.0, 1.0, 1.0));
+		scene.setMaxLightBounces(1);
+		scene.addHittable(std::make_shared<Sphere>(Vector3(0.0, 0.0, 0.0), 1.0, glass));
+
+		Ray ray(Vector3(0.0, 0.0, 0.0), Vector3(0.0, 0.0, 1.0));
+		const Color color = Renderer::internal::_calculateLightRaysColor(ray, scene);
+
+		requireNear(color.getRed(), std::exp(-2.0), "Dielectric Beer-Lambert red absorption used the wrong physical distance.");
+		requireNear(color.getGreen(), 1.0, "Dielectric Beer-Lambert green absorption is wrong.");
+		requireNear(color.getBlue(), 1.0, "Dielectric Beer-Lambert blue absorption is wrong.");
+
+		glass->setTransmittance(Color(std::exp(-2.0), std::exp(-4.0), 1.0), 2.0);
+		const Color coefficient = glass->getAbsorptionCoefficient();
+		requireNear(coefficient.getRed(), 1.0, "Dielectric transmittance red coefficient is wrong.");
+		requireNear(coefficient.getGreen(), 2.0, "Dielectric transmittance green coefficient is wrong.");
+		requireNear(coefficient.getBlue(), 0.0, "Dielectric transmittance blue coefficient is wrong.");
+	}
+
+	void	testMetalConductorFresnel(void)
+	{
+		Metal metal;
+		metal.setConductorFresnel(Color(0.2, 0.2, 0.2), Color(3.0, 3.0, 3.0));
+
+		Ray ray(Vector3(0.0, 0.0, 1.0), Vector3(0.0, 0.0, -1.0));
+		HitRecord hitRecord;
+		ScatterRecord scatterRecord;
+
+		hitRecord.position = Vector3(0.0, 0.0, 0.0);
+		hitRecord.normal = Vector3(0.0, 0.0, 1.0);
+		hitRecord.frontFace = true;
+		require(metal.scatter(ray, hitRecord, scatterRecord), "Conductor metal did not scatter.");
+
+		const double expectedReflectance = ((0.2 - 1.0) * (0.2 - 1.0) + 9.0) / ((0.2 + 1.0) * (0.2 + 1.0) + 9.0);
+		requireNear(scatterRecord.attenuation.getRed(), expectedReflectance, "Conductor Fresnel red reflectance is wrong.");
+		requireNear(scatterRecord.attenuation.getGreen(), expectedReflectance, "Conductor Fresnel green reflectance is wrong.");
+		requireNear(scatterRecord.attenuation.getBlue(), expectedReflectance, "Conductor Fresnel blue reflectance is wrong.");
+	}
+
+	void	testRoughMetalUsesGGXBSDF(void)
+	{
+		Metal metal(Color(0.8, 0.7, 0.6), 0.45);
+		Ray ray(Vector3(0.0, 0.0, 1.0), Vector3(0.0, 0.0, -1.0));
+		HitRecord hitRecord;
+		ScatterRecord scatterRecord;
+
+		hitRecord.position = Vector3(0.0, 0.0, 0.0);
+		hitRecord.normal = Vector3(0.0, 0.0, 1.0);
+		hitRecord.frontFace = true;
+		Sampler::setRenderSeed(2027);
+		Sampler::beginPixelSample(3, 5, 7);
+		require(metal.scatter(ray, hitRecord, scatterRecord), "Rough metal did not scatter.");
+		Sampler::endPixelSample();
+
+		require(!scatterRecord.isSpecular, "Rough metal used a delta specular scatter.");
+		require(scatterRecord.pdfType == SCATTER_PDF_BSDF, "Rough metal did not use the BSDF PDF path.");
+		require(scatterRecord.bsdfMaterial == &metal, "Rough metal did not store its BSDF material.");
+		require(scatterRecord.sampledPDF > 0.0 && std::isfinite(scatterRecord.sampledPDF), "Rough metal sampled PDF is invalid.");
+		requireFiniteNonNegativeColor(scatterRecord.attenuation, "Rough metal throughput");
+
+		const double materialPDF = metal.scatteringPDF(ray, hitRecord, scatterRecord.sampledDirection);
+		const Color bsdfCos = metal.evaluateBSDFCos(ray, hitRecord, scatterRecord.sampledDirection);
+		requireNear(scatterRecord.sampledPDF, materialPDF, "Rough metal sampled PDF does not match material PDF.");
+		requireFiniteNonNegativeColor(bsdfCos, "Rough metal BSDF cosine");
+		require(BSDF::maxChannel(bsdfCos) > 0.0, "Rough metal BSDF cosine was zero.");
+		requireNear(scatterRecord.attenuation.getRed(), bsdfCos.getRed() / materialPDF, "Rough metal red throughput is wrong.");
+	}
+
+	void	testGlossyUsesGGXBSDF(void)
+	{
+		Glossy glossy(Color(0.9, 0.7, 0.5), 0.25);
+		Ray ray(Vector3(0.0, 0.0, 1.0), Vector3(0.0, 0.0, -1.0));
+		HitRecord hitRecord;
+		ScatterRecord scatterRecord;
+
+		hitRecord.position = Vector3(0.0, 0.0, 0.0);
+		hitRecord.normal = Vector3(0.0, 0.0, 1.0);
+		hitRecord.frontFace = true;
+		Sampler::setRenderSeed(2031);
+		Sampler::beginPixelSample(31, 37, 41);
+		require(glossy.scatter(ray, hitRecord, scatterRecord), "Glossy material did not scatter.");
+		Sampler::endPixelSample();
+
+		require(!scatterRecord.isSpecular, "Rough glossy material used a delta scatter.");
+		require(scatterRecord.pdfType == SCATTER_PDF_BSDF, "Glossy material did not use the BSDF PDF path.");
+		require(scatterRecord.bsdfMaterial == &glossy, "Glossy material did not store its BSDF material.");
+		require(scatterRecord.sampledPDF > 0.0 && std::isfinite(scatterRecord.sampledPDF), "Glossy sampled PDF is invalid.");
+		requireFiniteNonNegativeColor(scatterRecord.attenuation, "Glossy throughput");
+
+		const double materialPDF = glossy.scatteringPDF(ray, hitRecord, scatterRecord.sampledDirection);
+		const Color bsdfCos = glossy.evaluateBSDFCos(ray, hitRecord, scatterRecord.sampledDirection);
+		requireNear(scatterRecord.sampledPDF, materialPDF, "Glossy sampled PDF does not match material PDF.");
+		requireFiniteNonNegativeColor(bsdfCos, "Glossy BSDF cosine");
+		require(BSDF::maxChannel(bsdfCos) > 0.0, "Glossy BSDF cosine was zero.");
+
+		const Vector3 mirrorDirection(0.0, 0.0, 1.0);
+		const Color mirror = glossy.evaluateBSDFCos(ray, hitRecord, mirrorDirection);
+		const Color expected = BSDF::ggxReflectionBSDFCos(
+			Color(0.9, 0.7, 0.5),
+			hitRecord.normal,
+			Vector3(0.0, 0.0, 1.0),
+			mirrorDirection,
+			BSDF::roughnessToAlpha(0.25)
+		);
+		requireColorNear(mirror, expected, "Glossy mirror BSDF does not match GGX reflection.");
+		require(mirror.getRed() > mirror.getGreen() && mirror.getGreen() > mirror.getBlue(), "Glossy color did not tint reflection.");
+	}
+
+	void	testDiffuseGlossyMixPreservesStrongGlossyComponent(void)
+	{
+		DiffuseGlossy material(Color(1.0, 1.0, 1.0), Color(1.0, 1.0, 1.0), 0.6, 0.1);
+		Principled clearcoatProxy(Color(1.0, 1.0, 1.0), 0.0, 0.1, 0.0, 1.5, 0.6, 0.1, 0.0);
+		Ray ray(Vector3(0.0, 0.0, 1.0), Vector3(0.0, 0.0, -1.0));
+		HitRecord hitRecord;
+		ScatterRecord scatterRecord;
+
+		hitRecord.position = Vector3(0.0, 0.0, 0.0);
+		hitRecord.normal = Vector3(0.0, 0.0, 1.0);
+		hitRecord.frontFace = true;
+		Sampler::setRenderSeed(2032);
+		Sampler::beginPixelSample(43, 47, 53);
+		require(material.scatter(ray, hitRecord, scatterRecord), "Diffuse-glossy material did not scatter.");
+		Sampler::endPixelSample();
+
+		require(scatterRecord.pdfType == SCATTER_PDF_BSDF, "Diffuse-glossy material did not use the BSDF PDF path.");
+		require(scatterRecord.bsdfMaterial == &material, "Diffuse-glossy material did not store its BSDF material.");
+		require(scatterRecord.sampledPDF > 0.0 && std::isfinite(scatterRecord.sampledPDF), "Diffuse-glossy sampled PDF is invalid.");
+
+		const Vector3 mirrorDirection(0.0, 0.0, 1.0);
+		const Color mixedMirror = material.evaluateBSDFCos(ray, hitRecord, mirrorDirection);
+		const Color proxyMirror = clearcoatProxy.evaluateBSDFCos(ray, hitRecord, mirrorDirection);
+		require(mixedMirror.getRed() > proxyMirror.getRed() * 10.0, "Diffuse-glossy mix collapsed to weak clearcoat reflection.");
+		requireNear(
+			material.scatteringPDF(ray, hitRecord, mirrorDirection),
+			(0.4 / D_PI) + (0.6 * BSDF::ggxReflectionPDF(
+				hitRecord.normal,
+				Vector3(0.0, 0.0, 1.0),
+				mirrorDirection,
+				BSDF::roughnessToAlpha(0.1)
+			)),
+			"Diffuse-glossy mixture PDF is wrong."
+		);
+	}
+
+	void	testRoughDielectricUsesGGXBSDF(void)
+	{
+		Dielectric glass(Color(0.9, 0.95, 1.0), 1.5, 0.35);
+		Ray ray(Vector3(0.0, 0.0, 1.0), Vector3(0.0, 0.0, -1.0));
+		HitRecord hitRecord;
+		ScatterRecord scatterRecord;
+
+		hitRecord.position = Vector3(0.0, 0.0, 0.0);
+		hitRecord.normal = Vector3(0.0, 0.0, 1.0);
+		hitRecord.frontFace = true;
+		Sampler::setRenderSeed(2028);
+		Sampler::beginPixelSample(11, 13, 17);
+		require(glass.scatter(ray, hitRecord, scatterRecord), "Rough dielectric did not scatter.");
+		Sampler::endPixelSample();
+
+		require(!scatterRecord.isSpecular, "Rough dielectric used a delta specular scatter.");
+		require(scatterRecord.pdfType == SCATTER_PDF_BSDF, "Rough dielectric did not use the BSDF PDF path.");
+		require(scatterRecord.bsdfMaterial == &glass, "Rough dielectric did not store its BSDF material.");
+		require(scatterRecord.sampledPDF > 0.0 && std::isfinite(scatterRecord.sampledPDF), "Rough dielectric sampled PDF is invalid.");
+		requireFiniteNonNegativeColor(scatterRecord.attenuation, "Rough dielectric throughput");
+
+		const double materialPDF = glass.scatteringPDF(ray, hitRecord, scatterRecord.sampledDirection);
+		const Color bsdfCos = glass.evaluateBSDFCos(ray, hitRecord, scatterRecord.sampledDirection);
+		requireNear(scatterRecord.sampledPDF, materialPDF, "Rough dielectric sampled PDF does not match material PDF.");
+		requireFiniteNonNegativeColor(bsdfCos, "Rough dielectric BSDF cosine");
+		require(BSDF::maxChannel(bsdfCos) > 0.0, "Rough dielectric BSDF cosine was zero.");
+	}
+
+	void	testPrincipledLayeredBSDF(void)
+	{
+		Principled material(Color(0.8, 0.3, 0.1), 0.2, 0.45, 0.35, 1.45, 0.5, 0.12, 0.4);
+		Ray ray(Vector3(0.0, 0.0, 1.0), Vector3(0.0, 0.0, -1.0));
+		HitRecord hitRecord;
+		ScatterRecord scatterRecord;
+
+		hitRecord.position = Vector3(0.0, 0.0, 0.0);
+		hitRecord.normal = Vector3(0.0, 0.0, 1.0);
+		hitRecord.frontFace = true;
+		material.setAbsorptionCoefficient(Color(0.1, 0.2, 0.3));
+		Sampler::setRenderSeed(2029);
+		Sampler::beginPixelSample(19, 23, 29);
+		require(material.scatter(ray, hitRecord, scatterRecord), "Principled material did not scatter.");
+		Sampler::endPixelSample();
+
+		require(!scatterRecord.isSpecular, "Principled material used a delta scatter.");
+		require(scatterRecord.pdfType == SCATTER_PDF_BSDF, "Principled material did not use the BSDF PDF path.");
+		require(scatterRecord.bsdfMaterial == &material, "Principled material did not store its BSDF material.");
+		require(scatterRecord.sampledPDF > 0.0 && std::isfinite(scatterRecord.sampledPDF), "Principled sampled PDF is invalid.");
+		require(scatterRecord.hasMediumAbsorption, "Transmissive principled material did not carry absorption.");
+		requireFiniteNonNegativeColor(scatterRecord.attenuation, "Principled throughput");
+
+		const double materialPDF = material.scatteringPDF(ray, hitRecord, scatterRecord.sampledDirection);
+		const Color bsdfCos = material.evaluateBSDFCos(ray, hitRecord, scatterRecord.sampledDirection);
+		requireNear(scatterRecord.sampledPDF, materialPDF, "Principled sampled PDF does not match material PDF.");
+		requireFiniteNonNegativeColor(bsdfCos, "Principled BSDF cosine");
+		require(BSDF::maxChannel(bsdfCos) > 0.0, "Principled BSDF cosine was zero.");
+	}
+
 	void	testSceneFileLoadsNamedTexturedSphere(void)
 	{
 		const std::filesystem::path directory = std::filesystem::temp_directory_path();
@@ -1433,7 +2978,15 @@ namespace
 				<< "texture=" << texturePath.filename().string() << "\n"
 				<< "}\n\n"
 				<< "[scene]\n"
-				<< "camera=(1,2,10),(0,0,-1),45,0,7\n"
+				<< "camera main {\n"
+				<< "position=(1,2,10)\n"
+				<< "direction=(0,0,-1)\n"
+				<< "focal_length_mm=50\n"
+				<< "sensor_width_mm=36\n"
+				<< "sensor_height_mm=20.25\n"
+				<< "pinhole=1\n"
+				<< "focus_distance=7\n"
+				<< "}\n"
 				<< "sphere earth {\n"
 				<< "position=(1,2,3)\n"
 				<< "radius=4\n"
@@ -1458,9 +3011,11 @@ namespace
 		requireNear(hitRecord.u, 0.375, "Sphere cube-cross U was not generated.");
 		requireNear(hitRecord.v, 0.5, "Sphere cube-cross V was not generated.");
 		const Color texturedColor = hitRecord.material->colorAt(hitRecord);
-		requireNear(texturedColor.getRed(), 1.0, "Named sphere texture red channel was not sampled.");
-		requireNear(texturedColor.getGreen(), 0.0, "Named sphere texture green channel was not sampled.");
-		requireNear(texturedColor.getBlue(), 0.0, "Named sphere texture blue channel was not sampled.");
+		requireColorNear(
+			texturedColor,
+			ColorManagement::acescgFromSRGB(Color(1.0, 0.0, 0.0)),
+			"Named sphere texture did not convert sRGB input to ACEScg."
+		);
 
 		std::filesystem::remove(scenePath);
 		std::filesystem::remove(texturePath);
@@ -1482,9 +3037,11 @@ namespace
 				<< "camera main {\n"
 				<< "position=(0,0,8)\n"
 				<< "direction=(0,0,-1)\n"
-				<< "fov=45\n"
-				<< "aperture=0\n"
-				<< "focusDistance=8\n"
+				<< "focal_length_mm=50\n"
+				<< "sensor_width_mm=36\n"
+				<< "sensor_height_mm=20.25\n"
+				<< "pinhole=1\n"
+				<< "focus_distance=8\n"
 				<< "}\n"
 				<< "volume mist {\n"
 				<< "shape=sphere\n"
@@ -1515,6 +3072,83 @@ namespace
 		std::filesystem::remove(scenePath);
 	}
 
+	void	testSceneFileMetersPerUnitScalesVolumeDensity(void)
+	{
+		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_volume_density_scale_test.luz";
+		{
+			std::ofstream sceneStream(scenePath);
+			sceneStream
+				<< "[settings]\n"
+				<< "meters_per_unit=0.5\n\n"
+				<< "[scene]\n"
+				<< "volume mist {\n"
+				<< "shape=sphere\n"
+				<< "position=(0,0,0)\n"
+				<< "radius=2\n"
+				<< "density=2\n"
+				<< "color=(1,1,1)\n"
+				<< "}\n";
+		}
+
+		Scene scene;
+		SceneFile::read(scene, scenePath.string());
+
+		require(scene.getHittables().size() == 1, "Scaled volume scene did not load one hittable.");
+		auto volume = std::dynamic_pointer_cast<ConstantVolume>(scene.getHittables()[0]);
+		require(volume != nullptr, "Scaled volume block did not create a ConstantVolume.");
+		requireNear(volume->getDensity(), 1.0, "Volume density did not convert from inverse meters to inverse scene units.");
+
+		std::filesystem::remove(scenePath);
+	}
+
+	void	testCausticPhotonMapBuildsAndEstimates(void)
+	{
+		Scene scene;
+		auto lightMaterial = std::make_shared<Emissive>(Color(25.0, 25.0, 25.0));
+		auto glassMaterial = std::make_shared<Dielectric>(Color(1.0, 1.0, 1.0), 1.5);
+		auto floorMaterial = std::make_shared<Lambertian>(Color(0.8, 0.8, 0.8));
+
+		scene.setCausticsEnabled(true);
+		scene.setCausticPhotonCount(3000);
+		scene.setCausticPassCount(4);
+		scene.setCausticRadiusMeters(3.0);
+		scene.setCausticAlpha(0.8);
+		scene.setMaxLightBounces(6);
+		scene.addHittable(std::make_shared<Rectangle>(
+			Transform(Vector3(0.0, 5.0, 0.0), Vector3(0.0, -1.0, 0.0), Vector3(1.0, 1.0, 1.0)),
+			2.0,
+			2.0,
+			lightMaterial
+		));
+		scene.addHittable(std::make_shared<Sphere>(Vector3(0.0, 1.0, 0.0), 2.0, glassMaterial));
+		scene.addHittable(std::make_shared<Plane>(-2.5, Vector3(0.0, 1.0, 0.0), floorMaterial));
+		scene.updateLights();
+		scene.updateAccelerationStructure();
+
+		CausticPhotonMap map;
+		map.build(scene, 424242u);
+		require(map.photonCount() > 0, "Caustic photon map did not store photons after specular transport.");
+		require(map.radiusMeters() < 3.0, "Caustic photon map did not apply progressive radius shrinkage.");
+		requireNear(map.radiusSceneUnits(), map.radiusMeters(), "Caustic radius did not match unit scale.");
+
+		HitRecord receiver;
+		receiver.position = Vector3(0.0, -2.5, 0.0);
+		receiver.normal = Vector3(0.0, 1.0, 0.0);
+		receiver.frontFace = true;
+		receiver.material = floorMaterial.get();
+
+		Ray cameraRay(Vector3(0.0, 0.0, 4.0), Vector3(0.0, -1.0, -1.0));
+		ScatterRecord scatterRecord;
+		require(floorMaterial->scatter(cameraRay, receiver, scatterRecord), "Diffuse receiver did not scatter for caustic lookup.");
+		const Color estimate = map.estimate(receiver, scatterRecord);
+		require(Utilities::luminance(estimate) > 0.0, "Caustic photon map estimate did not contribute radiance.");
+
+		scene.setCausticsEnabled(false);
+		CausticPhotonMap disabledMap;
+		disabledMap.build(scene, 424242u);
+		require(disabledMap.photonCount() == 0, "Disabled caustic photon map still stored photons.");
+	}
+
 	void	testSceneFileLoadsNonMetallicPrincipledMaterial(void)
 	{
 		const std::filesystem::path directory = std::filesystem::temp_directory_path();
@@ -1539,8 +3173,13 @@ namespace
 				<< "base_color=(0.8,0.8,0.75)\n"
 				<< "metallic=0\n"
 				<< "roughness=0.35\n"
-				<< "emission=(0,0,0)\n"
-				<< "emissionStrength=1\n"
+				<< "transmission=0.25\n"
+				<< "ior=1.45\n"
+				<< "clearcoat=0.6\n"
+				<< "clearcoat_roughness=0.12\n"
+				<< "sheen=0.4\n"
+				<< "transmittance=(0.8,0.9,1)\n"
+				<< "attenuation_distance=2\n"
 				<< "}\n\n"
 				<< "[meshes]\n"
 				<< "mesh triangle_mesh {\n"
@@ -1550,9 +3189,11 @@ namespace
 				<< "camera main {\n"
 				<< "position=(0,0,3)\n"
 				<< "direction=(0,0,-1)\n"
-				<< "fov=45\n"
-				<< "aperture=0\n"
-				<< "focusDistance=3\n"
+				<< "focal_length_mm=50\n"
+				<< "sensor_width_mm=36\n"
+				<< "sensor_height_mm=20.25\n"
+				<< "pinhole=1\n"
+				<< "focus_distance=3\n"
 				<< "}\n"
 				<< "object triangle {\n"
 				<< "mesh=triangle_mesh\n"
@@ -1567,10 +3208,63 @@ namespace
 		SceneFile::read(scene, scenePath.string());
 
 		require(scene.getHittables().size() == 1, "Principled scene did not load the sphere.");
-		require(scene.getHittables()[0]->getMaterial()->getType() == PRINCIPLED, "Non-metallic principled material did not remain principled.");
+		Principled* material = dynamic_cast<Principled*>(scene.getHittables()[0]->getMaterial());
+		require(material != nullptr, "Non-metallic principled material did not remain principled.");
+		requireNear(material->getRoughness(), 0.35, "Principled roughness was not parsed.");
+		requireNear(material->getTransmission(), 0.25, "Principled transmission was not parsed.");
+		requireNear(material->getRefractiveIndex(), 1.45, "Principled IOR was not parsed.");
+		requireNear(material->getClearcoat(), 0.6, "Principled clearcoat was not parsed.");
+		requireNear(material->getClearcoatRoughness(), 0.12, "Principled clearcoat roughness was not parsed.");
+		requireNear(material->getSheen(), 0.4, "Principled sheen was not parsed.");
+		const Color coefficient = material->getAbsorptionCoefficient();
+		requireNear(coefficient.getRed(), -std::log(0.8) / 2.0, "Principled red transmittance was not parsed.");
+		requireNear(coefficient.getGreen(), -std::log(0.9) / 2.0, "Principled green transmittance was not parsed.");
+		requireNear(coefficient.getBlue(), 0.0, "Principled blue transmittance was not parsed.");
 
 		std::filesystem::remove(scenePath);
 		std::filesystem::remove(objectPath);
+	}
+
+	void	testSceneFileLoadsGlossyMaterials(void)
+	{
+		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_glossy_materials_test.luz";
+		{
+			std::ofstream sceneStream(scenePath);
+			sceneStream
+				<< "[materials]\n"
+				<< "material pure_gloss {\n"
+				<< "type=glossy\n"
+				<< "color=(0.8,0.7,0.6)\n"
+				<< "roughness=0.2\n"
+				<< "}\n"
+				<< "material mixed_plastic {\n"
+				<< "type=diffuse_glossy\n"
+				<< "color=(1,1,1)\n"
+				<< "glossy_color=(0.9,0.9,1)\n"
+				<< "glossy_weight=0.6\n"
+				<< "roughness=0.1\n"
+				<< "}\n\n"
+				<< "[scene]\n"
+				<< "objects{\n"
+				<< "sphere=(-1,0,-3),0.5,material=pure_gloss\n"
+				<< "sphere=(1,0,-3),0.5,material=mixed_plastic\n"
+				<< "}\n";
+		}
+
+		Scene scene;
+		SceneFile::read(scene, scenePath.string());
+
+		require(scene.getHittables().size() == 2, "Glossy material scene did not load both objects.");
+		Glossy* glossy = dynamic_cast<Glossy*>(scene.getHittables()[0]->getMaterial());
+		require(glossy != nullptr, "Glossy material did not parse as Glossy.");
+		requireNear(glossy->getRoughness(), 0.2, "Glossy roughness was not parsed.");
+		DiffuseGlossy* mixed = dynamic_cast<DiffuseGlossy*>(scene.getHittables()[1]->getMaterial());
+		require(mixed != nullptr, "Diffuse-glossy material did not parse as DiffuseGlossy.");
+		requireNear(mixed->getGlossyWeight(), 0.6, "Diffuse-glossy weight was not parsed.");
+		requireNear(mixed->getGlossyRoughness(), 0.1, "Diffuse-glossy roughness was not parsed.");
+		requireColorNear(mixed->getGlossyColor(), Color(0.9, 0.9, 1.0), "Diffuse-glossy color was not parsed.");
+
+		std::filesystem::remove(scenePath);
 	}
 
 	void	testSceneFileRejectsInvalidMaterial(void)
@@ -1582,7 +3276,15 @@ namespace
 				<< "[settings]\n"
 				<< "resolution=2,2\n\n"
 				<< "[scene]\n"
-				<< "camera=(0,0,1),(0,0,-1),45,0,1\n"
+				<< "camera main {\n"
+				<< "position=(0,0,1)\n"
+				<< "direction=(0,0,-1)\n"
+				<< "focal_length_mm=50\n"
+				<< "sensor_width_mm=36\n"
+				<< "sensor_height_mm=20.25\n"
+				<< "pinhole=1\n"
+				<< "focus_distance=1\n"
+				<< "}\n"
 				<< "objects{\n"
 				<< "sphere=(0,0,-1),0.5,material[\n"
 				<< "plastic=(1.0,1.0,1.0)\n"
@@ -1600,6 +3302,57 @@ namespace
 		);
 
 		std::filesystem::remove(scenePath);
+	}
+
+	void	testSceneFileRejectsAmbiguousMeasuredData(void)
+	{
+		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_ambiguous_measured_data_test.luz";
+		auto requireBadScene = [&scenePath](const std::string& contents, const std::string& message)
+		{
+			{
+				std::ofstream stream(scenePath);
+				stream << contents;
+			}
+			Scene scene;
+			requireThrows(
+				[&scene, &scenePath]()
+				{
+					SceneFile::read(scene, scenePath.string());
+				},
+				message
+			);
+			std::filesystem::remove(scenePath);
+		};
+
+		requireBadScene(
+			"[materials]\n"
+			"material bad_gold {\n"
+			"type=metal\n"
+			"preset=gold\n"
+			"eta=(0.2,0.3,0.4)\n"
+			"k=(2,3,4)\n"
+			"}\n\n",
+			"Scene file accepted metal preset mixed with explicit eta/k."
+		);
+		requireBadScene(
+			"[materials]\n"
+			"material bad_glass {\n"
+			"type=dielectric\n"
+			"glass_preset=bk7\n"
+			"ior=1.4\n"
+			"}\n\n",
+			"Scene file accepted glass preset mixed with explicit IOR."
+		);
+		requireBadScene(
+			"[scene]\n"
+			"volume bad_fog {\n"
+			"shape=sphere\n"
+			"radius=1\n"
+			"preset=fog\n"
+			"density=0.1\n"
+			"}\n",
+			"Scene file accepted volume preset mixed with explicit density."
+		);
 	}
 
 	void	testBVHReturnsClosestHit(void)
@@ -1727,6 +3480,34 @@ namespace
 		require(triangle.hit(ray, hitRecord, 0.001, 100.0), "Triangle with vertex normals was not hit.");
 		require(hitRecord.normal.getY() > 0.6, "Triangle did not use interpolated vertex normal Y.");
 		require(hitRecord.normal.getZ() > 0.6, "Triangle did not use interpolated vertex normal Z.");
+		requireVectorNear(hitRecord.geometricNormal, Vector3(0.0, 0.0, 1.0), "Triangle geometric normal");
+	}
+
+	void	testOpaqueSmoothNormalDoesNotReceiveBacksideLight(void)
+	{
+		auto material = std::make_shared<Lambertian>(Color(1.0, 1.0, 1.0));
+		auto light = std::make_shared<Emissive>(Color(1.0, 1.0, 1.0));
+		Scene scene;
+
+		scene.setRenderSky(SKY_NONE);
+		scene.setBackgroundColor(Color(0.0, 0.0, 0.0));
+		scene.setMaxLightBounces(1);
+		scene.addHittable(std::make_shared<Triangle>(
+			Vector3(-1.0, -1.0, 0.0),
+			Vector3(1.0, -1.0, 0.0),
+			Vector3(0.0, 1.0, 0.0),
+			Vector3(0.0, 1.0, 0.0),
+			Vector3(0.0, 1.0, 0.0),
+			Vector3(0.0, 1.0, 0.0),
+			material
+		));
+		scene.addHittable(std::make_shared<DirectionalLight>(Vector3(0.0, -1.0, 0.0), light));
+		scene.updateLights();
+
+		Ray ray(Vector3(0.0, 0.0, 1.0), Vector3(0.0, 0.0, -1.0));
+		const Color color = Renderer::internal::_calculateLightRaysColor(ray, scene);
+
+		requireColorNear(color, Color(0.0, 0.0, 0.0), "Opaque smooth normal accepted backside light");
 	}
 
 	void	testOBJReaderLoadsVertexNormals(void)
@@ -1806,7 +3587,15 @@ namespace
 				<< "file=" << objectPath.filename().string() << "\n"
 				<< "}\n\n"
 				<< "[scene]\n"
-				<< "camera=(0,0,2),(0,0,-1),45,0,2\n"
+				<< "camera main {\n"
+				<< "position=(0,0,2)\n"
+				<< "direction=(0,0,-1)\n"
+				<< "focal_length_mm=50\n"
+				<< "sensor_width_mm=36\n"
+				<< "sensor_height_mm=20.25\n"
+				<< "pinhole=1\n"
+				<< "focus_distance=2\n"
+				<< "}\n"
 				<< "object triangle {\n"
 				<< "mesh=triangle_mesh\n"
 				<< "position=(0,0,0)\n"
@@ -1825,9 +3614,11 @@ namespace
 		requireNear(hitRecord.u, 0.25, "OBJ reader did not interpolate texture coordinate U.");
 		requireNear(hitRecord.v, 0.25, "OBJ reader did not interpolate texture coordinate V.");
 		const Color texturedColor = hitRecord.material->colorAt(hitRecord);
-		requireNear(texturedColor.getRed(), 1.0, "Texture red channel was not sampled.");
-		requireNear(texturedColor.getGreen(), 0.0, "Texture green channel was not sampled.");
-		requireNear(texturedColor.getBlue(), 0.0, "Texture blue channel was not sampled.");
+		requireColorNear(
+			texturedColor,
+			ColorManagement::acescgFromSRGB(Color(1.0, 0.0, 0.0)),
+			"OBJ texture did not convert sRGB input to ACEScg."
+		);
 
 		std::filesystem::remove(scenePath);
 		std::filesystem::remove(objectPath);
@@ -2113,15 +3904,13 @@ namespace
 	void	testFlagsParsePostProcessOptions(void)
 	{
 		std::unique_ptr<Scene> scene = parseFlags({
-			"--gamma", "false",
-			"--tonemapping", "false",
+			"--view-transform", "raw",
 			"--bloom", "false",
 			"--exposure", "1.25",
 			"--contrast", "1.5"
 		});
 
-		require(!scene->getGammaCorrected(), "--gamma false was not parsed.");
-		require(!scene->getToneMapped(), "--tonemapping false was not parsed.");
+		require(scene->getViewTransform() == ViewTransform::Raw, "--view-transform raw was not parsed.");
 		require(!scene->getBloom(), "--bloom false was not parsed.");
 		requireNear(scene->getExposure(), 1.25, "--exposure was not parsed.");
 		requireNear(scene->getContrast(), 1.5, "--contrast was not parsed.");
@@ -2170,6 +3959,31 @@ namespace
 		require(fileOverrideScene->getDenoise(), "--denoise did not override scene file denoise setting.");
 	}
 
+	void	testFlagsParseCausticOptions(void)
+	{
+		std::unique_ptr<Scene> enabledScene = parseFlags({"--caustics"});
+		require(enabledScene->getCausticsEnabled(), "Bare --caustics did not enable caustics.");
+
+		std::unique_ptr<Scene> falseScene = parseFlags({"--caustics", "false"});
+		require(!falseScene->getCausticsEnabled(), "--caustics false did not disable caustics.");
+
+		std::unique_ptr<Scene> disabledScene = parseFlags({"--caustics", "--no-caustics"});
+		require(!disabledScene->getCausticsEnabled(), "--no-caustics did not override --caustics.");
+
+		std::unique_ptr<Scene> tunedScene = parseFlags({
+			"--caustics",
+			"--caustic-photons", "1234",
+			"--caustic-passes", "6",
+			"--caustic-radius", "0.125",
+			"--caustic-alpha", "0.8"
+		});
+		require(tunedScene->getCausticsEnabled(), "Caustics were not enabled.");
+		require(tunedScene->getCausticPhotonCount() == 1234, "--caustic-photons was not parsed.");
+		require(tunedScene->getCausticPassCount() == 6, "--caustic-passes was not parsed.");
+		requireNear(tunedScene->getCausticRadiusMeters(), 0.125, "--caustic-radius was not parsed.");
+		requireNear(tunedScene->getCausticAlpha(), 0.8, "--caustic-alpha was not parsed.");
+	}
+
 	void	testFlagsParsePNGOutput(void)
 	{
 		std::unique_ptr<Scene> outputScene = parseFlags({"--output", "custom_render.png"});
@@ -2212,10 +4026,20 @@ namespace
 		requireFlagParseThrows({"--maxLightBounces", "-1"}, "CLI accepted negative max light bounces.");
 		requireFlagParseThrows({"--resolution", "-1x100"}, "CLI accepted negative width.");
 		requireFlagParseThrows({"--threads", "0"}, "CLI accepted zero threads.");
+		requireFlagParseThrows({"--view-transform"}, "CLI accepted missing view transform.");
+		requireFlagParseThrows({"--view-transform", "filmic"}, "CLI accepted invalid view transform.");
+		requireFlagParseThrows({"--gamma", "false"}, "CLI accepted removed gamma flag.");
+		requireFlagParseThrows({"--tonemapping", "false"}, "CLI accepted removed tone mapping flag.");
 		requireFlagParseThrows({"--exposure"}, "CLI accepted missing exposure.");
 		requireFlagParseThrows({"--exposure", "nan"}, "CLI accepted non-finite exposure.");
 		requireFlagParseThrows({"--contrast"}, "CLI accepted missing contrast.");
 		requireFlagParseThrows({"--contrast", "-1"}, "CLI accepted negative contrast.");
+		requireFlagParseThrows({"--caustics", "maybe"}, "CLI accepted invalid caustics value.");
+		requireFlagParseThrows({"--caustic-photons"}, "CLI accepted missing caustic photon count.");
+		requireFlagParseThrows({"--caustic-photons", "-1"}, "CLI accepted negative caustic photon count.");
+		requireFlagParseThrows({"--caustic-passes", "0"}, "CLI accepted zero caustic pass count.");
+		requireFlagParseThrows({"--caustic-radius", "0"}, "CLI accepted zero caustic radius.");
+		requireFlagParseThrows({"--caustic-alpha", "1.2"}, "CLI accepted caustic alpha above one.");
 		requireFlagParseThrows({"--denoise", "maybe"}, "CLI accepted invalid denoise value.");
 		requireFlagParseThrows({"--compression", "75"}, "CLI accepted removed compression flag.");
 		requireFlagParseThrows({"--compression=75"}, "CLI accepted removed compression assignment.");
@@ -2243,9 +4067,22 @@ namespace
 		requireThrows([&]() { scene.setAdaptiveCheckInterval(0); }, "Scene accepted zero adaptive check interval.");
 		requireThrows([&]() { scene.setMaxLightBounces(-1); }, "Scene accepted negative max light bounces.");
 		requireThrows([&]() { scene.setRenderingThreads(0); }, "Scene accepted zero rendering threads.");
+		requireThrows([&]() { scene.setMetersPerUnit(0.0); }, "Scene accepted zero meters per unit.");
+		requireThrows([&]() { scene.setMetersPerUnit(std::numeric_limits<double>::quiet_NaN()); }, "Scene accepted non-finite meters per unit.");
 		requireThrows([&]() { scene.setExposure(std::numeric_limits<double>::quiet_NaN()); }, "Scene accepted non-finite exposure.");
+		requireThrows([&]() { scene.setPhotographicExposure(0.0, 1.0, 100.0); }, "Scene accepted zero photographic f-number.");
+		requireThrows([&]() { scene.setPhotographicExposure(2.0, 0.0, 100.0); }, "Scene accepted zero photographic shutter.");
+		requireThrows([&]() { scene.setPhotographicExposure(2.0, 1.0, 0.0); }, "Scene accepted zero photographic ISO.");
+		requireThrows([&]() { scene.setPhotographicExposure(std::numeric_limits<double>::quiet_NaN(), 1.0, 100.0); }, "Scene accepted non-finite photographic f-number.");
 		requireThrows([&]() { scene.setContrast(-1.0); }, "Scene accepted negative contrast.");
 		requireThrows([&]() { scene.setContrast(std::numeric_limits<double>::quiet_NaN()); }, "Scene accepted non-finite contrast.");
+		requireThrows([&]() { scene.setCausticPhotonCount(-1); }, "Scene accepted negative caustic photon count.");
+		requireThrows([&]() { scene.setCausticPassCount(0); }, "Scene accepted zero caustic pass count.");
+		requireThrows([&]() { scene.setCausticRadiusMeters(0.0); }, "Scene accepted zero caustic radius.");
+		requireThrows([&]() { scene.setCausticRadiusMeters(std::numeric_limits<double>::quiet_NaN()); }, "Scene accepted non-finite caustic radius.");
+		requireThrows([&]() { scene.setCausticAlpha(0.0); }, "Scene accepted zero caustic alpha.");
+		requireThrows([&]() { scene.setCausticAlpha(1.1); }, "Scene accepted caustic alpha above one.");
+		requireThrows([&]() { scene.setCausticAlpha(std::numeric_limits<double>::quiet_NaN()); }, "Scene accepted non-finite caustic alpha.");
 		requireThrows([&]() { scene.setEnvironmentStrength(-1.0); }, "Scene accepted negative environment strength.");
 		requireThrows([&]() { scene.setEnvironmentStrength(std::numeric_limits<double>::quiet_NaN()); }, "Scene accepted non-finite environment strength.");
 		requireThrows([&]() { scene.setEnvironmentRotation(std::numeric_limits<double>::quiet_NaN()); }, "Scene accepted non-finite environment rotation.");
@@ -2266,6 +4103,8 @@ namespace
 		requireThrows([&]() { Atmosphere().setSunRadiance(Color(1.0, std::numeric_limits<double>::quiet_NaN(), 1.0)); }, "Atmosphere accepted non-finite sun radiance.");
 		requireThrows([&]() { Atmosphere().setSunRadianceScale(-1.0); }, "Atmosphere accepted negative sun radiance scale.");
 		requireThrows([&]() { Atmosphere().setSunRadianceScale(std::numeric_limits<double>::quiet_NaN()); }, "Atmosphere accepted non-finite sun radiance scale.");
+		requireThrows([&]() { Atmosphere().setMetersPerUnit(0.0); }, "Atmosphere accepted zero meters per unit.");
+		requireThrows([&]() { Atmosphere().setMetersPerUnit(std::numeric_limits<double>::quiet_NaN()); }, "Atmosphere accepted non-finite meters per unit.");
 		requireThrows([&]() { Atmosphere().setEarthRadius(D_ATMOSPHERE_RADIUS); }, "Atmosphere accepted Earth radius at atmosphere radius.");
 		requireThrows([&]() { Atmosphere().setAtmosphereRadius(D_EARTH_RADIUS); }, "Atmosphere accepted atmosphere radius at Earth radius.");
 		requireThrows([&]() { Atmosphere().setHR(std::numeric_limits<double>::quiet_NaN()); }, "Atmosphere accepted non-finite HR.");
@@ -2273,6 +4112,14 @@ namespace
 		requireThrows([&]() { Atmosphere().setStarsBrightness(std::numeric_limits<double>::quiet_NaN()); }, "Atmosphere accepted non-finite star brightness.");
 		requireThrows([&]() { Atmosphere(0.0, 2.0, 1.0, 1.0, 1.0, 1, 1, 0.0); }, "Atmosphere accepted atmosphere radius smaller than Earth radius.");
 		Atmosphere(0.0, D_ATMOSPHERE_RADIUS * 2.0, D_ATMOSPHERE_RADIUS * 2.0 + 1000.0, D_HR, D_HM, 1, 1, 0.0);
+		requireThrows([&]() { Dielectric(Color(1.0, 1.0, 1.0), 0.0); }, "Dielectric accepted zero refractive index.");
+		Dielectric glass(Color(1.0, 1.0, 1.0));
+		requireThrows([&]() { glass.setAbsorptionCoefficient(Color(-1.0, 0.0, 0.0)); }, "Dielectric accepted negative absorption.");
+		requireThrows([&]() { glass.setTransmittance(Color(1.2, 1.0, 1.0), 1.0); }, "Dielectric accepted transmittance above one.");
+		requireThrows([&]() { glass.setTransmittance(Color(1.0, 1.0, 1.0), 0.0); }, "Dielectric accepted zero transmittance distance.");
+		Metal conductor;
+		requireThrows([&]() { conductor.setConductorFresnel(Color(0.0, 1.0, 1.0), Color(1.0, 1.0, 1.0)); }, "Metal accepted zero conductor eta.");
+		requireThrows([&]() { conductor.setConductorFresnel(Color(1.0, 1.0, 1.0), Color(-1.0, 1.0, 1.0)); }, "Metal accepted negative conductor k.");
 		requireThrows([&]() { HenyeyGreenstein(Color(1.0, 1.0, 1.0), 1.0); }, "Henyey-Greenstein material accepted invalid anisotropy.");
 		requireThrows([&]() {
 			ConstantVolume(
@@ -2379,6 +4226,29 @@ namespace
 		requireNear(emptySample.transmittance.getBlue(), 1.0, "Empty atmosphere segment blue transmittance should be one.");
 	}
 
+	void	testAtmosphereMetersPerUnitPreservesPhysicalScale(void)
+	{
+		const Atmosphere meterAtmosphere(0.0, 1.0, 2.0, 1.0, 1.0, 8, 4, 0.0);
+		Atmosphere scaledAtmosphere(0.0, 1.0, 2.0, 1.0, 1.0, 8, 4, 0.0);
+		scaledAtmosphere.setMetersPerUnit(0.5);
+
+		const Ray meterRay(Vector3(0.0, 0.0, -4.0), Vector3(0.0, 0.0, 1.0));
+		const Ray scaledRay(Vector3(0.0, 0.0, -8.0), Vector3(0.0, 0.0, 1.0));
+		const AtmosphereSample meterSample = meterAtmosphere.sampleSegment(meterRay, 3.0);
+		const AtmosphereSample scaledSample = scaledAtmosphere.sampleSegment(scaledRay, 6.0);
+
+		requireColorNear(scaledSample.inScattering, meterSample.inScattering, "Scaled atmosphere in-scattering");
+		requireColorNear(scaledSample.transmittance, meterSample.transmittance, "Scaled atmosphere transmittance");
+
+		Atmosphere largeUnitAtmosphere(0.0, 1.0, 2.0, 1.0, 1.0, 8, 4, 0.0);
+		largeUnitAtmosphere.setMetersPerUnit(2.0);
+		const Ray largeUnitRay(Vector3(0.0, 0.0, -2.0), Vector3(0.0, 0.0, 1.0));
+		const AtmosphereSample largeUnitSample = largeUnitAtmosphere.sampleSegment(largeUnitRay, T_MAX);
+
+		requireFiniteNonNegativeColor(largeUnitSample.inScattering, "Large-unit atmosphere in-scattering");
+		require(Utilities::luminance(largeUnitSample.inScattering) > 0.0, "Large-unit atmosphere T_MAX overflowed to an empty sample.");
+	}
+
 	void	testAtmospherePrimaryHitCompositesSurface(void)
 	{
 		const Atmosphere atmosphere(0.0, 1.0, 2.0, 1.0, 1.0, 8, 4, 0.0);
@@ -2391,7 +4261,7 @@ namespace
 		scene.addHittable(std::make_shared<Sphere>(
 			Vector3(0.0, 0.0, 0.0),
 			1.0,
-			std::make_shared<Emissive>(surfaceEmission, 1.0)
+			std::make_shared<Emissive>(surfaceEmission)
 		));
 
 		Ray ray(Vector3(0.0, 0.0, -4.0), Vector3(0.0, 0.0, 1.0));
@@ -2408,6 +4278,27 @@ namespace
 			"Atmosphere primary-hit composite returned the bare surface color."
 		);
 
+		Atmosphere scaledAtmosphere(0.0, 1.0, 2.0, 1.0, 1.0, 8, 4, 0.0);
+		Scene scaledScene;
+		scaledScene.setMetersPerUnit(0.5);
+		scaledScene.setRenderSky(SKY_ATMOSPHERE);
+		scaledScene.setAtmosphere(scaledAtmosphere);
+		scaledScene.setMaxLightBounces(0);
+		scaledScene.addHittable(std::make_shared<Sphere>(
+			Vector3(0.0, 0.0, 0.0),
+			2.0,
+			std::make_shared<Emissive>(surfaceEmission)
+		));
+
+		Ray scaledRay(Vector3(0.0, 0.0, -8.0), Vector3(0.0, 0.0, 1.0));
+		const AtmosphereSample scaledAtmosphereSample = scaledScene.getAtmosphere().sampleSegment(scaledRay, 6.0);
+		const Color scaledExpected = scaledAtmosphereSample.inScattering + (scaledAtmosphereSample.transmittance * surfaceEmission);
+		const Color scaledActual = Renderer::internal::_calculateLightRaysColor(scaledRay, scaledScene);
+
+		requireFiniteNonNegativeColor(scaledActual, "Scaled atmosphere primary-hit composite");
+		requireColorNear(scaledActual, scaledExpected, "Scaled atmosphere primary-hit composite");
+		requireColorNear(scaledActual, actual, "Scaled atmosphere primary-hit physical equivalence");
+
 		Scene protrudingScene;
 		protrudingScene.setRenderSky(SKY_ATMOSPHERE);
 		protrudingScene.setAtmosphere(atmosphere);
@@ -2415,7 +4306,7 @@ namespace
 		protrudingScene.addHittable(std::make_shared<Sphere>(
 			Vector3(0.0, 0.0, 0.0),
 			1.5,
-			std::make_shared<Emissive>(surfaceEmission, 1.0)
+			std::make_shared<Emissive>(surfaceEmission)
 		));
 
 		const Color protrudingExpected = atmosphereSample.inScattering + (atmosphereSample.transmittance * surfaceEmission);
@@ -2482,8 +4373,7 @@ namespace
 
 		Scene scene;
 		configureVisualRenderScene(scene, 9, 9);
-		scene.setGammaCorrected(true);
-		scene.setToneMapped(true);
+		scene.setViewTransform(ViewTransform::AgX);
 		scene.setBloom(true);
 		scene.setExposure(0.5);
 		scene.setContrast(1.1);
@@ -2561,6 +4451,64 @@ namespace
 		std::filesystem::remove(bmpPath);
 	}
 
+	void	testGlossySurfaceReflectsEmissiveLight(void)
+	{
+		setRandomSeed(2026);
+
+		Scene scene;
+		scene.getImage()->setWidth(9);
+		scene.getImage()->setHeight(9);
+		scene.getImage()->initialize();
+		scene.setSampleCount(16);
+		scene.setAdaptiveSampling(false);
+		scene.setMaxLightBounces(2);
+		scene.setViewTransform(ViewTransform::Raw);
+		scene.setBloom(false);
+		scene.setDenoise(false);
+		scene.setRenderSky(SKY_NONE);
+		scene.setBackgroundColor(Color(0.0, 0.0, 0.0));
+		scene.setRenderingThreads(1);
+		scene.setBenchmarkMode(true);
+		scene.addCamera(testPinholeCamera(Vector3(0.0, 1.0, 4.0), Vector3(0.0, -0.35, -1.0), 4.0));
+		scene.addHittable(std::make_shared<Plane>(
+			0.0,
+			Vector3(0.0, 1.0, 0.0),
+			std::make_shared<Principled>(
+				Color(1.0, 1.0, 1.0),
+				0.0,
+				0.08,
+				0.0,
+				1.5,
+				1.0,
+				0.08,
+				0.0
+			)
+		));
+		scene.addHittable(std::make_shared<Rectangle>(
+			Transform(Vector3(0.0, 3.0, -7.5), Vector3(0.0, -1.0, 0.0), Vector3(1.0, 0.0, 0.0)),
+			5.0,
+			5.0,
+			std::make_shared<Emissive>(Color(4.0, 4.0, 4.0))
+		));
+
+		require(Renderer::render(scene), "Glossy reflection render failed.");
+		requireImageIsFinite(*scene.getImage(), "Glossy reflection render");
+
+		double brightestLuminance = 0.0;
+		for (std::size_t y = 0; y < scene.getImage()->getHeight(); y++)
+		{
+			for (std::size_t x = 0; x < scene.getImage()->getWidth(); x++)
+			{
+				brightestLuminance = std::max(
+					brightestLuminance,
+					Utilities::luminance(scene.getImage()->getPixel(x, y))
+				);
+			}
+		}
+
+		require(brightestLuminance > 0.05, "Glossy reflected light path lost too much energy.");
+	}
+
 	void	testTinyRender(void)
 	{
 		setRandomSeed(42);
@@ -2572,14 +4520,13 @@ namespace
 		scene.setSampleCount(1);
 		scene.setAdaptiveSampling(false);
 		scene.setMaxLightBounces(1);
-		scene.setGammaCorrected(false);
-		scene.setToneMapped(false);
+		scene.setViewTransform(ViewTransform::Raw);
 		scene.setBloom(false);
 		scene.setDenoise(false);
 		scene.setRenderSky(SKY_NONE);
 		scene.setBackgroundColor(Color(0.1, 0.2, 0.3));
 		scene.setRenderingThreads(1);
-		scene.addCamera(Camera(Vector3(0.0, 0.0, 1.0), Vector3(0.0, 0.0, -1.0), 45, 0.0, 1.0));
+		scene.addCamera(testPinholeCamera(Vector3(0.0, 0.0, 1.0), Vector3(0.0, 0.0, -1.0), 1.0));
 		scene.addHittable(std::make_shared<Sphere>(
 			Vector3(0.0, 0.0, -1.0),
 			0.5,
@@ -2612,24 +4559,22 @@ namespace
 		scene.getImage()->initialize();
 		scene.setSampleCount(1);
 		scene.setMaxLightBounces(0);
-		scene.setGammaCorrected(false);
-		scene.setToneMapped(false);
+		scene.setViewTransform(ViewTransform::Raw);
 		scene.setBloom(false);
 		scene.setRenderSky(SKY_ENVIRONMENT);
 		scene.setEnvironmentMap(std::make_shared<EnvironmentMap>(EnvironmentMap::load(environmentPath.string())));
 		scene.setEnvironmentStrength(1.5);
 		scene.setRenderingThreads(1);
-		scene.addCamera(Camera(Vector3(0.0, 0.0, 1.0), Vector3(0.0, 0.0, -1.0), 45, 0.0, 1.0));
+		scene.addCamera(testPinholeCamera(Vector3(0.0, 0.0, 1.0), Vector3(0.0, 0.0, -1.0), 1.0));
 
 		require(Renderer::render(scene), "Environment background render failed.");
+		const Color expected = ColorManagement::acescgFromSRGB(Color(0.2, 0.4, 0.6)) * 1.5;
 		for (std::size_t y = 0; y < scene.getImage()->getHeight(); y++)
 		{
 			for (std::size_t x = 0; x < scene.getImage()->getWidth(); x++)
 			{
 				const Color pixel = scene.getImage()->getPixel(x, y);
-				requireNear(pixel.getRed(), 0.3, "Environment render red channel was wrong.");
-				requireNear(pixel.getGreen(), 0.6, "Environment render green channel was wrong.");
-				requireNear(pixel.getBlue(), 0.9, "Environment render blue channel was wrong.");
+				requireColorNear(pixel, expected, "Environment render did not use ACEScg environment radiance.");
 			}
 		}
 
@@ -2650,14 +4595,13 @@ namespace
 		scene.setAdaptiveThreshold(0.5);
 		scene.setAdaptiveCheckInterval(1);
 		scene.setMaxLightBounces(1);
-		scene.setGammaCorrected(false);
-		scene.setToneMapped(false);
+		scene.setViewTransform(ViewTransform::Raw);
 		scene.setBloom(false);
 		scene.setDenoise(false);
 		scene.setRenderSky(SKY_NONE);
 		scene.setBackgroundColor(Color(0.1, 0.2, 0.3));
 		scene.setRenderingThreads(1);
-		scene.addCamera(Camera(Vector3(0.0, 0.0, 1.0), Vector3(0.0, 0.0, -1.0), 45, 0.0, 1.0));
+		scene.addCamera(testPinholeCamera(Vector3(0.0, 0.0, 1.0), Vector3(0.0, 0.0, -1.0), 1.0));
 
 		require(Renderer::render(scene), "Tiny adaptive render failed.");
 		for (std::size_t y = 0; y < scene.getImage()->getHeight(); y++)
@@ -2685,14 +4629,13 @@ namespace
 		scene.setAdaptiveThreshold(0.5);
 		scene.setAdaptiveCheckInterval(1);
 		scene.setMaxLightBounces(1);
-		scene.setGammaCorrected(false);
-		scene.setToneMapped(false);
+		scene.setViewTransform(ViewTransform::Raw);
 		scene.setBloom(false);
 		scene.setDenoise(true);
 		scene.setRenderSky(SKY_NONE);
 		scene.setBackgroundColor(Color(0.1, 0.2, 0.3));
 		scene.setRenderingThreads(1);
-		scene.addCamera(Camera(Vector3(0.0, 0.0, 1.0), Vector3(0.0, 0.0, -1.0), 45, 0.0, 1.0));
+		scene.addCamera(testPinholeCamera(Vector3(0.0, 0.0, 1.0), Vector3(0.0, 0.0, -1.0), 1.0));
 
 		require(Renderer::render(scene), "Tiny adaptive denoised render failed.");
 		require(scene.hasDenoisedImage(), "Adaptive denoised render did not create a companion image.");
@@ -2711,14 +4654,13 @@ namespace
 		scene.setSampleCount(1);
 		scene.setAdaptiveSampling(false);
 		scene.setMaxLightBounces(1);
-		scene.setGammaCorrected(false);
-		scene.setToneMapped(false);
+		scene.setViewTransform(ViewTransform::Raw);
 		scene.setBloom(false);
 		scene.setDenoise(true);
 		scene.setRenderSky(SKY_NONE);
 		scene.setBackgroundColor(Color(0.1, 0.2, 0.3));
 		scene.setRenderingThreads(1);
-		scene.addCamera(Camera(Vector3(0.0, 0.0, 1.0), Vector3(0.0, 0.0, -1.0), 45, 0.0, 1.0));
+		scene.addCamera(testPinholeCamera(Vector3(0.0, 0.0, 1.0), Vector3(0.0, 0.0, -1.0), 1.0));
 
 		require(Renderer::render(scene), "Tiny denoised render failed.");
 		require(scene.hasDenoisedImage(), "Denoised render did not create a companion image.");
@@ -2730,37 +4672,16 @@ namespace
 		require(std::abs(denoisedPixel.getRed() - 0.1) < 0.02, "Denoised companion image value drifted too far.");
 	}
 
-	void	testZeroFocusDistanceRender(void)
+	void	testCameraRejectsInvalidPhysicalOptics(void)
 	{
-		setRandomSeed(42);
+		Camera camera;
 
-		Scene scene;
-		scene.getImage()->setWidth(2);
-		scene.getImage()->setHeight(2);
-		scene.getImage()->initialize();
-		scene.setSampleCount(1);
-		scene.setAdaptiveSampling(false);
-		scene.setMaxLightBounces(1);
-		scene.setGammaCorrected(false);
-		scene.setToneMapped(false);
-		scene.setBloom(false);
-		scene.setDenoise(false);
-		scene.setRenderSky(SKY_NONE);
-		scene.setBackgroundColor(Color(0.1, 0.2, 0.3));
-		scene.setRenderingThreads(1);
-		scene.addCamera(Camera(Vector3(0.0, 0.0, 1.0), Vector3(0.0, 0.0, -1.0), 45, 3.0, 0.0));
-
-		require(Renderer::render(scene), "Zero-focus render failed.");
-		for (std::size_t y = 0; y < scene.getImage()->getHeight(); y++)
-		{
-			for (std::size_t x = 0; x < scene.getImage()->getWidth(); x++)
-			{
-				const Color pixel = scene.getImage()->getPixel(x, y);
-				require(std::isfinite(pixel.getRed()), "Zero-focus render produced non-finite red value.");
-				require(std::isfinite(pixel.getGreen()), "Zero-focus render produced non-finite green value.");
-				require(std::isfinite(pixel.getBlue()), "Zero-focus render produced non-finite blue value.");
-			}
-		}
+		requireThrows([&]() { camera.setFocalLengthMeters(0.0); }, "Camera accepted zero focal length.");
+		requireThrows([&]() { camera.setSensorWidthMeters(0.0); }, "Camera accepted zero sensor width.");
+		requireThrows([&]() { camera.setSensorHeightMeters(0.0); }, "Camera accepted zero sensor height.");
+		requireThrows([&]() { camera.setFNumber(0.0); }, "Camera accepted zero f-number.");
+		requireThrows([&]() { camera.setApertureDiameterMeters(0.0); }, "Camera accepted zero aperture diameter.");
+		requireThrows([&]() { camera.setFocusDistanceMeters(0.0); }, "Camera accepted zero focus distance.");
 	}
 }
 
@@ -2769,11 +4690,22 @@ int	main(void)
 	try
 	{
 		testColorMath();
-		testToneMappingBlackPixel();
-		testToneMappingCompressesHighlights();
+		testViewTransformBlackPixel();
+		testACESViewTransformCompressesHighlights();
+		testStandardViewTransformClipsForDisplay();
+		testRawViewTransformKeepsSceneLinearData();
 		testSRGBGammaCorrection();
+		testColorManagementACEScgContract();
+		testACEScgSceneImageEncodesToSRGB();
 		testExposureAndContrast();
+		testPhotographicExposureConversion();
 		testBloomExtractionPreservesHighlightColor();
+		testBloomExtractionSuppressesIsolatedFireflies();
+		testDisplayFireflySuppressionRemovesIsolatedWhitePixels();
+		testPhysicalLightUnitConversions();
+		testIESProfileLoadsPhysicalLampData();
+		testSpectralColorConversions();
+		testSpectralReflectanceCurveConversion();
 		testGaussianBlurSupportsInPlaceSmallImages();
 		testGaussianBlurPreservesCenteredEnergyAndEdges();
 		testTerminalFilePath();
@@ -2787,31 +4719,64 @@ int	main(void)
 		testSceneFileUsesSceneDefaults();
 		testSceneFileAdaptiveSettings();
 		testSceneFilePostProcessSettings();
+		testSceneFileCausticSettings();
+		testSceneFilePhotographicExposureSetting();
+		testSceneFileCameraPhotographicExposure();
 		testSceneFileRejectsInvalidSettings();
 		testSceneFileAtmosphereSetting();
 		testSceneFileDirectionalSunDrivesAtmosphere();
 		testSceneFileBackgroundSetting();
 		testEnvironmentMapLoadsPPM();
+		testEnvironmentMapPhysicalMetrics();
+		testSceneEnvironmentPhysicalCalibration();
 		testEnvironmentMapLoadsHDR();
 		testEnvironmentMapLoadsRLEHDR();
 		testSceneFileEnvironmentSetting();
-		testSceneFileLegacyCameraPreservesDecimalFOV();
+		testSceneFileAtmosphereCombinesWithEnvironment();
+		testSceneFileLoadsPhysicalCamera();
+		testRenderCameraFitsSensorGateToImageAspect();
+		testSceneFileRejectsCompactCameraSyntax();
 		testSceneFileLoadsRelativeObject();
+		testAssetPathUsesProvidedScenePaths();
 		testSceneFileLoadsTransformedObject();
 		testSceneFileLoadsNamedBlocks();
+		testSceneFileCompactPrimitivesUseNamedMaterials();
+		testSceneFilePhysicalLightUnits();
+		testSceneFileSolarDirectionalLightPreset();
+		testSceneFileLoadsIESPointLight();
+		testSceneFileMetersPerUnitScalesPhysicalLightArea();
+		testSceneFileSpectralColorValues();
+		testSceneFileLoadsNamedReflectanceSpectra();
+		testSceneFileExplicitColorSpaces();
+		testSceneFileLoadsAbsorbingDielectricMaterial();
+		testSceneFileLoadsConductorMetalMaterial();
+		testSceneFileLoadsMeasuredMaterialPresets();
+		testSceneFileLoadsMeasuredVolumeData();
 		testSphereUVProjectionModes();
 		testSphereHitTracksFrontFace();
 		testDielectricUsesExitRefractionRatio();
+		testDielectricBeerLambertAbsorption();
+		testMetalConductorFresnel();
+		testRoughMetalUsesGGXBSDF();
+		testGlossyUsesGGXBSDF();
+		testDiffuseGlossyMixPreservesStrongGlossyComponent();
+		testRoughDielectricUsesGGXBSDF();
+		testPrincipledLayeredBSDF();
 		testSceneFileLoadsNamedTexturedSphere();
 		testSceneFileLoadsVolumeBlock();
+		testSceneFileMetersPerUnitScalesVolumeDensity();
+		testCausticPhotonMapBuildsAndEstimates();
 		testSceneFileLoadsNonMetallicPrincipledMaterial();
+		testSceneFileLoadsGlossyMaterials();
 		testSceneFileRejectsInvalidMaterial();
+		testSceneFileRejectsAmbiguousMeasuredData();
 		testBVHReturnsClosestHit();
 		testVolumeHitWorksFromInsideBoundary();
 		testBoxVolumeHitWorksFromInsideBoundary();
 		testTinyTriangleHitAndNormal();
 		testTrianglePDFAndRandomSampling();
 		testTriangleInterpolatesVertexNormals();
+		testOpaqueSmoothNormalDoesNotReceiveBacksideLight();
 		testOBJReaderLoadsVertexNormals();
 		testSceneFileLoadsTexturedOBJUVs();
 		testMeshPDFAndRandomSampling();
@@ -2823,6 +4788,7 @@ int	main(void)
 		testHittablePDFAveragesMultipleLights();
 		testFlagsParsePostProcessOptions();
 		testFlagsParseDenoiseOptions();
+		testFlagsParseCausticOptions();
 		testFlagsParsePNGOutput();
 		testFlagsParseBenchmarkFileOptions();
 		testFlagsParsePositionalSceneFile();
@@ -2832,16 +4798,19 @@ int	main(void)
 		testPlanetaryHitRobustIntersections();
 		testAtmosphereIncidentLightInsideOutsideAndSunPosition();
 		testAtmosphereSegmentTransmittance();
+		testAtmosphereMetersPerUnitPreservesPhysicalScale();
 		testAtmospherePrimaryHitCompositesSurface();
 		testSceneDefaultsEnableAdaptiveAndDenoise();
 		testRenderedSceneHasBasicVisualStructure();
 		testRenderedScenePostProcessingProducesDisplayableImage();
 		testRenderedBMPContainsVisualSignal();
+		testGlossySurfaceReflectsEmissiveLight();
 		testTinyRender();
+		testAtmosphereCompositesEnvironmentBackground();
 		testTinyAdaptiveRender();
 		testTinyAdaptiveDenoisedRender();
 		testTinyDenoisedRenderProducesCompanionImage();
-		testZeroFocusDistanceRender();
+		testCameraRejectsInvalidPhysicalOptics();
 		testEnvironmentBackgroundRender();
 	}
 	catch (const std::exception& exception)

@@ -59,15 +59,17 @@ namespace
 
 		bloomImage.initialize();
 		Gaussian::blur(*brightnessImage, bloomImage, 9, 2.0);
-		for (std::size_t y = 0; y < image.getHeight(); y++)
+		Color* imagePixels = image.pixels();
+		const Color* bloomPixels = bloomImage.pixels();
+		const std::size_t width = image.getWidth();
+		const std::size_t height = image.getHeight();
+		for (std::size_t y = 0; y < height; y++)
 		{
-			for (std::size_t x = 0; x < image.getWidth(); x++)
+			for (std::size_t x = 0; x < width; x++)
 			{
-				image.setPixel(
-					x,
-					y,
-					image.getPixel(x, y) + (bloomImage.getPixel(x, y) * D_BLOOM_INTENSITY)
-				);
+				const std::size_t index = y * width + x;
+
+				imagePixels[index] += bloomPixels[index] * D_BLOOM_INTENSITY;
 			}
 		}
 	}
@@ -79,18 +81,21 @@ namespace
 		{
 			applyBloom(image);
 		}
-		if (scene.getToneMapped())
+		const ViewTransform viewTransform = scene.getViewTransform();
+		if (viewTransform == ViewTransform::Raw)
 		{
-			image.toneMap();
+			return;
 		}
-		if (scene.getContrast() != D_CONTRAST)
+		if (scene.getContrast() == D_CONTRAST)
 		{
-			image.applyContrast(scene.getContrast());
+			image.applyViewTransformAndEncodeSRGB(viewTransform);
+			image.suppressIsolatedFireflies();
+			return;
 		}
-		if (scene.getGammaCorrected())
-		{
-			image.gammaCorrect();
-		}
+		image.applyViewTransform(viewTransform);
+		image.applyContrast(scene.getContrast());
+		image.gammaCorrect();
+		image.suppressIsolatedFireflies();
 	}
 
 	void	printRenderProgress(unsigned int percentage)
@@ -573,7 +578,7 @@ unsigned int	Renderer::internal::_threadRender(Scene& scene, const RenderCamera&
 			}
 		}
 		pixelColor /= static_cast<double>(samplesUsed);
-		scene.getImage()->setPixel(x, y, cleanColor(pixelColor));
+		scene.getImage()->setPixelUnchecked(x, y, cleanColor(pixelColor));
 		return (samplesUsed);
 	}
 
@@ -631,6 +636,6 @@ unsigned int	Renderer::internal::_threadRender(Scene& scene, const RenderCamera&
 		samplesUsed
 	);
 
-	scene.getImage()->setPixel(x, y, pixelColor);
+	scene.getImage()->setPixelUnchecked(x, y, pixelColor);
 	return (samplesUsed);
 }

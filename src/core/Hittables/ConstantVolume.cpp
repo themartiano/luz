@@ -117,6 +117,7 @@ bool	ConstantVolume::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_
 	}
 	hitRecord.position = ray.pointAtRay(hitRecord.t0);
 	hitRecord.normal = Vector3(1.0, 0.0, 0.0); // Arbitrary
+	hitRecord.geometricNormal = hitRecord.normal;
 	hitRecord.material = this->_phaseFunction.get();
 
 	return (true);

@@ -797,6 +797,53 @@ bool	Mesh::sampleLight(const Vector3& origin, HittableLightSample& sample) const
 	return (sample.valid);
 }
 
+bool	Mesh::sampleEmission(HittableEmissionSample& sample) const
+{
+	sample = HittableEmissionSample();
+	if (this->_triangleAreaPrefixSums.empty() || this->_totalArea <= 0.0)
+	{
+		return (false);
+	}
+
+	const double targetArea = Sampler::sample1D(Sampler::DIM_LIGHT_SURFACE_SELECTION) * this->_totalArea;
+	const auto areaIt = std::lower_bound(
+		this->_triangleAreaPrefixSums.begin(),
+		this->_triangleAreaPrefixSums.end(),
+		targetArea
+	);
+	const std::size_t randomIndex = std::min<std::size_t>(
+		static_cast<std::size_t>(areaIt - this->_triangleAreaPrefixSums.begin()),
+		this->_triangleAreaPrefixSums.size() - 1
+	);
+	const double previousArea = randomIndex == 0
+		? 0.0
+		: this->_triangleAreaPrefixSums[randomIndex - 1];
+	const double selectedArea = this->_triangleAreaPrefixSums[randomIndex] - previousArea;
+	if (selectedArea <= 0.0)
+	{
+		return (false);
+	}
+
+	bool sampled = false;
+	if (this->_usesPackedTriangles)
+	{
+		sampled = this->_triangles[randomIndex].sampleEmission(sample);
+	}
+	else
+	{
+		sampled = this->_legacyTriangles[randomIndex]->sampleEmission(sample);
+	}
+	if (!sampled || !sample.valid)
+	{
+		sample = HittableEmissionSample();
+		return (false);
+	}
+
+	sample.powerScale *= this->_totalArea / selectedArea;
+	sample.valid = std::isfinite(sample.powerScale) && sample.powerScale > 0.0;
+	return (sample.valid);
+}
+
 double	Mesh::lightSelectionWeight(void) const
 {
 	if (!this->_material)

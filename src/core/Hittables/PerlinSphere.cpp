@@ -7,6 +7,18 @@
 #include <algorithm>
 #include <cmath>
 
+namespace
+{
+	bool	zeroDirection(const Vector3& direction)
+	{
+		return (
+			direction.getX() == 0.0
+			&& direction.getY() == 0.0
+			&& direction.getZ() == 0.0
+		);
+	}
+}
+
 /*
 	Constructors
 */
@@ -72,11 +84,16 @@ void	PerlinSphere::setMaterial(std::shared_ptr<Material> material)
 // Calculates if the PerlinSphere is hit by 'ray', is closer than 't_max' and farther than T_MIN
 bool	PerlinSphere::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) const
 {
+	const Vector3& direction = ray.getDirection();
+	if (zeroDirection(direction))
+	{
+		return (false);
+	}
+
 	Vector3 oc = ray.getOrigin() - this->_position;
-	double a = Utilities::vectorLengthSquared(ray.getDirection());
-	double b = Utilities::dot(oc, ray.getDirection());
+	double b = Utilities::dot(oc, direction);
 	double c = Utilities::vectorLengthSquared(oc) - (this->_radius * this->_radius);
-	double discriminant = (b * b) - (a * c);
+	double discriminant = (b * b) - c;
 
 	if (discriminant < 0.0)
 	{
@@ -84,10 +101,10 @@ bool	PerlinSphere::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_ma
 	}
 
 	double sqrtd = sqrt(discriminant);
-	double root = (-b - sqrtd) / a;
+	double root = -b - sqrtd;
 	if (root < t_min || root > t_max)
 	{
-		root = (-b + sqrtd) / a;
+		root = -b + sqrtd;
 		if (root < t_min || root > t_max)
 		{
 			return (false);
@@ -97,7 +114,7 @@ bool	PerlinSphere::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_ma
 	hitRecord.t0 = root;
 	hitRecord.position = ray.pointAtRay(root);
 
-	const Vector3 outwardNormal = Utilities::normalize((hitRecord.position - this->_position) / this->_radius);
+	const Vector3 outwardNormal = (hitRecord.position - this->_position) / this->_radius;
 	hitRecord.setFaceNormal(ray, outwardNormal);
 	hitRecord.material = this->_material.get();
 
@@ -111,11 +128,16 @@ bool	PerlinSphere::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_ma
 
 bool	PerlinSphere::hitAny(Ray& ray, double t_min, double t_max) const
 {
+	const Vector3& direction = ray.getDirection();
+	if (zeroDirection(direction))
+	{
+		return (false);
+	}
+
 	Vector3 oc = ray.getOrigin() - this->_position;
-	double a = Utilities::vectorLengthSquared(ray.getDirection());
-	double b = Utilities::dot(oc, ray.getDirection());
+	double b = Utilities::dot(oc, direction);
 	double c = Utilities::vectorLengthSquared(oc) - (this->_radius * this->_radius);
-	double discriminant = (b * b) - (a * c);
+	double discriminant = (b * b) - c;
 
 	if (discriminant < 0.0)
 	{
@@ -123,12 +145,12 @@ bool	PerlinSphere::hitAny(Ray& ray, double t_min, double t_max) const
 	}
 
 	double sqrtd = sqrt(discriminant);
-	double root = (-b - sqrtd) / a;
+	double root = -b - sqrtd;
 	if (root >= t_min && root <= t_max)
 	{
 		return (true);
 	}
-	root = (-b + sqrtd) / a;
+	root = -b + sqrtd;
 	return (root >= t_min && root <= t_max);
 }
 
@@ -236,6 +258,32 @@ bool	PerlinSphere::sampleLight(const Vector3& origin, HittableLightSample& sampl
 	sample.tMax = root;
 	sample.material = this->_material.get();
 	sample.valid = std::isfinite(sample.pdf) && sample.pdf > 0.0 && sample.tMax > T_MIN;
+	return (sample.valid);
+}
+
+bool	PerlinSphere::sampleEmission(HittableEmissionSample& sample) const
+{
+	sample = HittableEmissionSample();
+	if (!this->_material || this->_radius <= 0.0)
+	{
+		return (false);
+	}
+
+	const Color emitted = this->_material->emitted();
+	if (Utilities::luminance(emitted) <= 0.0)
+	{
+		return (false);
+	}
+
+	const Vector3 outwardNormal = Utilities::normalize(Sampler::sphereDirection(Sampler::DIM_LIGHT_SURFACE_POINT));
+	const ONB basis(outwardNormal);
+
+	sample.position = this->_position + outwardNormal * this->_radius;
+	sample.normal = outwardNormal;
+	sample.direction = Utilities::normalize(basis.local(Sampler::cosineHemisphere(Sampler::DIM_LIGHT_EMISSION_DIRECTION)));
+	sample.emitted = emitted;
+	sample.powerScale = D_PI * 4.0 * D_PI * this->_radius * this->_radius;
+	sample.valid = Utilities::vectorLengthSquared(sample.direction) > 0.0;
 	return (sample.valid);
 }
 

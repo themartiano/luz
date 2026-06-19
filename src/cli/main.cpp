@@ -64,10 +64,18 @@ static void	saveImage(const std::unique_ptr<Image>& image, const std::string& ou
 	}
 	else if (isPngOutput(outputFileName))
 	{
+		if (image->getColorEncoding() == ImageColorEncoding::SceneLinearACEScg)
+		{
+			throw std::runtime_error("Raw scene-linear output is for debugging/HDR data and requires .tiff, not .png.");
+		}
 		image->saveToPNG(outputFileName);
 	}
 	else if (isBmpOutput(outputFileName))
 	{
+		if (image->getColorEncoding() == ImageColorEncoding::SceneLinearACEScg)
+		{
+			throw std::runtime_error("Raw scene-linear output is for debugging/HDR data and requires .tiff, not .bmp.");
+		}
 		image->saveToBMP(outputFileName);
 	}
 	else
@@ -128,8 +136,17 @@ int	main(int argc, char *argv[])
 
 			// Coordinate system ~~ Right Hand ~~ Forward: -Z | Up: +Y | Right: +X
 
-			// A bigger aperture means more focus. ?(real aperture == aperture parameter / focus distance)?
-			scene.addCamera(Camera(Vector3(-4.5, 1.0, 4.5), Vector3(0.5, 0.0, -0.5), 39.31, 0.0, 20.0)); // 35 mm
+			Camera camera(
+				Vector3(-4.5, 1.0, 4.5),
+				Vector3(0.5, 0.0, -0.5),
+				0.050397,
+				D_CAMERA_SENSOR_WIDTH_METERS,
+				D_CAMERA_SENSOR_HEIGHT_METERS,
+				D_CAMERA_F_NUMBER,
+				20.0
+			);
+			camera.setPinhole(true);
+			scene.addCamera(camera);
 
 			scene.addHittable(std::make_shared<Plane>(
 				0.0,
@@ -147,7 +164,7 @@ int	main(int argc, char *argv[])
 				Transform(Vector3(-15.0, 2.5, 0.0), Vector3(1.0, 0.0, 0.0), Vector3(1.0, 0.0, 0.0)),
 				10.0,
 				5.0,
-				std::make_shared<Emissive>(Color(1.0, 1.0, 1.0), 10.0)
+				std::make_shared<Emissive>(Color(1.0, 1.0, 1.0) * 10.0)
 			));
 
 			// scene.addHittable(std::make_shared<Rectangle>(

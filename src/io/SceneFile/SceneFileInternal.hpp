@@ -23,6 +23,7 @@ namespace SceneFile::internal
 		std::filesystem::path	baseDirectory;
 		std::unordered_map<std::string, std::shared_ptr<Material>>	materials;
 		std::unordered_map<std::string, std::string>	meshes;
+		std::unordered_map<std::string, Color>	spectra;
 		ObjLoadProgress*	meshLoadProgress = nullptr;
 		std::size_t	meshLoadConcurrency = 1;
 		std::shared_ptr<MeshLoadScheduler>	meshLoadScheduler;
@@ -32,6 +33,7 @@ namespace SceneFile::internal
 	void	_readSettingsSection(Scene& scene, std::ifstream& stream, SceneFileContext& context);
 	void	_readNamedMaterialsSection(std::ifstream& stream, SceneFileContext& context);
 	void	_readNamedMeshesSection(std::ifstream& stream, SceneFileContext& context);
+	void	_readNamedSpectraSection(std::ifstream& stream, SceneFileContext& context);
 	void	_readSceneSection(Scene& scene, std::ifstream& stream, SceneFileContext& context);
 	void	_readObjectsSubSection(Scene& scene, std::ifstream& stream, SceneFileContext& context);
 	bool	_readSceneObjectOrLightBlock(Scene& scene, std::ifstream& stream, SceneFileContext& context, const std::string& line);
@@ -42,4 +44,6 @@ namespace SceneFile::internal
 	bool	_parseNamedBlockHeader(const std::string& line, const std::string& keyword, std::string& name);
 	Vector3	_parseVector3Value(const std::string& value, const std::string& label);
 	Color	_parseColorValue(const std::string& value, const std::string& label);
+	Color	_parseColorValue(const std::string& value, const std::string& label, const std::filesystem::path& baseDirectory);
+	Color	_parseColorValue(const std::string& value, const std::string& label, const SceneFileContext& context);
 }

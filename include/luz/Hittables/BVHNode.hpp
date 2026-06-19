@@ -18,7 +18,7 @@ class   BVHNode : public Hittable
 		virtual Material* getMaterial(void) const override;
 
 	private:
-		BVHNode(std::vector<std::shared_ptr<Hittable>>& hittables, size_t start, size_t end);
+		BVHNode(std::vector<std::shared_ptr<Hittable>>& hittables, size_t start, size_t end, bool isRoot);
 
 		std::vector<std::shared_ptr<Hittable>>	_childs;
 		std::vector<AABB>				_childBoundingBoxes;

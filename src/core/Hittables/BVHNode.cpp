@@ -8,7 +8,8 @@
 
 namespace
 {
-	constexpr std::size_t	BVH_LEAF_CHILD_COUNT = 24;
+	constexpr std::size_t	BVH_LEAF_CHILD_COUNT = 8;
+	constexpr std::size_t	BVH_ROOT_LEAF_CHILD_COUNT = 16;
 
 	struct	ChildTraversal
 	{
@@ -82,6 +83,44 @@ namespace
 
 		return (&material);
 	}
+
+	AABB	boundingBoxForRange(
+		const std::vector<std::shared_ptr<Hittable>>& hittables,
+		size_t start,
+		size_t end
+	)
+	{
+		AABB result;
+		bool hasBox = false;
+
+		for (size_t i = start; i < end; i++)
+		{
+			AABB childBox;
+
+			if (!hittables[i]->createBoundingBox(childBox))
+			{
+				continue;
+			}
+			result = hasBox ? Utilities::mergeBoundingBoxes(result, childBox) : childBox;
+			hasBox = true;
+		}
+		return (result);
+	}
+
+	unsigned int	largestExtentAxis(const AABB& boundingBox)
+	{
+		const Vector3 extent = boundingBox.getMaximum() - boundingBox.getMinimum();
+
+		if (extent.getX() >= extent.getY() && extent.getX() >= extent.getZ())
+		{
+			return (0);
+		}
+		if (extent.getY() >= extent.getZ())
+		{
+			return (1);
+		}
+		return (2);
+	}
 }
 
 // Static function prototypes
@@ -96,19 +135,23 @@ static bool	boxCompare(const std::shared_ptr<Hittable>& hittable1, const std::sh
 
 // Constructor overload, only calls the actual constructor
 BVHNode::BVHNode(std::vector<std::shared_ptr<Hittable>> hittables)
-	: BVHNode(hittables, 0, hittables.size())
+	: BVHNode(hittables, 0, hittables.size(), true)
 {}
 
 // Constructs the BVHNode
-BVHNode::BVHNode(std::vector<std::shared_ptr<Hittable>>& hittables, size_t start, size_t end)
+BVHNode::BVHNode(std::vector<std::shared_ptr<Hittable>>& hittables, size_t start, size_t end, bool isRoot)
 {
-	unsigned int axis = randomEngine.integer(0, 2);
+	const AABB rangeBoundingBox = boundingBoxForRange(hittables, start, end);
+	unsigned int axis = largestExtentAxis(rangeBoundingBox);
 	auto comparator = (axis == 0) ? boxXCompare : (axis == 1) ? boxYCompare : boxZCompare;
 
 	size_t	hittableCount = end - start;
 	this->_childs.reserve(hittableCount);
 
-	if (hittableCount <= BVH_LEAF_CHILD_COUNT)
+	if (
+		hittableCount <= BVH_LEAF_CHILD_COUNT
+		|| (isRoot && hittableCount <= BVH_ROOT_LEAF_CHILD_COUNT)
+	)
 	{
 		for (size_t i = start; i < end; i++)
 		{
@@ -120,8 +163,8 @@ BVHNode::BVHNode(std::vector<std::shared_ptr<Hittable>>& hittables, size_t start
 		std::sort(hittables.begin() + start, hittables.begin() + end, comparator);
 
 		auto mid = start + hittableCount / 2;
-		this->_childs.push_back(std::shared_ptr<Hittable>(new BVHNode(hittables, start, mid)));
-		this->_childs.push_back(std::shared_ptr<Hittable>(new BVHNode(hittables, mid, end)));
+		this->_childs.push_back(std::shared_ptr<Hittable>(new BVHNode(hittables, start, mid, false)));
+		this->_childs.push_back(std::shared_ptr<Hittable>(new BVHNode(hittables, mid, end, false)));
 	}
 
 	this->_childBoundingBoxes.clear();

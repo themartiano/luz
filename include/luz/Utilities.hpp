@@ -77,6 +77,4 @@ namespace Utilities
 	bool	stringEndsWith(std::string str, std::string ending);
 	std::string	terminalFilePath(const std::string& filePath);
 	double	luminance(const Color& color);
-	Color	filmicToneMap(const Color& color);
-	Color	reinhardJodie(const Color& color);
 }

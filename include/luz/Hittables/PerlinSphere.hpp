@@ -23,6 +23,7 @@ class	PerlinSphere : public Hittable
 		virtual double  	pdfValue(const Vector3& origin, const Vector3& vec) const override;
 		virtual Vector3 	random(const Vector3& origin) const override;
 		virtual bool		sampleLight(const Vector3& origin, HittableLightSample& sample) const override;
+		virtual bool		sampleEmission(HittableEmissionSample& sample) const override;
 		virtual double	lightSelectionWeight(void) const override;
 		Vector3				randomToSphere(double distanceSquared) const;
 		void				calculateSphereUV(const Vector3& point, double& u, double& v) const;

@@ -30,6 +30,21 @@ namespace
 		}
 		return (viewUp);
 	}
+
+	void	fitViewportToImageAspect(double& viewportWidth, double& viewportHeight, double imageWidth, double imageHeight)
+	{
+		const double imageAspect = imageWidth / imageHeight;
+		const double viewportAspect = viewportWidth / viewportHeight;
+
+		if (imageAspect > viewportAspect)
+		{
+			viewportHeight = viewportWidth / imageAspect;
+		}
+		else if (imageAspect < viewportAspect)
+		{
+			viewportWidth = viewportHeight * imageAspect;
+		}
+	}
 }
 
 Renderer::internal::RenderCamera	Renderer::internal::_prepareRenderCamera(Scene& scene)
@@ -46,19 +61,18 @@ Renderer::internal::RenderCamera	Renderer::internal::_prepareRenderCamera(Scene&
 	renderCamera.position = camera.getPosition();
 	const Vector3	cameraLookDirection = camera.getDirection();
 
-	const double	viewportWidth = 2.0 * tan(((camera.getFOV() * D_PI) / 180.0) / 2.0);
-	const double	viewportHeight = (renderCamera.height / renderCamera.width) * viewportWidth;
-	const double	rawFocusDistance = camera.getFocusDistance();
-	const bool		hasValidFocusDistance = std::isfinite(rawFocusDistance) && rawFocusDistance > 0.0;
-	const double	focusDistance = hasValidFocusDistance ? rawFocusDistance : 1.0;
+	const double	focusDistance = camera.getFocusDistanceMeters() / scene.getMetersPerUnit();
+	double	viewportWidth = focusDistance * camera.getSensorWidthMeters() / camera.getFocalLengthMeters();
+	double	viewportHeight = focusDistance * camera.getSensorHeightMeters() / camera.getFocalLengthMeters();
+	fitViewportToImageAspect(viewportWidth, viewportHeight, renderCamera.width, renderCamera.height);
 
 	const Vector3	w = Utilities::normalize(cameraLookDirection);
 	const Vector3	viewUp = cameraUpOrFallback(camera.getUpDirection(), w);
 	renderCamera.u = Utilities::normalize(Utilities::cross(viewUp, w));
 	renderCamera.v = Utilities::cross(w, renderCamera.u);
-	renderCamera.lensRadius = hasValidFocusDistance ? camera.getAperture() / 2.0 : 0.0;
-	renderCamera.horizontal = renderCamera.u * viewportWidth * focusDistance;
-	renderCamera.vertical = renderCamera.v * viewportHeight * focusDistance;
+	renderCamera.lensRadius = camera.getApertureDiameterMeters() / (2.0 * scene.getMetersPerUnit());
+	renderCamera.horizontal = renderCamera.u * viewportWidth;
+	renderCamera.vertical = renderCamera.v * viewportHeight;
 	renderCamera.lowerLeftCorner = renderCamera.position
 		+ (renderCamera.horizontal / 2.0)
 		+ (renderCamera.vertical / 2.0)

@@ -40,15 +40,23 @@ The exporter also works without passing the `.blend` file before `--python`:
 --include-hidden              Include objects hidden from render.
 --resolution WIDTHxHEIGHT     Override exported render resolution.
 --samples N                   Override samples per pixel.
+--adaptive auto|on|off        Enable adaptive sampling by default, mirror Blender with auto, or force off.
+--adaptive-min-samples N      Override exported adaptive minimum samples.
+--adaptive-threshold N        Override exported adaptive noise threshold.
+--adaptive-check-interval N   Override exported adaptive check interval.
+--denoise auto|on|off         Enable denoising by default, mirror Blender with auto, or force off.
+--view-transform auto|standard|agx|aces|raw
+                             Export a Luz display transform. Raw is debugging/HDR data, not viewing.
+--exposure EV                 Override exported display exposure in stops.
 --max-light-bounces N         Override max light bounces.
 --sky linear|none|atmosphere|environment
                              Override exported Luz sky mode.
 --render-output PATH          Luz render output path.
 --global-scale N              Scale exported positions, meshes, and light sizes.
---light-power-scale N         Extra multiplier after Blender lamp energy conversion. Defaults to 1.0.
+--light-power-scale N         Extra multiplier for exported area/point power. Defaults to 1.0.
 --min-point-light-radius N    Minimum Blender-unit radius for point/spot lights. Defaults to 0.1.
---sun-power-scale N           Convert Blender sun energy to Luz intensity. Defaults to 1.0.
---camera-aperture N           Override Luz camera aperture.
+--sun-power-scale N           Multiplier for exported sun irradiance. Defaults to 1.0.
+--camera-f-stop N             Override exported camera f-number.
 --texture-dir DIR             Texture output directory. Defaults to textures next to the .luz file.
 --texture-max-size N          Maximum exported texture width/height. Defaults to 1024.
 --no-texture-colors           Skip image texture color approximation.
@@ -71,48 +79,78 @@ The exporter also works without passing the `.blend` file before `--python`:
   overrides the sky mode. Light Path mixes that separate camera rays from
   non-camera rays are handled for the camera background only.
 - Blender World Environment Texture nodes connected to Background Color are
-  exported as `sky=environment` plus `environment=...`. External `.hdr` and
-  `.pic` files are copied through as HDR environment maps; generated, packed, or
-  non-HDR environment images are exported as PPM.
+  exported as `environment=PATH,ROTATION` plus `environment_scale=STRENGTH`.
+  External `.hdr` and `.pic` files are copied through as HDR environment maps;
+  generated, packed, or non-HDR environment images are exported as PPM. If
+  `--sky atmosphere` is used, the HDRI is still exported and lights the scene
+  behind the atmospheric sky.
 - The active camera is exported as a Luz camera block.
 - Blender camera roll is preserved through the named camera `up` vector.
-- Invalid zero camera focus distances are replaced with a scene-based fallback;
-  DOF aperture is disabled unless Blender provides a valid focus target/distance.
-- Blender f-stop DOF is converted to a Luz world-unit lens diameter from
-  `camera.lens / aperture_fstop`.
+- The exporter writes `meters_per_unit=1 / --global-scale` so physical light
+  power, light area, and atmosphere distances preserve Blender-meter scale even
+  when exported coordinates are scaled for Luz.
+- Invalid zero camera focus distances are replaced with a scene-based fallback.
+- Blender camera lens, sensor size, f-stop, and focus distance are exported as
+  physical Luz camera properties. Focus distance remains in meters even when
+  `--global-scale` changes exported coordinates; Luz converts it through
+  `meters_per_unit` while rendering.
+- Luz fits the exported physical sensor gate to the render resolution aspect, so
+  rendering a full-frame 36x24 mm camera at 16:9 crops the vertical gate instead
+  of stretching the image.
+- Blender cameras with DOF disabled are exported as `pinhole=1`. Cameras with
+  valid DOF export Blender's `aperture_fstop` as `f_stop`.
 - Area lights become `area_light` blocks. Blender's area-light energy is treated
-  as total emitted power and converted to Luz surface intensity with
-  `energy / (pi * width * height)`, then multiplied by `--light-power-scale`.
+  as total emitted power and written as `power=energy * --light-power-scale`.
+  Luz converts power to surface radiance from the exported light area.
 - Point and spot lights become small emissive `point_light` sphere blocks.
-  Blender's point-light energy is treated as total emitted power and converted
-  to Luz sphere surface intensity with `energy / (4 * pi^2 * radius^2)`, then
-  multiplied by `--light-power-scale`. When Blender's light softness is zero,
+  Blender's point-light energy is treated as total emitted power and written as
+  `power=energy * --light-power-scale`. Luz converts power to sphere surface
+  radiance from the exported radius. When Blender's light softness is zero,
   `--min-point-light-radius` prevents near-zero export radii from producing
-  extreme surface intensity. Exported point and spot lights use `visible=0` so
-  their emissive sampling spheres do not render as visible bulbs. Use
-  `--min-point-light-radius 0` to preserve the old tiny-light intensity
-  conversion.
+  extreme surface radiance. Exported point and spot lights use `visible=0` so
+  their emissive sampling spheres do not render as visible bulbs.
 - Sun lights become `directional_light` blocks. They use
-  `--sun-power-scale`, not `--light-power-scale`, because Blender SUN energy is
-  directional rather than finite-area power.
+  `irradiance=energy * --sun-power-scale`, not `--light-power-scale`, because
+  Blender SUN energy is directional rather than finite-area power.
 - When `--sky atmosphere` is used, the first exported Blender SUN light becomes
   the source of truth for both surface lighting and atmosphere lighting,
-  including sun direction, color, and intensity. The exporter still writes an
+  including sun direction, color, and irradiance. The exporter still writes an
   `atmosphere=` line for the physical atmosphere parameters; its sun-angle field
-  and legacy atmosphere radiance are only fallbacks when no `directional_light`
+  and atmosphere fallback radiance are only fallbacks when no `directional_light`
   exists in the scene.
-- Emissive mesh materials stay as emissive mesh objects. Luz importance-samples
-  emissive meshes directly.
+- Emissive mesh materials stay as emissive mesh objects and write
+  `radiance=...`. Luz importance-samples emissive meshes directly.
 - Common Blender shader nodes connected to Material Output are mapped into
   Luz material properties, including diffuse, glossy, glass, emission,
   Principled, mix, add, RGB/value, image average color, and color ramp values.
 - Image textures connected directly to Principled BSDF Base Color or Diffuse
   BSDF Color are exported as PPM textures, downscaled by `--texture-max-size`,
-  and referenced from the generated named material with `texture=...`.
+  and referenced from the generated named material with `texture=...`. Luz loads
+  these base-color PPMs as sRGB albedo textures and converts them into its
+  scene-linear ACEScg working space.
 - When a material has multiple Material Output nodes, the exporter prefers the
   output target that matches the scene render engine, such as Cycles or EEVEE.
 - Blender material values are written as named material property blocks for
   Luz's scene parser to approximate.
+- Blender RGB material, light, and world colors are written as
+  `linear_srgb(...)` values so Luz converts Blender's linear RGB values into its
+  ACEScg working space.
+- Adaptive sampling and denoising are enabled in the generated scene by default.
+  Pass `--adaptive auto` or `--denoise auto` to mirror Blender's corresponding
+  setting, or pass `off` to disable a feature explicitly.
+- When Blender leaves adaptive minimum samples unset, the exporter uses a
+  conservative minimum derived from the exported sample count instead of relying
+  on Luz's generic defaults.
+- Blender view exposure is exported as Luz `exposure`. With
+  `--view-transform auto`, Blender `Standard` and `Raw` export
+  `view_transform=standard`, Blender `AgX` exports `view_transform=agx`, and
+  Blender `ACES` exports `view_transform=aces`. Luz `raw` is available only as an
+  explicit override for debugging/HDR data, not for normal viewing.
+- Principled BSDF export includes IOR, coat weight/roughness, and sheen when
+  those Blender sockets are available. Glossy and anisotropic BSDF nodes export
+  as Luz `glossy` materials, and Blender Diffuse+Glossy `Mix Shader` graphs
+  export as `diffuse_glossy` so legacy Cycles glossy plastic keeps its strong
+  reflection without scaling scene lights.
 
 ## Current Limits
 
@@ -122,9 +160,10 @@ The exporter also works without passing the `.blend` file before `--python`:
 - World environment mapping nodes are not exported yet. Environment maps are
   written with Luz's default equirectangular orientation and `0` degrees
   rotation.
-- Image texture export uses Luz's built-in PPM texture loader. When no usable
-  Base Color image texture is found, image colors can still be approximated by
-  averaging a temporary thumbnail, controlled by `--texture-sample-size`.
+- Image texture export uses Luz's built-in PPM texture loader for sRGB base
+  color textures. When no usable Base Color image texture is found, image colors
+  can still be approximated by averaging a temporary thumbnail, controlled by
+  `--texture-sample-size`.
 - Per-face materials are preserved by splitting mesh objects into one OBJ per
   material slot.
 - Instancing is baked into separate OBJ files.

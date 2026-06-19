@@ -3,7 +3,9 @@
 #include "Materials/Material.hpp"
 #include "AABB.hpp"
 #include "Hittables/Hittable.hpp"
+#include "IESProfile.hpp"
 #include "Vector3.hpp"
+#include <memory>
 
 enum class SphereUVProjection
 {
@@ -23,6 +25,7 @@ class	Sphere : public Hittable
 		void				setRadius(double radius);
 		bool				isVisible(void) const;
 		void				setVisible(bool visible);
+		void				setIESProfile(std::shared_ptr<IESProfile> iesProfile, Vector3 direction, double rotationDegrees);
 		SphereUVProjection	getUVProjection(void) const;
 		void				setUVProjection(SphereUVProjection uvProjection);
 		virtual Material*	getMaterial(void) const override;
@@ -34,6 +37,7 @@ class	Sphere : public Hittable
 		virtual double  	pdfValue(const Vector3& origin, const Vector3& vec) const override;
 		virtual Vector3 	random(const Vector3& origin) const override;
 		virtual bool		sampleLight(const Vector3& origin, HittableLightSample& sample) const override;
+		virtual bool		sampleEmission(HittableEmissionSample& sample) const override;
 		virtual double		lightSelectionWeight(void) const override;
 		Vector3				randomToSphere(double distanceSquared) const;
 
@@ -43,4 +47,7 @@ class	Sphere : public Hittable
 		double		_radius;
 		bool		_visible;
 		SphereUVProjection	_uvProjection;
+		std::shared_ptr<IESProfile>	_iesProfile;
+		Vector3		_iesDirection;
+		double		_iesRotationDegrees;
 };

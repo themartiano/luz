@@ -58,11 +58,17 @@ namespace
 			<< "      --max-light-bounces N   Alias for --maxLightBounces\n"
 			<< "  -t, --threads N             Render with N worker threads\n"
 			<< "  --seed N                    Seed random sampling\n"
-			<< "  --gamma true|false          Toggle gamma correction\n"
-			<< "  -tm, --tonemapping true|false  Toggle tone mapping\n"
+			<< "  --view-transform standard|agx|aces|raw\n"
+			<< "                               Select display transform; raw is debugging/HDR data, not viewing\n"
 			<< "  --bloom true|false          Toggle bloom\n"
 			<< "  --exposure EV              Exposure compensation in stops\n"
 			<< "  --contrast F               Display contrast multiplier\n"
+			<< "  --caustics [true|false]     Toggle caustic photon mapping\n"
+			<< "  --no-caustics               Disable caustic photon mapping\n"
+			<< "  --caustic-photons N         Photons emitted for caustic mapping\n"
+			<< "  --caustic-passes N          Progressive caustic radius passes\n"
+			<< "  --caustic-radius METERS     Initial caustic gather radius\n"
+			<< "  --caustic-alpha F           Progressive caustic radius factor\n"
 			<< "  --denoise [true|false]      Toggle denoised companion render (default: true)\n"
 			<< "  --no-denoise                Disable denoising\n"
 			<< "  -o, --output PATH.EXT       Override render output path\n"
@@ -95,11 +101,15 @@ void	FlagsParser::parse(Scene& scene)
 	this->_parseResolution(scene);
 	this->_parseDetach();
 	this->_parseThreads(scene);
-	this->_parseGamma(scene);
-	this->_parseToneMapping(scene);
+	this->_parseViewTransform(scene);
 	this->_parseBloom(scene);
 	this->_parseExposure(scene);
 	this->_parseContrast(scene);
+	this->_parseCaustics(scene);
+	this->_parseCausticPhotons(scene);
+	this->_parseCausticPasses(scene);
+	this->_parseCausticRadius(scene);
+	this->_parseCausticAlpha(scene);
 	this->_parseDenoise(scene);
 	this->_parseOutput(scene);
 	this->_parseDenoiseOutput(scene);
@@ -127,6 +137,18 @@ void	FlagsParser::_rejectRemovedFlags(void)
 		if (arg == "--output-file" || arg.rfind("--output-file=", 0) == 0)
 		{
 			throw std::runtime_error("--output-file has been removed. Use --output PATH.EXT.");
+		}
+		if (arg == "--gamma" || arg.rfind("--gamma=", 0) == 0)
+		{
+			throw std::runtime_error("--gamma has been removed. Use --view-transform standard, agx, aces, or raw.");
+		}
+		if (
+			arg == "--tonemapping"
+			|| arg == "-tm"
+			|| arg.rfind("--tonemapping=", 0) == 0
+		)
+		{
+			throw std::runtime_error("--tonemapping has been removed. Use --view-transform standard, agx, aces, or raw.");
 		}
 	}
 }
@@ -163,17 +185,21 @@ FlagsParser::_iterator	FlagsParser::_findPositionalFile(void)
 		"--maxLightBounces", "--max-light-bounces", "-mlb",
 		"--resolution", "-r",
 		"--threads", "-t",
-		"--gamma",
-		"--tonemapping", "-tm",
+		"--view-transform",
 		"--bloom",
 		"--exposure",
 		"--contrast",
+		"--caustic-photons",
+		"--caustic-passes",
+		"--caustic-radius",
+		"--caustic-alpha",
 		"--output", "-o",
 		"--denoise-output",
 	};
 	const StringVec optionalBooleanFlags = {
 		"--adaptive",
 		"--denoise",
+		"--caustics",
 	};
 
 	for (auto it = this->_args.begin(); it != this->_args.end(); it++)
@@ -270,13 +296,12 @@ void	FlagsParser::_parseBenchmark(Scene& scene)
 
 		scene.getImage()->setWidth(200);
 		scene.getImage()->setHeight(200);
-		scene.getImage()->initialize();
-		scene.setSampleCount(50);
-		scene.setMaxLightBounces(8);
-		scene.setGammaCorrected(true);
-		scene.setToneMapped(true);
-		if (benchmarkCase != "atmosphere")
-		{
+	scene.getImage()->initialize();
+	scene.setSampleCount(50);
+	scene.setMaxLightBounces(8);
+	scene.setViewTransform(ViewTransform::AgX);
+	if (benchmarkCase != "atmosphere")
+	{
 			scene.setRenderSky(SKY_NONE);
 		}
 		scene.setDistanceBlueness(false);
@@ -454,52 +479,37 @@ void	FlagsParser::_parseThreads(Scene& scene)
 	}
 }
 
-void	FlagsParser::_parseGamma(Scene& scene)
+void	FlagsParser::_parseViewTransform(Scene& scene)
 {
-	auto it = this->_findFlag("--gamma");
+	auto it = this->_findFlag("--view-transform");
 	if (it != this->_args.end())
 	{
 		if (it + 1 == this->_args.end())
 		{
-			throw std::runtime_error("--gamma requires a value.");
+			throw std::runtime_error("--view-transform requires a value.");
 		}
-		std::string gamma = *(it + 1);
-		if (gamma == "true" || gamma == "1")
-		{
-			scene.setGammaCorrected(true);
-		}
-		else if (gamma == "false" || gamma == "0")
-		{
-			scene.setGammaCorrected(false);
-		}
-		else
-		{
-			throw std::runtime_error("Invalid value for --gamma. Use true, false, 1, or 0.");
-		}
-	}
-}
+		std::string viewTransform = *(it + 1);
 
-void	FlagsParser::_parseToneMapping(Scene& scene)
-{
-	auto it = this->_findFlag(_stringVec{"--tonemapping", "-tm"});
-	if (it != this->_args.end())
-	{
-		if (it + 1 == this->_args.end())
+		Utilities::toLower(viewTransform);
+		if (viewTransform == "standard")
 		{
-			throw std::runtime_error("--tonemapping requires a value.");
+			scene.setViewTransform(ViewTransform::Standard);
 		}
-		std::string toneMapping = *(it + 1);
-		if (toneMapping == "true" || toneMapping == "1")
+		else if (viewTransform == "agx")
 		{
-			scene.setToneMapped(true);
+			scene.setViewTransform(ViewTransform::AgX);
 		}
-		else if (toneMapping == "false" || toneMapping == "0")
+		else if (viewTransform == "aces")
 		{
-			scene.setToneMapped(false);
+			scene.setViewTransform(ViewTransform::ACES);
+		}
+		else if (viewTransform == "raw")
+		{
+			scene.setViewTransform(ViewTransform::Raw);
 		}
 		else
 		{
-			throw std::runtime_error("Invalid value for " + *it + ". Use true, false, 1, or 0.");
+			throw std::runtime_error("Invalid value for --view-transform. Use standard, agx, aces, or raw. Raw is for debugging/HDR data, not display viewing.");
 		}
 	}
 }
@@ -552,6 +562,87 @@ void	FlagsParser::_parseContrast(Scene& scene)
 			throw std::runtime_error("--contrast requires a value.");
 		}
 		scene.setContrast(std::stod(*(it + 1)));
+	}
+}
+
+void	FlagsParser::_parseCaustics(Scene& scene)
+{
+	for (auto it = this->_args.begin(); it != this->_args.end(); it++)
+	{
+		if (*it == "--caustics")
+		{
+			if (it + 1 == this->_args.end() || (it + 1)->rfind("-", 0) == 0)
+			{
+				scene.setCausticsEnabled(true);
+			}
+			else
+			{
+				bool caustics;
+
+				if (!parseOptionalBoolean(*(it + 1), caustics))
+				{
+					throw std::runtime_error("Invalid value for --caustics. Use true, false, 1, or 0.");
+				}
+				scene.setCausticsEnabled(caustics);
+				it++;
+			}
+		}
+		else if (*it == "--no-caustics")
+		{
+			scene.setCausticsEnabled(false);
+		}
+	}
+}
+
+void	FlagsParser::_parseCausticPhotons(Scene& scene)
+{
+	auto it = this->_findFlag("--caustic-photons");
+	if (it != this->_args.end())
+	{
+		if (it + 1 == this->_args.end())
+		{
+			throw std::runtime_error("--caustic-photons requires a value.");
+		}
+		scene.setCausticPhotonCount(std::stoi(*(it + 1)));
+	}
+}
+
+void	FlagsParser::_parseCausticPasses(Scene& scene)
+{
+	auto it = this->_findFlag("--caustic-passes");
+	if (it != this->_args.end())
+	{
+		if (it + 1 == this->_args.end())
+		{
+			throw std::runtime_error("--caustic-passes requires a value.");
+		}
+		scene.setCausticPassCount(std::stoi(*(it + 1)));
+	}
+}
+
+void	FlagsParser::_parseCausticRadius(Scene& scene)
+{
+	auto it = this->_findFlag("--caustic-radius");
+	if (it != this->_args.end())
+	{
+		if (it + 1 == this->_args.end())
+		{
+			throw std::runtime_error("--caustic-radius requires a value.");
+		}
+		scene.setCausticRadiusMeters(std::stod(*(it + 1)));
+	}
+}
+
+void	FlagsParser::_parseCausticAlpha(Scene& scene)
+{
+	auto it = this->_findFlag("--caustic-alpha");
+	if (it != this->_args.end())
+	{
+		if (it + 1 == this->_args.end())
+		{
+			throw std::runtime_error("--caustic-alpha requires a value.");
+		}
+		scene.setCausticAlpha(std::stod(*(it + 1)));
 	}
 }
 

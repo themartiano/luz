@@ -1,4 +1,6 @@
 #include "RendererInternal.hpp"
+#include "Renderer/CausticPhotonMap.hpp"
+#include "Materials/Principled.hpp"
 #include "Utilities.hpp"
 #include "Defaults.hpp"
 #include "SkyTypes.hpp"
@@ -33,7 +35,11 @@ namespace
 		bool	valid = false;
 	};
 
-	double	scatterPDFValue(const ScatterRecord& scatterRecord, const Vector3& direction)
+	double	scatterPDFValue(
+		const ScatterRecord& scatterRecord,
+		const HitRecord& hitRecord,
+		const Vector3& direction
+	)
 	{
 		switch (scatterRecord.pdfType)
 		{
@@ -68,9 +74,40 @@ namespace
 
 				return ((1.0 - g2) / (4.0 * D_PI * denominator * std::sqrt(denominator)));
 			}
+			case SCATTER_PDF_BSDF:
+				if (!scatterRecord.bsdfMaterial)
+				{
+					return (0.0);
+				}
+				return (scatterRecord.bsdfMaterial->scatteringPDF(
+					scatterRecord.incidentRay,
+					hitRecord,
+					direction
+				));
 			default:
 				return (0.0);
 		}
+	}
+
+	Color	scatterBSDFCos(
+		const ScatterRecord& scatterRecord,
+		const HitRecord& hitRecord,
+		const Vector3& direction
+	)
+	{
+		if (scatterRecord.pdfType == SCATTER_PDF_BSDF)
+		{
+			if (!scatterRecord.bsdfMaterial)
+			{
+				return (Color(0.0, 0.0, 0.0));
+			}
+			return (scatterRecord.bsdfMaterial->evaluateBSDFCos(
+				scatterRecord.incidentRay,
+				hitRecord,
+				direction
+			));
+		}
+		return (scatterRecord.attenuation * scatterPDFValue(scatterRecord, hitRecord, direction));
 	}
 
 	Vector3	henyeyGreensteinDirection(const ScatterRecord& scatterRecord)
@@ -118,6 +155,8 @@ namespace
 				return (Sampler::sphereDirection(Sampler::DIM_BSDF_DIRECTION));
 			case SCATTER_PDF_HENYEY_GREENSTEIN:
 				return (henyeyGreensteinDirection(scatterRecord));
+			case SCATTER_PDF_BSDF:
+				return (scatterRecord.sampledDirection);
 			default:
 				return (Vector3(0.0, 0.0, 0.0));
 		}
@@ -256,13 +295,114 @@ namespace
 		return (!std::isfinite(throughputMax) || throughputMax <= PATH_THROUGHPUT_EPSILON);
 	}
 
+	bool	materialCanTransmitThroughGeometry(const Material* material)
+	{
+		if (!material)
+		{
+			return (false);
+		}
+		const MaterialType type = material->getType();
+		if (
+			type == DIELECTRIC
+			|| type == ISOTROPIC
+			|| type == HENYEY_GREENSTEIN
+		)
+		{
+			return (true);
+		}
+		if (type != PRINCIPLED)
+		{
+			return (false);
+		}
+
+		const Principled* principled = dynamic_cast<const Principled*>(material);
+		return (principled != nullptr && principled->getTransmission() > 0.0);
+	}
+
+	bool	leavesOpaqueGeometricSurface(const HitRecord& hitRecord, const Vector3& direction)
+	{
+		if (materialCanTransmitThroughGeometry(hitRecord.material))
+		{
+			return (true);
+		}
+
+		Vector3 geometricNormal = hitRecord.geometricNormal;
+		if (Utilities::vectorLengthSquared(geometricNormal) <= 1e-12)
+		{
+			geometricNormal = hitRecord.normal;
+		}
+		if (Utilities::vectorLengthSquared(geometricNormal) <= 1e-12)
+		{
+			return (true);
+		}
+		return (Utilities::dot(geometricNormal, direction) > 1e-7);
+	}
+
 	bool	hasEnvironmentLight(Scene& scene)
 	{
 		return (
-			scene.getRenderSky() == SKY_ENVIRONMENT
-			&& scene.hasEnvironmentMap()
+			scene.hasEnvironmentMap()
+			&& scene.getEnvironmentLighting()
 			&& scene.getEnvironmentStrength() > 0.0
 		);
+	}
+
+	bool	hasVisibleEnvironment(Scene& scene)
+	{
+		return (scene.hasEnvironmentMap() && scene.getEnvironmentStrength() > 0.0);
+	}
+
+	Color	sampleEnvironmentRadiance(Scene& scene, const Vector3& direction)
+	{
+		if (!hasVisibleEnvironment(scene))
+		{
+			return (Color(0.0, 0.0, 0.0));
+		}
+		return (
+			scene.getEnvironmentMap()->sampleDirection(
+				direction,
+				scene.getEnvironmentRotation()
+			) * scene.getEnvironmentStrength()
+		);
+	}
+
+	Color	sampleProceduralStars(const Atmosphere& atmosphere, const Color& atmosphereColor)
+	{
+		double random = Sampler::sample1D(Sampler::DIM_ATMOSPHERE);
+		if (random < 0.9996)
+		{
+			return (Color(0.0, 0.0, 0.0));
+		}
+
+		double starSample = Sampler::sample1D(Sampler::DIM_ATMOSPHERE + 1);
+		double diff = (atmosphere.getStarsBrightness() - 0.2 + (0.4 * starSample))
+			- ((atmosphereColor.getRed() + atmosphereColor.getGreen() + atmosphereColor.getBlue()) / 3.0);
+		if (diff < 0.0)
+		{
+			diff = 0.0;
+		}
+		else if (diff > 1.0)
+		{
+			diff = 1.0;
+		}
+		return (Color(diff, diff, diff));
+	}
+
+	Color	sampleAtmosphereSky(Scene& scene, Ray& ray, double environmentMISWeight)
+	{
+		const Atmosphere& atmosphere = scene.getAtmosphere();
+		const AtmosphereSample atmosphereSample = atmosphere.sampleSegment(ray, T_MAX);
+		Color background(0.0, 0.0, 0.0);
+
+		if (hasVisibleEnvironment(scene))
+		{
+			background = sampleEnvironmentRadiance(scene, ray.getDirection()) * environmentMISWeight;
+		}
+		else
+		{
+			background = sampleProceduralStars(atmosphere, atmosphereSample.inScattering);
+		}
+		return (atmosphereSample.inScattering + (atmosphereSample.transmittance * background));
 	}
 
 	Color	sampleSceneSky(Scene& scene, Ray& ray)
@@ -270,19 +410,12 @@ namespace
 		switch(scene.getRenderSky())
 		{
 			case (SKY_ATMOSPHERE):
-				return (Renderer::internal::_computeAtmosphereColor(scene, ray));
+				return (sampleAtmosphereSky(scene, ray, 1.0));
 			case (SKY_LINEAR):
 				return (Renderer::internal::_calculateSkyInterpolation(scene, ray));
 			case (SKY_ENVIRONMENT):
-				if (scene.hasEnvironmentMap())
-				{
-					return (
-						scene.getEnvironmentMap()->sampleDirection(
-							ray.getDirection(),
-							scene.getEnvironmentRotation()
-						) * scene.getEnvironmentStrength()
-					);
-				}
+				if (hasVisibleEnvironment(scene))
+					return (sampleEnvironmentRadiance(scene, ray.getDirection()));
 				return (scene.getBackgroundColor());
 			default:
 				return (scene.getBackgroundColor());
@@ -297,7 +430,7 @@ namespace
 		}
 
 		HitRecord earthHitRecord;
-		if (!planetaryHit(atmosphere.getEarthRadius(), ray, earthHitRecord) || earthHitRecord.t1 <= T_MIN)
+		if (!planetaryHit(atmosphere.metersToSceneUnits(atmosphere.getEarthRadius()), ray, earthHitRecord) || earthHitRecord.t1 <= T_MIN)
 		{
 			return (surfaceTMax);
 		}
@@ -354,6 +487,36 @@ namespace
 		throughput /= survivalProbability;
 
 		return (true);
+	}
+
+	Color	mediumTransmittance(const ScatterRecord& scatterRecord, double distanceMeters)
+	{
+		if (!scatterRecord.hasMediumAbsorption || !std::isfinite(distanceMeters) || distanceMeters <= 0.0)
+		{
+			return (Color(1.0, 1.0, 1.0));
+		}
+
+		return (Color(
+			std::exp(-scatterRecord.mediumAbsorptionCoefficient.getRed() * distanceMeters),
+			std::exp(-scatterRecord.mediumAbsorptionCoefficient.getGreen() * distanceMeters),
+			std::exp(-scatterRecord.mediumAbsorptionCoefficient.getBlue() * distanceMeters)
+		));
+	}
+
+	Color	effectiveScatterAttenuation(
+		Scene& scene,
+		const HitRecord& hitRecord,
+		const ScatterRecord& scatterRecord
+	)
+	{
+		if (hitRecord.frontFace)
+		{
+			return (scatterRecord.attenuation);
+		}
+		return (
+			scatterRecord.attenuation
+			* mediumTransmittance(scatterRecord, scene.sceneUnitsToMeters(hitRecord.t0))
+		);
 	}
 
 	double	normalizedColorChannel(double value)
@@ -556,7 +719,9 @@ namespace
 			return (sample);
 		}
 
-		sample.emitted = material->emitted();
+		sample.emitted = surfaceSample.hasEmitted
+			? surfaceSample.emitted
+			: material->emitted();
 		if (maxChannel(sample.emitted) <= 0.0)
 		{
 			return (sample);
@@ -598,10 +763,18 @@ namespace
 		{
 			return (Color(0.0, 0.0, 0.0));
 		}
+		if (!leavesOpaqueGeometricSurface(hitRecord, lightSample.direction))
+		{
+			return (Color(0.0, 0.0, 0.0));
+		}
 
-		const double scatterSamplePDF = scatterPDFValue(scatterRecord, lightSample.direction);
-		const double scatteringPDF = scatterSamplePDF;
-		if (scatteringPDF <= 0.0 || !std::isfinite(scatteringPDF))
+		const double scatterSamplePDF = scatterPDFValue(scatterRecord, hitRecord, lightSample.direction);
+		const Color bsdfCos = scatterBSDFCos(scatterRecord, hitRecord, lightSample.direction);
+		if (
+			scatterSamplePDF <= 0.0
+			|| !std::isfinite(scatterSamplePDF)
+			|| maxChannel(bsdfCos) <= 0.0
+		)
 		{
 			return (Color(0.0, 0.0, 0.0));
 		}
@@ -614,9 +787,9 @@ namespace
 		const double misWeight = powerHeuristic(lightSample.pdf, scatterSamplePDF);
 
 		return (
-			scatterRecord.attenuation
+			bsdfCos
 			* lightSample.emitted
-			* (scatteringPDF * misWeight / (lightSample.pdf * sampleProbability))
+			* (misWeight / (lightSample.pdf * sampleProbability))
 		);
 	}
 
@@ -645,9 +818,18 @@ namespace
 		{
 			return (Color(0.0, 0.0, 0.0));
 		}
+		if (!leavesOpaqueGeometricSurface(hitRecord, lightSample.direction))
+		{
+			return (Color(0.0, 0.0, 0.0));
+		}
 
-		const double scatterSamplePDF = scatterPDFValue(scatterRecord, lightSample.direction);
-		if (scatterSamplePDF <= 0.0 || !std::isfinite(scatterSamplePDF))
+		const double scatterSamplePDF = scatterPDFValue(scatterRecord, hitRecord, lightSample.direction);
+		const Color bsdfCos = scatterBSDFCos(scatterRecord, hitRecord, lightSample.direction);
+		if (
+			scatterSamplePDF <= 0.0
+			|| !std::isfinite(scatterSamplePDF)
+			|| maxChannel(bsdfCos) <= 0.0
+		)
 		{
 			return (Color(0.0, 0.0, 0.0));
 		}
@@ -655,9 +837,9 @@ namespace
 		const double misWeight = powerHeuristic(lightSample.pdf, scatterSamplePDF);
 
 		return (
-			scatterRecord.attenuation
+			bsdfCos
 			* lightSample.emitted
-			* (scatterSamplePDF * misWeight / (lightSample.pdf * sampleProbability))
+			* (misWeight / (lightSample.pdf * sampleProbability))
 		);
 	}
 
@@ -715,6 +897,7 @@ namespace
 			&scene.getLightSelectionCumulativeWeights(),
 			scene.getLightSelectionTotalWeight()
 		};
+		const CausticPhotonMap* causticPhotonMap = scene.getCausticPhotonMap().get();
 		//static bool		distanceBlueness = scene.getDistanceBlueness();
 
 		Ray		currentRay = ray;
@@ -734,17 +917,37 @@ namespace
 				{
 					*primaryFeatures = primaryMissFeatures(scene, *renderCamera, currentRay, x, y);
 				}
-				const Color	skyColor = sampleSceneSky(scene, currentRay);
-				double skyMISWeight = 1.0;
-				if (skyType == SKY_ENVIRONMENT && bounces > 0 && !previousBounceSpecular && environmentLight)
+				double environmentMISWeight = 1.0;
+				if (
+					(skyType == SKY_ENVIRONMENT || skyType == SKY_ATMOSPHERE)
+					&& bounces > 0
+					&& !previousBounceSpecular
+					&& environmentLight
+				)
 				{
-					skyMISWeight = powerHeuristic(
+					environmentMISWeight = powerHeuristic(
 						previousScatterPDF,
 						environmentPDF(scene, currentRay.getDirection())
 					);
 				}
+				Color skyColor(0.0, 0.0, 0.0);
+				switch (skyType)
+				{
+					case SKY_ATMOSPHERE:
+						skyColor = sampleAtmosphereSky(scene, currentRay, environmentMISWeight);
+						break;
+					case SKY_ENVIRONMENT:
+						skyColor = sampleSceneSky(scene, currentRay) * environmentMISWeight;
+						break;
+					case SKY_LINEAR:
+						skyColor = Renderer::internal::_calculateSkyInterpolation(scene, currentRay);
+						break;
+					default:
+						skyColor = scene.getBackgroundColor();
+						break;
+				}
 
-				return (accumulatedColor + clampRayColor(throughput * skyColor * skyMISWeight));
+				return (accumulatedColor + clampRayColor(throughput * skyColor));
 			}
 			if (bounces == 0 && primaryFeatures != nullptr && renderCamera != nullptr)
 			{
@@ -773,10 +976,15 @@ namespace
 
 				return (accumulatedColor + clampRayColor((throughput * emitted) * emissionMISWeight));
 			}
+			const Color attenuation = effectiveScatterAttenuation(scene, hitRecord, scatterRecord);
 
 			if (scatterRecord.isSpecular)
 			{
-				throughput = clampRayColor(throughput * scatterRecord.attenuation);
+				if (!leavesOpaqueGeometricSurface(hitRecord, scatterRecord.specularRay.getDirection()))
+				{
+					return (accumulatedColor);
+				}
+				throughput = clampRayColor(throughput * attenuation);
 				if (isTerminatedThroughput(throughput) || !applyRussianRoulette(throughput, bounces))
 				{
 					return (accumulatedColor);
@@ -788,9 +996,15 @@ namespace
 			}
 
 			accumulatedColor += throughput * emitted;
-			if (isTerminatedThroughput(throughput * scatterRecord.attenuation))
+			if (isTerminatedThroughput(throughput * attenuation))
 			{
 				return (accumulatedColor);
+			}
+			if (causticPhotonMap)
+			{
+				accumulatedColor += clampRayColor(
+					throughput * causticPhotonMap->estimate(hitRecord, scatterRecord)
+				);
 			}
 
 			if (lightCount > 0)
@@ -819,7 +1033,11 @@ namespace
 			}
 
 			Ray scattered = Ray::fromNormalizedDirection(hitRecord.position, scatterPDFGenerate(scatterRecord));
-			const double pdfValue = scatterPDFValue(scatterRecord, scattered.getDirection());
+			if (!leavesOpaqueGeometricSurface(hitRecord, scattered.getDirection()))
+			{
+				return (accumulatedColor);
+			}
+			const double pdfValue = scatterPDFValue(scatterRecord, hitRecord, scattered.getDirection());
 
 			if (pdfValue <= 0.0 || !std::isfinite(pdfValue))
 			{
@@ -827,7 +1045,7 @@ namespace
 			}
 
 			throughput = clampRayColor(
-				throughput * scatterRecord.attenuation
+				throughput * attenuation
 			);
 			if (isTerminatedThroughput(throughput) || !applyRussianRoulette(throughput, bounces))
 			{

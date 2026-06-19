@@ -3,7 +3,6 @@
 #include "Random.hpp"
 #include <algorithm>
 #include <array>
-#include <atomic>
 #include <cmath>
 #include <cstdint>
 
@@ -26,7 +25,7 @@ namespace
 		std::uint64_t	baseKey = 0;
 	};
 
-	std::atomic<std::uint32_t>	g_renderSeed(0x9e3779b9u);
+	std::uint32_t	g_renderSeed = 0x9e3779b9u;
 	thread_local SampleContext	g_context;
 
 	std::uint64_t	splitMix64(std::uint64_t value)
@@ -122,6 +121,7 @@ namespace
 			|| baseDimension == Sampler::DIM_LIGHT_SURFACE_POINT
 			|| baseDimension == Sampler::DIM_ENVIRONMENT_SELECTION
 			|| baseDimension == Sampler::DIM_ENVIRONMENT_POINT
+			|| baseDimension == Sampler::DIM_LIGHT_EMISSION_DIRECTION
 		);
 	}
 
@@ -150,7 +150,7 @@ namespace
 
 void	Sampler::setRenderSeed(std::uint32_t seed)
 {
-	g_renderSeed.store(seed);
+	g_renderSeed = seed;
 }
 
 void	Sampler::beginPixelSample(std::size_t x, std::size_t y, std::uint32_t sampleIndex)
@@ -166,7 +166,7 @@ void	Sampler::beginPixelSample(std::size_t x, std::size_t y, std::uint32_t sampl
 	g_context.sampleIndex = sampleIndex;
 	g_context.stream = stream;
 	g_context.bounce = 0;
-	g_context.baseKey = g_renderSeed.load();
+	g_context.baseKey = g_renderSeed;
 	g_context.baseKey ^= (static_cast<std::uint64_t>(x) + 1ull) * 0xbf58476d1ce4e5b9ull;
 	g_context.baseKey ^= (static_cast<std::uint64_t>(y) + 1ull) * 0x94d049bb133111ebull;
 	g_context.baseKey ^= (static_cast<std::uint64_t>(stream) + 1ull) * 0xda942042e4dd58b5ull;

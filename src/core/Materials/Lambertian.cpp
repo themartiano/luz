@@ -23,9 +23,14 @@ bool	Lambertian::scatter(Ray& ray, HitRecord& hitRecord, ScatterRecord& scatterR
 	(void)ray;
 }
 
-double	Lambertian::scatteringPDF(Ray& ray, HitRecord& hitRecord)
+double	Lambertian::scatteringPDF(
+	const Ray& ray,
+	const HitRecord& hitRecord,
+	const Vector3& scatteredDirection
+	) const
 {
-	double cosine = Utilities::dot(hitRecord.normal, ray.getDirection());
+	(void)ray;
+	double cosine = Utilities::dot(hitRecord.normal, scatteredDirection);
 
 	return (cosine < 0.0 ? 0.0 : cosine / D_PI);
 }

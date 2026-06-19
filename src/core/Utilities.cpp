@@ -1,4 +1,5 @@
 #include "Utilities.hpp"
+#include "ColorManagement.hpp"
 #include "Hittables/Sphere.hpp"
 #include "Defaults.hpp"
 #include <cmath>
@@ -129,71 +130,5 @@ std::string	Utilities::terminalFilePath(const std::string& filePath)
 // Returns the luminance of the color 'color'
 double	Utilities::luminance(const Color& color)
 {
-	return (
-		dot(color, Vector3(0.2126, 0.7152, 0.0722))
-	);
-}
-
-namespace
-{
-	double	clampUnit(double value)
-	{
-		if (!std::isfinite(value) || value <= 0.0)
-		{
-			return (0.0);
-		}
-		if (value >= 1.0)
-		{
-			return (1.0);
-		}
-		return (value);
-	}
-
-	double	filmicToneMapChannel(double value)
-	{
-		constexpr double a = 2.51;
-		constexpr double b = 0.03;
-		constexpr double c = 2.43;
-		constexpr double d = 0.59;
-		constexpr double e = 0.14;
-
-		if (!std::isfinite(value) || value <= 0.0)
-		{
-			return (0.0);
-		}
-		return (clampUnit((value * ((a * value) + b)) / ((value * ((c * value) + d)) + e)));
-	}
-}
-
-Color	Utilities::filmicToneMap(const Color& color)
-{
-	return (Color(
-		filmicToneMapChannel(color.getRed()),
-		filmicToneMapChannel(color.getGreen()),
-		filmicToneMapChannel(color.getBlue())
-	));
-}
-
-// Reinhard-Jodie tone mapping. Kept for callers that prefer the softer curve.
-Color	Utilities::reinhardJodie(const Color& color)
-{
-	const double l = luminance(color);
-
-	if (!std::isfinite(l) || l <= 0.0)
-	{
-		return (Color(0.0, 0.0, 0.0));
-	}
-
-	const Color luminanceMapped = color / (1.0 + l);
-	const Color channelMapped(
-		color.getRed() / (1.0 + color.getRed()),
-		color.getGreen() / (1.0 + color.getGreen()),
-		color.getBlue() / (1.0 + color.getBlue())
-	);
-
-	return (Color(
-		clampUnit((luminanceMapped.getRed() * (1.0 - channelMapped.getRed())) + (channelMapped.getRed() * channelMapped.getRed())),
-		clampUnit((luminanceMapped.getGreen() * (1.0 - channelMapped.getGreen())) + (channelMapped.getGreen() * channelMapped.getGreen())),
-		clampUnit((luminanceMapped.getBlue() * (1.0 - channelMapped.getBlue())) + (channelMapped.getBlue() * channelMapped.getBlue()))
-	));
+	return (ColorManagement::luminance(color));
 }

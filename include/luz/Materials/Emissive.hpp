@@ -4,13 +4,12 @@ class	Emissive : public Material
 {
 	public:
 		Emissive(void);
-		Emissive(Color color);
-		Emissive(double intensity);
-		Emissive(Color color, double intensity);
+		explicit Emissive(Color radiance);
+		static Emissive	fromRadiance(Color color, double radiance);
+		static Emissive	fromLuminance(Color color, double luminance);
+		static Emissive	fromRadiantPower(Color color, double watts, double area);
+		static Emissive	fromLuminousFlux(Color color, double lumens, double area);
 		Color	emitted(void);
-		void	setIntensity(double newIntensity);
+		void	setRadiance(Color radiance);
 		MaterialType	getType(void) const;
-
-	private:
-		double	_intensity;
 };

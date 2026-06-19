@@ -15,6 +15,7 @@ struct	HitRecord
 	double		t1 = 0.0;
 	Vector3		position;
 	Vector3		normal;
+	Vector3		geometricNormal;
 	bool		frontFace = true;
 	double		u = 0.0;
 	double		v = 0.0;
@@ -30,15 +31,28 @@ struct	HitRecord
 			+ (direction.getZ() * outwardNormal.getZ())
 		) < 0.0;
 		this->normal = this->frontFace ? outwardNormal : outwardNormal * -1.0;
+		this->geometricNormal = this->normal;
 	}
 };
 
 struct	HittableLightSample
 {
 	Vector3		direction;
+	Color		emitted = Color(0.0, 0.0, 0.0);
 	double		pdf = 0.0;
 	double		tMax = 0.0;
 	Material*	material = nullptr;
+	bool		hasEmitted = false;
+	bool		valid = false;
+};
+
+struct	HittableEmissionSample
+{
+	Vector3		position;
+	Vector3		normal;
+	Vector3		direction;
+	Color		emitted = Color(0.0, 0.0, 0.0);
+	double		powerScale = 0.0;
 	bool		valid = false;
 };
 
@@ -54,5 +68,6 @@ class   Hittable
 		virtual double pdfValue(const Vector3& origin, const Vector3& vec) const;
 		virtual Vector3 random(const Vector3& origin) const;
 		virtual bool sampleLight(const Vector3& origin, HittableLightSample& sample) const;
+		virtual bool sampleEmission(HittableEmissionSample& sample) const;
 		virtual double lightSelectionWeight(void) const;
 };

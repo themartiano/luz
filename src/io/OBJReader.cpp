@@ -13,13 +13,17 @@
 #include <vector>
 #include <fstream>
 #include <algorithm>
+#include <cctype>
 #include <string>
-#include <sstream>
 #include <unistd.h>
 #include <chrono>
+#include <cstdio>
+#include <cstdlib>
 #include <iostream>
 #include <stdexcept>
 #include <cmath>
+#include <ios>
+#include <limits>
 #include <utility>
 
 namespace
@@ -159,31 +163,60 @@ namespace
 
 	std::size_t	parseObjFile(Mesh& mesh, std::ifstream& stream, const ObjTransform& transform, std::shared_ptr<Material> material);
 
-	Vector3	parseVectorValues(const std::string& value, const std::string& line)
+	Vector3	parseVectorValues(const char* value, const std::string& line)
 	{
 		double x;
 		double y;
 		double z;
-		std::istringstream lineStream(value);
 
-		if (!(lineStream >> x >> y >> z))
+		if (std::sscanf(value, "%lf %lf %lf", &x, &y, &z) != 3)
 		{
 			throw std::runtime_error("Invalid OBJ vector line: " + line);
 		}
 		return (Vector3(x, y, z));
 	}
 
-	Vector3	parseTextureValues(const std::string& value, const std::string& line)
+	Vector3	parseTextureValues(const char* value, const std::string& line)
 	{
 		double u;
 		double v;
-		std::istringstream lineStream(value);
 
-		if (!(lineStream >> u >> v))
+		if (std::sscanf(value, "%lf %lf", &u, &v) != 2)
 		{
 			throw std::runtime_error("Invalid OBJ texture coordinate line: " + line);
 		}
 		return (Vector3(u, v, 0.0));
+	}
+
+	void	reserveObjStorage(
+		std::ifstream& stream,
+		std::vector<Vector3>& vertices,
+		std::vector<Vector3>& textureCoordinates,
+		std::vector<Vector3>& normals,
+		std::vector<Triangle>& triangles
+	)
+	{
+		const std::streampos start = stream.tellg();
+		if (start == std::streampos(-1))
+		{
+			return;
+		}
+
+		stream.seekg(0, std::ios::end);
+		const std::streampos end = stream.tellg();
+		stream.seekg(start);
+		if (end == std::streampos(-1) || end <= start)
+		{
+			return;
+		}
+
+		const std::size_t byteCount = static_cast<std::size_t>(end - start);
+		const std::size_t estimatedLines = std::max<std::size_t>(16, byteCount / 48);
+
+		vertices.reserve(estimatedLines / 2);
+		textureCoordinates.reserve(estimatedLines / 3);
+		normals.reserve(estimatedLines / 3);
+		triangles.reserve(estimatedLines / 2);
 	}
 
 	int	resolveObjIndex(int index, std::size_t count, const std::string& token)
@@ -209,37 +242,77 @@ namespace
 		return (resolvedIndex);
 	}
 
+	bool	isTokenEnd(char character)
+	{
+		return (
+			character == '\0'
+			|| std::isspace(static_cast<unsigned char>(character))
+		);
+	}
+
+	void	skipSpaces(const char*& cursor)
+	{
+		while (std::isspace(static_cast<unsigned char>(*cursor)))
+		{
+			cursor++;
+		}
+	}
+
+	int	parseObjIndexToken(const char*& cursor, const std::string& line)
+	{
+		char* end = nullptr;
+		const long value = std::strtol(cursor, &end, 10);
+
+		if (end == cursor)
+		{
+			throw std::runtime_error("Invalid OBJ face vertex index: " + line);
+		}
+		if (
+			value < static_cast<long>(std::numeric_limits<int>::min())
+			|| value > static_cast<long>(std::numeric_limits<int>::max())
+		)
+		{
+			throw std::runtime_error("OBJ face vertex index is out of range: " + line);
+		}
+		cursor = end;
+		return (static_cast<int>(value));
+	}
+
 	ObjFaceVertex	parseFaceVertex(
-		const std::string& token,
+		const char*& cursor,
 		std::size_t vertexCount,
 		std::size_t textureCount,
-		std::size_t normalCount
+		std::size_t normalCount,
+		const std::string& line
 	)
 	{
 		ObjFaceVertex faceVertex;
-		const std::size_t firstSlash = token.find('/');
-		const std::size_t secondSlash = firstSlash == std::string::npos ? std::string::npos : token.find('/', firstSlash + 1);
-		const std::string vertexPart = token.substr(0, firstSlash);
 
-		if (vertexPart.empty())
+		skipSpaces(cursor);
+		if (*cursor == '\0')
 		{
-			throw std::runtime_error("OBJ face vertex is missing a position index: " + token);
+			throw std::runtime_error("OBJ face vertex is missing a position index: " + line);
 		}
-		faceVertex.vertexIndex = resolveObjIndex(std::stoi(vertexPart), vertexCount, token);
-		if (firstSlash != std::string::npos && firstSlash + 1 < token.length())
+		faceVertex.vertexIndex = resolveObjIndex(parseObjIndexToken(cursor, line), vertexCount, line);
+		if (*cursor == '/')
 		{
-			const std::size_t textureLength = secondSlash == std::string::npos
-				? std::string::npos
-				: secondSlash - firstSlash - 1;
-			const std::string texturePart = token.substr(firstSlash + 1, textureLength);
-			if (!texturePart.empty())
+			cursor++;
+			if (*cursor != '/' && !isTokenEnd(*cursor))
 			{
-				faceVertex.textureIndex = resolveObjIndex(std::stoi(texturePart), textureCount, token);
+				faceVertex.textureIndex = resolveObjIndex(parseObjIndexToken(cursor, line), textureCount, line);
+			}
+			if (*cursor == '/')
+			{
+				cursor++;
+				if (!isTokenEnd(*cursor))
+				{
+					faceVertex.normalIndex = resolveObjIndex(parseObjIndexToken(cursor, line), normalCount, line);
+				}
 			}
 		}
-		if (secondSlash != std::string::npos && secondSlash + 1 < token.length())
+		if (!isTokenEnd(*cursor))
 		{
-			faceVertex.normalIndex = resolveObjIndex(std::stoi(token.substr(secondSlash + 1)), normalCount, token);
+			throw std::runtime_error("Invalid OBJ face vertex: " + line);
 		}
 
 		return (faceVertex);
@@ -412,6 +485,8 @@ std::size_t	parseObjFile(Mesh& mesh, std::ifstream& stream, const ObjTransform& 
 	std::vector<Triangle> triangles;
 	std::size_t skippedDegenerateTriangles = 0;
 
+	reserveObjStorage(stream, vertices, textureCoordinates, normals, triangles);
+
 	do
 	{
 		getline(stream, line);
@@ -423,26 +498,36 @@ std::size_t	parseObjFile(Mesh& mesh, std::ifstream& stream, const ObjTransform& 
 
 		if (line.rfind("v ", 0) == 0)
 		{
-			vertices.push_back(parseVectorValues(line.substr(2), line));
+			vertices.push_back(parseVectorValues(line.c_str() + 2, line));
 		}
 		else if (line.rfind("vt ", 0) == 0)
 		{
-			textureCoordinates.push_back(parseTextureValues(line.substr(3), line));
+			textureCoordinates.push_back(parseTextureValues(line.c_str() + 3, line));
 		}
 		else if (line.rfind("vn ", 0) == 0)
 		{
-			normals.push_back(parseVectorValues(line.substr(3), line));
+			normals.push_back(parseVectorValues(line.c_str() + 3, line));
 		}
 		else if (line.rfind("f ", 0) == 0)
 		{
-			std::istringstream lineStream(line.substr(2));
 			std::vector<ObjFaceVertex> faceVertices;
-			std::string token;
+			const char* cursor = line.c_str() + 2;
 
 			faceVertices.reserve(4);
-			while (lineStream >> token)
+			while (true)
 			{
-				faceVertices.push_back(parseFaceVertex(token, vertices.size(), textureCoordinates.size(), normals.size()));
+				skipSpaces(cursor);
+				if (*cursor == '\0')
+				{
+					break;
+				}
+				faceVertices.push_back(parseFaceVertex(
+					cursor,
+					vertices.size(),
+					textureCoordinates.size(),
+					normals.size(),
+					line
+				));
 			}
 			if (faceVertices.size() < 3)
 			{

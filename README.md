@@ -2,7 +2,9 @@
 
 **Luz** is a C++20 Path Tracer developed from scratch with zero third-party dependencies.
 
-It supports Monte Carlo path tracing, global illumination, BVH acceleration, adaptive sampling, denoising, atmospheric scattering, custom scene files, and a Blender-to-Luz exporter.
+It supports Monte Carlo path tracing, global illumination, BVH acceleration,
+adaptive sampling, denoising, atmospheric scattering, physically parameterized
+scene files, and a Blender-to-Luz exporter.
 
 https://github.com/user-attachments/assets/7dc03485-9418-47af-a7e7-c4c4c53b6b70
 
@@ -16,16 +18,22 @@ https://github.com/user-attachments/assets/7dc03485-9418-47af-a7e7-c4c4c53b6b70
 - Adaptive sampling
 - Denoiser (NFOR-style)
 - Spheres, planes, rectangles, triangles, cubes, volumes, and OBJ meshes
-- Lambertian, metal, dielectric, emissive, isotropic, and Henyey-Greenstein phase materials
-- Area, point, sphere and directional lights
-- PPM and HDR equirectangular environment maps
+- Scene-linear ACEScg rendering with sRGB input/output transforms
+- Spectral authoring helpers: wavelength, blackbody, solar, and reflectance curves
+- Lambertian, GGX metal, rough dielectric, layered principled, emissive,
+  isotropic, and Henyey-Greenstein phase materials
+- Measured conductor, glass, and volume presets, plus IES lamp profiles
+- Area, point, sphere and directional lights with physical units
+- PPM and HDR equirectangular environment maps with calibrated lighting and MIS
 - Custom `.luz` scene files
 - .blend to .luz converter
 - Fully customizable render parameters via CLI or scene file
-- Importance sampling with PDFs
+- Importance sampling with PDFs, MIS, and optional caustic photon mapping
 - BVH acceleration, including packed mesh BVHs with binned SAH construction and near-first traversal
 - Atmospheric simulation w/ scattering
-- Depth of field, antialiasing, exposure, contrast, tone mapping, gamma correction, and bloom
+- Physical camera focal length, sensor size, aperture/f-stop, focus distance,
+  photographic exposure, antialiasing, contrast, tone mapping, sRGB encoding,
+  and bloom
 - BMP, PNG, and 32-bit floating-point TIFF output
 - Deterministic benchmark harness with render, denoise, post-process, and score breakdowns
 
@@ -149,13 +157,13 @@ Options:
   --adaptive-min-samples N    Minimum samples before adaptive stopping
   --adaptive-threshold F      Relative adaptive noise threshold
   --adaptive-check-interval N Adaptive convergence check interval
-  -mlb, --maxLightBounces N   Override maximum light bounces
-      --max-light-bounces N   Alias for --maxLightBounces
-  -t, --threads N             Render with N worker threads
-  --seed N                    Seed random sampling
-  --gamma true|false          Toggle gamma correction
-  -tm, --tonemapping true|false  Toggle tone mapping
-  --bloom true|false          Toggle bloom
+	-mlb, --maxLightBounces N   Override maximum light bounces
+	    --max-light-bounces N   Alias for --maxLightBounces
+	-t, --threads N             Render with N worker threads
+	--seed N                    Seed random sampling
+	--view-transform standard|agx|aces|raw
+	                              Select display transform; raw is debugging/HDR data, not viewing
+	--bloom true|false          Toggle bloom
   --exposure EV              Exposure compensation in stops
   --contrast F               Display contrast multiplier
   --denoise [true|false]      Toggle denoised companion render (default: true)
@@ -168,8 +176,60 @@ Options:
 ```
 
 TIFF output stores RGB as uncompressed 32-bit IEEE floating-point samples. Use
-`--output render.tiff` with `--tonemapping false --gamma false` to preserve
-scene-linear HDR values above 1.0.
+`--output render.tiff --view-transform raw` to preserve scene-linear ACEScg HDR
+values above 1.0. Raw output is for debugging, measurement, and compositing data,
+not normal viewing.
+
+## Physically Based Authoring
+
+Luz scene units are controlled with `meters_per_unit`, and color values are
+converted into scene-linear ACEScg before rendering. Numeric triples are ACEScg
+values by default; use explicit functions for other sources:
+
+```text
+color=srgb(0.8,0.2,0.1)
+color=wavelength(550nm)
+color=blackbody(3000K)
+color=solar
+color=reflectance(materials/red_paint.spd)
+```
+
+Lights can be authored with physical quantities:
+
+```text
+area_light softbox {
+position=(0,3,0)
+size=(2,1)
+normal=(0,-1,0)
+color=blackbody(3200K)
+lumens=12000
+}
+
+directional_light sun {
+direction=(-0.2,-1,-0.1)
+color=solar
+solar=1
+}
+```
+
+Cameras can use real lens controls:
+
+```text
+camera main {
+position=(0,1.5,5)
+direction=(0,0,-1)
+focal_length_mm=50
+sensor_width_mm=36
+sensor_height_mm=24
+f_stop=2.8
+focus_distance=4
+shutter=0.0166667
+iso=400
+}
+```
+
+The complete scene-file reference is in
+[`docs/scene-files.md`](docs/scene-files.md).
 
 ## Adaptive Sampling
 
@@ -211,14 +271,29 @@ misleading because each local filter window covers too much of the image.
 
 Example scenes live in `examples/scenes/`. The scene-file format is documented in [`docs/scene-files.md`](docs/scene-files.md).
 
-Object paths in `.luz` files are resolved relative to the scene file first, then relative to the current working directory, then under `assets/objects/`. Keep large or generated OBJ assets local unless they are intentionally reviewed for inclusion.
+Object paths in `.luz` files use the path provided by the scene: absolute paths are used as-is, and relative paths are resolved from the directory containing the `.luz` file. Keep large or generated OBJ assets local unless they are intentionally reviewed for inclusion.
 
-OBJ meshes can also be offset and assigned a scene material:
+OBJ meshes can be declared, transformed, and assigned named scene materials:
 
 ```text
-obj=mesh.obj,(x,y,z),material[
-metal=(0.8,0.8,0.8),0.1
-]
+[materials]
+material gold {
+type=metal
+preset=gold
+roughness=0.15
+}
+
+[meshes]
+mesh statue_mesh {
+file=objects/statue.obj
+}
+
+[scene]
+object statue {
+mesh=statue_mesh
+position=(0,0,0)
+material=gold
+}
 ```
 
 ## Blender Exporter
@@ -243,7 +318,7 @@ src/scene/         Scene model and scene helpers
 src/io/            Scene-file, OBJ, BMP, PNG, and TIFF loading/writing
 src/cli/           Command-line entry point and flags
 examples/scenes/   Example .luz scene files
-assets/objects/    Benchmark OBJ assets and optional local OBJ assets
+examples/objects/  Example OBJ assets
 docs/images/       Compressed showcase images
 tools/             Export and utility scripts
 tests/             Standard-library-only test program

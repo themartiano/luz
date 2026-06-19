@@ -6,6 +6,7 @@
 #include "Sampler.hpp"
 #include <algorithm>
 #include <cmath>
+#include <stdexcept>
 
 namespace
 {
@@ -97,6 +98,15 @@ namespace
 		}
 		setLatLongUV(outwardNormal, hitRecord);
 	}
+
+	bool	zeroDirection(const Vector3& direction)
+	{
+		return (
+			direction.getX() == 0.0
+			&& direction.getY() == 0.0
+			&& direction.getZ() == 0.0
+		);
+	}
 }
 
 /*
@@ -111,6 +121,9 @@ Sphere::Sphere(void)
 	this->_radius = 1.0;
 	this->_visible = true;
 	this->_uvProjection = SphereUVProjection::LatLong;
+	this->_iesProfile = nullptr;
+	this->_iesDirection = Vector3(0.0, -1.0, 0.0);
+	this->_iesRotationDegrees = 0.0;
 }
 
 // Constructs the Sphere with custom values
@@ -121,6 +134,9 @@ Sphere::Sphere(Vector3 position, double radius, std::shared_ptr<Material> materi
 	this->_material = material;
 	this->_visible = true;
 	this->_uvProjection = uvProjection;
+	this->_iesProfile = nullptr;
+	this->_iesDirection = Vector3(0.0, -1.0, 0.0);
+	this->_iesRotationDegrees = 0.0;
 }
 
 Sphere::Sphere(Vector3 position, double radius, std::shared_ptr<Material> material, bool visible, SphereUVProjection uvProjection)
@@ -130,6 +146,9 @@ Sphere::Sphere(Vector3 position, double radius, std::shared_ptr<Material> materi
 	this->_material = material;
 	this->_visible = visible;
 	this->_uvProjection = uvProjection;
+	this->_iesProfile = nullptr;
+	this->_iesDirection = Vector3(0.0, -1.0, 0.0);
+	this->_iesRotationDegrees = 0.0;
 }
 
 // Returns the Sphere's position
@@ -166,6 +185,22 @@ void	Sphere::setVisible(bool visible)
 	this->_visible = visible;
 }
 
+void	Sphere::setIESProfile(std::shared_ptr<IESProfile> iesProfile, Vector3 direction, double rotationDegrees)
+{
+	const double directionLengthSquared = Utilities::vectorLengthSquared(direction);
+	if (iesProfile && (!std::isfinite(directionLengthSquared) || directionLengthSquared <= 0.0))
+	{
+		throw std::invalid_argument("IES profile direction must be non-zero.");
+	}
+	if (!std::isfinite(rotationDegrees))
+	{
+		throw std::invalid_argument("IES profile rotation must be finite.");
+	}
+	this->_iesProfile = iesProfile;
+	this->_iesDirection = direction;
+	this->_iesRotationDegrees = rotationDegrees;
+}
+
 SphereUVProjection	Sphere::getUVProjection(void) const
 {
 	return (this->_uvProjection);
@@ -196,11 +231,16 @@ bool	Sphere::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) con
 		return (false);
 	}
 
+	const Vector3& direction = ray.getDirection();
+	if (zeroDirection(direction))
+	{
+		return (false);
+	}
+
 	Vector3 oc = ray.getOrigin() - this->_position;
-	double a = Utilities::dot(ray.getDirection(), ray.getDirection());
-	double b = Utilities::dot(oc, ray.getDirection());
+	double b = Utilities::dot(oc, direction);
 	double c = Utilities::dot(oc, oc) - (this->_radius * this->_radius);
-	double discriminant = (b * b) - (a * c);
+	double discriminant = (b * b) - c;
 
 	if (discriminant < 0.0)
 	{
@@ -208,10 +248,10 @@ bool	Sphere::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) con
 	}
 
 	double sqrtd = sqrt(discriminant);
-	double root = (-b - sqrtd) / a;
+	double root = -b - sqrtd;
 	if (root < t_min || root > t_max)
 	{
-		root = (-b + sqrtd) / a;
+		root = -b + sqrtd;
 		if (root < t_min || root > t_max)
 		{
 			return (false);
@@ -220,7 +260,7 @@ bool	Sphere::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) con
 
 	hitRecord.t0 = root;
 	hitRecord.position = ray.pointAtRay(root);
-	const Vector3 outwardNormal = Utilities::normalize((hitRecord.position - this->_position) / this->_radius);
+	const Vector3 outwardNormal = (hitRecord.position - this->_position) / this->_radius;
 	setSphereUV(outwardNormal, this->_uvProjection, hitRecord);
 	hitRecord.setFaceNormal(ray, outwardNormal);
 	hitRecord.material = this->_material.get();
@@ -235,11 +275,16 @@ bool	Sphere::hitAny(Ray& ray, double t_min, double t_max) const
 		return (false);
 	}
 
+	const Vector3& direction = ray.getDirection();
+	if (zeroDirection(direction))
+	{
+		return (false);
+	}
+
 	Vector3 oc = ray.getOrigin() - this->_position;
-	double a = Utilities::dot(ray.getDirection(), ray.getDirection());
-	double b = Utilities::dot(oc, ray.getDirection());
+	double b = Utilities::dot(oc, direction);
 	double c = Utilities::dot(oc, oc) - (this->_radius * this->_radius);
-	double discriminant = (b * b) - (a * c);
+	double discriminant = (b * b) - c;
 
 	if (discriminant < 0.0)
 	{
@@ -247,31 +292,36 @@ bool	Sphere::hitAny(Ray& ray, double t_min, double t_max) const
 	}
 
 	double sqrtd = sqrt(discriminant);
-	double root = (-b - sqrtd) / a;
+	double root = -b - sqrtd;
 	if (root >= t_min && root <= t_max)
 	{
 		return (true);
 	}
-	root = (-b + sqrtd) / a;
+	root = -b + sqrtd;
 	return (root >= t_min && root <= t_max);
 }
 
 bool	Sphere::hitInterval(Ray& ray, double t_min, double t_max, double& t0, double& t1) const
 {
-	Vector3 oc = ray.getOrigin() - this->_position;
-	double a = Utilities::dot(ray.getDirection(), ray.getDirection());
-	double b = Utilities::dot(oc, ray.getDirection());
-	double c = Utilities::dot(oc, oc) - (this->_radius * this->_radius);
-	double discriminant = (b * b) - (a * c);
+	const Vector3& direction = ray.getDirection();
+	if (zeroDirection(direction))
+	{
+		return (false);
+	}
 
-	if (a <= 0.0 || discriminant < 0.0)
+	Vector3 oc = ray.getOrigin() - this->_position;
+	double b = Utilities::dot(oc, direction);
+	double c = Utilities::dot(oc, oc) - (this->_radius * this->_radius);
+	double discriminant = (b * b) - c;
+
+	if (discriminant < 0.0)
 	{
 		return (false);
 	}
 
 	const double sqrtd = sqrt(discriminant);
-	double root0 = (-b - sqrtd) / a;
-	double root1 = (-b + sqrtd) / a;
+	double root0 = -b - sqrtd;
+	double root1 = -b + sqrtd;
 	if (root0 > root1)
 	{
 		std::swap(root0, root1);
@@ -398,7 +448,54 @@ bool	Sphere::sampleLight(const Vector3& origin, HittableLightSample& sample) con
 	sample.pdf = 1.0 / solidAngle;
 	sample.tMax = root;
 	sample.material = this->_material.get();
+	if (this->_iesProfile && this->_material)
+	{
+		const Vector3 emissionDirection = sample.direction * -1.0;
+		const double relativeIntensity = this->_iesProfile->relativeIntensity(
+			emissionDirection,
+			this->_iesDirection,
+			this->_iesRotationDegrees
+		);
+
+		sample.emitted = this->_material->emitted() * relativeIntensity;
+		sample.hasEmitted = true;
+	}
 	sample.valid = std::isfinite(sample.pdf) && sample.pdf > 0.0 && sample.tMax > T_MIN;
+	return (sample.valid);
+}
+
+bool	Sphere::sampleEmission(HittableEmissionSample& sample) const
+{
+	sample = HittableEmissionSample();
+	if (!this->_material || this->_radius <= 0.0)
+	{
+		return (false);
+	}
+
+	const Color emitted = this->_material->emitted();
+	if (Utilities::luminance(emitted) <= 0.0)
+	{
+		return (false);
+	}
+
+	const Vector3 outwardNormal = Utilities::normalize(Sampler::sphereDirection(Sampler::DIM_LIGHT_SURFACE_POINT));
+	const ONB basis(outwardNormal);
+
+	sample.position = this->_position + outwardNormal * this->_radius;
+	sample.normal = outwardNormal;
+	sample.direction = Utilities::normalize(basis.local(Sampler::cosineHemisphere(Sampler::DIM_LIGHT_EMISSION_DIRECTION)));
+	sample.emitted = emitted;
+	if (this->_iesProfile)
+	{
+		sample.emitted = sample.emitted * this->_iesProfile->relativeIntensity(
+			sample.direction,
+			this->_iesDirection,
+			this->_iesRotationDegrees
+		);
+	}
+	sample.powerScale = D_PI * 4.0 * D_PI * this->_radius * this->_radius;
+	sample.valid = Utilities::luminance(sample.emitted) > 0.0
+		&& Utilities::vectorLengthSquared(sample.direction) > 0.0;
 	return (sample.valid);
 }
 

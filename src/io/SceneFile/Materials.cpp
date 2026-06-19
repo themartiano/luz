@@ -4,11 +4,19 @@
 #include "Materials/Dielectric.hpp"
 #include "Materials/Emissive.hpp"
 #include "Materials/Principled.hpp"
+#include "Materials/Glossy.hpp"
+#include "Materials/DiffuseGlossy.hpp"
 #include "Materials/Isotropic.hpp"
 #include "Materials/HenyeyGreenstein.hpp"
 #include "Texture.hpp"
+#include "LightUnits.hpp"
+#include "MeasuredMaterials.hpp"
+#include "RefractiveIndexes.hpp"
 #include "Utilities.hpp"
+#include <algorithm>
+#include <array>
 #include <fstream>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <cstdio>
@@ -24,10 +32,32 @@ namespace
 		double		roughness = 0.0;
 		double		metallic = 0.0;
 		double		transmission = 0.0;
+		double		refractiveIndex = RI_GLASS;
+		bool		hasRefractiveIndex = false;
+		double		clearcoat = 0.0;
+		double		clearcoatRoughness = 0.03;
+		double		sheen = 0.0;
+		Color		glossyColor = Color(1.0, 1.0, 1.0);
+		double		glossyWeight = 0.5;
+		bool		hasGlossyColor = false;
 		double		alpha = 1.0;
-		double		intensity = 1.0;
-		double		emissionStrength = 0.0;
 		double		anisotropy = 0.0;
+		std::optional<double>	emissionRadiance;
+		std::optional<double>	emissionLuminance;
+		std::optional<Color>	absorptionCoefficient;
+		std::optional<Color>	transmittance;
+		std::optional<Color>	conductorEta;
+		std::optional<Color>	conductorExtinction;
+		std::string	materialPreset;
+		std::string	conductorPreset;
+		std::string	glassPreset;
+		std::optional<double>	abbeNumber;
+		std::optional<Vector3>	sellmeierB;
+		std::optional<Vector3>	sellmeierC;
+		double		iorWavelengthNanometers = 587.5618;
+		bool		hasIorWavelength = false;
+		double		transmittanceDistance = 1.0;
+		bool		hasTransmittanceDistance = false;
 		std::string	texturePath;
 		bool		hasProperties = false;
 		bool		hasEmissionColor = false;
@@ -46,6 +76,32 @@ namespace
 		value = SceneFile::internal::_trim(line.substr(separator + 1));
 
 		return (true);
+	}
+
+	std::array<double, 3>	vectorToArray(Vector3 vector)
+	{
+		return (std::array<double, 3>{vector.getX(), vector.getY(), vector.getZ()});
+	}
+
+	double	parseNanometers(std::string value, const std::string& label)
+	{
+		value = SceneFile::internal::_trim(value);
+		std::string lowerValue = SceneFile::internal::_lowerCopy(value);
+		if (
+			lowerValue.length() > 2
+			&& lowerValue.compare(lowerValue.length() - 2, 2, "nm") == 0
+		)
+		{
+			value = SceneFile::internal::_trim(value.substr(0, value.length() - 2));
+		}
+
+		std::size_t parsed = 0;
+		const double nanometers = std::stod(value, &parsed);
+		if (parsed != value.length() || !std::isfinite(nanometers) || nanometers <= 0.0)
+		{
+			throw std::runtime_error(label + " must be a finite positive wavelength in nm.");
+		}
+		return (nanometers);
 	}
 
 	bool	parseDirectMaterialLine(const std::string& line, std::shared_ptr<Material>& material)
@@ -74,6 +130,17 @@ namespace
 			material = std::make_shared<Metal>(Color(r, g, b), reflectionFuzziness);
 			return (true);
 		}
+		if (lowerLine.rfind("glossy=", 0) != std::string::npos)
+		{
+			double r, g, b, roughness;
+
+			if (sscanf(lowerLine.c_str(), "glossy=(%lf,%lf,%lf),%lf", &r, &g, &b, &roughness) != 4)
+			{
+				throw std::runtime_error("Invalid glossy material: " + line);
+			}
+			material = std::make_shared<Glossy>(Color(r, g, b), roughness);
+			return (true);
+		}
 		if (lowerLine.rfind("dielectric=", 0) != std::string::npos)
 		{
 			double r, g, b;
@@ -87,14 +154,7 @@ namespace
 		}
 		if (lowerLine.rfind("emissive=", 0) != std::string::npos)
 		{
-			double r, g, b, lightIntensity;
-
-			if (sscanf(lowerLine.c_str(), "emissive=(%lf,%lf,%lf),%lf", &r, &g, &b, &lightIntensity) != 4)
-			{
-				throw std::runtime_error("Invalid emissive material: " + line);
-			}
-			material = std::make_shared<Emissive>(Color(r, g, b), lightIntensity);
-			return (true);
+			throw std::runtime_error("Direct emissive material syntax is not physical. Use type=emissive with radiance or luminance.");
 		}
 		if (lowerLine.rfind("isotropic=", 0) != std::string::npos)
 		{
@@ -126,16 +186,160 @@ namespace
 		return (false);
 	}
 
-	bool	colorHasEnergy(const Color& color)
+	void	assignSingleEmissionQuantity(
+		std::optional<double>& destination,
+		const std::string& value,
+		const MaterialBuilder& builder
+	)
 	{
-		return (
-			color.getRed() > 0.0
-			|| color.getGreen() > 0.0
-			|| color.getBlue() > 0.0
-		);
+		if (builder.emissionRadiance || builder.emissionLuminance)
+		{
+			throw std::runtime_error("Material block defines multiple emission unit quantities.");
+		}
+		destination = std::stod(value);
 	}
 
-	void	parseMaterialProperty(MaterialBuilder& builder, const std::string& line)
+	std::shared_ptr<Material>	buildEmissiveMaterial(
+		const Color& color,
+		const MaterialBuilder& builder
+	)
+	{
+		if (builder.emissionRadiance)
+		{
+			return (std::make_shared<Emissive>(Emissive::fromRadiance(color, *builder.emissionRadiance)));
+		}
+		if (builder.emissionLuminance)
+		{
+			return (std::make_shared<Emissive>(Emissive::fromLuminance(color, *builder.emissionLuminance)));
+		}
+		throw std::runtime_error("Emissive material requires radiance or luminance.");
+	}
+
+	std::optional<MeasuredMaterials::Glass>	selectedGlassPreset(
+		const MaterialBuilder& builder,
+		const std::string& type
+	)
+	{
+		if (!builder.glassPreset.empty())
+		{
+			return (MeasuredMaterials::glassPreset(builder.glassPreset));
+		}
+		if (
+			!builder.materialPreset.empty()
+			&& (
+				type == "dielectric"
+				|| type == "principled"
+			)
+		)
+		{
+			return (MeasuredMaterials::glassPreset(builder.materialPreset));
+		}
+		return (std::nullopt);
+	}
+
+	double	materialRefractiveIndex(const MaterialBuilder& builder, const std::string& type)
+	{
+		const std::optional<MeasuredMaterials::Glass> glass = selectedGlassPreset(builder, type);
+		if (glass && builder.hasRefractiveIndex)
+		{
+			throw std::runtime_error("Material defines both glass preset and explicit ior.");
+		}
+		if (glass && builder.abbeNumber)
+		{
+			throw std::runtime_error("Material defines both glass preset and explicit Abbe number.");
+		}
+		if (glass && (builder.sellmeierB || builder.sellmeierC))
+		{
+			throw std::runtime_error("Material defines both glass preset and explicit Sellmeier coefficients.");
+		}
+		if (builder.abbeNumber && (builder.sellmeierB || builder.sellmeierC))
+		{
+			throw std::runtime_error("Material defines both Abbe and Sellmeier dispersion.");
+		}
+		if (builder.sellmeierB || builder.sellmeierC)
+		{
+			if (!builder.sellmeierB || !builder.sellmeierC)
+			{
+				throw std::runtime_error("Sellmeier dispersion requires both sellmeier_b and sellmeier_c.");
+			}
+			return (MeasuredMaterials::refractiveIndexFromSellmeier(
+				vectorToArray(*builder.sellmeierB),
+				vectorToArray(*builder.sellmeierC),
+				builder.iorWavelengthNanometers
+			));
+		}
+		if (glass && glass->hasSellmeier)
+		{
+			return (MeasuredMaterials::refractiveIndexFromSellmeier(
+				glass->sellmeierB,
+				glass->sellmeierC,
+				builder.iorWavelengthNanometers
+			));
+		}
+		if (builder.abbeNumber)
+		{
+			const double nd = glass ? glass->refractiveIndexD : builder.refractiveIndex;
+			return (MeasuredMaterials::refractiveIndexFromAbbe(
+				nd,
+				*builder.abbeNumber,
+				builder.iorWavelengthNanometers
+			));
+		}
+		if (glass)
+		{
+			if (builder.hasIorWavelength && glass->abbeNumber > 0.0)
+			{
+				return (MeasuredMaterials::refractiveIndexFromAbbe(
+					glass->refractiveIndexD,
+					glass->abbeNumber,
+					builder.iorWavelengthNanometers
+				));
+			}
+			if (builder.hasIorWavelength)
+			{
+				throw std::runtime_error("ior_wavelength requires Sellmeier or Abbe dispersion.");
+			}
+			return (glass->refractiveIndexD);
+		}
+		if (builder.hasIorWavelength)
+		{
+			throw std::runtime_error("ior_wavelength requires a glass preset, Abbe number, or Sellmeier coefficients.");
+		}
+		return (builder.refractiveIndex);
+	}
+
+	std::shared_ptr<Dielectric>	buildDielectricMaterial(const MaterialBuilder& builder)
+	{
+		if (builder.absorptionCoefficient && builder.transmittance)
+		{
+			throw std::runtime_error("Dielectric material defines both absorption and transmittance.");
+		}
+		if (builder.hasTransmittanceDistance && !builder.transmittance)
+		{
+			throw std::runtime_error("Dielectric attenuation distance requires transmittance.");
+		}
+
+		std::shared_ptr<Dielectric> material = std::make_shared<Dielectric>(
+			builder.color,
+			materialRefractiveIndex(builder, "dielectric"),
+			builder.roughness
+		);
+		if (builder.absorptionCoefficient)
+		{
+			material->setAbsorptionCoefficient(*builder.absorptionCoefficient);
+		}
+		if (builder.transmittance)
+		{
+			material->setTransmittance(*builder.transmittance, builder.transmittanceDistance);
+		}
+		return (material);
+	}
+
+	void	parseMaterialProperty(
+		MaterialBuilder& builder,
+		const std::string& line,
+		const SceneFile::internal::SceneFileContext& context
+	)
 	{
 		std::string key;
 		std::string value;
@@ -154,13 +358,17 @@ namespace
 		{
 			builder.type = SceneFile::internal::_lowerCopy(value);
 		}
+		else if (key == "preset" || key == "material_preset" || key == "materialpreset")
+		{
+			builder.materialPreset = value;
+		}
 		else if (key == "color" || key == "basecolor" || key == "base_color")
 		{
-			builder.color = SceneFile::internal::_parseColorValue(value, key);
+			builder.color = SceneFile::internal::_parseColorValue(value, key, context);
 		}
 		else if (key == "emission" || key == "emissioncolor" || key == "emission_color")
 		{
-			builder.emissionColor = SceneFile::internal::_parseColorValue(value, key);
+			builder.emissionColor = SceneFile::internal::_parseColorValue(value, key, context);
 			builder.hasEmissionColor = true;
 		}
 		else if (key == "fuzz")
@@ -175,21 +383,158 @@ namespace
 		{
 			builder.metallic = std::stod(value);
 		}
+		else if (key == "eta" || key == "conductor_eta")
+		{
+			builder.conductorEta = SceneFile::internal::_parseColorValue(value, key, context);
+		}
+		else if (
+			key == "metal_preset"
+			|| key == "metalpreset"
+			|| key == "conductor"
+			|| key == "conductor_preset"
+			|| key == "conductorpreset"
+		)
+		{
+			builder.conductorPreset = value;
+		}
+		else if (
+			key == "k"
+			|| key == "extinction"
+			|| key == "extinctioncoefficient"
+			|| key == "extinction_coefficient"
+			|| key == "conductor_k"
+		)
+		{
+			builder.conductorExtinction = SceneFile::internal::_parseColorValue(value, key, context);
+		}
 		else if (key == "transmission")
 		{
 			builder.transmission = std::stod(value);
+		}
+		else if (key == "clearcoat" || key == "clear_coat" || key == "coat")
+		{
+			builder.clearcoat = std::stod(value);
+		}
+		else if (
+			key == "clearcoatroughness"
+			|| key == "clearcoat_roughness"
+			|| key == "clear_coat_roughness"
+			|| key == "coatroughness"
+			|| key == "coat_roughness"
+		)
+		{
+			builder.clearcoatRoughness = std::stod(value);
+		}
+		else if (key == "sheen")
+		{
+			builder.sheen = std::stod(value);
+		}
+		else if (key == "glossy_color" || key == "glossycolor" || key == "specular_color" || key == "specularcolor")
+		{
+			builder.glossyColor = SceneFile::internal::_parseColorValue(value, key, context);
+			builder.hasGlossyColor = true;
+		}
+		else if (
+			key == "glossy_weight"
+			|| key == "glossyweight"
+			|| key == "glossy_mix"
+			|| key == "glossymix"
+		)
+		{
+			builder.glossyWeight = std::stod(value);
+		}
+		else if (key == "ior" || key == "refractiveindex" || key == "refractive_index")
+		{
+			builder.refractiveIndex = std::stod(value);
+			builder.hasRefractiveIndex = true;
+		}
+		else if (
+			key == "glass"
+			|| key == "glass_preset"
+			|| key == "glasspreset"
+			|| key == "dielectric_preset"
+			|| key == "dielectricpreset"
+		)
+		{
+			builder.glassPreset = value;
+		}
+		else if (key == "abbe" || key == "abbe_number" || key == "abbenumber" || key == "vd")
+		{
+			builder.abbeNumber = std::stod(value);
+		}
+		else if (key == "sellmeier_b" || key == "sellmeierb")
+		{
+			builder.sellmeierB = SceneFile::internal::_parseVector3Value(value, key);
+		}
+		else if (key == "sellmeier_c" || key == "sellmeierc")
+		{
+			builder.sellmeierC = SceneFile::internal::_parseVector3Value(value, key);
+		}
+		else if (
+			key == "ior_wavelength"
+			|| key == "iorwavelength"
+			|| key == "refractive_index_wavelength"
+			|| key == "refractiveindexwavelength"
+		)
+		{
+			builder.iorWavelengthNanometers = parseNanometers(value, "IOR wavelength");
+			builder.hasIorWavelength = true;
+		}
+		else if (
+			key == "absorption"
+			|| key == "absorptioncoefficient"
+			|| key == "absorption_coefficient"
+			|| key == "sigma_a"
+			|| key == "sigmaa"
+		)
+		{
+			builder.absorptionCoefficient = SceneFile::internal::_parseColorValue(value, key, context);
+		}
+		else if (
+			key == "transmittance"
+			|| key == "transmittancecolor"
+			|| key == "transmittance_color"
+			|| key == "attenuation"
+			|| key == "attenuation_color"
+			|| key == "attenuationcolor"
+		)
+		{
+			builder.transmittance = SceneFile::internal::_parseColorValue(value, key, context);
+		}
+		else if (
+			key == "attenuationdistance"
+			|| key == "attenuation_distance"
+			|| key == "absorptiondistance"
+			|| key == "absorption_distance"
+		)
+		{
+			builder.transmittanceDistance = std::stod(value);
+			builder.hasTransmittanceDistance = true;
 		}
 		else if (key == "alpha")
 		{
 			builder.alpha = std::stod(value);
 		}
-		else if (key == "intensity")
+		else if (
+			key == "radiance"
+			|| key == "surfaceradiance"
+			|| key == "surface_radiance"
+			|| key == "emissionradiance"
+			|| key == "emission_radiance"
+		)
 		{
-			builder.intensity = std::stod(value);
+			assignSingleEmissionQuantity(builder.emissionRadiance, value, builder);
 		}
-		else if (key == "emissionstrength" || key == "emission_strength")
+		else if (
+			key == "luminance"
+			|| key == "nits"
+			|| key == "cd_m2"
+			|| key == "cdm2"
+			|| key == "emissionluminance"
+			|| key == "emission_luminance"
+		)
 		{
-			builder.emissionStrength = std::stod(value);
+			assignSingleEmissionQuantity(builder.emissionLuminance, value, builder);
 		}
 		else if (key == "anisotropy" || key == "g")
 		{
@@ -214,9 +559,82 @@ namespace
 		if (!builder.texturePath.empty())
 		{
 			material->setTexture(std::make_shared<Texture>(
-				Texture::loadPPM(SceneFile::internal::_resolveAssetPath(baseDirectory, builder.texturePath))
+				Texture::loadPPM(
+					SceneFile::internal::_resolveAssetPath(baseDirectory, builder.texturePath),
+					TextureColorRole::ColorSRGB
+				)
 			));
 		}
+	}
+
+	std::shared_ptr<Metal>	buildMetalMaterial(const MaterialBuilder& builder)
+	{
+		const std::string preset = !builder.conductorPreset.empty()
+			? builder.conductorPreset
+			: builder.materialPreset;
+		if (!preset.empty())
+		{
+			if (builder.conductorEta || builder.conductorExtinction)
+			{
+				throw std::runtime_error("Metal material defines both conductor preset and explicit eta/k.");
+			}
+			const MeasuredMaterials::Conductor conductor = MeasuredMaterials::conductorPreset(preset);
+			return (std::make_shared<Metal>(
+				conductor.eta,
+				conductor.extinctionCoefficient,
+				builder.fuzz >= 0.0 ? builder.fuzz : builder.roughness
+			));
+		}
+		if (builder.conductorEta || builder.conductorExtinction)
+		{
+			if (!builder.conductorEta || !builder.conductorExtinction)
+			{
+				throw std::runtime_error("Conductor metal requires both eta and k.");
+			}
+			return (std::make_shared<Metal>(
+				*builder.conductorEta,
+				*builder.conductorExtinction,
+				builder.fuzz >= 0.0 ? builder.fuzz : builder.roughness
+			));
+		}
+		return (std::make_shared<Metal>(builder.color, builder.fuzz >= 0.0 ? builder.fuzz : builder.roughness));
+	}
+
+	std::shared_ptr<Principled>	buildPrincipledMaterial(const MaterialBuilder& builder)
+	{
+		if (builder.conductorEta || builder.conductorExtinction)
+		{
+			throw std::runtime_error("Principled conductor metals use metallic color; use type=metal for eta/k.");
+		}
+		if (builder.absorptionCoefficient && builder.transmittance)
+		{
+			throw std::runtime_error("Principled material defines both absorption and transmittance.");
+		}
+		if (builder.hasTransmittanceDistance && !builder.transmittance)
+		{
+			throw std::runtime_error("Principled attenuation distance requires transmittance.");
+		}
+
+		const double transmission = std::max(builder.transmission, 1.0 - builder.alpha);
+		std::shared_ptr<Principled> material = std::make_shared<Principled>(
+			builder.color,
+			builder.metallic,
+			builder.roughness,
+			transmission,
+			materialRefractiveIndex(builder, "principled"),
+			builder.clearcoat,
+			builder.clearcoatRoughness,
+			builder.sheen
+		);
+		if (builder.absorptionCoefficient)
+		{
+			material->setAbsorptionCoefficient(*builder.absorptionCoefficient);
+		}
+		if (builder.transmittance)
+		{
+			material->setTransmittance(*builder.transmittance, builder.transmittanceDistance);
+		}
+		return (material);
 	}
 
 	std::shared_ptr<Material>	buildMaterial(
@@ -236,26 +654,53 @@ namespace
 		}
 
 		std::string type = builder.type.empty() ? "lambertian" : builder.type;
+		if (
+			!builder.materialPreset.empty()
+			&& type != "metal"
+			&& type != "dielectric"
+			&& type != "principled"
+		)
+		{
+			throw std::runtime_error("Material preset is only valid for metal, dielectric, or principled materials.");
+		}
+		if (!builder.conductorPreset.empty() && type != "metal")
+		{
+			throw std::runtime_error("Conductor preset is only valid for metal materials.");
+		}
+		if (
+			(
+				!builder.glassPreset.empty()
+				|| builder.abbeNumber
+				|| builder.sellmeierB
+				|| builder.sellmeierC
+				|| builder.hasIorWavelength
+			)
+			&& type != "dielectric"
+			&& type != "principled"
+		)
+		{
+			throw std::runtime_error("Glass dispersion properties are only valid for dielectric or principled materials.");
+		}
 		if (type == "principled")
 		{
-			const Color emissionColor = builder.hasEmissionColor ? builder.emissionColor : builder.color;
-			if (builder.emissionStrength > 0.0 && colorHasEnergy(emissionColor))
-			{
-				return (std::make_shared<Emissive>(emissionColor, builder.emissionStrength));
-			}
-			if (builder.transmission > 0.0 || builder.alpha < 1.0)
-			{
-				std::shared_ptr<Material> material = std::make_shared<Dielectric>(builder.color);
-				attachTexture(material, builder, baseDirectory);
-				return (material);
-			}
-			if (builder.metallic >= 0.5)
-			{
-				std::shared_ptr<Material> material = std::make_shared<Metal>(builder.color, builder.fuzz >= 0.0 ? builder.fuzz : builder.roughness);
-				attachTexture(material, builder, baseDirectory);
-				return (material);
-			}
-			std::shared_ptr<Material> material = std::make_shared<Principled>(builder.color, builder.metallic, builder.roughness);
+			std::shared_ptr<Material> material = buildPrincipledMaterial(builder);
+			attachTexture(material, builder, baseDirectory);
+			return (material);
+		}
+		if (type == "glossy")
+		{
+			std::shared_ptr<Material> material = std::make_shared<Glossy>(builder.color, builder.roughness);
+			attachTexture(material, builder, baseDirectory);
+			return (material);
+		}
+		if (type == "diffuse_glossy" || type == "diffuseglossy")
+		{
+			std::shared_ptr<Material> material = std::make_shared<DiffuseGlossy>(
+				builder.color,
+				builder.hasGlossyColor ? builder.glossyColor : builder.color,
+				builder.glossyWeight,
+				builder.roughness
+			);
 			attachTexture(material, builder, baseDirectory);
 			return (material);
 		}
@@ -267,21 +712,21 @@ namespace
 		}
 		if (type == "metal")
 		{
-			std::shared_ptr<Material> material = std::make_shared<Metal>(builder.color, builder.fuzz >= 0.0 ? builder.fuzz : builder.roughness);
+			std::shared_ptr<Material> material = buildMetalMaterial(builder);
 			attachTexture(material, builder, baseDirectory);
 			return (material);
 		}
 		if (type == "dielectric")
 		{
-			std::shared_ptr<Material> material = std::make_shared<Dielectric>(builder.color);
+			std::shared_ptr<Material> material = buildDielectricMaterial(builder);
 			attachTexture(material, builder, baseDirectory);
 			return (material);
 		}
 		if (type == "emissive")
 		{
-			return (std::make_shared<Emissive>(
+			return (buildEmissiveMaterial(
 				builder.hasEmissionColor ? builder.emissionColor : builder.color,
-				builder.emissionStrength > 0.0 ? builder.emissionStrength : builder.intensity
+				builder
 			));
 		}
 		if (type == "isotropic")
@@ -305,7 +750,7 @@ namespace
 	std::shared_ptr<Material>	readBraceMaterialBlock(
 		std::ifstream& stream,
 		const std::string& blockDescription,
-		const std::filesystem::path& baseDirectory
+		const SceneFile::internal::SceneFileContext& context
 	)
 	{
 		std::string line;
@@ -322,7 +767,7 @@ namespace
 			}
 			if (trimmedLine == "}")
 			{
-				return (buildMaterial(builder, blockDescription, baseDirectory));
+				return (buildMaterial(builder, blockDescription, context.baseDirectory));
 			}
 
 			std::shared_ptr<Material> directMaterial;
@@ -336,7 +781,7 @@ namespace
 				continue;
 			}
 
-			parseMaterialProperty(builder, trimmedLine);
+			parseMaterialProperty(builder, trimmedLine, context);
 		} while (!stream.eof());
 
 		throw std::runtime_error(blockDescription + " is missing a closing }.");
@@ -413,7 +858,7 @@ void	SceneFile::internal::_readNamedMaterialsSection(std::ifstream& stream, Scen
 		context.materials[materialName] = readBraceMaterialBlock(
 			stream,
 			"Material block '" + materialName + "'",
-			context.baseDirectory
+			context
 		);
 	} while (!stream.eof());
 }

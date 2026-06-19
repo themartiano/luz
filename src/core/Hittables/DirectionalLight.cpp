@@ -3,6 +3,7 @@
 #include "Materials/Emissive.hpp"
 #include "Utilities.hpp"
 #include <cmath>
+#include <stdexcept>
 
 namespace
 {
@@ -19,13 +20,17 @@ namespace
 DirectionalLight::DirectionalLight(void)
 {
 	this->_direction = Vector3(0.0, -1.0, 0.0);
-	this->_material = std::make_shared<Emissive>(Color(1.0, 1.0, 1.0), 1.0);
+	this->_material = std::make_shared<Emissive>(Color(1.0, 1.0, 1.0));
+	this->_hasAtmosphereSunRadiance = false;
+	this->_atmosphereSunRadiance = Color(0.0, 0.0, 0.0);
 }
 
 DirectionalLight::DirectionalLight(Vector3 direction, std::shared_ptr<Material> material)
 {
 	this->_direction = normalizedLightDirection(direction);
 	this->_material = material;
+	this->_hasAtmosphereSunRadiance = false;
+	this->_atmosphereSunRadiance = Color(0.0, 0.0, 0.0);
 }
 
 bool	DirectionalLight::hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) const
@@ -95,4 +100,31 @@ double	DirectionalLight::lightSelectionWeight(void) const
 		return (0.0);
 	}
 	return (luminance);
+}
+
+void	DirectionalLight::setAtmosphereSunRadiance(Color radiance)
+{
+	if (
+		!std::isfinite(radiance.getRed())
+		|| !std::isfinite(radiance.getGreen())
+		|| !std::isfinite(radiance.getBlue())
+		|| radiance.getRed() < 0.0
+		|| radiance.getGreen() < 0.0
+		|| radiance.getBlue() < 0.0
+	)
+	{
+		throw std::invalid_argument("Atmosphere sun radiance must be finite and non-negative.");
+	}
+	this->_atmosphereSunRadiance = radiance;
+	this->_hasAtmosphereSunRadiance = true;
+}
+
+bool	DirectionalLight::hasAtmosphereSunRadiance(void) const
+{
+	return (this->_hasAtmosphereSunRadiance);
+}
+
+Color	DirectionalLight::getAtmosphereSunRadiance(void) const
+{
+	return (this->_atmosphereSunRadiance);
 }

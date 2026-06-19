@@ -75,6 +75,26 @@ class	SmartArray
 			return (this->_array[index]);
 		}
 
+		T&	unchecked(std::size_t index)
+		{
+			return (this->_array[index]);
+		}
+
+		const T&	unchecked(std::size_t index) const
+		{
+			return (this->_array[index]);
+		}
+
+		T*	data(void)
+		{
+			return (this->_array);
+		}
+
+		const T*	data(void) const
+		{
+			return (this->_array);
+		}
+
 		// Deep copies 'other' into this array
 		SmartArray&	operator=(const SmartArray& other)
 		{

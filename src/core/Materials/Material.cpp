@@ -55,11 +55,28 @@ Color	Material::emitted(void)
 	return (Color(0.0, 0.0, 0.0));
 }
 
-double	Material::scatteringPDF(Ray& ray, HitRecord& hitRecord)
+Color	Material::evaluateBSDFCos(
+	const Ray& ray,
+	const HitRecord& hitRecord,
+	const Vector3& scatteredDirection
+	) const
+{
+	return (Color(0.0, 0.0, 0.0));
+	(void)ray;
+	(void)hitRecord;
+	(void)scatteredDirection;
+}
+
+double	Material::scatteringPDF(
+	const Ray& ray,
+	const HitRecord& hitRecord,
+	const Vector3& scatteredDirection
+	) const
 {
 	return (0.0);
 	(void)ray;
 	(void)hitRecord;
+	(void)scatteredDirection;
 }
 
 MaterialType	Material::getType(void) const

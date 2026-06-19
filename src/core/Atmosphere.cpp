@@ -1,5 +1,7 @@
 #include "Atmosphere.hpp"
 #include "Defaults.hpp"
+#include "ColorScience.hpp"
+#include "LightUnits.hpp"
 #include "Utilities.hpp"
 #include "SystemSpecifics.hpp"
 #include <algorithm>
@@ -12,7 +14,6 @@ namespace
 	const double kRayleighPhaseScale = 3.0 / (16.0 * D_PI);
 	const double kMiePhaseScale = 3.0 / (8.0 * D_PI);
 	constexpr double kMieAbsorptionScale = 1.1;
-	constexpr double kLegacyFallbackSunRadiance = 20.0;
 
 	Vector3	exponentialAttenuation(const Vector3& tau)
 	{
@@ -73,8 +74,9 @@ Atmosphere::Atmosphere(void)
 	this->_samples = 16;
 	this->_lightSamples = 8;
 	this->_starsBrightness = 0.5;
-	this->_sunRadiance = Color(kLegacyFallbackSunRadiance, kLegacyFallbackSunRadiance, kLegacyFallbackSunRadiance);
+	this->_sunRadiance = LightUnits::solarDirectionalIrradiance(ColorScience::solar(), 1.0);
 	this->_sunRadianceScale = 1.0;
+	this->_metersPerUnit = 1.0;
 	updateSunDirectionVector();
 }
 
@@ -89,8 +91,9 @@ Atmosphere::Atmosphere(double sunAngle, double earthRadius, double atmosphereRad
 	this->_samples = 16;
 	this->_lightSamples = 8;
 	this->_starsBrightness = 0.5;
-	this->_sunRadiance = Color(kLegacyFallbackSunRadiance, kLegacyFallbackSunRadiance, kLegacyFallbackSunRadiance);
+	this->_sunRadiance = LightUnits::solarDirectionalIrradiance(ColorScience::solar(), 1.0);
 	this->_sunRadianceScale = 1.0;
+	this->_metersPerUnit = 1.0;
 	setSunAngle(sunAngle);
 	if (!std::isfinite(earthRadius) || earthRadius <= 0.0)
 	{
@@ -145,6 +148,34 @@ double	Atmosphere::getSunRadianceScale(void) const
 	return (this->_sunRadianceScale);
 }
 
+double	Atmosphere::getMetersPerUnit(void) const
+{
+	return (this->_metersPerUnit);
+}
+
+double	Atmosphere::sceneUnitsToMeters(double sceneUnits) const
+{
+	if (!std::isfinite(sceneUnits))
+	{
+		return (sceneUnits);
+	}
+	const double maxSceneUnits = T_MAX / this->_metersPerUnit;
+	if (sceneUnits >= maxSceneUnits)
+	{
+		return (T_MAX);
+	}
+	if (sceneUnits <= -maxSceneUnits)
+	{
+		return (-T_MAX);
+	}
+	return (sceneUnits * this->_metersPerUnit);
+}
+
+double	Atmosphere::metersToSceneUnits(double meters) const
+{
+	return (meters / this->_metersPerUnit);
+}
+
 //Returns the Sun Angle (double)
 double  Atmosphere::getSunAngle(void) const
 {
@@ -180,6 +211,15 @@ void	Atmosphere::setSunRadianceScale(double sunRadianceScale)
 		throw std::invalid_argument("Atmosphere sun radiance scale must be finite and non-negative.");
 	}
 	this->_sunRadianceScale = sunRadianceScale;
+}
+
+void	Atmosphere::setMetersPerUnit(double metersPerUnit)
+{
+	if (!std::isfinite(metersPerUnit) || metersPerUnit <= 0.0)
+	{
+		throw std::invalid_argument("Atmosphere meters per unit must be finite and positive.");
+	}
+	this->_metersPerUnit = metersPerUnit;
 }
 
 // Sets the EarthRadius
@@ -311,26 +351,37 @@ AtmosphereSample	Atmosphere::sampleSegment(const Ray& ray, double t_max) const
 	{
 		return (sample);
 	}
+	const double tMaxMeters = this->sceneUnitsToMeters(t_max);
+	const double tMinMeters = this->sceneUnitsToMeters(T_MIN);
+	if (!std::isfinite(tMaxMeters) || tMaxMeters <= tMinMeters)
+	{
+		return (sample);
+	}
+	const Ray meterRay(
+		ray.getOrigin() * this->_metersPerUnit,
+		ray.getDirection()
+	);
 	HitRecord atmosphereHitRecord;
-	if (!planetaryHit(this->_atmosphereRadius, ray, atmosphereHitRecord) || atmosphereHitRecord.t1 <= T_MIN)
+	if (!planetaryHit(this->_atmosphereRadius, meterRay, atmosphereHitRecord) || atmosphereHitRecord.t1 <= tMinMeters)
 	{
 		return (sample);
 	}
 
 	HitRecord earthHitRecord;
-	if (planetaryHit(this->_earthRadius, ray, earthHitRecord) && earthHitRecord.t1 > T_MIN)
+	double tMax = tMaxMeters;
+	if (planetaryHit(this->_earthRadius, meterRay, earthHitRecord) && earthHitRecord.t1 > tMinMeters)
 	{
-		t_max = std::min(t_max, std::max(0.0, earthHitRecord.t0));
+		tMax = std::min(tMax, std::max(0.0, earthHitRecord.t0));
 	}
 
-	const double t_min = std::max(T_MIN, atmosphereHitRecord.t0);
-	t_max = std::min(t_max, atmosphereHitRecord.t1);
-	if (!std::isfinite(t_min) || !std::isfinite(t_max) || t_max <= t_min)
+	const double t_min = std::max(tMinMeters, atmosphereHitRecord.t0);
+	tMax = std::min(tMax, atmosphereHitRecord.t1);
+	if (!std::isfinite(t_min) || !std::isfinite(tMax) || tMax <= t_min)
 	{
 		return (sample);
 	}
 
-	const double segmentLength = (t_max - t_min) / this->_samples;
+	const double segmentLength = (tMax - t_min) / this->_samples;
 	if (!std::isfinite(segmentLength) || segmentLength <= 0.0)
 	{
 		return (sample);
@@ -342,7 +393,7 @@ AtmosphereSample	Atmosphere::sampleSegment(const Ray& ray, double t_max) const
 	Vector3 sumM(0.0, 0.0, 0.0);
 	double  opticalDepthR = 0.0;
 	double  opticalDepthM = 0.0;
-	const double mu = std::clamp(Utilities::dot(ray.getDirection(), this->_sunDirection), -1.0, 1.0);
+	const double mu = std::clamp(Utilities::dot(meterRay.getDirection(), this->_sunDirection), -1.0, 1.0);
 	const double muSquared = mu * mu;
 	const double phaseR = kRayleighPhaseScale * (1.0 + muSquared);
 	const double mieDenominatorBase = std::max(1.0 + kMieG * kMieG - 2.0 * kMieG * mu, 1.0e-6);
@@ -355,7 +406,7 @@ AtmosphereSample	Atmosphere::sampleSegment(const Ray& ray, double t_max) const
 	for (int i = 0; i < this->_samples; i++)
 	{
 		const double viewSampleT = t_min + (static_cast<double>(i) + 0.5) * segmentLength;
-		const Vector3 samplePosition = ray.getOrigin() + viewSampleT * ray.getDirection();
+		const Vector3 samplePosition = meterRay.getOrigin() + viewSampleT * meterRay.getDirection();
 		const double height = Utilities::vectorLength(samplePosition) - this->_earthRadius;
 		const double densityR = densityAtHeight(height, inverseHR);
 		const double densityM = densityAtHeight(height, inverseHM);
@@ -427,6 +478,6 @@ AtmosphereSample	Atmosphere::sampleSegment(const Ray& ray, double t_max) const
 // Returns the sky color for 'ray'
 Color   Atmosphere::computeIncidentLight(const Ray& ray, HitRecord& hitRecord, double t_max) const
 {
-	planetaryHit(this->_atmosphereRadius, ray, hitRecord);
+	planetaryHit(this->metersToSceneUnits(this->_atmosphereRadius), ray, hitRecord);
 	return (sampleSegment(ray, t_max).inScattering);
 }
