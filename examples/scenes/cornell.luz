@@ -2,7 +2,7 @@
 resolution=500,500
 samples=50
 maxlightbounces=12
-gamma=1
+view_transform=standard
 sky=none
 distanceblueness=0
 meters_per_unit=0.01

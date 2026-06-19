@@ -42,10 +42,8 @@ class	Scene
 		void	setAdaptiveThreshold(double adaptiveThreshold);
 		int		getMaxLightBounces(void) const;
 		void	setMaxLightBounces(const int maxLightBounces);
-		bool	getGammaCorrected(void) const;
-		void	setGammaCorrected(bool gamma);
-		bool	getToneMapped(void) const;
-		void	setToneMapped(bool toneMapped);
+		ViewTransform	getViewTransform(void) const;
+		void	setViewTransform(ViewTransform viewTransform);
 		double	getExposure(void) const;
 		void	setExposure(double exposure);
 		void	setPhotographicExposure(double fNumber, double shutterSeconds, double iso);
@@ -141,8 +139,7 @@ class	Scene
 		int						_adaptiveCheckInterval;
 		double					_adaptiveThreshold;
 		int						_maxLightBounces;
-		bool					_gammaCorrected;
-		bool					_toneMapped;
+		ViewTransform			_viewTransform;
 			double					_exposure;
 			double					_contrast;
 			bool					_causticsEnabled;

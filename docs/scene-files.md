@@ -41,15 +41,14 @@ The parser is intentionally strict: unknown lines and malformed values throw an 
 | `adaptivethreshold` | `adaptivethreshold=F` | Relative 95% confidence interval threshold for luminance convergence. Lower values render longer. Alias: `adaptive_threshold`. |
 | `adaptivecheckinterval` | `adaptivecheckinterval=N` | Sample interval between adaptive convergence checks. Alias: `adaptive_check_interval`. |
 | `maxlightbounces` | `maxlightbounces=N` | Maximum recursive light bounces. |
-| `gamma` | `gamma=0` or `gamma=1` | Enables sRGB display encoding when set to `1`. With `tonemapping=0`, scene-linear ACEScg is converted directly to sRGB and clipped for display output. |
-| `tonemapping` | `tonemapping=0` or `tonemapping=1` | Enables the ACES-fitted display transform from scene-linear ACEScg to display-linear sRGB. Alias: `tone_mapping`. |
+| `view_transform` | `view_transform=standard`, `agx`, `aces`, or `raw` | Selects the display transform. `standard` converts scene-linear ACEScg to clipped display sRGB. `agx` uses an AgX-style highlight rolloff and is the default. `aces` uses the ACES-fitted display transform. `raw` preserves scene-linear ACEScg HDR data for debugging/compositing and is not for display viewing. |
 | `bloom` | `bloom=0` or `bloom=1` | Enables bloom when set to `1`. Bloom ignores isolated extreme firefly pixels so rare path samples do not expand into square glow blocks; display output also suppresses isolated saturated white fireflies. |
-| `exposure` | `exposure=F` | Exposure compensation in stops. `1.0` doubles light before bloom and tone mapping; `-1.0` halves it. |
+| `exposure` | `exposure=F` | Exposure compensation in stops. `1.0` doubles light before bloom and the view transform; `-1.0` halves it. |
 | `photographic_exposure` | `photographic_exposure=F_NUMBER,SHUTTER_SECONDS,ISO` | Sets exposure from physical camera controls using `shutter * ISO / 100 / F_NUMBER^2`. `f/1`, `1s`, `ISO 100` equals `exposure=0`. Aliases: `photographicexposure`, `camera_exposure`, `cameraexposure`. |
 | `contrast` | `contrast=F` | Display contrast multiplier applied after the display transform and before sRGB encoding. `1.0` keeps contrast unchanged. |
 | `denoise` | `denoise=0` or `denoise=1` | Toggles the NFOR denoised companion image. Enabled by default. The denoiser runs before exposure, bloom, display transform, contrast, and sRGB encoding. |
 | `denoiseoutputfilename` | `denoiseoutputfilename=PATH` | Optional denoised companion output path. Defaults to `outputfilename` with `_denoised` before the extension. Must use a `.bmp`, `.png`, or `.tiff` suffix. Aliases: `denoiseoutput`, `denoise_output`. |
-| `outputfilename` | `outputfilename=PATH` | `.bmp` is appended if no suffix is present. Explicit suffixes must be `.bmp`, `.png`, or `.tiff`; `.tif` is not accepted. PNG output is 8-bit RGB SDR with sRGB metadata when display-encoded. TIFF output is uncompressed 32-bit floating-point RGB with Luz color-encoding metadata; disable tone mapping and gamma to preserve scene-linear ACEScg HDR values above `1.0`. |
+| `outputfilename` | `outputfilename=PATH` | `.bmp` is appended if no suffix is present. Explicit suffixes must be `.bmp`, `.png`, or `.tiff`; `.tif` is not accepted. PNG output is 8-bit RGB SDR with sRGB metadata after a display view transform. BMP is plain 8-bit display output. TIFF output is uncompressed 32-bit floating-point RGB with Luz color-encoding metadata and is the required format for `view_transform=raw`. |
 | `sky` | `sky=none`, `sky=linear`, `sky=atmosphere`, or `sky=environment` | Selects background rendering. |
 | `background` | `background=COLOR` | Background color used when `sky=none`. Aliases: `backgroundcolor`, `background_color`. |
 | `environment` | `environment=PATH[,ROTATION_DEGREES]` | Equirectangular environment map. If no explicit `sky=` appeared earlier in settings, `environment=...` also selects `sky=environment`. Aliases: `environmentmap`, `environment_map`, `backgroundimage`, `background_image`. |
@@ -134,15 +133,15 @@ The default post-process path is:
 scene-linear ACEScg
 -> exposure
 -> bloom
--> ACES-fitted display transform to display-linear sRGB
+-> selected view transform to display-linear sRGB
 -> contrast
 -> sRGB display encoding
 ```
 
-Turn off both `tonemapping` and `gamma` only for raw scene-linear inspection or
-float TIFF output. PNG and BMP are 8-bit display formats and will clip any raw
-HDR values that remain above `1.0`. PNG and TIFF carry Luz color metadata; BMP is
-plain 8-bit BGR output and should be treated as display sRGB by convention.
+Use `view_transform=raw` only for scene-linear debugging, measurement, or float
+TIFF output. Raw is not a display/viewing transform, and PNG/BMP output rejects
+raw scene-linear images. PNG and TIFF carry Luz color metadata; BMP is plain
+8-bit BGR output and should be treated as display sRGB by convention.
 
 ### Environment Map Notes
 
@@ -650,7 +649,7 @@ angular distribution while the scalar unit controls total output.
 resolution=300,300
 samples=16
 maxlightbounces=6
-gamma=1
+view_transform=agx
 sky=linear
 
 [scene]

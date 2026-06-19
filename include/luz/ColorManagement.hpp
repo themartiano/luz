@@ -17,9 +17,19 @@ enum class TextureColorRole
 	Data
 };
 
+enum class ViewTransform
+{
+	Standard,
+	AgX,
+	ACES,
+	Raw
+};
+
 namespace ColorManagement
 {
 	const char*	workingSpaceName(void);
+	const char*	viewTransformName(ViewTransform viewTransform);
+	const char*	viewTransformDescription(ViewTransform viewTransform);
 	double		srgbToLinear(double value);
 	double		linearToSRGB(double value);
 	Color		decodeSRGB(Color color);
@@ -30,7 +40,7 @@ namespace ColorManagement
 	Color		encodedSRGBFromACEScg(Color color);
 	Color		acescgFromXYZ(Color xyz);
 	Color		xyzFromACEScg(Color color);
-	Color		displayTransformToLinearSRGB(Color color);
+	Color		viewTransformToLinearSRGB(Color color, ViewTransform viewTransform);
 	Color		sanitizeSceneLinear(Color color);
 	double		luminance(Color color);
 	const char*	imageEncodingName(ImageColorEncoding encoding);

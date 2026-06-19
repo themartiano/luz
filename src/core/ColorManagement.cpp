@@ -73,6 +73,51 @@ namespace
 		));
 	}
 
+	double	agxDefaultContrast(double value)
+	{
+		value = std::clamp(value, 0.0, 1.0);
+		const double value2 = value * value;
+		const double value3 = value2 * value;
+		const double value4 = value2 * value2;
+		const double value5 = value4 * value;
+		const double value6 = value4 * value2;
+
+		return (clampUnit(
+			(15.5 * value6)
+			- (40.14 * value5)
+			+ (31.96 * value4)
+			- (6.868 * value3)
+			+ (0.4298 * value2)
+			+ (0.1191 * value)
+			- 0.00232
+		));
+	}
+
+	double	agxCurve(double value)
+	{
+		constexpr double MIN_EV = -12.47393;
+		constexpr double MAX_EV = 4.026069;
+
+		if (!std::isfinite(value) || value <= 0.0)
+		{
+			value = MIN_EV;
+		}
+		else
+		{
+			value = std::clamp(std::log2(value), MIN_EV, MAX_EV);
+		}
+		return (agxDefaultContrast((value - MIN_EV) / (MAX_EV - MIN_EV)));
+	}
+
+	Color	agxDefaultContrast(Color color)
+	{
+		return (Color(
+			agxCurve(color.getRed()),
+			agxCurve(color.getGreen()),
+			agxCurve(color.getBlue())
+		));
+	}
+
 	const Matrix3 LINEAR_SRGB_TO_ACESCG = {{
 		{0.6131324224, 0.3395380158, 0.0474166960},
 		{0.0701243808, 0.9163940113, 0.0134515239},
@@ -108,11 +153,55 @@ namespace
 		{-0.10208, 1.10813, -0.00605},
 		{-0.00327, -0.07276, 1.07602}
 	}};
+
+	const Matrix3 AGX_INSET = {{
+		{0.842479062253094, 0.0784335999999992, 0.0792237451477643},
+		{0.0423282422610123, 0.878468636469772, 0.0791661274605434},
+		{0.0423756549057051, 0.0784336, 0.879142973793104}
+	}};
+
+	const Matrix3 AGX_OUTSET = {{
+		{1.19687900512017, -0.0980208811401368, -0.0990297440797205},
+		{-0.0528968517574562, 1.15190312990417, -0.0989611768448433},
+		{-0.0529716355144438, -0.0980434501171241, 1.15107367264116}
+	}};
 }
 
 const char*	ColorManagement::workingSpaceName(void)
 {
 	return ("ACEScg scene-linear RGB (AP1 primaries, ACES D60 white)");
+}
+
+const char*	ColorManagement::viewTransformName(ViewTransform viewTransform)
+{
+	switch (viewTransform)
+	{
+		case ViewTransform::Standard:
+			return ("standard");
+		case ViewTransform::AgX:
+			return ("agx");
+		case ViewTransform::ACES:
+			return ("aces");
+		case ViewTransform::Raw:
+			return ("raw");
+	}
+	return ("unknown");
+}
+
+const char*	ColorManagement::viewTransformDescription(ViewTransform viewTransform)
+{
+	switch (viewTransform)
+	{
+		case ViewTransform::Standard:
+			return ("standard display transform, scene-linear ACEScg to clipped display sRGB");
+		case ViewTransform::AgX:
+			return ("AgX display transform, scene-linear ACEScg to display sRGB with highlight rolloff");
+		case ViewTransform::ACES:
+			return ("ACES fitted display transform, scene-linear ACEScg to display sRGB");
+		case ViewTransform::Raw:
+			return ("raw scene-linear ACEScg for debugging and HDR data, not display viewing");
+	}
+	return ("unknown view transform");
 }
 
 double	ColorManagement::srgbToLinear(double value)
@@ -190,12 +279,26 @@ Color	ColorManagement::xyzFromACEScg(Color color)
 	return (multiply(ACESCG_TO_XYZ, color));
 }
 
-Color	ColorManagement::displayTransformToLinearSRGB(Color color)
+Color	ColorManagement::viewTransformToLinearSRGB(Color color, ViewTransform viewTransform)
 {
 	Color linearSRGB = sanitizeSceneLinear(linearSRGBFromACEScg(color));
-	Color fitted = rrtAndOdtFit(multiply(ACES_INPUT_FIT, linearSRGB));
 
-	return (clampColor(multiply(ACES_OUTPUT_FIT, fitted)));
+	switch (viewTransform)
+	{
+		case ViewTransform::Standard:
+			return (clampColor(linearSRGB));
+		case ViewTransform::AgX:
+			return (clampColor(multiply(AGX_OUTSET, agxDefaultContrast(multiply(AGX_INSET, linearSRGB)))));
+		case ViewTransform::ACES:
+		{
+			const Color fitted = rrtAndOdtFit(multiply(ACES_INPUT_FIT, linearSRGB));
+
+			return (clampColor(multiply(ACES_OUTPUT_FIT, fitted)));
+		}
+		case ViewTransform::Raw:
+			return (linearSRGB);
+	}
+	return (clampColor(linearSRGB));
 }
 
 Color	ColorManagement::sanitizeSceneLinear(Color color)

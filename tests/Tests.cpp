@@ -223,8 +223,7 @@ namespace
 		scene.setSampleCount(1);
 		scene.setAdaptiveSampling(false);
 		scene.setMaxLightBounces(1);
-		scene.setGammaCorrected(false);
-		scene.setToneMapped(false);
+		scene.setViewTransform(ViewTransform::Raw);
 		scene.setBloom(false);
 		scene.setDenoise(false);
 		scene.setRenderSky(SKY_NONE);
@@ -478,38 +477,67 @@ namespace
 		requireNear(result.getBlue(), 2.0, "Color blue channel math failed.");
 	}
 
-	void	testToneMappingBlackPixel(void)
+	void	testViewTransformBlackPixel(void)
 	{
 		Image image(1, 1);
 		image.initialize();
 		image.setPixel(0, 0, Color(0.0, 0.0, 0.0));
 
-		image.toneMap();
+		image.applyViewTransform(ViewTransform::ACES);
 		const Color pixel = image.getPixel(0, 0);
 
-		require(std::isfinite(pixel.getRed()), "Tone mapping black produced non-finite red value.");
-		require(std::isfinite(pixel.getGreen()), "Tone mapping black produced non-finite green value.");
-		require(std::isfinite(pixel.getBlue()), "Tone mapping black produced non-finite blue value.");
-		requireNear(pixel.getRed(), 0.0, "Tone mapping black changed red value.");
-		requireNear(pixel.getGreen(), 0.0, "Tone mapping black changed green value.");
-		requireNear(pixel.getBlue(), 0.0, "Tone mapping black changed blue value.");
+		require(std::isfinite(pixel.getRed()), "View transform black produced non-finite red value.");
+		require(std::isfinite(pixel.getGreen()), "View transform black produced non-finite green value.");
+		require(std::isfinite(pixel.getBlue()), "View transform black produced non-finite blue value.");
+		requireNear(pixel.getRed(), 0.0, "View transform black changed red value.");
+		requireNear(pixel.getGreen(), 0.0, "View transform black changed green value.");
+		requireNear(pixel.getBlue(), 0.0, "View transform black changed blue value.");
 	}
 
-	void	testToneMappingCompressesHighlights(void)
+	void	testACESViewTransformCompressesHighlights(void)
 	{
 		Image image(1, 1);
 		image.initialize();
 		image.setPixel(0, 0, Color(4.0, 2.0, 1.0));
 
-		image.toneMap();
+		image.applyViewTransform(ViewTransform::ACES);
 		const Color pixel = image.getPixel(0, 0);
 
-		require(pixel.getRed() > pixel.getGreen(), "Tone mapping did not preserve channel order.");
-		require(pixel.getGreen() > pixel.getBlue(), "Tone mapping did not preserve highlight color.");
-		require(pixel.getRed() <= 1.0, "Tone mapping did not compress red highlight.");
-		require(pixel.getGreen() <= 1.0, "Tone mapping did not compress green highlight.");
-		require(pixel.getBlue() <= 1.0, "Tone mapping did not compress blue highlight.");
-		require(pixel.getRed() > 0.0, "Tone mapping crushed red highlight.");
+		require(pixel.getRed() > pixel.getGreen(), "ACES view transform did not preserve channel order.");
+		require(pixel.getGreen() > pixel.getBlue(), "ACES view transform did not preserve highlight color.");
+		require(pixel.getRed() <= 1.0, "ACES view transform did not compress red highlight.");
+		require(pixel.getGreen() <= 1.0, "ACES view transform did not compress green highlight.");
+		require(pixel.getBlue() <= 1.0, "ACES view transform did not compress blue highlight.");
+		require(pixel.getRed() > 0.0, "ACES view transform crushed red highlight.");
+	}
+
+	void	testStandardViewTransformClipsForDisplay(void)
+	{
+		Image image(1, 1);
+		image.initialize();
+		image.setPixel(0, 0, ColorManagement::acescgFromLinearSRGB(Color(2.0, 0.5, 0.25)));
+
+		image.applyViewTransform(ViewTransform::Standard);
+		const Color pixel = image.getPixel(0, 0);
+
+		requireNear(pixel.getRed(), 1.0, "Standard view transform did not clip red to display range.");
+		requireNearTolerance(pixel.getGreen(), 0.5, 0.0001, "Standard view transform changed display-linear green.");
+		requireNearTolerance(pixel.getBlue(), 0.25, 0.0001, "Standard view transform changed display-linear blue.");
+	}
+
+	void	testRawViewTransformKeepsSceneLinearData(void)
+	{
+		Image image(1, 1);
+		image.initialize();
+		image.setPixel(0, 0, Color(4.0, 2.0, 1.0));
+
+		image.applyViewTransformAndEncodeSRGB(ViewTransform::Raw);
+		const Color pixel = image.getPixel(0, 0);
+
+		require(image.getColorEncoding() == ImageColorEncoding::SceneLinearACEScg, "Raw view transform changed image encoding.");
+		requireNear(pixel.getRed(), 4.0, "Raw view transform changed scene-linear red.");
+		requireNear(pixel.getGreen(), 2.0, "Raw view transform changed scene-linear green.");
+		requireNear(pixel.getBlue(), 1.0, "Raw view transform changed scene-linear blue.");
 	}
 
 	void	testSRGBGammaCorrection(void)
@@ -1263,8 +1291,7 @@ namespace
 			std::ofstream stream(scenePath);
 			stream
 				<< "[settings]\n"
-				<< "gamma=0\n"
-				<< "tonemapping=0\n"
+				<< "view_transform=raw\n"
 				<< "bloom=0\n"
 				<< "exposure=1.5\n"
 				<< "contrast=1.25\n\n";
@@ -1272,8 +1299,7 @@ namespace
 
 		Scene scene;
 		SceneFile::read(scene, scenePath.string());
-		require(!scene.getGammaCorrected(), "Scene gamma setting was not applied.");
-		require(!scene.getToneMapped(), "Scene tonemapping setting was not applied.");
+		require(scene.getViewTransform() == ViewTransform::Raw, "Scene view_transform setting was not applied.");
 		require(!scene.getBloom(), "Scene bloom setting was not applied.");
 		requireNear(scene.getExposure(), 1.5, "Scene exposure setting was not applied.");
 		requireNear(scene.getContrast(), 1.25, "Scene contrast setting was not applied.");
@@ -1385,8 +1411,10 @@ namespace
 		requireSceneFileSettingThrows("adaptivethreshold=0", "Scene file accepted zero adaptive threshold.");
 		requireSceneFileSettingThrows("adaptivecheckinterval=0", "Scene file accepted zero adaptive check interval.");
 		requireSceneFileSettingThrows("maxlightbounces=-1", "Scene file accepted negative max light bounces.");
-		requireSceneFileSettingThrows("gamma=2", "Scene file accepted non-binary gamma.");
-		requireSceneFileSettingThrows("tonemapping=2", "Scene file accepted non-binary tone mapping.");
+		requireSceneFileSettingThrows("gamma=1", "Scene file accepted removed gamma setting.");
+		requireSceneFileSettingThrows("tonemapping=1", "Scene file accepted removed tone mapping setting.");
+		requireSceneFileSettingThrows("viewtransform=raw", "Scene file accepted view_transform alias.");
+		requireSceneFileSettingThrows("view_transform=display", "Scene file accepted invalid view transform.");
 		requireSceneFileSettingThrows("bloom=2", "Scene file accepted non-binary bloom.");
 		requireSceneFileSettingThrows("exposure=nan", "Scene file accepted non-finite exposure.");
 		requireSceneFileSettingThrows("photographic_exposure=0,1,100", "Scene file accepted zero photographic f-number.");
@@ -3876,15 +3904,13 @@ namespace
 	void	testFlagsParsePostProcessOptions(void)
 	{
 		std::unique_ptr<Scene> scene = parseFlags({
-			"--gamma", "false",
-			"--tonemapping", "false",
+			"--view-transform", "raw",
 			"--bloom", "false",
 			"--exposure", "1.25",
 			"--contrast", "1.5"
 		});
 
-		require(!scene->getGammaCorrected(), "--gamma false was not parsed.");
-		require(!scene->getToneMapped(), "--tonemapping false was not parsed.");
+		require(scene->getViewTransform() == ViewTransform::Raw, "--view-transform raw was not parsed.");
 		require(!scene->getBloom(), "--bloom false was not parsed.");
 		requireNear(scene->getExposure(), 1.25, "--exposure was not parsed.");
 		requireNear(scene->getContrast(), 1.5, "--contrast was not parsed.");
@@ -4000,6 +4026,10 @@ namespace
 		requireFlagParseThrows({"--maxLightBounces", "-1"}, "CLI accepted negative max light bounces.");
 		requireFlagParseThrows({"--resolution", "-1x100"}, "CLI accepted negative width.");
 		requireFlagParseThrows({"--threads", "0"}, "CLI accepted zero threads.");
+		requireFlagParseThrows({"--view-transform"}, "CLI accepted missing view transform.");
+		requireFlagParseThrows({"--view-transform", "filmic"}, "CLI accepted invalid view transform.");
+		requireFlagParseThrows({"--gamma", "false"}, "CLI accepted removed gamma flag.");
+		requireFlagParseThrows({"--tonemapping", "false"}, "CLI accepted removed tone mapping flag.");
 		requireFlagParseThrows({"--exposure"}, "CLI accepted missing exposure.");
 		requireFlagParseThrows({"--exposure", "nan"}, "CLI accepted non-finite exposure.");
 		requireFlagParseThrows({"--contrast"}, "CLI accepted missing contrast.");
@@ -4343,8 +4373,7 @@ namespace
 
 		Scene scene;
 		configureVisualRenderScene(scene, 9, 9);
-		scene.setGammaCorrected(true);
-		scene.setToneMapped(true);
+		scene.setViewTransform(ViewTransform::AgX);
 		scene.setBloom(true);
 		scene.setExposure(0.5);
 		scene.setContrast(1.1);
@@ -4433,8 +4462,7 @@ namespace
 		scene.setSampleCount(16);
 		scene.setAdaptiveSampling(false);
 		scene.setMaxLightBounces(2);
-		scene.setGammaCorrected(false);
-		scene.setToneMapped(false);
+		scene.setViewTransform(ViewTransform::Raw);
 		scene.setBloom(false);
 		scene.setDenoise(false);
 		scene.setRenderSky(SKY_NONE);
@@ -4492,8 +4520,7 @@ namespace
 		scene.setSampleCount(1);
 		scene.setAdaptiveSampling(false);
 		scene.setMaxLightBounces(1);
-		scene.setGammaCorrected(false);
-		scene.setToneMapped(false);
+		scene.setViewTransform(ViewTransform::Raw);
 		scene.setBloom(false);
 		scene.setDenoise(false);
 		scene.setRenderSky(SKY_NONE);
@@ -4532,8 +4559,7 @@ namespace
 		scene.getImage()->initialize();
 		scene.setSampleCount(1);
 		scene.setMaxLightBounces(0);
-		scene.setGammaCorrected(false);
-		scene.setToneMapped(false);
+		scene.setViewTransform(ViewTransform::Raw);
 		scene.setBloom(false);
 		scene.setRenderSky(SKY_ENVIRONMENT);
 		scene.setEnvironmentMap(std::make_shared<EnvironmentMap>(EnvironmentMap::load(environmentPath.string())));
@@ -4569,8 +4595,7 @@ namespace
 		scene.setAdaptiveThreshold(0.5);
 		scene.setAdaptiveCheckInterval(1);
 		scene.setMaxLightBounces(1);
-		scene.setGammaCorrected(false);
-		scene.setToneMapped(false);
+		scene.setViewTransform(ViewTransform::Raw);
 		scene.setBloom(false);
 		scene.setDenoise(false);
 		scene.setRenderSky(SKY_NONE);
@@ -4604,8 +4629,7 @@ namespace
 		scene.setAdaptiveThreshold(0.5);
 		scene.setAdaptiveCheckInterval(1);
 		scene.setMaxLightBounces(1);
-		scene.setGammaCorrected(false);
-		scene.setToneMapped(false);
+		scene.setViewTransform(ViewTransform::Raw);
 		scene.setBloom(false);
 		scene.setDenoise(true);
 		scene.setRenderSky(SKY_NONE);
@@ -4630,8 +4654,7 @@ namespace
 		scene.setSampleCount(1);
 		scene.setAdaptiveSampling(false);
 		scene.setMaxLightBounces(1);
-		scene.setGammaCorrected(false);
-		scene.setToneMapped(false);
+		scene.setViewTransform(ViewTransform::Raw);
 		scene.setBloom(false);
 		scene.setDenoise(true);
 		scene.setRenderSky(SKY_NONE);
@@ -4667,8 +4690,10 @@ int	main(void)
 	try
 	{
 		testColorMath();
-		testToneMappingBlackPixel();
-		testToneMappingCompressesHighlights();
+		testViewTransformBlackPixel();
+		testACESViewTransformCompressesHighlights();
+		testStandardViewTransformClipsForDisplay();
+		testRawViewTransformKeepsSceneLinearData();
 		testSRGBGammaCorrection();
 		testColorManagementACEScgContract();
 		testACEScgSceneImageEncodesToSRGB();

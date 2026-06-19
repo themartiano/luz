@@ -33,8 +33,8 @@ class	Image
 		void		applyExposure(double exposure);
 		void		applyContrast(double contrast);
 		void		gammaCorrect(void);
-		void		toneMap(void);
-		void		toneMapAndGammaCorrect(void);
+		void		applyViewTransform(ViewTransform viewTransform);
+		void		applyViewTransformAndEncodeSRGB(ViewTransform viewTransform);
 		void		suppressIsolatedFireflies(void);
 		std::unique_ptr<Image>	extractBloom(double threshold, double softKnee) const;
 		std::unique_ptr<Image>	extractBrightness(void) const;

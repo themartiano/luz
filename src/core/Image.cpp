@@ -510,9 +510,12 @@ void	Image::gammaCorrect(void)
 	this->_colorEncoding = ImageColorEncoding::DisplayEncodedSRGB;
 }
 
-void	Image::toneMap(void)
+void	Image::applyViewTransform(ViewTransform viewTransform)
 {
-	if (this->_colorEncoding != ImageColorEncoding::SceneLinearACEScg)
+	if (
+		viewTransform == ViewTransform::Raw
+		|| this->_colorEncoding != ImageColorEncoding::SceneLinearACEScg
+	)
 	{
 		return;
 	}
@@ -520,14 +523,20 @@ void	Image::toneMap(void)
 	{
 		Color& pixel = this->_pixels.unchecked(i);
 
-		pixel = ColorManagement::displayTransformToLinearSRGB(ColorManagement::sanitizeSceneLinear(pixel));
+		pixel = ColorManagement::viewTransformToLinearSRGB(
+			ColorManagement::sanitizeSceneLinear(pixel),
+			viewTransform
+		);
 	}
 	this->_colorEncoding = ImageColorEncoding::DisplayLinearSRGB;
 }
 
-void	Image::toneMapAndGammaCorrect(void)
+void	Image::applyViewTransformAndEncodeSRGB(ViewTransform viewTransform)
 {
-	if (this->_colorEncoding == ImageColorEncoding::DisplayEncodedSRGB)
+	if (
+		viewTransform == ViewTransform::Raw
+		|| this->_colorEncoding == ImageColorEncoding::DisplayEncodedSRGB
+	)
 	{
 		return;
 	}
@@ -541,8 +550,9 @@ void	Image::toneMapAndGammaCorrect(void)
 		Color& pixel = this->_pixels.unchecked(i);
 
 		pixel = ColorManagement::encodeSRGB(
-			ColorManagement::displayTransformToLinearSRGB(
-				ColorManagement::sanitizeSceneLinear(pixel)
+			ColorManagement::viewTransformToLinearSRGB(
+				ColorManagement::sanitizeSceneLinear(pixel),
+				viewTransform
 			)
 		);
 	}

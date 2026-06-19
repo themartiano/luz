@@ -106,7 +106,7 @@ config_for_case()
 			next
 		}
 		NR > 1 && $1 == benchmark_case {
-			printf "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s", field("width"), field("height"), field("samples"), field("bounces"), field("threads"), field("seed"), field("gamma"), field("tonemapping"), field("bloom"), field("adaptive"), field("denoise")
+			printf "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s", field("width"), field("height"), field("samples"), field("bounces"), field("threads"), field("seed"), field("view_transform"), field("bloom"), field("adaptive"), field("denoise")
 			exit
 		}
 		function field(name, field_index) {
@@ -268,7 +268,7 @@ print_overall_row()
 
 cases=$(awk -F, 'NR > 1 && $1 != "" { print $1 }' "$results_file" | sort -u)
 
-echo "case,width,height,samples,bounces,threads,seed,gamma,tonemapping,bloom,adaptive,denoise,runs,median_elapsed_ms,median_render_ms,median_total_ms,median_average_spp,median_samples_per_second,score,median_actual_samples_per_second,actual_score,render_samples_per_second,render_score,median_non_render_ms,render_time_share_percent,render_score_over_score_percent"
+echo "case,width,height,samples,bounces,threads,seed,view_transform,bloom,adaptive,denoise,runs,median_elapsed_ms,median_render_ms,median_total_ms,median_average_spp,median_samples_per_second,score,median_actual_samples_per_second,actual_score,render_samples_per_second,render_score,median_non_render_ms,render_time_share_percent,render_score_over_score_percent"
 
 scores=""
 actual_scores=""
@@ -281,7 +281,7 @@ for benchmark_case in $cases; do
 	fi
 
 	config=$(config_for_case "$results_file" "$benchmark_case")
-	IFS=',' read -r width height samples bounces threads seed gamma tonemapping bloom adaptive denoise <<< "$config"
+	IFS=',' read -r width height samples bounces threads seed view_transform bloom adaptive denoise <<< "$config"
 
 	runs=$(stats_count "$elapsed_stats")
 	median_elapsed_ms=$(stats_median "$elapsed_stats")
@@ -315,8 +315,8 @@ for benchmark_case in $cases; do
 	IFS=',' read -r median_non_render_ms render_time_share_percent <<< "$render_time_fields"
 	render_score_over_score_percent=$(ratio_percent "$render_score" "$score")
 
-	printf "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n" \
-		"$benchmark_case" "$width" "$height" "$samples" "$bounces" "$threads" "$seed" "$gamma" "$tonemapping" "$bloom" "$adaptive" "$denoise" "$runs" "$median_elapsed_ms" "$median_render_ms" "$median_total_ms" "$median_average_spp" "$median_samples_per_second" "$score" "$median_actual_samples_per_second" "$actual_score" "$render_samples_per_second" "$render_score" "$median_non_render_ms" "$render_time_share_percent" "$render_score_over_score_percent"
+	printf "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n" \
+		"$benchmark_case" "$width" "$height" "$samples" "$bounces" "$threads" "$seed" "$view_transform" "$bloom" "$adaptive" "$denoise" "$runs" "$median_elapsed_ms" "$median_render_ms" "$median_total_ms" "$median_average_spp" "$median_samples_per_second" "$score" "$median_actual_samples_per_second" "$actual_score" "$render_samples_per_second" "$render_score" "$median_non_render_ms" "$render_time_share_percent" "$render_score_over_score_percent"
 	scores+="${score}"$'\n'
 	actual_scores+="${actual_score}"$'\n'
 	if [[ -n "$render_score" ]]; then

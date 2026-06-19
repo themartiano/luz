@@ -2,7 +2,7 @@
 resolution=600,400
 samples=64
 maxlightbounces=4
-gamma=1
+view_transform=standard
 bloom=1
 sky=linear
 outputfilename=suzanne

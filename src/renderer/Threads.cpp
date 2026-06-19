@@ -81,29 +81,21 @@ namespace
 		{
 			applyBloom(image);
 		}
-		if (
-			scene.getToneMapped()
-			&& scene.getGammaCorrected()
-			&& scene.getContrast() == D_CONTRAST
-		)
+		const ViewTransform viewTransform = scene.getViewTransform();
+		if (viewTransform == ViewTransform::Raw)
 		{
-			image.toneMapAndGammaCorrect();
+			return;
+		}
+		if (scene.getContrast() == D_CONTRAST)
+		{
+			image.applyViewTransformAndEncodeSRGB(viewTransform);
 			image.suppressIsolatedFireflies();
 			return;
 		}
-		if (scene.getToneMapped())
-		{
-			image.toneMap();
-		}
-		if (scene.getContrast() != D_CONTRAST)
-		{
-			image.applyContrast(scene.getContrast());
-		}
-		if (scene.getGammaCorrected())
-		{
-			image.gammaCorrect();
-			image.suppressIsolatedFireflies();
-		}
+		image.applyViewTransform(viewTransform);
+		image.applyContrast(scene.getContrast());
+		image.gammaCorrect();
+		image.suppressIsolatedFireflies();
 	}
 
 	void	printRenderProgress(unsigned int percentage)

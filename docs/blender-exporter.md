@@ -45,7 +45,8 @@ The exporter also works without passing the `.blend` file before `--python`:
 --adaptive-threshold N        Override exported adaptive noise threshold.
 --adaptive-check-interval N   Override exported adaptive check interval.
 --denoise auto|on|off         Enable denoising by default, mirror Blender with auto, or force off.
---tonemapping auto|on|off     Enable tone mapping by default, mirror Blender with auto, or force off.
+--view-transform auto|standard|agx|aces|raw
+                             Export a Luz display transform. Raw is debugging/HDR data, not viewing.
 --exposure EV                 Override exported display exposure in stops.
 --max-light-bounces N         Override max light bounces.
 --sky linear|none|atmosphere|environment
@@ -134,17 +135,17 @@ The exporter also works without passing the `.blend` file before `--python`:
 - Blender RGB material, light, and world colors are written as
   `linear_srgb(...)` values so Luz converts Blender's linear RGB values into its
   ACEScg working space.
-- Adaptive sampling, denoising, and tone mapping are enabled in the generated
-  scene by default. Pass `--adaptive auto`, `--denoise auto`, or
-  `--tonemapping auto` to mirror Blender's corresponding setting, or pass `off`
-  to disable a feature explicitly.
+- Adaptive sampling and denoising are enabled in the generated scene by default.
+  Pass `--adaptive auto` or `--denoise auto` to mirror Blender's corresponding
+  setting, or pass `off` to disable a feature explicitly.
 - When Blender leaves adaptive minimum samples unset, the exporter uses a
   conservative minimum derived from the exported sample count instead of relying
   on Luz's generic defaults.
 - Blender view exposure is exported as Luz `exposure`. With
-  `--tonemapping auto`, Blender `Standard` and `Raw` view transforms export
-  `tonemapping=0` so Luz uses direct scene-linear to sRGB display encoding
-  instead of its ACES-fitted tone map.
+  `--view-transform auto`, Blender `Standard` and `Raw` export
+  `view_transform=standard`, Blender `AgX` exports `view_transform=agx`, and
+  Blender `ACES` exports `view_transform=aces`. Luz `raw` is available only as an
+  explicit override for debugging/HDR data, not for normal viewing.
 - Principled BSDF export includes IOR, coat weight/roughness, and sheen when
   those Blender sockets are available. Glossy and anisotropic BSDF nodes export
   as Luz `glossy` materials, and Blender Diffuse+Glossy `Mix Shader` graphs

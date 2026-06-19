@@ -64,10 +64,18 @@ static void	saveImage(const std::unique_ptr<Image>& image, const std::string& ou
 	}
 	else if (isPngOutput(outputFileName))
 	{
+		if (image->getColorEncoding() == ImageColorEncoding::SceneLinearACEScg)
+		{
+			throw std::runtime_error("Raw scene-linear output is for debugging/HDR data and requires .tiff, not .png.");
+		}
 		image->saveToPNG(outputFileName);
 	}
 	else if (isBmpOutput(outputFileName))
 	{
+		if (image->getColorEncoding() == ImageColorEncoding::SceneLinearACEScg)
+		{
+			throw std::runtime_error("Raw scene-linear output is for debugging/HDR data and requires .tiff, not .bmp.");
+		}
 		image->saveToBMP(outputFileName);
 	}
 	else

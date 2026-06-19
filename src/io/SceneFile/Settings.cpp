@@ -33,6 +33,29 @@ namespace
 		}
 	}
 
+	ViewTransform	parseViewTransform(const std::string& value)
+	{
+		std::string normalized = SceneFile::internal::_lowerCopy(SceneFile::internal::_trim(value));
+
+		if (normalized == "standard")
+		{
+			return (ViewTransform::Standard);
+		}
+		if (normalized == "agx")
+		{
+			return (ViewTransform::AgX);
+		}
+		if (normalized == "aces")
+		{
+			return (ViewTransform::ACES);
+		}
+		if (normalized == "raw")
+		{
+			return (ViewTransform::Raw);
+		}
+		throw std::runtime_error("Invalid view_transform setting. Use standard, agx, aces, or raw. Raw is for debugging/HDR data, not display viewing.");
+	}
+
 	std::string	settingValue(const std::string& line, const std::string& message)
 	{
 		const std::size_t separator = line.find('=');
@@ -248,30 +271,12 @@ void	SceneFile::internal::_readSettingsSection(Scene& scene, std::ifstream& stre
 			}
 			scene.setMaxLightBounces(maxLightBounces);
 		}
-		else if (lowerLine.rfind("gamma=", 0) != std::string::npos)
+		else if (lowerLine.rfind("view_transform=", 0) != std::string::npos)
 		{
-			int gammaCorrected;
-
-			if (sscanf(lowerLine.c_str(), "gamma=%d", &gammaCorrected) != 1)
-			{
-				throw std::runtime_error("Invalid gamma setting. Use gamma=0 or gamma=1.");
-			}
-			requireBinarySetting(gammaCorrected, "gamma");
-			scene.setGammaCorrected(gammaCorrected);
-		}
-		else if (
-			lowerLine.rfind("tonemapping=", 0) != std::string::npos
-			|| lowerLine.rfind("tone_mapping=", 0) != std::string::npos
-		)
-		{
-			int toneMapped;
-
-			if (sscanf(lowerLine.c_str(), "%*[^=]=%d", &toneMapped) != 1)
-			{
-				throw std::runtime_error("Invalid tonemapping setting. Use tonemapping=0 or tonemapping=1.");
-			}
-			requireBinarySetting(toneMapped, "tonemapping");
-			scene.setToneMapped(toneMapped);
+			scene.setViewTransform(parseViewTransform(settingValue(
+				line,
+				"Invalid view_transform setting. Use view_transform=standard, agx, aces, or raw."
+			)));
 		}
 		else if (lowerLine.rfind("bloom=", 0) != std::string::npos)
 		{

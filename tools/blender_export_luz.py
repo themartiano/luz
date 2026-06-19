@@ -28,6 +28,7 @@ except ImportError as error:
 SAMPLE_TEXTURE_COLORS = True
 TEXTURE_SAMPLE_SIZE = 64
 DEFAULT_QUALITY_MODE = "on"
+DEFAULT_VIEW_TRANSFORM_MODE = "auto"
 
 
 @dataclass
@@ -146,7 +147,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 	parser.add_argument("--adaptive-check-interval", type=int, help="Override exported Luz adaptive check interval.")
 	parser.add_argument("--max-light-bounces", type=int, help="Override Luz max light bounces.")
 	parser.add_argument("--denoise", choices=("auto", "on", "off", "true", "false", "1", "0"), default=DEFAULT_QUALITY_MODE, help="Enable Luz denoising by default; use auto to mirror Blender or off to disable.")
-	parser.add_argument("--tonemapping", choices=("auto", "on", "off", "true", "false", "1", "0"), default=DEFAULT_QUALITY_MODE, help="Enable Luz tone mapping by default; use auto to mirror Blender's view transform or off to disable.")
+	parser.add_argument("--view-transform", choices=("auto", "standard", "agx", "aces", "raw"), default=DEFAULT_VIEW_TRANSFORM_MODE, help="Luz view transform. Raw is for debugging/HDR data, not display viewing.")
 	parser.add_argument("--exposure", type=float, help="Override exported Luz exposure compensation in stops.")
 	parser.add_argument("--sky", choices=("linear", "none", "atmosphere", "environment"), help="Override Luz sky mode.")
 	parser.add_argument("--render-output", help="Luz render output filename. .bmp is appended by Luz when omitted.")
@@ -1764,7 +1765,9 @@ def scene_exposure(args: argparse.Namespace) -> float:
 	return exposure if math.isfinite(exposure) else 0.0
 
 
-def scene_tonemapping(args: argparse.Namespace) -> bool:
+def scene_view_transform(args: argparse.Namespace) -> str:
+	if args.view_transform != "auto":
+		return args.view_transform
 	view_settings = scene_view_settings()
 	view_transform = ""
 	if view_settings is not None:
@@ -1772,8 +1775,14 @@ def scene_tonemapping(args: argparse.Namespace) -> bool:
 			view_transform = str(getattr(view_settings, "view_transform", ""))
 		except Exception:
 			view_transform = ""
-	standard_like_view = view_transform.strip().lower() in {"standard", "raw"}
-	return bool_from_mode(args.tonemapping, not standard_like_view)
+	view_transform = view_transform.strip().lower()
+	if view_transform == "agx":
+		return "agx"
+	if view_transform == "aces":
+		return "aces"
+	if view_transform in {"standard", "raw"}:
+		return "standard"
+	return "agx"
 
 
 def scene_bounces(args: argparse.Namespace) -> int:
@@ -1820,8 +1829,7 @@ def write_luz_scene(
 			f"adaptive={1 if adaptive else 0}",
 			f"maxlightbounces={scene_bounces(args)}",
 			f"meters_per_unit={fmt_float(1.0 / args.global_scale)}",
-			"gamma=1",
-			f"tonemapping={1 if scene_tonemapping(args) else 0}",
+			f"view_transform={scene_view_transform(args)}",
 			"bloom=1",
 			f"exposure={fmt_float(scene_exposure(args))}",
 			f"denoise={1 if scene_denoise(args) else 0}",

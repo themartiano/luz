@@ -106,8 +106,7 @@ Scene::Scene(void)
 	this->_adaptiveCheckInterval = D_ADAPTIVE_CHECK_INTERVAL;
 	this->_adaptiveThreshold = D_ADAPTIVE_THRESHOLD;
 	this->_maxLightBounces = D_MAX_LIGHT_BOUNCES;
-	this->_gammaCorrected = true;
-	this->_toneMapped = true;
+	this->_viewTransform = ViewTransform::AgX;
 	this->_exposure = D_EXPOSURE;
 	this->_contrast = D_CONTRAST;
 	this->_causticsEnabled = D_CAUSTICS;
@@ -244,26 +243,14 @@ void	Scene::setMaxLightBounces(const int maxLightBounces)
 	this->_maxLightBounces = maxLightBounces;
 }
 
-// Returns Gamma Correction (whether or not the render should be gamma corrected)
-bool	Scene::getGammaCorrected(void) const
+ViewTransform	Scene::getViewTransform(void) const
 {
-	return (this->_gammaCorrected);
+	return (this->_viewTransform);
 }
 
-// Sets Gamma Correction (whether or not the render should be gamma corrected)
-void	Scene::setGammaCorrected(bool gammaCorrected)
+void	Scene::setViewTransform(ViewTransform viewTransform)
 {
-	this->_gammaCorrected = gammaCorrected;
-}
-
-bool	Scene::getToneMapped(void) const
-{
-	return (this->_toneMapped);
-}
-
-void	Scene::setToneMapped(bool toneMapped)
-{
-	this->_toneMapped = toneMapped;
+	this->_viewTransform = viewTransform;
 }
 
 double	Scene::getExposure(void) const

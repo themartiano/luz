@@ -157,13 +157,13 @@ Options:
   --adaptive-min-samples N    Minimum samples before adaptive stopping
   --adaptive-threshold F      Relative adaptive noise threshold
   --adaptive-check-interval N Adaptive convergence check interval
-  -mlb, --maxLightBounces N   Override maximum light bounces
-      --max-light-bounces N   Alias for --maxLightBounces
-  -t, --threads N             Render with N worker threads
-  --seed N                    Seed random sampling
-  --gamma true|false          Toggle gamma correction
-  -tm, --tonemapping true|false  Toggle tone mapping
-  --bloom true|false          Toggle bloom
+	-mlb, --maxLightBounces N   Override maximum light bounces
+	    --max-light-bounces N   Alias for --maxLightBounces
+	-t, --threads N             Render with N worker threads
+	--seed N                    Seed random sampling
+	--view-transform standard|agx|aces|raw
+	                              Select display transform; raw is debugging/HDR data, not viewing
+	--bloom true|false          Toggle bloom
   --exposure EV              Exposure compensation in stops
   --contrast F               Display contrast multiplier
   --denoise [true|false]      Toggle denoised companion render (default: true)
@@ -176,8 +176,9 @@ Options:
 ```
 
 TIFF output stores RGB as uncompressed 32-bit IEEE floating-point samples. Use
-`--output render.tiff` with `--tonemapping false --gamma false` to preserve
-scene-linear ACEScg HDR values above 1.0.
+`--output render.tiff --view-transform raw` to preserve scene-linear ACEScg HDR
+values above 1.0. Raw output is for debugging, measurement, and compositing data,
+not normal viewing.
 
 ## Physically Based Authoring
 
