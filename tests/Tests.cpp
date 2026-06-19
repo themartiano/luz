@@ -4509,6 +4509,85 @@ namespace
 		require(brightestLuminance > 0.05, "Glossy reflected light path lost too much energy.");
 	}
 
+	void	testConstantBackgroundDirectlyLightsSurfaces(void)
+	{
+		setRandomSeed(2027);
+
+		Scene scene;
+		scene.getImage()->setWidth(3);
+		scene.getImage()->setHeight(3);
+		scene.getImage()->initialize();
+		scene.setSampleCount(128);
+		scene.setAdaptiveSampling(false);
+		scene.setMaxLightBounces(0);
+		scene.setViewTransform(ViewTransform::Raw);
+		scene.setBloom(false);
+		scene.setDenoise(false);
+		scene.setRenderSky(SKY_NONE);
+		scene.setBackgroundColor(Color(0.4, 0.4, 0.4));
+		scene.setRenderingThreads(1);
+		scene.setBenchmarkMode(true);
+		scene.addCamera(testPinholeCamera(Vector3(0.0, 1.0, 3.0), Vector3(0.0, -0.5, -1.0), 3.0));
+		scene.addHittable(std::make_shared<Plane>(
+			0.0,
+			Vector3(0.0, 1.0, 0.0),
+			std::make_shared<Lambertian>(Color(1.0, 1.0, 1.0))
+		));
+
+		require(Renderer::render(scene), "Constant background direct-light render failed.");
+		requireImageIsFinite(*scene.getImage(), "Constant background direct-light render");
+		const double centerLuminance = Utilities::luminance(scene.getImage()->getPixel(1, 1));
+
+		require(
+			centerLuminance > 0.01,
+			"Constant background was not sampled as direct infinite light at zero bounce depth."
+		);
+	}
+
+	void	testConstantBackgroundDoesNotDirectlySampleTransmissiveBSDF(void)
+	{
+		setRandomSeed(2028);
+
+		Scene scene;
+		scene.getImage()->setWidth(3);
+		scene.getImage()->setHeight(3);
+		scene.getImage()->initialize();
+		scene.setSampleCount(128);
+		scene.setAdaptiveSampling(false);
+		scene.setMaxLightBounces(0);
+		scene.setViewTransform(ViewTransform::Raw);
+		scene.setBloom(false);
+		scene.setDenoise(false);
+		scene.setRenderSky(SKY_NONE);
+		scene.setBackgroundColor(Color(0.4, 0.4, 0.4));
+		scene.setRenderingThreads(1);
+		scene.setBenchmarkMode(true);
+		scene.addCamera(testPinholeCamera(Vector3(0.0, 0.0, 3.0), Vector3(0.0, 0.0, -1.0), 3.0));
+		scene.addHittable(std::make_shared<Sphere>(
+			Vector3(0.0, 0.0, 0.0),
+			1.0,
+			std::make_shared<Principled>(
+				Color(0.9, 0.8, 0.7),
+				0.0,
+				0.5,
+				1.0,
+				1.1,
+				0.0,
+				0.03,
+				0.0
+			)
+		));
+
+		require(Renderer::render(scene), "Constant background transmissive BSDF render failed.");
+		requireImageIsFinite(*scene.getImage(), "Constant background transmissive BSDF render");
+		const double centerLuminance = Utilities::luminance(scene.getImage()->getPixel(1, 1));
+
+		require(
+			centerLuminance < 0.01,
+			"Constant background was directly sampled by a transmissive BSDF at zero bounce depth."
+		);
+	}
+
 	void	testTinyRender(void)
 	{
 		setRandomSeed(42);
@@ -4805,6 +4884,8 @@ int	main(void)
 		testRenderedScenePostProcessingProducesDisplayableImage();
 		testRenderedBMPContainsVisualSignal();
 		testGlossySurfaceReflectsEmissiveLight();
+		testConstantBackgroundDirectlyLightsSurfaces();
+		testConstantBackgroundDoesNotDirectlySampleTransmissiveBSDF();
 		testTinyRender();
 		testAtmosphereCompositesEnvironmentBackground();
 		testTinyAdaptiveRender();

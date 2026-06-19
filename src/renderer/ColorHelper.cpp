@@ -19,6 +19,7 @@ namespace
 	constexpr double	RUSSIAN_ROULETTE_MAX_SURVIVAL = 0.95;
 	constexpr int		DIRECT_LIGHT_FULL_SAMPLE_BOUNCES = 2;
 	constexpr double	DIRECT_LIGHT_LATE_SAMPLE_PROBABILITY = 0.5;
+	const double		FULL_SPHERE_PDF = 1.0 / (4.0 * D_PI);
 
 	struct	LightDistribution
 	{
@@ -270,6 +271,33 @@ namespace
 		return (color);
 	}
 
+	Color	clampColorLuminance(Color color, double maxLuminance)
+	{
+		const double luminance = Utilities::luminance(color);
+
+		if (!std::isfinite(luminance))
+		{
+			return (Color(0.0, 0.0, 0.0));
+		}
+		if (maxLuminance > 0.0 && luminance > maxLuminance)
+		{
+			color = color * (maxLuminance / luminance);
+		}
+		return (color);
+	}
+
+	Color	clampConstantBackgroundMiss(Scene& scene, Color contribution)
+	{
+		constexpr double BACKGROUND_MISS_HEADROOM = 4.0;
+		const double backgroundLuminance = Utilities::luminance(scene.getBackgroundColor());
+
+		if (!std::isfinite(backgroundLuminance) || backgroundLuminance <= 0.0)
+		{
+			return (contribution);
+		}
+		return (clampColorLuminance(contribution, backgroundLuminance * BACKGROUND_MISS_HEADROOM));
+	}
+
 	double	maxChannel(const Color& color)
 	{
 		return (std::max(color.getRed(), std::max(color.getGreen(), color.getBlue())));
@@ -344,6 +372,40 @@ namespace
 			scene.hasEnvironmentMap()
 			&& scene.getEnvironmentLighting()
 			&& scene.getEnvironmentStrength() > 0.0
+		);
+	}
+
+	bool	hasConstantBackgroundLight(Scene& scene)
+	{
+		return (
+			!hasEnvironmentLight(scene)
+			&& scene.getRenderSky() == SKY_NONE
+			&& maxChannel(scene.getBackgroundColor()) > 0.0
+		);
+	}
+
+	bool	hasSampledInfiniteLight(Scene& scene)
+	{
+		return (hasEnvironmentLight(scene) || hasConstantBackgroundLight(scene));
+	}
+
+	bool	supportsConstantBackgroundDirectLighting(const ScatterRecord& scatterRecord)
+	{
+		return (scatterRecord.pdfType != SCATTER_PDF_BSDF);
+	}
+
+	bool	samplesVisibleInfiniteLightForScatter(
+		Scene& scene,
+		SkyTypes skyType,
+		const ScatterRecord& scatterRecord
+	)
+	{
+		return (
+			((skyType == SKY_ENVIRONMENT || skyType == SKY_ATMOSPHERE) && hasEnvironmentLight(scene))
+			|| (
+				hasConstantBackgroundLight(scene)
+				&& supportsConstantBackgroundDirectLighting(scatterRecord)
+			)
 		);
 	}
 
@@ -459,13 +521,17 @@ namespace
 		throughput = clampRayColor(throughput * atmosphereSample.transmittance);
 	}
 
-	double	environmentPDF(Scene& scene, const Vector3& direction)
+	double	infiniteLightPDF(Scene& scene, const Vector3& direction)
 	{
-		if (!hasEnvironmentLight(scene))
+		if (hasEnvironmentLight(scene))
 		{
-			return (0.0);
+			return (scene.getEnvironmentMap()->pdf(direction, scene.getEnvironmentRotation()));
 		}
-		return (scene.getEnvironmentMap()->pdf(direction, scene.getEnvironmentRotation()));
+		if (hasConstantBackgroundLight(scene))
+		{
+			return (FULL_SPHERE_PDF);
+		}
+		return (0.0);
 	}
 
 	bool	applyRussianRoulette(Color& throughput, int bounces)
@@ -625,6 +691,33 @@ namespace
 		return (false);
 	}
 
+	LightSample	sampleConstantBackgroundLight(Scene& scene, const Vector3& origin)
+	{
+		LightSample sample;
+
+		if (!hasConstantBackgroundLight(scene))
+		{
+			return (sample);
+		}
+		sample.direction = Sampler::sphereDirection(Sampler::DIM_ENVIRONMENT_POINT);
+		sample.emitted = scene.getBackgroundColor();
+		sample.pdf = FULL_SPHERE_PDF;
+		sample.tMax = T_MAX;
+		if (maxChannel(sample.emitted) <= 0.0)
+		{
+			return (sample);
+		}
+
+		Ray shadowRay = Ray::fromNormalizedDirection(origin, sample.direction);
+		if (isShadowOccluded(scene, shadowRay, T_MAX))
+		{
+			return (sample);
+		}
+
+		sample.valid = true;
+		return (sample);
+	}
+
 	LightSample	sampleEnvironmentLight(Scene& scene, const Vector3& origin)
 	{
 		LightSample sample;
@@ -661,6 +754,15 @@ namespace
 
 		sample.valid = true;
 		return (sample);
+	}
+
+	LightSample	sampleInfiniteLight(Scene& scene, const Vector3& origin)
+	{
+		if (hasEnvironmentLight(scene))
+		{
+			return (sampleEnvironmentLight(scene, origin));
+		}
+		return (sampleConstantBackgroundLight(scene, origin));
 	}
 
 	double	directLightSampleProbability(int bounces)
@@ -800,6 +902,16 @@ namespace
 		int bounces
 	)
 	{
+		const bool constantBackgroundLight = hasConstantBackgroundLight(scene);
+
+		if (
+			constantBackgroundLight
+			&& !supportsConstantBackgroundDirectLighting(scatterRecord)
+		)
+		{
+			return (Color(0.0, 0.0, 0.0));
+		}
+
 		const double sampleProbability = directLightSampleProbability(bounces);
 		if (sampleProbability <= 0.0)
 		{
@@ -813,7 +925,7 @@ namespace
 			return (Color(0.0, 0.0, 0.0));
 		}
 
-		const LightSample lightSample = sampleEnvironmentLight(scene, hitRecord.position);
+		const LightSample lightSample = sampleInfiniteLight(scene, hitRecord.position);
 		if (!lightSample.valid)
 		{
 			return (Color(0.0, 0.0, 0.0));
@@ -836,11 +948,16 @@ namespace
 
 		const double misWeight = powerHeuristic(lightSample.pdf, scatterSamplePDF);
 
-		return (
+		Color contribution = (
 			bsdfCos
 			* lightSample.emitted
 			* (misWeight / (lightSample.pdf * sampleProbability))
 		);
+		if (constantBackgroundLight)
+		{
+			contribution = clampConstantBackgroundMiss(scene, contribution);
+		}
+		return (contribution);
 	}
 
 	Color	calculateLightRaysColor(
@@ -892,7 +1009,7 @@ namespace
 		const auto		skyType = scene.getRenderSky();
 		const auto&		lights = scene.getLights();
 		const auto		lightCount = lights.size();
-		const bool		environmentLight = hasEnvironmentLight(scene);
+		const bool		sampledInfiniteLight = hasSampledInfiniteLight(scene);
 		const LightDistribution lightDistribution = {
 			&scene.getLightSelectionCumulativeWeights(),
 			scene.getLightSelectionTotalWeight()
@@ -904,8 +1021,9 @@ namespace
 		Color	accumulatedColor(0.0, 0.0, 0.0);
 		Color	throughput(1.0, 1.0, 1.0);
 		bool	previousBounceSpecular = true;
-		Vector3	previousScatterOrigin;
-		double	previousScatterPDF = 0.0;
+			Vector3	previousScatterOrigin;
+			double	previousScatterPDF = 0.0;
+			bool	previousScatterSampledVisibleInfiniteLight = false;
 
 		for (int bounces = 0; bounces <= maxLightBounces; bounces++)
 		{
@@ -919,15 +1037,14 @@ namespace
 				}
 				double environmentMISWeight = 1.0;
 				if (
-					(skyType == SKY_ENVIRONMENT || skyType == SKY_ATMOSPHERE)
-					&& bounces > 0
+					bounces > 0
 					&& !previousBounceSpecular
-					&& environmentLight
+					&& previousScatterSampledVisibleInfiniteLight
 				)
 				{
 					environmentMISWeight = powerHeuristic(
 						previousScatterPDF,
-						environmentPDF(scene, currentRay.getDirection())
+						infiniteLightPDF(scene, currentRay.getDirection())
 					);
 				}
 				Color skyColor(0.0, 0.0, 0.0);
@@ -943,11 +1060,16 @@ namespace
 						skyColor = Renderer::internal::_calculateSkyInterpolation(scene, currentRay);
 						break;
 					default:
-						skyColor = scene.getBackgroundColor();
+						skyColor = scene.getBackgroundColor() * environmentMISWeight;
 						break;
 				}
 
-				return (accumulatedColor + clampRayColor(throughput * skyColor));
+				Color skyContribution = throughput * skyColor;
+				if (bounces > 0 && hasConstantBackgroundLight(scene))
+				{
+					skyContribution = clampConstantBackgroundMiss(scene, skyContribution);
+				}
+				return (accumulatedColor + clampRayColor(skyContribution));
 			}
 			if (bounces == 0 && primaryFeatures != nullptr && renderCamera != nullptr)
 			{
@@ -1020,7 +1142,7 @@ namespace
 					)
 				);
 			}
-			if (environmentLight)
+			if (sampledInfiniteLight)
 			{
 				accumulatedColor += clampRayColor(
 					throughput * estimateEnvironmentLighting(
@@ -1055,6 +1177,11 @@ namespace
 			previousBounceSpecular = false;
 			previousScatterOrigin = hitRecord.position;
 			previousScatterPDF = pdfValue;
+			previousScatterSampledVisibleInfiniteLight = samplesVisibleInfiniteLightForScatter(
+				scene,
+				skyType,
+				scatterRecord
+			);
 		}
 
 		return (accumulatedColor);

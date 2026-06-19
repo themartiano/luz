@@ -22,7 +22,12 @@ try:
 	import bpy
 	from mathutils import Vector
 except ImportError as error:
-	raise SystemExit("This exporter must be run inside Blender with --python.") from error
+	bpy = None
+	_BLENDER_IMPORT_ERROR = error
+
+	class Vector:  # type: ignore[no-redef]
+		def __init__(self, *_args: object, **_kwargs: object) -> None:
+			raise RuntimeError("mathutils.Vector is only available inside Blender.")
 
 
 SAMPLE_TEXTURE_COLORS = True
@@ -514,8 +519,23 @@ def texture_image_from_output(output_socket: object, visited: set[object], depth
 	if node_type in {"TEX_IMAGE", "TEX_ENVIRONMENT"} and output_name == "Color":
 		return getattr(node, "image", None)
 	if node_type in {"MIX_RGB", "MIX"} and output_name in {"Color", "Result"}:
+		for input_name in ("Color1", "Color2", "A", "B"):
+			socket = node_socket(node, input_name)
+			if socket is None:
+				continue
+			for link in getattr(socket, "links", []):
+				image = texture_image_from_output(link.from_socket, visited.copy(), depth + 1)
+				if image is not None:
+					return image
 		return None
-	if node_type in {"RGB", "VALUE", "VALTORGB", "MATH"}:
+	if node_type == "VALTORGB" and output_name == "Color":
+		socket = node_socket(node, "Fac") or node_socket(node, "Factor")
+		for link in getattr(socket, "links", []) if socket is not None else []:
+			image = texture_image_from_output(link.from_socket, visited.copy(), depth + 1)
+			if image is not None:
+				return image
+		return None
+	if node_type in {"RGB", "VALUE"}:
 		return None
 	for socket in getattr(node, "inputs", []):
 		for link in getattr(socket, "links", []):
@@ -1995,6 +2015,8 @@ def write_luz_scene(
 
 def main() -> None:
 	global SAMPLE_TEXTURE_COLORS, TEXTURE_SAMPLE_SIZE
+	if bpy is None:
+		raise SystemExit("This exporter must be run inside Blender with --python.") from _BLENDER_IMPORT_ERROR
 	start_time = time.perf_counter()
 	args = parse_args(sys.argv)
 	SAMPLE_TEXTURE_COLORS = args.sample_texture_colors
