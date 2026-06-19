@@ -9,6 +9,8 @@ Run from Blender:
 from __future__ import annotations
 
 import argparse
+from array import array
+from collections.abc import Iterable
 import math
 import os
 import re
@@ -17,6 +19,7 @@ import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
+from typing import TextIO
 
 try:
 	import bpy
@@ -34,6 +37,7 @@ SAMPLE_TEXTURE_COLORS = True
 TEXTURE_SAMPLE_SIZE = 64
 DEFAULT_QUALITY_MODE = "on"
 DEFAULT_VIEW_TRANSFORM_MODE = "auto"
+IMAGE_AVERAGE_CACHE: dict[tuple[int, int, int, int], tuple[float, float, float] | None] = {}
 
 
 @dataclass
@@ -163,6 +167,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 	parser.add_argument("--render-output", help="Luz render output filename. .bmp is appended by Luz when omitted.")
 	parser.add_argument("--global-scale", type=float, default=1.0, help="Scale all exported positions and mesh vertices.")
 	parser.add_argument("--light-power-scale", type=float, default=1.0, help="Additional multiplier for exported area and point light power.")
+	parser.add_argument("--subsurface-scale-multiplier", type=float, default=1.0, help="Additional multiplier for exported Principled subsurface scale.")
 	parser.add_argument("--min-point-light-radius", type=float, default=0.1, help="Minimum Blender-unit radius for point and spot lights. Defaults to 0.1.")
 	parser.add_argument("--sun-power-scale", type=float, default=1.0, help="Multiplier from Blender sun energy to Luz directional irradiance.")
 	parser.add_argument("--camera-f-stop", type=float, help="Override exported camera f-number.")
@@ -175,6 +180,8 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 	args = parser.parse_args(argv)
 	if not math.isfinite(args.global_scale) or args.global_scale <= 0.0:
 		parser.error("--global-scale must be a finite positive value.")
+	if not math.isfinite(args.subsurface_scale_multiplier) or args.subsurface_scale_multiplier <= 0.0:
+		parser.error("--subsurface-scale-multiplier must be a finite positive value.")
 	if not math.isfinite(args.min_point_light_radius) or args.min_point_light_radius < 0.0:
 		parser.error("--min-point-light-radius must be a finite non-negative value.")
 	if args.camera_f_stop is not None and (not math.isfinite(args.camera_f_stop) or args.camera_f_stop <= 0.0):
@@ -234,6 +241,20 @@ def log_profile(args: argparse.Namespace, message: str) -> None:
 
 def blender_point_to_luz(point: Vector, global_scale: float) -> Vector:
 	return Vector((point.x * global_scale, point.z * global_scale, -point.y * global_scale))
+
+
+def blender_meters_per_unit() -> float:
+	try:
+		scale_length = float(bpy.context.scene.unit_settings.scale_length)
+	except (AttributeError, TypeError, ValueError):
+		return 1.0
+	if not math.isfinite(scale_length) or scale_length <= 0.0:
+		return 1.0
+	return scale_length
+
+
+def luz_meters_per_unit(args: argparse.Namespace) -> float:
+	return blender_meters_per_unit() / args.global_scale
 
 
 def blender_vector_to_luz(vector: Vector) -> Vector:
@@ -346,12 +367,55 @@ def color_has_energy(color: tuple[float, float, float]) -> bool:
 	return max(color[0], color[1], color[2]) > 0.0
 
 
-def average_image_pixels(image: object) -> tuple[float, float, float] | None:
+def image_dimensions(image: object) -> tuple[int, int] | None:
 	try:
-		pixels = image.pixels[:]
-		pixel_count = int(len(pixels) / 4)
+		width = int(image.size[0])
+		height = int(image.size[1])
+	except (AttributeError, TypeError, ValueError):
+		return None
+	if width <= 0 or height <= 0:
+		return None
+	return (width, height)
+
+
+def image_pixels(image: object, width: int, height: int) -> object | None:
+	expected_values = width * height * 4
+	if expected_values <= 0:
+		return None
+	try:
+		pixels = image.pixels
+		foreach_get = getattr(pixels, "foreach_get", None)
+		if foreach_get is not None:
+			buffer = array("f", [0.0]) * expected_values
+			foreach_get(buffer)
+			return buffer
+		values = pixels[:]
 	except (AttributeError, TypeError, ValueError, RuntimeError):
 		return None
+	try:
+		if len(values) < expected_values:
+			return None
+	except TypeError:
+		return None
+	return values
+
+
+def remove_blender_image(image: object) -> None:
+	try:
+		bpy.data.images.remove(image)
+	except Exception:
+		pass
+
+
+def average_image_pixels(image: object) -> tuple[float, float, float] | None:
+	dimensions = image_dimensions(image)
+	if dimensions is None:
+		return None
+	width, height = dimensions
+	pixels = image_pixels(image, width, height)
+	if pixels is None:
+		return None
+	pixel_count = width * height
 	if pixel_count <= 0:
 		return None
 
@@ -368,17 +432,20 @@ def average_image_pixels(image: object) -> tuple[float, float, float] | None:
 def average_image_color(image: object | None) -> tuple[float, float, float] | None:
 	if image is None:
 		return None
-	try:
-		width = int(image.size[0])
-		height = int(image.size[1])
-	except (AttributeError, TypeError, ValueError):
+	dimensions = image_dimensions(image)
+	if dimensions is None:
 		return None
-	if width <= 0 or height <= 0:
-		return None
+	width, height = dimensions
 
 	sample_size = max(int(TEXTURE_SAMPLE_SIZE), 1)
+	cache_key = (id(image), width, height, sample_size)
+	if cache_key in IMAGE_AVERAGE_CACHE:
+		return IMAGE_AVERAGE_CACHE[cache_key]
+
 	if width <= sample_size and height <= sample_size:
-		return average_image_pixels(image)
+		result = average_image_pixels(image)
+		IMAGE_AVERAGE_CACHE[cache_key] = result
+		return result
 
 	scale = min(sample_size / width, sample_size / height)
 	sample_width = max(int(width * scale), 1)
@@ -387,25 +454,21 @@ def average_image_color(image: object | None) -> tuple[float, float, float] | No
 	try:
 		sampled_image = image.copy()
 		sampled_image.scale(sample_width, sample_height)
-		return average_image_pixels(sampled_image)
+		result = average_image_pixels(sampled_image)
 	except Exception:
-		return None
+		result = None
 	finally:
 		if sampled_image is not None:
-			try:
-				bpy.data.images.remove(sampled_image)
-			except Exception:
-				pass
+			remove_blender_image(sampled_image)
+	IMAGE_AVERAGE_CACHE[cache_key] = result
+	return result
 
 
 def image_copy_scaled(image: object, max_size: int) -> object | None:
-	try:
-		width = int(image.size[0])
-		height = int(image.size[1])
-	except (AttributeError, TypeError, ValueError):
+	dimensions = image_dimensions(image)
+	if dimensions is None:
 		return None
-	if width <= 0 or height <= 0:
-		return None
+	width, height = dimensions
 
 	max_size = max(int(max_size), 1)
 	if width <= max_size and height <= max_size:
@@ -422,47 +485,62 @@ def image_copy_scaled(image: object, max_size: int) -> object | None:
 		return None
 
 
+def channel_byte(value: float) -> int:
+	try:
+		channel = float(value)
+	except (TypeError, ValueError):
+		return 0
+	if math.isnan(channel) or channel <= 0.0:
+		return 0
+	if channel >= 1.0:
+		return 255
+	return int(channel * 255.0 + 0.5)
+
+
+def ppm_rgb_bytes(pixels: object, width: int, height: int) -> bytearray:
+	output = bytearray(width * height * 3)
+	output_offset = 0
+	to_byte = channel_byte
+	for y in range(height - 1, -1, -1):
+		pixel_offset = y * width * 4
+		row_end = pixel_offset + width * 4
+		while pixel_offset < row_end:
+			output[output_offset] = to_byte(pixels[pixel_offset])  # type: ignore[index]
+			output[output_offset + 1] = to_byte(pixels[pixel_offset + 1])  # type: ignore[index]
+			output[output_offset + 2] = to_byte(pixels[pixel_offset + 2])  # type: ignore[index]
+			output_offset += 3
+			pixel_offset += 4
+	return output
+
+
 def write_image_as_ppm(image: object, texture_path: Path, max_size: int) -> bool:
 	sampled_image = image_copy_scaled(image, max_size)
 	if sampled_image is None:
 		return False
 
 	remove_sampled_image = sampled_image is not image
-	try:
-		width = int(sampled_image.size[0])
-		height = int(sampled_image.size[1])
-		pixels = sampled_image.pixels[:]
-	except (AttributeError, TypeError, ValueError, RuntimeError):
+	dimensions = image_dimensions(sampled_image)
+	if dimensions is None:
 		if remove_sampled_image:
-			try:
-				bpy.data.images.remove(sampled_image)
-			except Exception:
-				pass
+			remove_blender_image(sampled_image)
+		return False
+	width, height = dimensions
+	pixels = image_pixels(sampled_image, width, height)
+	if pixels is None:
+		if remove_sampled_image:
+			remove_blender_image(sampled_image)
 		return False
 
-	def channel_byte(value: float) -> int:
-		return max(0, min(255, int(float(value) * 255.0 + 0.5)))
-
-	texture_path.parent.mkdir(parents=True, exist_ok=True)
 	try:
+		texture_path.parent.mkdir(parents=True, exist_ok=True)
 		with texture_path.open("wb") as stream:
 			stream.write(f"P6\n{width} {height}\n255\n".encode("ascii"))
-			for y in range(height - 1, -1, -1):
-				for x in range(width):
-					offset = (y * width + x) * 4
-					stream.write(bytes((
-						channel_byte(pixels[offset]),
-						channel_byte(pixels[offset + 1]),
-						channel_byte(pixels[offset + 2]),
-					)))
-	except OSError:
+			stream.write(ppm_rgb_bytes(pixels, width, height))
+	except (IndexError, OSError, TypeError, ValueError):
 		return False
 	finally:
 		if remove_sampled_image:
-			try:
-				bpy.data.images.remove(sampled_image)
-			except Exception:
-				pass
+			remove_blender_image(sampled_image)
 
 	return True
 
@@ -1192,6 +1270,8 @@ def export_material(
 
 	if texture_path is not None:
 		base_color = (1.0, 1.0, 1.0)
+	if subsurface > 0.0:
+		subsurface_scale *= args.subsurface_scale_multiplier
 	if not color_has_energy(emission_color):
 		emission_strength = 0.0
 	if emission_strength > 0.0:
@@ -1252,39 +1332,59 @@ def release_evaluated_mesh(evaluated_object: object) -> None:
 		evaluated_object.to_mesh_clear()
 
 
-def loop_normal(mesh: object, loop_index: int, normal_matrix: object) -> Vector:
+def loop_normal_from_data(corner_normals: object | None, loops: object, loop_index: int, normal_matrix: object) -> Vector:
 	try:
-		blender_normal = mesh.corner_normals[loop_index].vector.copy()
+		if corner_normals is not None:
+			blender_normal = corner_normals[loop_index].vector.copy()  # type: ignore[index]
+		else:
+			blender_normal = loops[loop_index].normal.copy()  # type: ignore[index]
 	except (AttributeError, IndexError):
-		blender_normal = mesh.loops[loop_index].normal.copy()
+		blender_normal = loops[loop_index].normal.copy()  # type: ignore[index]
 
 	world_normal = normal_matrix @ blender_normal
 	return blender_normal_to_luz(world_normal)
 
 
-def loop_uv(mesh: object, loop_index: int) -> tuple[float, float]:
+def loop_normal(mesh: object, loop_index: int, normal_matrix: object) -> Vector:
+	return loop_normal_from_data(getattr(mesh, "corner_normals", None), mesh.loops, loop_index, normal_matrix)
+
+
+def active_uv_layer_data(mesh: object) -> object | None:
 	try:
 		uv_layer = mesh.uv_layers.active
 		if uv_layer is None:
-			return (0.0, 0.0)
-		uv = uv_layer.data[loop_index].uv
+			return None
+		return uv_layer.data
+	except AttributeError:
+		return None
+
+
+def loop_uv_from_data(uv_layer_data: object | None, loop_index: int) -> tuple[float, float]:
+	if uv_layer_data is None:
+		return (0.0, 0.0)
+	try:
+		uv = uv_layer_data[loop_index].uv  # type: ignore[index]
 		return (float(uv.x), float(uv.y))
 	except (AttributeError, IndexError, TypeError, ValueError):
 		return (0.0, 0.0)
 
 
+def loop_uv(mesh: object, loop_index: int) -> tuple[float, float]:
+	return loop_uv_from_data(active_uv_layer_data(mesh), loop_index)
+
+
 ObjUVKey = tuple[str, str]
-ObjCorner = tuple[Vector, Vector, tuple[float, float]]
-ObjTriangle = tuple[ObjCorner, ObjCorner, ObjCorner]
 ObjVectorKey = tuple[str, str, str]
+ObjFaceCorner = tuple[int, int, int]
+ObjFace = tuple[ObjFaceCorner, ObjFaceCorner, ObjFaceCorner]
+OBJ_WRITE_CHUNK_LINES = 8192
 
 
 def obj_vector_key(vector: Vector) -> ObjVectorKey:
 	return (fmt_float(vector.x), fmt_float(vector.y), fmt_float(vector.z))
 
 
-def obj_index_for(vector: Vector, registry: dict[ObjVectorKey, int], values: list[ObjVectorKey]) -> int:
-	key = obj_vector_key(vector)
+def obj_index_for_key(key: ObjVectorKey, registry: dict[ObjVectorKey, int], values: list[ObjVectorKey]) -> int:
 	index = registry.get(key)
 	if index is not None:
 		return index
@@ -1299,8 +1399,7 @@ def obj_uv_key(uv: tuple[float, float]) -> ObjUVKey:
 	return (fmt_float(uv[0]), fmt_float(uv[1]))
 
 
-def obj_uv_index_for(uv: tuple[float, float], registry: dict[ObjUVKey, int], values: list[ObjUVKey]) -> int:
-	key = obj_uv_key(uv)
+def obj_uv_index_for_key(key: ObjUVKey, registry: dict[ObjUVKey, int], values: list[ObjUVKey]) -> int:
 	index = registry.get(key)
 	if index is not None:
 		return index
@@ -1311,38 +1410,62 @@ def obj_uv_index_for(uv: tuple[float, float], registry: dict[ObjUVKey, int], val
 	return index
 
 
-def write_obj(mesh_path: Path, triangles: list[ObjTriangle]) -> None:
-	vertex_registry: dict[ObjVectorKey, int] = {}
-	uv_registry: dict[ObjUVKey, int] = {}
-	normal_registry: dict[ObjVectorKey, int] = {}
-	vertices: list[ObjVectorKey] = []
-	uvs: list[ObjUVKey] = []
-	normals: list[ObjVectorKey] = []
-	faces: list[tuple[tuple[int, int, int], tuple[int, int, int], tuple[int, int, int]]] = []
+def write_text_line_chunks(stream: TextIO, lines: Iterable[str]) -> None:
+	chunk: list[str] = []
+	for line in lines:
+		chunk.append(line)
+		if len(chunk) >= OBJ_WRITE_CHUNK_LINES:
+			stream.write("".join(chunk))
+			chunk.clear()
+	if chunk:
+		stream.write("".join(chunk))
 
-	for triangle in triangles:
-		face: list[tuple[int, int, int]] = []
-		for vertex, normal, uv in triangle:
-			vertex_index = obj_index_for(vertex, vertex_registry, vertices)
-			uv_index = obj_uv_index_for(uv, uv_registry, uvs)
-			normal_index = obj_index_for(normal, normal_registry, normals)
+
+class ObjMeshAccumulator:
+	__slots__ = ("vertex_registry", "uv_registry", "normal_registry", "vertices", "uvs", "normals", "faces")
+
+	def __init__(self) -> None:
+		self.vertex_registry: dict[ObjVectorKey, int] = {}
+		self.uv_registry: dict[ObjUVKey, int] = {}
+		self.normal_registry: dict[ObjVectorKey, int] = {}
+		self.vertices: list[ObjVectorKey] = []
+		self.uvs: list[ObjUVKey] = []
+		self.normals: list[ObjVectorKey] = []
+		self.faces: list[ObjFace] = []
+
+	@property
+	def triangle_count(self) -> int:
+		return len(self.faces)
+
+	def add_triangle(
+		self,
+		vertex_keys: tuple[ObjVectorKey, ObjVectorKey, ObjVectorKey],
+		normal_keys: tuple[ObjVectorKey, ObjVectorKey, ObjVectorKey],
+		uv_keys: tuple[ObjUVKey, ObjUVKey, ObjUVKey],
+	) -> None:
+		face: list[ObjFaceCorner] = []
+		for index in range(3):
+			vertex_index = obj_index_for_key(vertex_keys[index], self.vertex_registry, self.vertices)
+			uv_index = obj_uv_index_for_key(uv_keys[index], self.uv_registry, self.uvs)
+			normal_index = obj_index_for_key(normal_keys[index], self.normal_registry, self.normals)
 			face.append((vertex_index, uv_index, normal_index))
-		faces.append((face[0], face[1], face[2]))
+		self.faces.append((face[0], face[1], face[2]))
 
-	mesh_path.parent.mkdir(parents=True, exist_ok=True)
-	with mesh_path.open("w", encoding="utf-8") as stream:
-		stream.write("# Generated by tools/blender_export_luz.py\n")
-		for x, y, z in vertices:
-			stream.write(f"v {x} {y} {z}\n")
-		for u, v in uvs:
-			stream.write(f"vt {u} {v}\n")
-		for x, y, z in normals:
-			stream.write(f"vn {x} {y} {z}\n")
-		for face in faces:
-			stream.write(
-				f"f {face[0][0]}/{face[0][1]}/{face[0][2]} "
-				f"{face[1][0]}/{face[1][1]}/{face[1][2]} "
-				f"{face[2][0]}/{face[2][1]}/{face[2][2]}\n"
+	def write(self, mesh_path: Path) -> None:
+		mesh_path.parent.mkdir(parents=True, exist_ok=True)
+		with mesh_path.open("w", encoding="utf-8") as stream:
+			stream.write("# Generated by tools/blender_export_luz.py\n")
+			write_text_line_chunks(stream, (f"v {x} {y} {z}\n" for x, y, z in self.vertices))
+			write_text_line_chunks(stream, (f"vt {u} {v}\n" for u, v in self.uvs))
+			write_text_line_chunks(stream, (f"vn {x} {y} {z}\n" for x, y, z in self.normals))
+			write_text_line_chunks(
+				stream,
+				(
+					f"f {face[0][0]}/{face[0][1]}/{face[0][2]} "
+					f"{face[1][0]}/{face[1][1]}/{face[1][2]} "
+					f"{face[2][0]}/{face[2][1]}/{face[2][2]}\n"
+					for face in self.faces
+				),
 			)
 
 
@@ -1382,53 +1505,75 @@ def export_meshes(
 				normal_matrix = world_matrix.to_3x3().inverted().transposed()
 			except Exception:
 				normal_matrix = world_matrix.to_3x3()
-			object_triangles_by_material: dict[int, list[ObjTriangle]] = {}
-			luz_vertices: dict[int, Vector] = {}
-			luz_normals: dict[int, Vector] = {}
-			luz_uvs: dict[int, tuple[float, float]] = {}
+			object_meshes_by_material: dict[int, ObjMeshAccumulator] = {}
+			luz_vertex_keys: dict[int, ObjVectorKey] = {}
+			luz_normal_keys: dict[int, ObjVectorKey] = {}
+			luz_uv_keys: dict[int, ObjUVKey] = {}
+			mesh_vertices = mesh.vertices
+			mesh_loops = mesh.loops
+			mesh_loop_triangles = mesh.loop_triangles
+			mesh_corner_normals = getattr(mesh, "corner_normals", None)
+			mesh_uv_layer_data = active_uv_layer_data(mesh)
 			log_profile(
 				args,
 				f"[{object_index}/{len(mesh_objects)}] '{object_.name}' has "
-				f"{len(mesh.vertices)} vertex/vertices and {len(mesh.loop_triangles)} triangle(s)",
+				f"{len(mesh_vertices)} vertex/vertices and {len(mesh_loop_triangles)} triangle(s)",
 			)
 
-			def luz_vertex_for(vertex_index: int) -> Vector:
-				luz_vertex = luz_vertices.get(vertex_index)
-				if luz_vertex is None:
-					blender_world = world_matrix @ mesh.vertices[vertex_index].co
+			def luz_vertex_key_for(vertex_index: int) -> ObjVectorKey:
+				luz_vertex_key = luz_vertex_keys.get(vertex_index)
+				if luz_vertex_key is None:
+					blender_world = world_matrix @ mesh_vertices[vertex_index].co
 					luz_vertex = blender_point_to_luz(blender_world, args.global_scale)
-					luz_vertices[vertex_index] = luz_vertex
 					bounds.include(luz_vertex)
-				return luz_vertex
+					luz_vertex_key = obj_vector_key(luz_vertex)
+					luz_vertex_keys[vertex_index] = luz_vertex_key
+				return luz_vertex_key
 
-			def luz_normal_for(loop_index: int) -> Vector:
-				luz_normal = luz_normals.get(loop_index)
-				if luz_normal is None:
-					luz_normal = loop_normal(mesh, loop_index, normal_matrix)
-					luz_normals[loop_index] = luz_normal
-				return luz_normal
+			def luz_normal_key_for(loop_index: int) -> ObjVectorKey:
+				luz_normal_key = luz_normal_keys.get(loop_index)
+				if luz_normal_key is None:
+					luz_normal = loop_normal_from_data(mesh_corner_normals, mesh_loops, loop_index, normal_matrix)
+					luz_normal_key = obj_vector_key(luz_normal)
+					luz_normal_keys[loop_index] = luz_normal_key
+				return luz_normal_key
 
-			def luz_uv_for(loop_index: int) -> tuple[float, float]:
-				luz_uv = luz_uvs.get(loop_index)
-				if luz_uv is None:
-					luz_uv = loop_uv(mesh, loop_index)
-					luz_uvs[loop_index] = luz_uv
-				return luz_uv
+			def luz_uv_key_for(loop_index: int) -> ObjUVKey:
+				luz_uv_key = luz_uv_keys.get(loop_index)
+				if luz_uv_key is None:
+					luz_uv = loop_uv_from_data(mesh_uv_layer_data, loop_index)
+					luz_uv_key = obj_uv_key(luz_uv)
+					luz_uv_keys[loop_index] = luz_uv_key
+				return luz_uv_key
 
-			for loop_triangle in mesh.loop_triangles:
+			for loop_triangle in mesh_loop_triangles:
 				material_index = loop_triangle.material_index
-				triangle_corners: list[ObjCorner] = []
-				for loop_index, vertex_index in zip(loop_triangle.loops, loop_triangle.vertices):
-					luz_vertex = luz_vertex_for(vertex_index)
-					luz_normal = luz_normal_for(loop_index)
-					luz_uv = luz_uv_for(loop_index)
-					triangle_corners.append((luz_vertex, luz_normal, luz_uv))
-				object_triangles_by_material.setdefault(material_index, []).append(
-					(triangle_corners[0], triangle_corners[1], triangle_corners[2])
+				obj_mesh = object_meshes_by_material.get(material_index)
+				if obj_mesh is None:
+					obj_mesh = ObjMeshAccumulator()
+					object_meshes_by_material[material_index] = obj_mesh
+				loop_indices = loop_triangle.loops
+				vertex_indices = loop_triangle.vertices
+				obj_mesh.add_triangle(
+					(
+						luz_vertex_key_for(vertex_indices[0]),
+						luz_vertex_key_for(vertex_indices[1]),
+						luz_vertex_key_for(vertex_indices[2]),
+					),
+					(
+						luz_normal_key_for(loop_indices[0]),
+						luz_normal_key_for(loop_indices[1]),
+						luz_normal_key_for(loop_indices[2]),
+					),
+					(
+						luz_uv_key_for(loop_indices[0]),
+						luz_uv_key_for(loop_indices[1]),
+						luz_uv_key_for(loop_indices[2]),
+					),
 				)
 
-			for material_index, triangles in object_triangles_by_material.items():
-				if not triangles:
+			for material_index, obj_mesh in object_meshes_by_material.items():
+				if obj_mesh.triangle_count == 0:
 					continue
 
 				material = material_for_slot(object_, material_index)
@@ -1437,7 +1582,7 @@ def export_meshes(
 				log_profile(
 					args,
 					f"[{object_index}/{len(mesh_objects)}] Resolving material '{material_label}' "
-					f"for {len(triangles)} triangle(s)",
+					f"for {obj_mesh.triangle_count} triangle(s)",
 				)
 				material_name = export_material(
 					material,
@@ -1456,7 +1601,7 @@ def export_meshes(
 				scene_file_path = Path(os.path.relpath(mesh_path, output_path.parent)).as_posix()
 
 				log_profile(args, f"[{object_index}/{len(mesh_objects)}] Writing {mesh_path.name}")
-				write_obj(mesh_path, triangles)
+				obj_mesh.write(mesh_path)
 				log_profile(
 					args,
 					f"[{object_index}/{len(mesh_objects)}] Wrote {mesh_path.name} "
@@ -1469,7 +1614,7 @@ def export_meshes(
 						scene_file_path=scene_file_path,
 						material_name=material_name,
 						object_name=object_name,
-						triangle_count=len(triangles),
+						triangle_count=obj_mesh.triangle_count,
 					)
 				)
 		finally:
@@ -1482,6 +1627,7 @@ def export_meshes(
 def export_camera(args: argparse.Namespace, bounds: Bounds) -> LuzCamera:
 	scene = bpy.context.scene
 	camera_object = scene.camera
+	unit_scale = blender_meters_per_unit()
 
 	if camera_object and camera_object.type == "CAMERA":
 		camera_data = camera_object.data
@@ -1500,23 +1646,23 @@ def export_camera(args: argparse.Namespace, bounds: Bounds) -> LuzCamera:
 		)
 
 		use_dof = getattr(camera_data.dof, "use_dof", False)
-		focus_distance_meters = float(args.default_focus_distance)
+		focus_distance_meters = float(args.default_focus_distance) * unit_scale
 		has_valid_blender_focus = False
 		if use_dof:
 			focus_object = getattr(camera_data.dof, "focus_object", None)
 			if focus_object:
-				focus_distance_meters = (focus_object.matrix_world.translation - camera_object.matrix_world.translation).length
+				focus_distance_meters = (focus_object.matrix_world.translation - camera_object.matrix_world.translation).length * unit_scale
 				has_valid_blender_focus = focus_distance_meters > 1e-6
 			else:
-				focus_distance_meters = float(camera_data.dof.focus_distance)
+				focus_distance_meters = float(camera_data.dof.focus_distance) * unit_scale
 				has_valid_blender_focus = focus_distance_meters > 1e-6
 
 		if focus_distance_meters <= 1e-6:
 			center_distance = (bounds.center() - position).dot(direction)
 			if center_distance > 1e-6:
-				focus_distance_meters = center_distance / args.global_scale
+				focus_distance_meters = (center_distance / args.global_scale) * unit_scale
 			else:
-				focus_distance_meters = max(float(args.default_focus_distance), 1.0)
+				focus_distance_meters = max(float(args.default_focus_distance) * unit_scale, unit_scale)
 
 		if args.camera_f_stop is not None:
 			f_stop = args.camera_f_stop
@@ -1534,7 +1680,7 @@ def export_camera(args: argparse.Namespace, bounds: Bounds) -> LuzCamera:
 	radius = bounds.radius()
 	position = Vector((center.x, center.y + radius * 0.25, center.z + radius * 3.0))
 	direction = center - position
-	focus_distance_meters = max(direction.length / args.global_scale, 1.0)
+	focus_distance_meters = max((direction.length / args.global_scale) * unit_scale, unit_scale)
 	return LuzCamera("main", position, direction.normalized(), Vector((0.0, 1.0, 0.0)), 50.0, 36.0, 20.25, 8.0, True, focus_distance_meters)
 
 
@@ -1994,7 +2140,7 @@ def write_luz_scene(
 			f"samples={samples}",
 			f"adaptive={1 if adaptive else 0}",
 			f"maxlightbounces={scene_bounces(args)}",
-			f"meters_per_unit={fmt_float(1.0 / args.global_scale)}",
+			f"meters_per_unit={fmt_float(luz_meters_per_unit(args))}",
 			f"view_transform={scene_view_transform(args)}",
 			"bloom=1",
 			f"exposure={fmt_float(scene_exposure(args))}",
@@ -2177,6 +2323,7 @@ def main() -> None:
 	args = parse_args(sys.argv)
 	SAMPLE_TEXTURE_COLORS = args.sample_texture_colors
 	TEXTURE_SAMPLE_SIZE = max(int(args.texture_sample_size), 1)
+	IMAGE_AVERAGE_CACHE.clear()
 	if args.blend:
 		log_profile(args, f"Opening blend file {args.blend}")
 		bpy.ops.wm.open_mainfile(filepath=args.blend)

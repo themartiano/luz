@@ -54,6 +54,8 @@ The exporter also works without passing the `.blend` file before `--python`:
 --render-output PATH          Luz render output path.
 --global-scale N              Scale exported positions, meshes, and light sizes.
 --light-power-scale N         Extra multiplier for exported area/point power. Defaults to 1.0.
+--subsurface-scale-multiplier N
+                             Extra multiplier for exported Principled subsurface scale. Defaults to 1.0.
 --min-point-light-radius N    Minimum Blender-unit radius for point/spot lights. Defaults to 0.1.
 --sun-power-scale N           Multiplier for exported sun irradiance. Defaults to 1.0.
 --camera-f-stop N             Override exported camera f-number.
@@ -86,9 +88,10 @@ The exporter also works without passing the `.blend` file before `--python`:
   behind the atmospheric sky.
 - The active camera is exported as a Luz camera block.
 - Blender camera roll is preserved through the named camera `up` vector.
-- The exporter writes `meters_per_unit=1 / --global-scale` so physical light
-  power, light area, and atmosphere distances preserve Blender-meter scale even
-  when exported coordinates are scaled for Luz.
+- The exporter writes `meters_per_unit=scene_unit_scale / --global-scale` so
+  physical light power, light area, camera focus, subsurface radius, and
+  atmosphere distances preserve Blender-meter scale even when exported
+  coordinates are scaled for Luz.
 - Invalid zero camera focus distances are replaced with a scene-based fallback.
 - Blender camera lens, effective render gate, f-stop, and focus distance are
   exported as physical Luz camera properties. Focus distance remains in meters
@@ -157,10 +160,13 @@ The exporter also works without passing the `.blend` file before `--python`:
 
 ## Current Limits
 
-- Only base-color image textures are exported as texture files. Roughness and
-  metallic texture maps are reduced to scalar approximations; procedural
-  textures, normal maps, bump maps, displacement, subsurface scattering, and full
-  shader graphs are not exported as texture networks.
+- Only base-color image textures are exported as texture files. Roughness,
+  metallic, and subsurface texture maps are reduced to scalar approximations;
+  procedural textures, normal maps, bump maps, displacement, and full shader
+  graphs are not exported as texture networks.
+- Blender Random Walk and Random Walk (Skin) subsurface methods are approximated
+  with Luz's Burley-style diffusion model. IOR and anisotropy controls for
+  random-walk subsurface are not exported yet.
 - Orthographic, panoramic, and lens-shifted cameras are not exported as equivalent
   Luz cameras yet.
 - World environment mapping nodes are not exported yet. Environment maps are
