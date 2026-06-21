@@ -17,6 +17,8 @@ class   Rectangle : public Hittable
 		void			setMaterial(std::shared_ptr<Material> material);
 		void			setWidth(double width);
 		void			setHeight(double height);
+		void			setAxes(Vector3 widthAxis, Vector3 heightAxis);
+		void			setTextureCoordinates(Vector3 uv0, Vector3 uv1, Vector3 uv2, Vector3 uv3);
 		virtual bool	hit(Ray& ray, HitRecord& hitRecord, double t_min, double t_max) const override;
 		virtual bool	hitAny(Ray& ray, double t_min, double t_max) const override;
 		virtual bool	createBoundingBox(AABB& outputBoundingBox) const override;
@@ -27,8 +29,19 @@ class   Rectangle : public Hittable
 		virtual double	lightSelectionWeight(void) const override;
 
 	private:
+		bool	_buildBasis(Vector3& normal, Vector3& widthAxis, Vector3& heightAxis) const;
+		Vector3	_uvAt(double u, double v) const;
+
 		Transform   _transform;
 		std::shared_ptr<Material>	_material;
 		double	  _width;
 		double	  _height;
+		Vector3	 _widthAxis;
+		Vector3	 _heightAxis;
+		Vector3	 _uv0;
+		Vector3	 _uv1;
+		Vector3	 _uv2;
+		Vector3	 _uv3;
+		bool	 _hasAxes;
+		bool	 _hasTextureCoordinates;
 };

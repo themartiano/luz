@@ -89,6 +89,130 @@ namespace
 		return ((red * red) + (green * green) + (blue * blue)) / 3.0;
 	}
 
+	double	colorLuminance(const Color& color)
+	{
+		const double luminance = Utilities::luminance(color);
+
+		if (!std::isfinite(luminance) || luminance <= 0.0)
+		{
+			return (0.0);
+		}
+		return (luminance);
+	}
+
+	Color	medianColorByLuminance(std::vector<Color>& colors)
+	{
+		std::sort(
+			colors.begin(),
+			colors.end(),
+			[](Color a, Color b)
+			{
+				return (colorLuminance(a) < colorLuminance(b));
+			}
+		);
+		return (colors[colors.size() / 2]);
+	}
+
+	bool	isDenoiseFirefly(
+		double luminance,
+		const std::vector<double>& neighborLuminances,
+		unsigned int similarNeighbors
+	)
+	{
+		constexpr double MIN_LUMINANCE = 0.30;
+		constexpr double LOCAL_OUTLIER_RATIO = 2.5;
+		constexpr double LOCAL_OUTLIER_EXCESS = 0.18;
+		constexpr unsigned int MIN_SIMILAR_SUPPORT = 2;
+
+		if (luminance < MIN_LUMINANCE || neighborLuminances.empty())
+		{
+			return (false);
+		}
+		if (similarNeighbors >= MIN_SIMILAR_SUPPORT)
+		{
+			return (false);
+		}
+
+		std::vector<double> sorted = neighborLuminances;
+		std::sort(sorted.begin(), sorted.end());
+		const double localMedian = sorted[sorted.size() / 2];
+		return (
+			luminance >= localMedian * LOCAL_OUTLIER_RATIO
+			&& luminance >= localMedian + LOCAL_OUTLIER_EXCESS
+		);
+	}
+
+	std::vector<Color>	suppressDenoiseFireflies(
+		const std::vector<Color>& image,
+		std::size_t width,
+		std::size_t height
+	)
+	{
+		constexpr int RADIUS = 2;
+		constexpr double SIMILAR_NEIGHBOR_RATIO = 0.65;
+		std::vector<Color> result = image;
+
+		if (width < 3 || height < 3 || image.size() != width * height)
+		{
+			return (result);
+		}
+		for (std::size_t y = 0; y < height; y++)
+		{
+			for (std::size_t x = 0; x < width; x++)
+			{
+				const std::size_t center = y * width + x;
+				const double luminance = colorLuminance(image[center]);
+				std::vector<double> neighborLuminances;
+				std::vector<Color> replacementCandidates;
+				unsigned int similarNeighbors = 0;
+
+				neighborLuminances.reserve((RADIUS * 2 + 1) * (RADIUS * 2 + 1) - 1);
+				replacementCandidates.reserve(neighborLuminances.capacity());
+				for (int offsetY = -RADIUS; offsetY <= RADIUS; offsetY++)
+				{
+					for (int offsetX = -RADIUS; offsetX <= RADIUS; offsetX++)
+					{
+						if (offsetX == 0 && offsetY == 0)
+						{
+							continue;
+						}
+						const long long sampleX = static_cast<long long>(x) + offsetX;
+						const long long sampleY = static_cast<long long>(y) + offsetY;
+						if (
+							sampleX < 0
+							|| sampleY < 0
+							|| static_cast<std::size_t>(sampleX) >= width
+							|| static_cast<std::size_t>(sampleY) >= height
+						)
+						{
+							continue;
+						}
+						const Color neighbor = image[static_cast<std::size_t>(sampleY) * width + static_cast<std::size_t>(sampleX)];
+						const double neighborLuminance = colorLuminance(neighbor);
+
+						neighborLuminances.push_back(neighborLuminance);
+						if (neighborLuminance >= luminance * SIMILAR_NEIGHBOR_RATIO)
+						{
+							similarNeighbors++;
+						}
+						else
+						{
+							replacementCandidates.push_back(neighbor);
+						}
+					}
+				}
+				if (
+					!replacementCandidates.empty()
+					&& isDenoiseFirefly(luminance, neighborLuminances, similarNeighbors)
+				)
+				{
+					result[center] = medianColorByLuminance(replacementCandidates);
+				}
+			}
+		}
+		return (result);
+	}
+
 	double	featureDistanceSquared(const Denoise::FeatureVector& a, const Denoise::FeatureVector& b)
 	{
 		double distance = 0.0;
@@ -222,13 +346,13 @@ namespace
 		return (colorWeightFromDistance(distance, bandwidth, minVariance));
 	}
 
-	std::vector<Color>	averageColorBuffers(const Denoise::NFORBuffers& buffers)
+	std::vector<Color>	averageColorBuffers(const std::vector<Color>& colorA, const std::vector<Color>& colorB)
 	{
-		std::vector<Color> result(buffers.width * buffers.height);
+		std::vector<Color> result(colorA.size());
 
 		for (std::size_t i = 0; i < result.size(); i++)
 		{
-			result[i] = (buffers.colorA[i] + buffers.colorB[i]) * 0.5;
+			result[i] = (colorA[i] + colorB[i]) * 0.5;
 		}
 		return (result);
 	}
@@ -863,7 +987,13 @@ std::unique_ptr<Image>	Denoise::applyNFOR(const NFORBuffers& buffers, const NFOR
 		throw std::invalid_argument("NFOR radii must be positive.");
 	}
 
-	const std::vector<Color> color = averageColorBuffers(buffers);
+	const std::vector<Color> colorA = suppressDenoiseFireflies(buffers.colorA, buffers.width, buffers.height);
+	const std::vector<Color> colorB = suppressDenoiseFireflies(buffers.colorB, buffers.width, buffers.height);
+	const std::vector<Color> color = suppressDenoiseFireflies(
+		averageColorBuffers(colorA, colorB),
+		buffers.width,
+		buffers.height
+	);
 	const std::vector<double> regressionVariance = doubledVariance(buffers.colorVariance);
 	const std::vector<double> featureVarianceAverage = averageFeatureVarianceMap(buffers.featureVariance);
 	reportProgress(settings, 5);
@@ -891,7 +1021,7 @@ std::unique_ptr<Image>	Denoise::applyNFOR(const NFORBuffers& buffers, const NFOR
 	reportProgress(settings, 25);
 
 	const RegressionPair filteredA = regressionPairPass(
-		buffers.colorA,
+		colorA,
 		filteredFeaturesB,
 		regressionVariance,
 		buffers.width,
@@ -902,7 +1032,7 @@ std::unique_ptr<Image>	Denoise::applyNFOR(const NFORBuffers& buffers, const NFOR
 	);
 	reportProgress(settings, 45);
 	const RegressionPair filteredB = regressionPairPass(
-		buffers.colorB,
+		colorB,
 		filteredFeaturesA,
 		regressionVariance,
 		buffers.width,
@@ -913,8 +1043,8 @@ std::unique_ptr<Image>	Denoise::applyNFOR(const NFORBuffers& buffers, const NFOR
 	);
 	reportProgress(settings, 65);
 	const ScalarMapPair mse = filterScalarMapPair(
-		estimateMSE(buffers.colorA, buffers.colorB, filteredA.first, filteredB.first, regressionVariance),
-		estimateMSE(buffers.colorA, buffers.colorB, filteredA.second, filteredB.second, regressionVariance),
+		estimateMSE(colorA, colorB, filteredA.first, filteredB.first, regressionVariance),
+		estimateMSE(colorA, colorB, filteredA.second, filteredB.second, regressionVariance),
 		color,
 		buffers.colorVariance,
 		buffers.width,

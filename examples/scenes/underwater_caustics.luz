@@ -1,0 +1,80 @@
+[settings]
+resolution=960,540
+samples=160
+adaptive=1
+adaptiveminsamples=48
+adaptivethreshold=0.04
+adaptivecheckinterval=16
+maxlightbounces=10
+view_transform=agx
+bloom=0
+denoise=1
+exposure=-1.0
+contrast=1.02
+sky=none
+background=linear_srgb(0.025,0.07,0.095)
+distanceblueness=0
+caustics=1
+caustic_photons=350000
+caustic_passes=4
+caustic_radius=0.24
+caustic_alpha=0.9
+outputfilename=underwater_caustics.png
+
+[materials]
+material water_surface {
+type=dielectric
+color=linear_srgb(0.78,0.93,1.0)
+glass_preset=water
+roughness=0.055
+}
+material sand_floor {
+type=lambertian
+color=linear_srgb(0.20,0.18,0.13)
+}
+material wall_mat {
+type=lambertian
+color=linear_srgb(0.09,0.23,0.28)
+}
+
+[scene]
+camera main {
+position=(0,0.9,-4.15)
+direction=(0,0.045,1.0)
+up=(0,1,0)
+focal_length_mm=20
+sensor_width_mm=36
+sensor_height_mm=20.25
+pinhole=1
+focus_distance=4.3
+}
+directional_light sun {
+direction=(-0.32,-1.0,-0.18)
+color=solar
+irradiance=0.7
+}
+sphere_light outside_glow {
+position=(-1.3,3.4,-1.2)
+radius=0.8
+color=solar
+luminance=1200
+visible=0
+}
+object wave_surface {
+file=../objects/underwater_wave_surface.obj
+material=water_surface
+}
+volume pool_haze {
+shape=box
+position=(0,1.25,0.2)
+size=(6.4,2.5,8.2)
+density=0.11
+color=linear_srgb(0.36,0.70,0.88)
+anisotropy=0.62
+}
+objects{
+rectangle=(0,0,0.2),(0,1,0),6.4,8.2,material=sand_floor
+rectangle=(0,1.55,4.1),(0,0,-1),6.4,3.1,material=wall_mat
+rectangle=(-3.2,1.55,0.2),(1,0,0),8.2,3.1,material=wall_mat
+rectangle=(3.2,1.55,0.2),(-1,0,0),8.2,3.1,material=wall_mat
+}

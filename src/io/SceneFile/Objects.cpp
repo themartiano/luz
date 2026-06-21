@@ -1399,15 +1399,29 @@ void	SceneFile::internal::_readObjectsSubSection(Scene& scene, std::ifstream& st
 		else if (lowerLine.rfind("rectangle=", 0) != std::string::npos)
 		{
 			double pX, pY, pZ, oX, oY, oZ, width, height;
+			double wX, wY, wZ, hX, hY, hZ;
+			double u0, v0, u1, v1, u2, v2, u3, v3;
 			int materialPosition = 0;
-
-			if (sscanf(lowerLine.c_str(), "rectangle=(%lf,%lf,%lf),(%lf,%lf,%lf),%lf,%lf,material%n", &pX, &pY, &pZ, &oX, &oY, &oZ, &width, &height, &materialPosition) == 8)
+			auto addRectangle = [&](bool hasAxes, bool hasUVs)
 			{
 				Rectangle rectangle;
 
 				rectangle.setTransform(Transform(Vector3(pX, pY, pZ), Vector3(oX, oY, oZ), Vector3(1.0, 1.0, 1.0)));
 				rectangle.setWidth(width);
 				rectangle.setHeight(height);
+				if (hasAxes)
+				{
+					rectangle.setAxes(Vector3(wX, wY, wZ), Vector3(hX, hY, hZ));
+				}
+				if (hasUVs)
+				{
+					rectangle.setTextureCoordinates(
+						Vector3(u0, v0, 0.0),
+						Vector3(u1, v1, 0.0),
+						Vector3(u2, v2, 0.0),
+						Vector3(u3, v3, 0.0)
+					);
+				}
 				rectangle.setMaterial(readPrimitiveMaterial(
 					trimmedLine,
 					stream,
@@ -1415,9 +1429,63 @@ void	SceneFile::internal::_readObjectsSubSection(Scene& scene, std::ifstream& st
 					materialPosition,
 					"rectangle object"
 				));
-
 				scene.addHittable(std::make_shared<Rectangle>(rectangle));
+			};
 
+			if (
+				sscanf(
+					lowerLine.c_str(),
+					"rectangle=(%lf,%lf,%lf),(%lf,%lf,%lf),(%lf,%lf,%lf),(%lf,%lf,%lf),%lf,%lf,uvs=(%lf,%lf),(%lf,%lf),(%lf,%lf),(%lf,%lf),material%n",
+					&pX, &pY, &pZ,
+					&oX, &oY, &oZ,
+					&wX, &wY, &wZ,
+					&hX, &hY, &hZ,
+					&width, &height,
+					&u0, &v0, &u1, &v1, &u2, &v2, &u3, &v3,
+					&materialPosition
+				) == 22
+			)
+			{
+				addRectangle(true, true);
+				continue;
+			}
+			materialPosition = 0;
+			if (
+				sscanf(
+					lowerLine.c_str(),
+					"rectangle=(%lf,%lf,%lf),(%lf,%lf,%lf),(%lf,%lf,%lf),(%lf,%lf,%lf),%lf,%lf,material%n",
+					&pX, &pY, &pZ,
+					&oX, &oY, &oZ,
+					&wX, &wY, &wZ,
+					&hX, &hY, &hZ,
+					&width, &height,
+					&materialPosition
+				) == 14
+			)
+			{
+				addRectangle(true, false);
+				continue;
+			}
+			materialPosition = 0;
+			if (
+				sscanf(
+					lowerLine.c_str(),
+					"rectangle=(%lf,%lf,%lf),(%lf,%lf,%lf),%lf,%lf,uvs=(%lf,%lf),(%lf,%lf),(%lf,%lf),(%lf,%lf),material%n",
+					&pX, &pY, &pZ,
+					&oX, &oY, &oZ,
+					&width, &height,
+					&u0, &v0, &u1, &v1, &u2, &v2, &u3, &v3,
+					&materialPosition
+				) == 16
+			)
+			{
+				addRectangle(false, true);
+				continue;
+			}
+			materialPosition = 0;
+			if (sscanf(lowerLine.c_str(), "rectangle=(%lf,%lf,%lf),(%lf,%lf,%lf),%lf,%lf,material%n", &pX, &pY, &pZ, &oX, &oY, &oZ, &width, &height, &materialPosition) == 8)
+			{
+				addRectangle(false, false);
 				continue;
 			}
 			throw std::runtime_error("Invalid rectangle object: " + line);

@@ -76,6 +76,19 @@ class LuzMesh:
 
 
 @dataclass
+class LuzRectangle:
+	object_name: str
+	material_name: str
+	position: Vector
+	normal: Vector
+	width_axis: Vector
+	height_axis: Vector
+	width: float
+	height: float
+	uvs: tuple[tuple[float, float], tuple[float, float], tuple[float, float], tuple[float, float]]
+
+
+@dataclass
 class LuzCamera:
 	name: str
 	position: Vector
@@ -175,6 +188,8 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 	parser.add_argument("--no-texture-colors", action="store_false", dest="sample_texture_colors", help="Skip image texture color approximation.")
 	parser.add_argument("--texture-sample-size", type=int, default=64, help="Temporary texture thumbnail size used for image color averaging. Defaults to 64.")
 	parser.add_argument("--texture-max-size", type=int, default=1024, help="Maximum exported texture side length. Defaults to 1024.")
+	parser.add_argument("--bake-procedural-textures", action="store_true", dest="bake_procedural_textures", default=True, help="Bake linked procedural base-color materials to PPM textures. Enabled by default.")
+	parser.add_argument("--no-bake-procedural-textures", action="store_false", dest="bake_procedural_textures", help="Disable procedural base-color texture baking.")
 	parser.add_argument("--profile", action="store_true", help="Print per-stage exporter progress and timings.")
 	parser.set_defaults(sample_texture_colors=True)
 	args = parser.parse_args(argv)
@@ -230,6 +245,10 @@ def fmt_color(value: tuple[float, float, float]) -> str:
 	return f"({fmt_float(value[0])},{fmt_float(value[1])},{fmt_float(value[2])})"
 
 
+def fmt_uv(value: tuple[float, float]) -> str:
+	return f"({fmt_float(value[0])},{fmt_float(value[1])})"
+
+
 def fmt_blender_color(value: tuple[float, float, float]) -> str:
 	return f"linear_srgb{fmt_color(value)}"
 
@@ -266,6 +285,87 @@ def blender_vector_to_luz(vector: Vector) -> Vector:
 
 def blender_normal_to_luz(normal: Vector) -> Vector:
 	return blender_vector_to_luz(normal)
+
+
+RECTANGLE_EPSILON = 1e-6
+MAX_NATIVE_RECTANGLE_POLYGONS_PER_MATERIAL = 2
+
+
+def vector_dot(a: Vector, b: Vector) -> float:
+	return (a.x * b.x) + (a.y * b.y) + (a.z * b.z)
+
+
+def vector_cross(a: Vector, b: Vector) -> Vector:
+	return Vector((
+		(a.y * b.z) - (a.z * b.y),
+		(a.z * b.x) - (a.x * b.z),
+		(a.x * b.y) - (a.y * b.x),
+	))
+
+
+def vector_length(value: Vector) -> float:
+	return math.sqrt(max(vector_dot(value, value), 0.0))
+
+
+def normalized_vector(value: Vector) -> Vector | None:
+	length = vector_length(value)
+	if length <= RECTANGLE_EPSILON:
+		return None
+	return value / length
+
+
+def vector_almost_zero(value: Vector, scale: float) -> bool:
+	return vector_length(value) <= (RECTANGLE_EPSILON * max(scale, 1.0))
+
+
+def luz_rectangle_from_quad(
+	object_name: str,
+	material_name: str,
+	vertices: tuple[Vector, Vector, Vector, Vector],
+	uvs: tuple[tuple[float, float], tuple[float, float], tuple[float, float], tuple[float, float]],
+) -> LuzRectangle | None:
+	edge_width = vertices[1] - vertices[0]
+	edge_height = vertices[2] - vertices[1]
+	opposite_width = vertices[2] - vertices[3]
+	opposite_height = vertices[3] - vertices[0]
+	width = vector_length(edge_width)
+	height = vector_length(edge_height)
+	scale = max(width, height, 1.0)
+
+	if width <= RECTANGLE_EPSILON or height <= RECTANGLE_EPSILON:
+		return None
+	if not vector_almost_zero(edge_width - opposite_width, scale):
+		return None
+	if not vector_almost_zero(edge_height - opposite_height, scale):
+		return None
+	if abs(vector_dot(edge_width, edge_height)) > (RECTANGLE_EPSILON * scale * scale):
+		return None
+
+	width_axis = normalized_vector(edge_width)
+	height_axis = normalized_vector(edge_height)
+	if width_axis is None or height_axis is None:
+		return None
+	normal = normalized_vector(vector_cross(width_axis, height_axis))
+	if normal is None:
+		return None
+	if abs(vector_dot(vertices[3] - vertices[0], normal)) > (RECTANGLE_EPSILON * scale):
+		return None
+
+	return LuzRectangle(
+		object_name=object_name,
+		material_name=material_name,
+		position=(vertices[0] + vertices[1] + vertices[2] + vertices[3]) * 0.25,
+		normal=normal,
+		width_axis=width_axis,
+		height_axis=height_axis,
+		width=width,
+		height=height,
+		uvs=uvs,
+	)
+
+
+def can_export_native_rectangle_group(polygon_count: int) -> bool:
+	return 0 < polygon_count <= MAX_NATIVE_RECTANGLE_POLYGONS_PER_MATERIAL
 
 
 def effective_camera_sensor_mm(
@@ -1159,8 +1259,165 @@ def base_color_texture_from_shader_node(
 	return None
 
 
+def shader_node_has_linked_base_color(
+	node: object | None,
+	visited: set[object] | None = None,
+) -> bool:
+	if node is None:
+		return False
+	if visited is None:
+		visited = set()
+	if node in visited:
+		return False
+	visited.add(node)
+
+	node_type = getattr(node, "type", "")
+	if node_type == "BSDF_PRINCIPLED":
+		socket = node_socket(node, "Base Color")
+		return bool(socket is not None and getattr(socket, "links", []))
+	if node_type in {"BSDF_DIFFUSE", "BSDF_GLOSSY", "BSDF_ANISOTROPIC"}:
+		socket = node_socket(node, "Color")
+		return bool(socket is not None and getattr(socket, "links", []))
+
+	for child in linked_shader_nodes(node):
+		if shader_node_has_linked_base_color(child, visited.copy()):
+			return True
+	return False
+
+
+def restore_object_selection(selected_objects: list[object], active_object: object | None) -> None:
+	try:
+		for object_ in bpy.context.scene.objects:
+			object_.select_set(False)
+		for object_ in selected_objects:
+			object_.select_set(True)
+		bpy.context.view_layer.objects.active = active_object
+	except Exception:
+		pass
+
+
+def bake_material_base_color_texture(
+	object_: object | None,
+	material: object | None,
+	material_name: str,
+	source_has_uvs: bool,
+	texture_dir: Path,
+	scene_texture_dir: Path,
+	used_texture_names: set[str],
+	exported_textures: dict[str, str],
+	args: argparse.Namespace,
+) -> str | None:
+	if not getattr(args, "bake_procedural_textures", False):
+		return None
+	if not source_has_uvs:
+		log_profile(args, f"Skipping procedural bake for '{material_name}': source mesh has no UVs")
+		return None
+	if (
+		bpy is None
+		or object_ is None
+		or material is None
+		or not getattr(material, "use_nodes", False)
+		or not getattr(material, "node_tree", None)
+	):
+		return None
+
+	image_key = "baked::" + str(getattr(material, "name_full", None) or getattr(material, "name", material_name))
+	if image_key in exported_textures:
+		return exported_textures[image_key]
+
+	base_name = slugify(getattr(material, "name", material_name), "texture")
+	texture_name = unique_name(base_name, used_texture_names) + ".ppm"
+	texture_path = texture_dir / texture_name
+	scene_path = (scene_texture_dir / texture_name).as_posix()
+	texture_size = max(1, int(args.texture_max_size))
+	node_tree = material.node_tree
+	nodes = node_tree.nodes
+	image = None
+	image_node = None
+	previous_active_node = getattr(nodes, "active", None)
+	selected_objects = list(getattr(bpy.context, "selected_objects", []))
+	active_object = getattr(getattr(bpy.context, "view_layer", None), "objects", None)
+	active_object = getattr(active_object, "active", None)
+	scene = bpy.context.scene
+	previous_engine = getattr(scene.render, "engine", None)
+	bake_settings = getattr(scene.render, "bake", None)
+	previous_bake_values: dict[str, object] = {}
+
+	try:
+		image = bpy.data.images.new(
+			name=f"{material_name}_base_color_bake",
+			width=texture_size,
+			height=texture_size,
+			alpha=False,
+		)
+		image_node = nodes.new(type="ShaderNodeTexImage")
+		image_node.image = image
+		nodes.active = image_node
+
+		for object_to_deselect in scene.objects:
+			object_to_deselect.select_set(False)
+		object_.select_set(True)
+		bpy.context.view_layer.objects.active = object_
+		try:
+			object_.active_material = material
+		except Exception:
+			pass
+
+		try:
+			scene.render.engine = "CYCLES"
+		except Exception:
+			pass
+		if bake_settings is not None:
+			for name, value in {
+				"use_pass_direct": False,
+				"use_pass_indirect": False,
+				"use_pass_color": True,
+				"margin": 2,
+			}.items():
+				if hasattr(bake_settings, name):
+					previous_bake_values[name] = getattr(bake_settings, name)
+					setattr(bake_settings, name, value)
+
+		bpy.ops.object.bake(type="DIFFUSE")
+		if not write_image_as_ppm(image, texture_path, texture_size):
+			log_profile(args, f"Procedural bake for '{material_name}' did not produce readable pixels")
+			return None
+		exported_textures[image_key] = scene_path
+		return scene_path
+	except Exception as error:
+		log_profile(args, f"Procedural bake failed for '{material_name}': {error}")
+		return None
+	finally:
+		if bake_settings is not None:
+			for name, value in previous_bake_values.items():
+				try:
+					setattr(bake_settings, name, value)
+				except Exception:
+					pass
+		if previous_engine is not None:
+			try:
+				scene.render.engine = previous_engine
+			except Exception:
+				pass
+		if image_node is not None:
+			try:
+				nodes.remove(image_node)
+			except Exception:
+				pass
+		if previous_active_node is not None:
+			try:
+				nodes.active = previous_active_node
+			except Exception:
+				pass
+		if image is not None:
+			remove_blender_image(image)
+		restore_object_selection(selected_objects, active_object)
+
+
 def export_material(
 	material: object | None,
+	source_object: object | None,
+	source_has_uvs: bool,
 	used_names: set[str],
 	registry: dict[str, LuzMaterial],
 	texture_dir: Path,
@@ -1254,6 +1511,20 @@ def export_material(
 				texture_path = export_texture_image(
 					base_color_texture,
 					name,
+					texture_dir,
+					scene_texture_dir,
+					used_texture_names,
+					exported_textures,
+					args,
+				)
+				if texture_path is not None:
+					base_color = (1.0, 1.0, 1.0)
+			elif shader_node_has_linked_base_color(shader_node):
+				texture_path = bake_material_base_color_texture(
+					source_object,
+					material,
+					name,
+					source_has_uvs,
 					texture_dir,
 					scene_texture_dir,
 					used_texture_names,
@@ -1480,9 +1751,10 @@ def export_meshes(
 	used_texture_names: set[str],
 	exported_textures: dict[str, str],
 	bounds: Bounds,
-) -> list[LuzMesh]:
+) -> tuple[list[LuzMesh], list[LuzRectangle]]:
 	depsgraph = bpy.context.evaluated_depsgraph_get()
 	meshes: list[LuzMesh] = []
+	rectangles: list[LuzRectangle] = []
 	used_mesh_names: set[str] = set()
 	used_object_names: set[str] = set()
 	mesh_objects = [
@@ -1506,6 +1778,8 @@ def export_meshes(
 			except Exception:
 				normal_matrix = world_matrix.to_3x3()
 			object_meshes_by_material: dict[int, ObjMeshAccumulator] = {}
+			native_rectangle_polygon_indices: set[int] = set()
+			luz_vertices: dict[int, Vector] = {}
 			luz_vertex_keys: dict[int, ObjVectorKey] = {}
 			luz_normal_keys: dict[int, ObjVectorKey] = {}
 			luz_uv_keys: dict[int, ObjUVKey] = {}
@@ -1514,19 +1788,26 @@ def export_meshes(
 			mesh_loop_triangles = mesh.loop_triangles
 			mesh_corner_normals = getattr(mesh, "corner_normals", None)
 			mesh_uv_layer_data = active_uv_layer_data(mesh)
+			mesh_has_uvs = mesh_uv_layer_data is not None
 			log_profile(
 				args,
 				f"[{object_index}/{len(mesh_objects)}] '{object_.name}' has "
 				f"{len(mesh_vertices)} vertex/vertices and {len(mesh_loop_triangles)} triangle(s)",
 			)
 
-			def luz_vertex_key_for(vertex_index: int) -> ObjVectorKey:
-				luz_vertex_key = luz_vertex_keys.get(vertex_index)
-				if luz_vertex_key is None:
+			def luz_vertex_for(vertex_index: int) -> Vector:
+				luz_vertex = luz_vertices.get(vertex_index)
+				if luz_vertex is None:
 					blender_world = world_matrix @ mesh_vertices[vertex_index].co
 					luz_vertex = blender_point_to_luz(blender_world, args.global_scale)
 					bounds.include(luz_vertex)
-					luz_vertex_key = obj_vector_key(luz_vertex)
+					luz_vertices[vertex_index] = luz_vertex
+				return luz_vertex
+
+			def luz_vertex_key_for(vertex_index: int) -> ObjVectorKey:
+				luz_vertex_key = luz_vertex_keys.get(vertex_index)
+				if luz_vertex_key is None:
+					luz_vertex_key = obj_vector_key(luz_vertex_for(vertex_index))
 					luz_vertex_keys[vertex_index] = luz_vertex_key
 				return luz_vertex_key
 
@@ -1546,7 +1827,85 @@ def export_meshes(
 					luz_uv_keys[loop_index] = luz_uv_key
 				return luz_uv_key
 
+			polygons = list(getattr(mesh, "polygons", []))
+			polygon_counts_by_material: dict[int, int] = {}
+			for polygon in polygons:
+				material_index = int(getattr(polygon, "material_index", 0))
+				polygon_counts_by_material[material_index] = polygon_counts_by_material.get(material_index, 0) + 1
+
+			rectangle_candidates_by_material: dict[int, list[tuple[int, LuzRectangle]]] = {}
+			rejected_rectangle_materials: set[int] = set()
+			for polygon_index, polygon in enumerate(polygons):
+				material_index = int(getattr(polygon, "material_index", 0))
+				if (
+					material_index in rejected_rectangle_materials
+					or not can_export_native_rectangle_group(polygon_counts_by_material.get(material_index, 0))
+				):
+					continue
+
+				vertex_indices = tuple(int(index) for index in getattr(polygon, "vertices", []))
+				loop_indices = tuple(int(index) for index in getattr(polygon, "loop_indices", []))
+				if len(loop_indices) == 0 and hasattr(polygon, "loop_start") and hasattr(polygon, "loop_total"):
+					loop_start = int(polygon.loop_start)
+					loop_indices = tuple(range(loop_start, loop_start + int(polygon.loop_total)))
+				if len(vertex_indices) != 4 or len(loop_indices) != 4:
+					rejected_rectangle_materials.add(material_index)
+					continue
+
+				material = material_for_slot(object_, material_index)
+				material_name = export_material(
+					material,
+					object_,
+					mesh_has_uvs,
+					used_material_names,
+					materials,
+					texture_dir,
+					scene_texture_dir,
+					used_texture_names,
+					exported_textures,
+					args,
+				)
+				rectangle = luz_rectangle_from_quad(
+					"",
+					material_name,
+					(
+						luz_vertex_for(vertex_indices[0]),
+						luz_vertex_for(vertex_indices[1]),
+						luz_vertex_for(vertex_indices[2]),
+						luz_vertex_for(vertex_indices[3]),
+					),
+					(
+						loop_uv_from_data(mesh_uv_layer_data, loop_indices[0]),
+						loop_uv_from_data(mesh_uv_layer_data, loop_indices[1]),
+						loop_uv_from_data(mesh_uv_layer_data, loop_indices[2]),
+						loop_uv_from_data(mesh_uv_layer_data, loop_indices[3]),
+					),
+				)
+				if rectangle is None:
+					rejected_rectangle_materials.add(material_index)
+					continue
+
+				rectangle_candidates_by_material.setdefault(material_index, []).append((
+					int(getattr(polygon, "index", polygon_index)),
+					rectangle,
+				))
+
+			for material_index, candidates in rectangle_candidates_by_material.items():
+				if material_index in rejected_rectangle_materials:
+					continue
+				if len(candidates) != polygon_counts_by_material.get(material_index, 0):
+					continue
+				for polygon_index, rectangle in candidates:
+					rectangle.object_name = unique_name(
+						slugify(f"{object_.name}_{rectangle.material_name}_rectangle", "object"),
+						used_object_names,
+					)
+					rectangles.append(rectangle)
+					native_rectangle_polygon_indices.add(polygon_index)
+
 			for loop_triangle in mesh_loop_triangles:
+				if int(getattr(loop_triangle, "polygon_index", -1)) in native_rectangle_polygon_indices:
+					continue
 				material_index = loop_triangle.material_index
 				obj_mesh = object_meshes_by_material.get(material_index)
 				if obj_mesh is None:
@@ -1586,6 +1945,8 @@ def export_meshes(
 				)
 				material_name = export_material(
 					material,
+					object_,
+					mesh_has_uvs,
 					used_material_names,
 					materials,
 					texture_dir,
@@ -1621,7 +1982,7 @@ def export_meshes(
 			release_evaluated_mesh(evaluated_object)
 		log_profile(args, f"[{object_index}/{len(mesh_objects)}] Finished '{object_.name}' in {time.perf_counter() - object_start:.2f}s")
 
-	return meshes
+	return (meshes, rectangles)
 
 
 def export_camera(args: argparse.Namespace, bounds: Bounds) -> LuzCamera:
@@ -2118,6 +2479,7 @@ def write_luz_scene(
 	output_path: Path,
 	materials: dict[str, LuzMaterial],
 	meshes: list[LuzMesh],
+	rectangles: list[LuzRectangle],
 	camera: LuzCamera,
 	lights: list[LuzLight],
 	background_color: tuple[float, float, float],
@@ -2275,6 +2637,24 @@ def write_luz_scene(
 			]
 		)
 
+	if rectangles:
+		lines.append("objects{")
+		for rectangle in rectangles:
+			lines.append(
+				f"rectangle={fmt_vector(rectangle.position)},"
+				f"{fmt_vector(rectangle.normal)},"
+				f"{fmt_vector(rectangle.width_axis)},"
+				f"{fmt_vector(rectangle.height_axis)},"
+				f"{fmt_float(rectangle.width)},"
+				f"{fmt_float(rectangle.height)},"
+				f"uvs={fmt_uv(rectangle.uvs[0])},"
+				f"{fmt_uv(rectangle.uvs[1])},"
+				f"{fmt_uv(rectangle.uvs[2])},"
+				f"{fmt_uv(rectangle.uvs[3])},"
+				f"material={rectangle.material_name}"
+			)
+		lines.append("}")
+
 	for light in lights:
 		if light.kind == "area_light":
 			lines.extend(
@@ -2342,7 +2722,7 @@ def main() -> None:
 	exported_textures: dict[str, str] = {}
 	bounds = Bounds()
 	log_profile(args, "Starting mesh export")
-	meshes = export_meshes(
+	meshes, rectangles = export_meshes(
 		args,
 		output_path,
 		mesh_dir,
@@ -2369,11 +2749,11 @@ def main() -> None:
 	if environment is not None:
 		log_profile(args, f"World environment={environment.path}")
 	log_profile(args, f"Writing Luz scene {output_path}")
-	write_luz_scene(args, output_path, materials, meshes, camera, lights, background_color, environment)
+	write_luz_scene(args, output_path, materials, meshes, rectangles, camera, lights, background_color, environment)
 
 	triangle_count = sum(mesh.triangle_count for mesh in meshes)
 	print(
-		f"Exported {len(meshes)} mesh group(s), {triangle_count} triangle(s), "
+		f"Exported {len(meshes)} mesh group(s), {triangle_count} triangle(s), {len(rectangles)} rectangle(s), "
 		f"{len(materials)} material(s), and {len(lights)} light(s) to {output_path} "
 		f"in {time.perf_counter() - start_time:.2f}s"
 	)

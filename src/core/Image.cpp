@@ -126,6 +126,14 @@ namespace
 		);
 	}
 
+	bool	isBrightDisplayOutlierCandidate(Color color)
+	{
+		return (
+			maxChannel(color) >= 0.50
+			&& sceneLuminance(color) >= 0.35
+		);
+	}
+
 	bool	isUnsupportedSaturatedDisplayPixel(Color color)
 	{
 		return (
@@ -153,14 +161,17 @@ namespace
 		constexpr int RADIUS = 2;
 		constexpr double SIMILAR_NEIGHBOR_RATIO = 0.65;
 		constexpr double BRIGHT_NEIGHBOR_THRESHOLD = 0.80;
+		constexpr double LOCAL_OUTLIER_RATIO = 1.65;
+		constexpr double LOCAL_OUTLIER_EXCESS = 0.08;
 		constexpr unsigned int MIN_SIMILAR_SUPPORT = 4;
 		constexpr unsigned int MIN_BRIGHT_SUPPORT = 6;
 		constexpr unsigned int MIN_SATURATED_SUPPORT = 3;
 		const Color pixel = image.getPixelUnchecked(x, y);
 		const double luminance = sceneLuminance(pixel);
 		const bool saturatedCandidate = isUnsupportedSaturatedDisplayPixel(pixel);
+		const bool displayCandidate = isDisplayFireflyCandidate(pixel);
 
-		if (!isDisplayFireflyCandidate(pixel))
+		if (!displayCandidate && !isBrightDisplayOutlierCandidate(pixel))
 		{
 			return (pixel);
 		}
@@ -168,7 +179,9 @@ namespace
 		unsigned int similarNeighbors = 0;
 		unsigned int brightNeighbors = 0;
 		unsigned int saturatedNeighbors = 0;
+		std::vector<double> immediateNeighborLuminances;
 		std::vector<Color> replacementCandidates;
+		immediateNeighborLuminances.reserve(8);
 		for (int offsetY = -RADIUS; offsetY <= RADIUS; offsetY++)
 		{
 			for (int offsetX = -RADIUS; offsetX <= RADIUS; offsetX++)
@@ -194,6 +207,10 @@ namespace
 					static_cast<std::size_t>(sampleY)
 				);
 				const double neighborLuminance = sceneLuminance(neighbor);
+				if (std::abs(offsetX) <= 1 && std::abs(offsetY) <= 1)
+				{
+					immediateNeighborLuminances.push_back(neighborLuminance);
+				}
 				if (neighborLuminance >= luminance * SIMILAR_NEIGHBOR_RATIO)
 				{
 					similarNeighbors++;
@@ -213,6 +230,26 @@ namespace
 			}
 		}
 
+		if (!displayCandidate)
+		{
+			if (immediateNeighborLuminances.empty())
+			{
+				return (pixel);
+			}
+			std::sort(immediateNeighborLuminances.begin(), immediateNeighborLuminances.end());
+			const double localMedian = immediateNeighborLuminances[immediateNeighborLuminances.size() / 2];
+			if (
+				luminance < localMedian * LOCAL_OUTLIER_RATIO
+				|| luminance < localMedian + LOCAL_OUTLIER_EXCESS
+			)
+			{
+				return (pixel);
+			}
+			if (!replacementCandidates.empty())
+			{
+				return (medianNeighborColor(replacementCandidates));
+			}
+		}
 		if (
 			saturatedCandidate
 			&& saturatedNeighbors < MIN_SATURATED_SUPPORT

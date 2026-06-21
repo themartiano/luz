@@ -173,9 +173,11 @@ The exporter also works without passing the `.blend` file before `--python`:
   written with Luz's default equirectangular orientation and `0` degrees
   rotation.
 - Image texture export uses Luz's built-in PPM texture loader for sRGB base
-  color textures. When no usable Base Color image texture is found, image colors
-  can still be approximated by averaging a temporary thumbnail, controlled by
-  `--texture-sample-size`.
+  color textures. Linked procedural base-color materials are baked to PPM by
+  default; use `--no-bake-procedural-textures` to disable that fallback.
+- Simple one- or two-polygon rectangular material groups are exported as native
+  Luz rectangles with explicit axes and UV corners. Complex or beveled geometry
+  stays in OBJ mesh export.
 - Per-face materials are preserved by splitting mesh objects into one OBJ per
   material slot.
 - Instancing is baked into separate OBJ files.

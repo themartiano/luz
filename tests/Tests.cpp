@@ -683,6 +683,17 @@ namespace
 		requireNear(isolated.getPixel(3, 3).getGreen(), 0.1, "Display firefly suppression did not replace isolated green.");
 		requireNear(isolated.getPixel(3, 3).getBlue(), 0.1, "Display firefly suppression did not replace isolated blue.");
 
+		Image mutedOutlier(7, 7);
+		mutedOutlier.initialize();
+		mutedOutlier.fill(Color(0.2, 0.22, 0.23));
+		mutedOutlier.setColorEncoding(ImageColorEncoding::DisplayEncodedSRGB);
+		mutedOutlier.setPixel(3, 3, Color(0.78, 0.84, 0.74));
+		mutedOutlier.suppressIsolatedFireflies();
+		require(
+			mutedOutlier.getPixel(3, 3).getGreen() < 0.3,
+			"Display firefly suppression kept an isolated non-saturated outlier."
+		);
+
 		Image sceneLinear(7, 7);
 		sceneLinear.initialize();
 		sceneLinear.fill(Color(0.1, 0.1, 0.1));
@@ -2108,6 +2119,37 @@ namespace
 
 		std::filesystem::remove(scenePath);
 		std::filesystem::remove(objectPath);
+	}
+
+	void	testSceneFileRectangleAxesAndUVs(void)
+	{
+		const std::filesystem::path scenePath = std::filesystem::temp_directory_path() / "luz_rectangle_axes_uv_test.luz";
+		{
+			std::ofstream sceneStream(scenePath);
+			sceneStream
+				<< "[materials]\n"
+				<< "material matte {\n"
+				<< "type=lambertian\n"
+				<< "color=(0.8,0.8,0.8)\n"
+				<< "}\n\n"
+				<< "[scene]\n"
+				<< "objects{\n"
+				<< "rectangle=(0,0,0),(0,1,0),(0,0,1),(1,0,0),4,2,"
+				<< "uvs=(0,0),(1,0),(1,1),(0,1),material=matte\n"
+				<< "}\n";
+		}
+
+		Scene scene;
+		SceneFile::read(scene, scenePath.string());
+		require(scene.getHittables().size() == 1, "Rectangle axes/UV scene did not load one hittable.");
+
+		Ray ray(Vector3(0.5, 2.0, 1.0), Vector3(0.0, -1.0, 0.0));
+		HitRecord hitRecord;
+		require(scene.getHittables()[0]->hit(ray, hitRecord, 0.001, 100.0), "Rectangle axes/UV scene rectangle was not hit.");
+		requireNear(hitRecord.u, 0.75, "Scene rectangle U coordinate was not parsed.");
+		requireNear(hitRecord.v, 0.75, "Scene rectangle V coordinate was not parsed.");
+
+		std::filesystem::remove(scenePath);
 	}
 
 	void	testSceneFilePhysicalLightUnits(void)
@@ -3785,6 +3827,17 @@ namespace
 		requireVectorNear(boundingBox.getMinimum(), Vector3(-1.0, 2.0 - T_MIN, 0.0), "Y-aligned rectangle minimum");
 		requireVectorNear(boundingBox.getMaximum(), Vector3(3.0, 2.0 + T_MIN, 6.0), "Y-aligned rectangle maximum");
 
+		Rectangle customAxesYRectangle(
+			Transform(Vector3(1.0, 2.0, 3.0), Vector3(0.0, 1.0, 0.0), Vector3(1.0, 1.0, 1.0)),
+			4.0,
+			2.0,
+			material
+		);
+		customAxesYRectangle.setAxes(Vector3(0.0, 0.0, 1.0), Vector3(1.0, 0.0, 0.0));
+		require(customAxesYRectangle.createBoundingBox(boundingBox), "Custom-axis Y rectangle did not create a bounding box.");
+		requireVectorNear(boundingBox.getMinimum(), Vector3(0.0, 2.0 - T_MIN, 1.0), "Custom-axis Y rectangle minimum");
+		requireVectorNear(boundingBox.getMaximum(), Vector3(2.0, 2.0 + T_MIN, 5.0), "Custom-axis Y rectangle maximum");
+
 		Rectangle zRectangle(
 			Transform(Vector3(1.0, 2.0, 3.0), Vector3(0.0, 0.0, 1.0), Vector3(1.0, 1.0, 1.0)),
 			4.0,
@@ -3852,6 +3905,53 @@ namespace
 		requireRectangleRandomSamplesHit(yRectangle, Vector3(0.0, 0.0, 0.0), "Y-aligned rectangle generated a direction that missed.");
 		requireRectangleRandomSamplesHit(zRectangle, Vector3(0.0, 0.0, 0.0), "Z-aligned rectangle generated a direction that missed.");
 		requireRectangleRandomSamplesHit(xRectangle, Vector3(0.0, 0.0, 0.0), "X-aligned rectangle generated a direction that missed.");
+	}
+
+	void	testRectangleTextureCoordinates(void)
+	{
+		auto material = std::make_shared<Lambertian>(Color(0.8, 0.8, 0.8));
+		Rectangle defaultUVRectangle(
+			Transform(Vector3(0.0, 0.0, 0.0), Vector3(0.0, 0.0, 1.0), Vector3(1.0, 1.0, 1.0)),
+			4.0,
+			2.0,
+			material
+		);
+		Ray defaultRay(Vector3(1.0, 0.5, 2.0), Vector3(0.0, 0.0, -1.0));
+		HitRecord defaultHit;
+		require(defaultUVRectangle.hit(defaultRay, defaultHit, 0.001, 100.0), "Rectangle with default UVs was not hit.");
+		requireNear(defaultHit.u, 0.75, "Rectangle default U coordinate is wrong.");
+		requireNear(defaultHit.v, 0.75, "Rectangle default V coordinate is wrong.");
+
+		Rectangle customUVRectangle(
+			Transform(Vector3(0.0, 0.0, 0.0), Vector3(0.0, 0.0, 1.0), Vector3(1.0, 1.0, 1.0)),
+			2.0,
+			2.0,
+			material
+		);
+		customUVRectangle.setTextureCoordinates(
+			Vector3(0.1, 0.2, 0.0),
+			Vector3(0.9, 0.2, 0.0),
+			Vector3(0.7, 0.8, 0.0),
+			Vector3(0.3, 0.8, 0.0)
+		);
+		Ray centerRay(Vector3(0.0, 0.0, 2.0), Vector3(0.0, 0.0, -1.0));
+		HitRecord centerHit;
+		require(customUVRectangle.hit(centerRay, centerHit, 0.001, 100.0), "Rectangle with custom UVs was not hit.");
+		requireNear(centerHit.u, 0.5, "Rectangle custom U coordinate was not bilinear-interpolated.");
+		requireNear(centerHit.v, 0.5, "Rectangle custom V coordinate was not bilinear-interpolated.");
+
+		Rectangle customAxesRectangle(
+			Transform(Vector3(0.0, 0.0, 0.0), Vector3(0.0, 1.0, 0.0), Vector3(1.0, 1.0, 1.0)),
+			4.0,
+			2.0,
+			material
+		);
+		customAxesRectangle.setAxes(Vector3(0.0, 0.0, 1.0), Vector3(1.0, 0.0, 0.0));
+		Ray customAxesRay(Vector3(0.5, 2.0, 1.0), Vector3(0.0, -1.0, 0.0));
+		HitRecord customAxesHit;
+		require(customAxesRectangle.hit(customAxesRay, customAxesHit, 0.001, 100.0), "Rectangle with custom axes was not hit.");
+		requireNear(customAxesHit.u, 0.75, "Rectangle custom-axis U coordinate is wrong.");
+		requireNear(customAxesHit.v, 0.75, "Rectangle custom-axis V coordinate is wrong.");
 	}
 
 	void	testCubeBoundingBoxAndSetters(void)
@@ -4785,6 +4885,45 @@ namespace
 		}
 	}
 
+	void	testNFORDoesNotSpreadIsolatedFirefly(void)
+	{
+		Denoise::NFORBuffers buffers;
+
+		buffers.initialize(7, 7);
+		for (std::size_t y = 0; y < buffers.height; y++)
+		{
+			for (std::size_t x = 0; x < buffers.width; x++)
+			{
+				const std::size_t index = buffers.index(x, y);
+
+				buffers.colorA[index] = Color(0.12, 0.13, 0.14);
+				buffers.colorB[index] = Color(0.12, 0.13, 0.14);
+				buffers.colorVariance[index] = 0.0001;
+				buffers.featuresA[index][0] = static_cast<double>(x) / 6.0;
+				buffers.featuresA[index][1] = static_cast<double>(y) / 6.0;
+				buffers.featuresB[index] = buffers.featuresA[index];
+			}
+		}
+		const std::size_t center = buffers.index(3, 3);
+		buffers.colorA[center] = Color(8.0, 8.0, 8.0);
+		buffers.colorB[center] = Color(8.0, 8.0, 8.0);
+
+		Denoise::NFORSettings settings;
+		settings.threadCount = 1;
+		std::unique_ptr<Image> denoised = Denoise::applyNFOR(buffers, settings);
+		const Color centerPixel = denoised->getPixel(3, 3);
+		const Color neighborPixel = denoised->getPixel(3, 2);
+
+		require(
+			Utilities::luminance(centerPixel) < 0.5,
+			"NFOR kept an isolated firefly at the source pixel."
+		);
+		require(
+			Utilities::luminance(neighborPixel) < 0.5,
+			"NFOR spread an isolated firefly into a neighbor."
+		);
+	}
+
 	void	testTinyAdaptiveDenoisedRender(void)
 	{
 		setRandomSeed(42);
@@ -4911,6 +5050,7 @@ int	main(void)
 		testSceneFileLoadsTransformedObject();
 		testSceneFileLoadsNamedBlocks();
 		testSceneFileCompactPrimitivesUseNamedMaterials();
+		testSceneFileRectangleAxesAndUVs();
 		testSceneFilePhysicalLightUnits();
 		testSceneFileSolarDirectionalLightPreset();
 		testSceneFileLoadsIESPointLight();
@@ -4956,6 +5096,7 @@ int	main(void)
 		testAABBHandlesAxisParallelBoundaryRays();
 		testRectangleBoundingBoxes();
 		testRectangleRandomSamplesSupportedAxes();
+		testRectangleTextureCoordinates();
 		testCubeBoundingBoxAndSetters();
 		testHittablePDFAveragesMultipleLights();
 		testFlagsParsePostProcessOptions();
@@ -4982,6 +5123,7 @@ int	main(void)
 		testTinyRender();
 		testAtmosphereCompositesEnvironmentBackground();
 		testTinyAdaptiveRender();
+		testNFORDoesNotSpreadIsolatedFirefly();
 		testTinyAdaptiveDenoisedRender();
 		testTinyDenoisedRenderProducesCompanionImage();
 		testCameraRejectsInvalidPhysicalOptics();

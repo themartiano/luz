@@ -1,0 +1,37 @@
+[settings]
+resolution=480,480
+samples=512
+adaptive=1
+adaptiveminsamples=96
+adaptivethreshold=0.025
+adaptivecheckinterval=16
+maxlightbounces=10
+view_transform=standard
+bloom=0
+denoise=0
+exposure=0
+contrast=1
+sky=none
+background=(1,1,1)
+distanceblueness=0
+outputfilename=exports/volumetric_gray_sphere_white_bg.png
+
+[scene]
+camera main {
+position=(0,0,-4)
+direction=(0,0,1)
+up=(0,1,0)
+focal_length_mm=55
+sensor_width_mm=36
+sensor_height_mm=36
+pinhole=1
+focus_distance=4
+}
+volume gray_sphere {
+shape=sphere
+position=(0,0,0)
+radius=1.15
+density=1.25
+color=(0.45,0.45,0.45)
+anisotropy=0
+}

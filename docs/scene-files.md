@@ -296,7 +296,7 @@ visible=0
 | Sphere | `sphere=(x,y,z),radius,material[` or `sphere=(x,y,z),radius,material=NAME` |
 | Named sphere | `sphere name { position=(x,y,z) radius=R material=name }` |
 | Plane | `plane=y,(ox,oy,oz),material[` or `plane=y,(ox,oy,oz),material=NAME` |
-| Rectangle | `rectangle=(x,y,z),(ox,oy,oz),width,height,material[` or `rectangle=(x,y,z),(ox,oy,oz),width,height,material=NAME` |
+| Rectangle | `rectangle=(x,y,z),(ox,oy,oz),width,height,material=NAME` or `rectangle=(x,y,z),(ox,oy,oz),(wx,wy,wz),(hx,hy,hz),width,height,uvs=(u0,v0),(u1,v1),(u2,v2),(u3,v3),material=NAME` |
 | Triangle | `triangle=(x0,y0,z0),(x1,y1,z1),(x2,y2,z2),material[` or `triangle=(x0,y0,z0),(x1,y1,z1),(x2,y2,z2),material=NAME` |
 | Cube | `cube=(x,y,z),(ox,oy,oz),width,height,depth,material[` or `cube=(x,y,z),(ox,oy,oz),width,height,depth,material=NAME` |
 | OBJ mesh | `obj=path/to/file.obj` |
