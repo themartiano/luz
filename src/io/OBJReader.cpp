@@ -32,13 +32,6 @@ namespace
 	const double	DEGREES_TO_RADIANS = 3.14159265358979323846 / 180.0;
 	const double	TRANSFORM_EPSILON = 1e-12;
 
-	struct ObjFaceVertex
-	{
-		int	vertexIndex = -1;
-		int	textureIndex = -1;
-		int	normalIndex = -1;
-	};
-
 	bool	nearlyEqual(double a, double b)
 	{
 		return (std::fabs(a - b) <= TRANSFORM_EPSILON);
@@ -161,7 +154,16 @@ namespace
 		}
 	};
 
-	std::size_t	parseObjFile(Mesh& mesh, std::ifstream& stream, const ObjTransform& transform, std::shared_ptr<Material> material);
+	ObjMeshData	parseObjFile(std::ifstream& stream);
+	ObjMeshData	loadObjMeshDataFromFile(const std::string& fileName);
+	std::vector<Triangle>	buildObjTriangles(
+		const ObjMeshData& data,
+		Vector3 positionOffset,
+		Vector3 rotationDegrees,
+		Vector3 scale,
+		std::shared_ptr<Material> material,
+		std::size_t* skippedDegenerateTriangles
+	);
 
 	Vector3	parseVectorValues(const char* value, const std::string& line)
 	{
@@ -278,7 +280,7 @@ namespace
 		return (static_cast<int>(value));
 	}
 
-	ObjFaceVertex	parseFaceVertex(
+	ObjMeshFaceVertex	parseFaceVertex(
 		const char*& cursor,
 		std::size_t vertexCount,
 		std::size_t textureCount,
@@ -286,7 +288,7 @@ namespace
 		const std::string& line
 	)
 	{
-		ObjFaceVertex faceVertex;
+		ObjMeshFaceVertex faceVertex;
 
 		skipSpaces(cursor);
 		if (*cursor == '\0')
@@ -319,35 +321,33 @@ namespace
 	}
 
 	Triangle	buildTriangle(
-		const std::vector<Vector3>& vertices,
-		const std::vector<Vector3>& textureCoordinates,
-		const std::vector<Vector3>& normals,
-		const ObjFaceVertex& faceVertex0,
-		const ObjFaceVertex& faceVertex1,
-		const ObjFaceVertex& faceVertex2,
+		const ObjMeshData& data,
+		const ObjMeshFaceVertex& faceVertex0,
+		const ObjMeshFaceVertex& faceVertex1,
+		const ObjMeshFaceVertex& faceVertex2,
 		const ObjTransform& transform,
 		std::shared_ptr<Material> material
 	)
 	{
-		const Vector3 vertex0 = transform.transformVertex(vertices.at(faceVertex0.vertexIndex));
-		const Vector3 vertex1 = transform.transformVertex(vertices.at(faceVertex1.vertexIndex));
-		const Vector3 vertex2 = transform.transformVertex(vertices.at(faceVertex2.vertexIndex));
+		const Vector3 vertex0 = transform.transformVertex(data.vertices.at(faceVertex0.vertexIndex));
+		const Vector3 vertex1 = transform.transformVertex(data.vertices.at(faceVertex1.vertexIndex));
+		const Vector3 vertex2 = transform.transformVertex(data.vertices.at(faceVertex2.vertexIndex));
 		Triangle triangle(vertex0, vertex1, vertex2, material);
 
 		if (faceVertex0.normalIndex >= 0 && faceVertex1.normalIndex >= 0 && faceVertex2.normalIndex >= 0)
 		{
 			triangle.setVertexNormals(
-				transform.transformNormal(normals.at(faceVertex0.normalIndex)),
-				transform.transformNormal(normals.at(faceVertex1.normalIndex)),
-				transform.transformNormal(normals.at(faceVertex2.normalIndex))
+				transform.transformNormal(data.normals.at(faceVertex0.normalIndex)),
+				transform.transformNormal(data.normals.at(faceVertex1.normalIndex)),
+				transform.transformNormal(data.normals.at(faceVertex2.normalIndex))
 			);
 		}
 		if (faceVertex0.textureIndex >= 0 && faceVertex1.textureIndex >= 0 && faceVertex2.textureIndex >= 0)
 		{
 			triangle.setTextureCoordinates(
-				textureCoordinates.at(faceVertex0.textureIndex),
-				textureCoordinates.at(faceVertex1.textureIndex),
-				textureCoordinates.at(faceVertex2.textureIndex)
+				data.textureCoordinates.at(faceVertex0.textureIndex),
+				data.textureCoordinates.at(faceVertex1.textureIndex),
+				data.textureCoordinates.at(faceVertex2.textureIndex)
 			);
 		}
 
@@ -402,6 +402,106 @@ namespace
 			std::cout << CLR_BLUE_BRIGHT << ")\n\n" << CLR_RESET;
 		}
 	}
+
+	ObjMeshData	loadObjMeshDataFromFile(const std::string& fileName)
+	{
+		std::ifstream stream;
+		stream.open(fileName);
+		if (!stream)
+		{
+			throw std::runtime_error("OBJ file could not be opened: " + fileName);
+		}
+
+		return (parseObjFile(stream));
+	}
+
+	std::vector<Triangle>	buildObjTriangles(
+		const ObjMeshData& data,
+		Vector3 positionOffset,
+		Vector3 rotationDegrees,
+		Vector3 scale,
+		std::shared_ptr<Material> material,
+		std::size_t* skippedDegenerateTriangles
+	)
+	{
+		const ObjTransform transform(positionOffset, rotationDegrees, scale);
+		std::vector<Triangle> triangles;
+		std::size_t skipped = 0;
+
+		triangles.reserve(data.triangles.size());
+		for (const std::array<ObjMeshFaceVertex, 3>& face : data.triangles)
+		{
+			Triangle triangle = buildTriangle(
+				data,
+				face[0],
+				face[1],
+				face[2],
+				transform,
+				material
+			);
+			if (triangle.area() <= DEGENERATE_TRIANGLE_EPSILON_SQUARED)
+			{
+				skipped++;
+				continue;
+			}
+			triangles.push_back(std::move(triangle));
+		}
+		if (skippedDegenerateTriangles != nullptr)
+		{
+			*skippedDegenerateTriangles = skipped;
+		}
+
+		return (triangles);
+	}
+}
+
+ObjMeshData	readObjMeshData(std::string fileName)
+{
+	return (readObjMeshData(fileName, ObjReadOptions()));
+}
+
+ObjMeshData	readObjMeshData(std::string fileName, const ObjReadOptions& options)
+{
+	Clock	clock;
+	const bool useProgress = options.progress != nullptr && options.progress->total > 0;
+
+	if (useProgress)
+	{
+		beginMeshLoadProgress(*options.progress);
+	}
+	else if (!options.quiet)
+	{
+		std::cout << CLR_YELLOW << "Parsing " << CLR_BLUE << fileName << CLR_YELLOW << "..." << CLR_RESET << std::endl;
+	}
+
+	clock.start();
+	ObjMeshData data = loadObjMeshDataFromFile(fileName);
+
+	if (useProgress)
+	{
+		finishMeshLoadProgress(*options.progress, 0);
+	}
+	else if (!options.quiet)
+	{
+		std::cout << CLR_BLUE << fileName << CLR_GREEN_BRIGHT << " parsing done! " << CLR_BLUE_BRIGHT << "(Duration: " << CLR_WHITE << clock.elapsedS() << "s" << CLR_BLUE_BRIGHT << ")\n\n" << CLR_RESET;
+	}
+
+	return (data);
+}
+
+Mesh	buildObjMesh(
+	const ObjMeshData& data,
+	Vector3 positionOffset,
+	Vector3 rotationDegrees,
+	Vector3 scale,
+	std::shared_ptr<Material> material
+)
+{
+	return (Mesh(
+		Vector3(),
+		material,
+		buildObjTriangles(data, positionOffset, rotationDegrees, scale, material, nullptr)
+	));
 }
 
 // Calls the actual 'readObj' function with a zeroed offset position
@@ -430,15 +530,8 @@ Mesh	readObj(
 	const ObjReadOptions& options
 )
 {
-	std::ifstream stream;
-	stream.open(fileName);
-	if (!stream)
-	{
-		throw std::runtime_error("OBJ file could not be opened: " + fileName);
-	}
-
 	Clock	clock;
-	Mesh	mesh;
+	std::size_t skippedDegenerateTriangles = 0;
 	const bool useProgress = options.progress != nullptr && options.progress->total > 0;
 
 	if (useProgress)
@@ -451,8 +544,12 @@ Mesh	readObj(
 	}
 
 	clock.start();
-	const ObjTransform transform(positionOffset, rotationDegrees, scale);
-	const std::size_t skippedDegenerateTriangles = parseObjFile(mesh, stream, transform, material);
+	const ObjMeshData data = loadObjMeshDataFromFile(fileName);
+	Mesh mesh(
+		Vector3(),
+		material,
+		buildObjTriangles(data, positionOffset, rotationDegrees, scale, material, &skippedDegenerateTriangles)
+	);
 
 	if (useProgress)
 	{
@@ -476,16 +573,14 @@ Mesh	readObj(
 
 namespace
 {
-std::size_t	parseObjFile(Mesh& mesh, std::ifstream& stream, const ObjTransform& transform, std::shared_ptr<Material> material)
+ObjMeshData	parseObjFile(std::ifstream& stream)
 {
 	std::string line;
-	std::vector<Vector3> vertices;
-	std::vector<Vector3> textureCoordinates;
-	std::vector<Vector3> normals;
-	std::vector<Triangle> triangles;
-	std::size_t skippedDegenerateTriangles = 0;
+	ObjMeshData data;
+	std::vector<Triangle> triangleReserveHint;
 
-	reserveObjStorage(stream, vertices, textureCoordinates, normals, triangles);
+	reserveObjStorage(stream, data.vertices, data.textureCoordinates, data.normals, triangleReserveHint);
+	data.triangles.reserve(triangleReserveHint.capacity());
 
 	do
 	{
@@ -498,19 +593,19 @@ std::size_t	parseObjFile(Mesh& mesh, std::ifstream& stream, const ObjTransform& 
 
 		if (line.rfind("v ", 0) == 0)
 		{
-			vertices.push_back(parseVectorValues(line.c_str() + 2, line));
+			data.vertices.push_back(parseVectorValues(line.c_str() + 2, line));
 		}
 		else if (line.rfind("vt ", 0) == 0)
 		{
-			textureCoordinates.push_back(parseTextureValues(line.c_str() + 3, line));
+			data.textureCoordinates.push_back(parseTextureValues(line.c_str() + 3, line));
 		}
 		else if (line.rfind("vn ", 0) == 0)
 		{
-			normals.push_back(parseVectorValues(line.c_str() + 3, line));
+			data.normals.push_back(parseVectorValues(line.c_str() + 3, line));
 		}
 		else if (line.rfind("f ", 0) == 0)
 		{
-			std::vector<ObjFaceVertex> faceVertices;
+			std::vector<ObjMeshFaceVertex> faceVertices;
 			const char* cursor = line.c_str() + 2;
 
 			faceVertices.reserve(4);
@@ -523,9 +618,9 @@ std::size_t	parseObjFile(Mesh& mesh, std::ifstream& stream, const ObjTransform& 
 				}
 				faceVertices.push_back(parseFaceVertex(
 					cursor,
-					vertices.size(),
-					textureCoordinates.size(),
-					normals.size(),
+					data.vertices.size(),
+					data.textureCoordinates.size(),
+					data.normals.size(),
 					line
 				));
 			}
@@ -536,28 +631,15 @@ std::size_t	parseObjFile(Mesh& mesh, std::ifstream& stream, const ObjTransform& 
 
 			for (std::size_t index = 1; index + 1 < faceVertices.size(); index++)
 			{
-				Triangle triangle = buildTriangle(
-					vertices,
-					textureCoordinates,
-					normals,
+				data.triangles.push_back({
 					faceVertices.at(0),
 					faceVertices.at(index),
-					faceVertices.at(index + 1),
-					transform,
-					material
-				);
-				if (triangle.area() <= DEGENERATE_TRIANGLE_EPSILON_SQUARED)
-				{
-					skippedDegenerateTriangles++;
-					continue;
-				}
-				triangles.push_back(std::move(triangle));
+					faceVertices.at(index + 1)
+				});
 			}
 		}
 	} while (!stream.eof());
 
-	mesh = Mesh(Vector3(), material, std::move(triangles));
-
-	return (skippedDegenerateTriangles);
+	return (data);
 }
 }

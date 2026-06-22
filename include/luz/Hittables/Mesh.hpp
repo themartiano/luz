@@ -4,6 +4,7 @@
 #include "Hittables/BVHNode.hpp"
 #include "Hittables/Triangle.hpp"
 #include <cstddef>
+#include <functional>
 #include <vector>
 
 class	Mesh : public Hittable
@@ -22,6 +23,15 @@ class	Mesh : public Hittable
 		virtual bool		sampleLight(const Vector3& origin, HittableLightSample& sample) const override;
 		virtual bool		sampleEmission(HittableEmissionSample& sample) const override;
 		virtual double	lightSelectionWeight(void) const override;
+		double			surfaceArea(void) const;
+		std::size_t		surfaceElementCount(void) const;
+		double			transformedSurfaceArea(const std::function<Vector3(const Vector3&)>& transformPoint) const;
+		double			transformedSurfaceElementArea(
+			std::size_t index,
+			const std::function<Vector3(const Vector3&)>& transformPoint
+		) const;
+		bool			sampleSurface(Vector3& position, Vector3& normal) const;
+		bool			sampleSurfaceElement(std::size_t index, Vector3& position, Vector3& normal) const;
 
 	private:
 		struct	PackedBVHNode
@@ -40,6 +50,7 @@ class	Mesh : public Hittable
 		std::size_t	_buildPackedBVHNode(std::size_t start, std::size_t end);
 		void	_computePackedTriangleAreas(void);
 		void	_computeLegacyTriangleAreas(void);
+		const Triangle*	_surfaceTriangle(std::size_t index) const;
 
 		Vector3 _position;
 		std::shared_ptr<Material>	_material;

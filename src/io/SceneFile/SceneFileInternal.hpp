@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Materials/Material.hpp"
+#include "Hittables/Mesh.hpp"
 #include "OBJReader.hpp"
 #include "Scene/Scene.hpp"
 #include "Color.hpp"
@@ -27,6 +28,8 @@ namespace SceneFile::internal
 		ObjLoadProgress*	meshLoadProgress = nullptr;
 		std::size_t	meshLoadConcurrency = 1;
 		std::shared_ptr<MeshLoadScheduler>	meshLoadScheduler;
+		std::unordered_map<std::string, std::shared_future<std::shared_ptr<ObjMeshData>>>	meshSourceLoads;
+		std::unordered_map<std::string, std::shared_future<std::shared_ptr<Mesh>>>	meshGeometryLoads;
 		std::vector<std::shared_future<std::shared_ptr<Hittable>>>	pendingMeshLoads;
 	};
 

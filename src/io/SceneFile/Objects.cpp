@@ -8,6 +8,7 @@
 #include "Hittables/ConstantVolume.hpp"
 #include "Hittables/Triangle.hpp"
 #include "Hittables/Mesh.hpp"
+#include "Hittables/MeshInstance.hpp"
 #include "OBJReader.hpp"
 #include "Materials/Emissive.hpp"
 #include "Materials/Lambertian.hpp"
@@ -65,10 +66,12 @@ namespace SceneFile::internal
 				}
 			}
 
-			std::shared_future<std::shared_ptr<Hittable>>	enqueue(std::function<std::shared_ptr<Hittable>()> task)
+			template <typename Function>
+			auto	enqueue(Function task) -> std::shared_future<decltype(task())>
 			{
-				auto promise = std::make_shared<std::promise<std::shared_ptr<Hittable>>>();
-				std::shared_future<std::shared_ptr<Hittable>> future = promise->get_future().share();
+				using Result = decltype(task());
+				auto promise = std::make_shared<std::promise<Result>>();
+				std::shared_future<Result> future = promise->get_future().share();
 
 				{
 					std::lock_guard<std::mutex> lock(this->_mutex);
@@ -260,6 +263,11 @@ namespace
 				return (this->hittable()->sampleLight(origin, sample));
 			}
 
+			bool	sampleEmission(HittableEmissionSample& sample) const override
+			{
+				return (this->hittable()->sampleEmission(sample));
+			}
+
 			double	lightSelectionWeight(void) const override
 			{
 				return (this->hittable()->lightSelectionWeight());
@@ -279,6 +287,76 @@ namespace
 			mutable std::shared_ptr<Hittable>	_hittable;
 	};
 
+	constexpr double	SCENE_MESH_INSTANCE_SCALE_EPSILON = 1e-12;
+
+	bool	isInvertibleMeshInstanceScale(const Vector3& scale)
+	{
+		return (
+			std::fabs(scale.getX()) > SCENE_MESH_INSTANCE_SCALE_EPSILON
+			&& std::fabs(scale.getY()) > SCENE_MESH_INSTANCE_SCALE_EPSILON
+			&& std::fabs(scale.getZ()) > SCENE_MESH_INSTANCE_SCALE_EPSILON
+		);
+	}
+
+	std::shared_future<std::shared_ptr<ObjMeshData>>	scheduleMeshSourceLoad(
+		SceneFile::internal::SceneFileContext& context,
+		const std::string& fileName
+	)
+	{
+		const auto cachedLoad = context.meshSourceLoads.find(fileName);
+		if (cachedLoad != context.meshSourceLoads.end())
+		{
+			return (cachedLoad->second);
+		}
+		if (!context.meshLoadScheduler)
+		{
+			context.meshLoadScheduler = std::make_shared<SceneFile::internal::MeshLoadScheduler>(context.meshLoadConcurrency);
+		}
+
+		const ObjReadOptions options = sceneObjReadOptions(context);
+		std::shared_future<std::shared_ptr<ObjMeshData>> future = context.meshLoadScheduler->enqueue(
+			[fileName, options] {
+				return (std::make_shared<ObjMeshData>(readObjMeshData(fileName, options)));
+			}
+		);
+		context.meshSourceLoads[fileName] = future;
+
+		return (future);
+	}
+
+	std::shared_future<std::shared_ptr<Mesh>>	scheduleMeshGeometryLoad(
+		SceneFile::internal::SceneFileContext& context,
+		const std::string& fileName
+	)
+	{
+		const auto cachedLoad = context.meshGeometryLoads.find(fileName);
+		if (cachedLoad != context.meshGeometryLoads.end())
+		{
+			return (cachedLoad->second);
+		}
+		if (!context.meshLoadScheduler)
+		{
+			context.meshLoadScheduler = std::make_shared<SceneFile::internal::MeshLoadScheduler>(context.meshLoadConcurrency);
+		}
+
+		const std::shared_future<std::shared_ptr<ObjMeshData>> sourceLoad = scheduleMeshSourceLoad(context, fileName);
+		std::shared_future<std::shared_ptr<Mesh>> future = context.meshLoadScheduler->enqueue(
+			[sourceLoad] {
+				auto geometryMaterial = std::make_shared<Emissive>(Color(1.0, 1.0, 1.0));
+				return (std::make_shared<Mesh>(buildObjMesh(
+					*sourceLoad.get(),
+					Vector3(0.0, 0.0, 0.0),
+					Vector3(0.0, 0.0, 0.0),
+					Vector3(1.0, 1.0, 1.0),
+					geometryMaterial
+				)));
+			}
+		);
+		context.meshGeometryLoads[fileName] = future;
+
+		return (future);
+	}
+
 	std::shared_ptr<Hittable>	scheduleMeshLoad(
 		SceneFile::internal::SceneFileContext& context,
 		const std::string& fileName,
@@ -288,17 +366,42 @@ namespace
 		std::shared_ptr<Material> material
 	)
 	{
-		const ObjReadOptions options = sceneObjReadOptions(context);
 		if (!context.meshLoadScheduler)
 		{
 			context.meshLoadScheduler = std::make_shared<SceneFile::internal::MeshLoadScheduler>(context.meshLoadConcurrency);
 		}
 
-		std::shared_future<std::shared_ptr<Hittable>> future = context.meshLoadScheduler->enqueue(
-			[fileName, position, rotation, scale, material, options] {
-				return (std::make_shared<Mesh>(readObj(fileName, position, rotation, scale, material, options)));
-			}
-		);
+		std::shared_future<std::shared_ptr<Hittable>> future;
+		if (!isInvertibleMeshInstanceScale(scale))
+		{
+			const std::shared_future<std::shared_ptr<ObjMeshData>> sourceLoad = scheduleMeshSourceLoad(context, fileName);
+			future = context.meshLoadScheduler->enqueue(
+				[sourceLoad, position, rotation, scale, material]() -> std::shared_ptr<Hittable> {
+					return (std::make_shared<Mesh>(buildObjMesh(
+						*sourceLoad.get(),
+						position,
+						rotation,
+						scale,
+						material
+					)));
+				}
+			);
+		}
+		else
+		{
+			const std::shared_future<std::shared_ptr<Mesh>> geometryLoad = scheduleMeshGeometryLoad(context, fileName);
+			future = context.meshLoadScheduler->enqueue(
+				[geometryLoad, position, rotation, scale, material]() -> std::shared_ptr<Hittable> {
+					return (std::make_shared<MeshInstance>(
+						geometryLoad.get(),
+						position,
+						rotation,
+						scale,
+						material
+					));
+				}
+			);
+		}
 
 		context.pendingMeshLoads.push_back(future);
 		return (std::make_shared<DeferredHittable>(future));

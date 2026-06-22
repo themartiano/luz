@@ -23,6 +23,9 @@ class   Triangle : public Hittable
 		void			setVertex0(Vector3 vertex0);
 		void			setVertex1(Vector3 vertex1);
 		void			setVertex2(Vector3 vertex2);
+		const Vector3&	getVertex0(void) const;
+		const Vector3&	getVertex1(void) const;
+		const Vector3&	getVertex2(void) const;
 		void			setVertexNormals(Vector3 normal0, Vector3 normal1, Vector3 normal2);
 		void			setTextureCoordinates(Vector3 uv0, Vector3 uv1, Vector3 uv2);
 		virtual Material* getMaterial(void) const override;
@@ -36,6 +39,7 @@ class   Triangle : public Hittable
 		virtual bool	sampleEmission(HittableEmissionSample& sample) const override;
 		virtual double	lightSelectionWeight(void) const override;
 		double			area(void) const;
+		bool			sampleSurface(Vector3& position, Vector3& normal) const;
 
 	private:
 		void	_updateCache(void);
