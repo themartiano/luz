@@ -195,7 +195,7 @@ namespace
 		std::vector<Vector3>& vertices,
 		std::vector<Vector3>& textureCoordinates,
 		std::vector<Vector3>& normals,
-		std::vector<Triangle>& triangles
+		std::size_t& triangleReserveHint
 	)
 	{
 		const std::streampos start = stream.tellg();
@@ -218,7 +218,7 @@ namespace
 		vertices.reserve(estimatedLines / 2);
 		textureCoordinates.reserve(estimatedLines / 3);
 		normals.reserve(estimatedLines / 3);
-		triangles.reserve(estimatedLines / 2);
+		triangleReserveHint = estimatedLines / 2;
 	}
 
 	int	resolveObjIndex(int index, std::size_t count, const std::string& token)
@@ -577,10 +577,10 @@ ObjMeshData	parseObjFile(std::ifstream& stream)
 {
 	std::string line;
 	ObjMeshData data;
-	std::vector<Triangle> triangleReserveHint;
+	std::size_t triangleReserveHint = 0;
 
 	reserveObjStorage(stream, data.vertices, data.textureCoordinates, data.normals, triangleReserveHint);
-	data.triangles.reserve(triangleReserveHint.capacity());
+	data.triangles.reserve(triangleReserveHint);
 
 	do
 	{
