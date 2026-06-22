@@ -65,10 +65,12 @@ namespace SceneFile::internal
 				}
 			}
 
-			std::shared_future<std::shared_ptr<Hittable>>	enqueue(std::function<std::shared_ptr<Hittable>()> task)
+			template <typename Function>
+			auto	enqueue(Function task) -> std::shared_future<decltype(task())>
 			{
-				auto promise = std::make_shared<std::promise<std::shared_ptr<Hittable>>>();
-				std::shared_future<std::shared_ptr<Hittable>> future = promise->get_future().share();
+				using Result = decltype(task());
+				auto promise = std::make_shared<std::promise<Result>>();
+				std::shared_future<Result> future = promise->get_future().share();
 
 				{
 					std::lock_guard<std::mutex> lock(this->_mutex);
@@ -279,6 +281,32 @@ namespace
 			mutable std::shared_ptr<Hittable>	_hittable;
 	};
 
+	std::shared_future<std::shared_ptr<ObjMeshData>>	scheduleMeshSourceLoad(
+		SceneFile::internal::SceneFileContext& context,
+		const std::string& fileName
+	)
+	{
+		const auto cachedLoad = context.meshSourceLoads.find(fileName);
+		if (cachedLoad != context.meshSourceLoads.end())
+		{
+			return (cachedLoad->second);
+		}
+		if (!context.meshLoadScheduler)
+		{
+			context.meshLoadScheduler = std::make_shared<SceneFile::internal::MeshLoadScheduler>(context.meshLoadConcurrency);
+		}
+
+		const ObjReadOptions options = sceneObjReadOptions(context);
+		std::shared_future<std::shared_ptr<ObjMeshData>> future = context.meshLoadScheduler->enqueue(
+			[fileName, options] {
+				return (std::make_shared<ObjMeshData>(readObjMeshData(fileName, options)));
+			}
+		);
+		context.meshSourceLoads[fileName] = future;
+
+		return (future);
+	}
+
 	std::shared_ptr<Hittable>	scheduleMeshLoad(
 		SceneFile::internal::SceneFileContext& context,
 		const std::string& fileName,
@@ -288,15 +316,21 @@ namespace
 		std::shared_ptr<Material> material
 	)
 	{
-		const ObjReadOptions options = sceneObjReadOptions(context);
+		const std::shared_future<std::shared_ptr<ObjMeshData>> sourceLoad = scheduleMeshSourceLoad(context, fileName);
 		if (!context.meshLoadScheduler)
 		{
 			context.meshLoadScheduler = std::make_shared<SceneFile::internal::MeshLoadScheduler>(context.meshLoadConcurrency);
 		}
 
 		std::shared_future<std::shared_ptr<Hittable>> future = context.meshLoadScheduler->enqueue(
-			[fileName, position, rotation, scale, material, options] {
-				return (std::make_shared<Mesh>(readObj(fileName, position, rotation, scale, material, options)));
+			[sourceLoad, position, rotation, scale, material]() -> std::shared_ptr<Hittable> {
+				return (std::make_shared<Mesh>(buildObjMesh(
+					*sourceLoad.get(),
+					position,
+					rotation,
+					scale,
+					material
+				)));
 			}
 		);
 

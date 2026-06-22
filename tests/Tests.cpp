@@ -52,6 +52,7 @@
 #include <iterator>
 #include <limits>
 #include <memory>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -1899,6 +1900,61 @@ namespace
 
 		require(scene.hasCamera(), "Relative-object scene did not load a camera.");
 		require(scene.getHittables().size() == 1, "Relative-object scene did not load one hittable.");
+
+		std::filesystem::remove(scenePath);
+		std::filesystem::remove(objectPath);
+	}
+
+	void	testSceneFileCachesRepeatedMeshFileLoads(void)
+	{
+		const std::filesystem::path directory = std::filesystem::temp_directory_path();
+		const std::filesystem::path scenePath = directory / "luz_repeated_mesh_cache_test.luz";
+		const std::filesystem::path objectPath = directory / "luz_repeated_mesh_cache_test.obj";
+		{
+			std::ofstream objectStream(objectPath);
+			objectStream
+				<< "v 0.0 0.0 0.0\n"
+				<< "v 1.0 0.0 0.0\n"
+				<< "v 0.0 1.0 0.0\n"
+				<< "f 1 2 3\n";
+		}
+		{
+			std::ofstream sceneStream(scenePath);
+			sceneStream
+				<< "[meshes]\n"
+				<< "mesh triangle_mesh {\n"
+				<< "file=" << objectPath.filename().string() << "\n"
+				<< "}\n\n"
+				<< "[scene]\n"
+				<< "object triangle_a {\n"
+				<< "mesh=triangle_mesh\n"
+				<< "position=(0,0,0)\n"
+				<< "}\n"
+				<< "object triangle_b {\n"
+				<< "mesh=triangle_mesh\n"
+				<< "position=(2,0,0)\n"
+				<< "}\n";
+		}
+
+		Scene scene;
+		std::ostringstream output;
+		std::streambuf* const previousOutput = std::cout.rdbuf(output.rdbuf());
+		try
+		{
+			SceneFile::read(scene, scenePath.string());
+			std::cout.rdbuf(previousOutput);
+		}
+		catch (...)
+		{
+			std::cout.rdbuf(previousOutput);
+			throw;
+		}
+
+		require(scene.getHittables().size() == 2, "Repeated mesh scene did not load both object instances.");
+		require(
+			output.str().find("[ 50% ]") == std::string::npos,
+			"Repeated named mesh file was counted as multiple mesh loads."
+		);
 
 		std::filesystem::remove(scenePath);
 		std::filesystem::remove(objectPath);
@@ -5046,6 +5102,7 @@ int	main(void)
 		testRenderCameraFitsSensorGateToImageAspect();
 		testSceneFileRejectsCompactCameraSyntax();
 		testSceneFileLoadsRelativeObject();
+		testSceneFileCachesRepeatedMeshFileLoads();
 		testAssetPathUsesProvidedScenePaths();
 		testSceneFileLoadsTransformedObject();
 		testSceneFileLoadsNamedBlocks();

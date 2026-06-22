@@ -1,10 +1,29 @@
 #pragma once
 
 #include "Hittables/Mesh.hpp"
+#include "Vector3.hpp"
+#include <array>
 #include <chrono>
 #include <cstddef>
+#include <memory>
 #include <mutex>
 #include <string>
+#include <vector>
+
+struct	ObjMeshFaceVertex
+{
+	int	vertexIndex = -1;
+	int	textureIndex = -1;
+	int	normalIndex = -1;
+};
+
+struct	ObjMeshData
+{
+	std::vector<Vector3>	vertices;
+	std::vector<Vector3>	textureCoordinates;
+	std::vector<Vector3>	normals;
+	std::vector<std::array<ObjMeshFaceVertex, 3>>	triangles;
+};
 
 struct	ObjLoadProgress
 {
@@ -22,6 +41,15 @@ struct	ObjReadOptions
 	ObjLoadProgress*	progress = nullptr;
 };
 
+ObjMeshData	readObjMeshData(std::string fileName);
+ObjMeshData	readObjMeshData(std::string fileName, const ObjReadOptions& options);
+Mesh	buildObjMesh(
+	const ObjMeshData& data,
+	Vector3 positionOffset,
+	Vector3 rotationDegrees,
+	Vector3 scale,
+	std::shared_ptr<Material> material
+);
 Mesh	readObj(std::string fileName);
 Mesh	readObj(std::string fileName, Vector3 positionOffset, std::shared_ptr<Material> material);
 Mesh	readObj(std::string fileName, Vector3 positionOffset, Vector3 rotationDegrees, Vector3 scale, std::shared_ptr<Material> material);
