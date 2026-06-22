@@ -146,6 +146,21 @@ void	Triangle::setVertex2(Vector3 vertex2)
 	this->_updateCache();
 }
 
+const Vector3&	Triangle::getVertex0(void) const
+{
+	return (this->_vertex0);
+}
+
+const Vector3&	Triangle::getVertex1(void) const
+{
+	return (this->_vertex1);
+}
+
+const Vector3&	Triangle::getVertex2(void) const
+{
+	return (this->_vertex2);
+}
+
 void	Triangle::setVertexNormals(Vector3 normal0, Vector3 normal1, Vector3 normal2)
 {
 	this->_normal0 = normal0;
@@ -300,6 +315,29 @@ bool	Triangle::createBoundingBox(AABB& outputBoundingBox) const
 double	Triangle::area(void) const
 {
 	return (this->_area);
+}
+
+bool	Triangle::sampleSurface(Vector3& position, Vector3& normal) const
+{
+	if (this->_isDegenerate || this->_area <= 0.0)
+	{
+		return (false);
+	}
+
+	Sampler::Sample2D surfaceSample = Sampler::sample2D(Sampler::DIM_LIGHT_SURFACE_POINT);
+	double u = surfaceSample.x;
+	double v = surfaceSample.y;
+	if (u + v > 1.0)
+	{
+		u = 1.0 - u;
+		v = 1.0 - v;
+	}
+
+	position = this->_vertex0
+		+ ((this->_vertex1 - this->_vertex0) * u)
+		+ ((this->_vertex2 - this->_vertex0) * v);
+	normal = this->_faceNormal;
+	return (true);
 }
 
 double	Triangle::pdfValue(const Vector3& origin, const Vector3& vec) const

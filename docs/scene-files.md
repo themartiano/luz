@@ -577,7 +577,7 @@ Named meshes bind a mesh name to an OBJ file:
 ```text
 [meshes]
 mesh suzanne {
-file=../objects/suzanne.obj
+file=../../assets/objects/suzanne.obj
 }
 ```
 

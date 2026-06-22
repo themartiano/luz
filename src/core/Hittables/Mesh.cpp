@@ -517,6 +517,23 @@ void	Mesh::_computeLegacyTriangleAreas(void)
 	}
 }
 
+const Triangle*	Mesh::_surfaceTriangle(std::size_t index) const
+{
+	if (this->_usesPackedTriangles)
+	{
+		if (index >= this->_triangles.size())
+		{
+			return (nullptr);
+		}
+		return (&this->_triangles[index]);
+	}
+	if (index >= this->_legacyTriangles.size())
+	{
+		return (nullptr);
+	}
+	return (dynamic_cast<const Triangle*>(this->_legacyTriangles[index].get()));
+}
+
 // Returns the Mesh's material
 Material*	Mesh::getMaterial(void) const
 {
@@ -697,6 +714,97 @@ bool	Mesh::createBoundingBox(AABB& outputBoundingBox) const
 
 	outputBoundingBox = this->_boundingBox;
 	return (true);
+}
+
+double	Mesh::surfaceArea(void) const
+{
+	return (this->_totalArea);
+}
+
+std::size_t	Mesh::surfaceElementCount(void) const
+{
+	if (this->_usesPackedTriangles)
+	{
+		return (this->_triangles.size());
+	}
+	return (this->_legacyTriangles.size());
+}
+
+double	Mesh::transformedSurfaceElementArea(
+	std::size_t index,
+	const std::function<Vector3(const Vector3&)>& transformPoint
+) const
+{
+	const Triangle* const triangle = this->_surfaceTriangle(index);
+	if (!triangle)
+	{
+		return (0.0);
+	}
+
+	const Vector3 vertex0 = transformPoint(triangle->getVertex0());
+	const Vector3 vertex1 = transformPoint(triangle->getVertex1());
+	const Vector3 vertex2 = transformPoint(triangle->getVertex2());
+	const double area = Utilities::vectorLength(Utilities::cross(vertex1 - vertex0, vertex2 - vertex0)) / 2.0;
+	if (!std::isfinite(area) || area <= 0.0)
+	{
+		return (0.0);
+	}
+	return (area);
+}
+
+double	Mesh::transformedSurfaceArea(const std::function<Vector3(const Vector3&)>& transformPoint) const
+{
+	double area = 0.0;
+	const std::size_t elementCount = this->surfaceElementCount();
+
+	for (std::size_t index = 0; index < elementCount; index++)
+	{
+		area += this->transformedSurfaceElementArea(index, transformPoint);
+	}
+	if (!std::isfinite(area) || area <= 0.0)
+	{
+		return (0.0);
+	}
+	return (area);
+}
+
+bool	Mesh::sampleSurface(Vector3& position, Vector3& normal) const
+{
+	if (this->_triangleAreaPrefixSums.empty() || this->_totalArea <= 0.0)
+	{
+		return (false);
+	}
+
+	const double targetArea = Sampler::sample1D(Sampler::DIM_LIGHT_SURFACE_SELECTION) * this->_totalArea;
+	const auto areaIt = std::lower_bound(
+		this->_triangleAreaPrefixSums.begin(),
+		this->_triangleAreaPrefixSums.end(),
+		targetArea
+	);
+	const std::size_t randomIndex = std::min<std::size_t>(
+		static_cast<std::size_t>(areaIt - this->_triangleAreaPrefixSums.begin()),
+		this->_triangleAreaPrefixSums.size() - 1
+	);
+	const double previousArea = randomIndex == 0
+		? 0.0
+		: this->_triangleAreaPrefixSums[randomIndex - 1];
+	const double selectedArea = this->_triangleAreaPrefixSums[randomIndex] - previousArea;
+	if (selectedArea <= 0.0)
+	{
+		return (false);
+	}
+
+	return (this->sampleSurfaceElement(randomIndex, position, normal));
+}
+
+bool	Mesh::sampleSurfaceElement(std::size_t index, Vector3& position, Vector3& normal) const
+{
+	const Triangle* const triangle = this->_surfaceTriangle(index);
+	if (!triangle)
+	{
+		return (false);
+	}
+	return (triangle->sampleSurface(position, normal));
 }
 
 double	Mesh::pdfValue(const Vector3& origin, const Vector3& vec) const

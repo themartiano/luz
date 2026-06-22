@@ -9,7 +9,7 @@ repeat=${BENCH_REPEAT:-20}
 warmup=${BENCH_WARMUP:-2}
 seed=${BENCH_SEED:-424242424}
 threads=${BENCH_THREADS:-1}
-cases=${BENCH_CASES:-${BENCH_CASE:-default many-objects mesh-bvh diffuse postprocess atmosphere lights emissive-geometry primitives-materials volumes obj-mesh}}
+cases=${BENCH_CASES:-${BENCH_CASE:-default many-objects mesh-bvh diffuse postprocess atmosphere lights emissive-geometry primitives-materials volumes obj-mesh suzanne-single suzanne-instances}}
 global_width=${BENCH_WIDTH:-}
 global_height=${BENCH_HEIGHT:-}
 global_samples=${BENCH_SAMPLES:-}
@@ -84,6 +84,12 @@ case_defaults()
 			;;
 		obj-mesh)
 			echo "builtin,${global_width:-160},${global_height:-160},${global_samples:-16},${global_bounces:-6},${global_view_transform:-agx},${global_bloom:-false},${global_adaptive:-false},${global_denoise:-false},${global_adaptive_min_samples:-},${global_adaptive_threshold:-},${global_adaptive_check_interval:-}"
+			;;
+		suzanne-single)
+			echo "examples/scenes/suzanne.luz,${global_width:-120},${global_height:-80},${global_samples:-4},${global_bounces:-4},${global_view_transform:-standard},${global_bloom:-false},${global_adaptive:-false},${global_denoise:-false},${global_adaptive_min_samples:-},${global_adaptive_threshold:-},${global_adaptive_check_interval:-}"
+			;;
+		suzanne-instances)
+			echo "examples/scenes/suzanne-instances.luz,${global_width:-120},${global_height:-80},${global_samples:-2},${global_bounces:-4},${global_view_transform:-standard},${global_bloom:-false},${global_adaptive:-false},${global_denoise:-false},${global_adaptive_min_samples:-},${global_adaptive_threshold:-},${global_adaptive_check_interval:-}"
 			;;
 		stormtroopers-preview)
 			echo "exports/stormtroopers.luz,${global_width:-80},${global_height:-45},${global_samples:-8},${global_bounces:-5},${global_view_transform:-standard},${global_bloom:-true},${global_adaptive:-false},${global_denoise:-false},${global_adaptive_min_samples:-},${global_adaptive_threshold:-},${global_adaptive_check_interval:-}"
@@ -218,6 +224,16 @@ stat_from_output()
 	'
 }
 
+monotonic_ns()
+{
+	local value
+
+	value=$(date +%s%N 2>/dev/null || true)
+	if [[ "$value" =~ ^[0-9]+$ ]]; then
+		printf '%s' "$value"
+	fi
+}
+
 echo "case,run,elapsed_ms,samples_per_second,width,height,samples,bounces,threads,seed,view_transform,bloom,adaptive,denoise,git_commit,git_status,compiler,system,score,rendered_samples,average_spp,actual_samples_per_second,actual_score,render_samples_per_second,render_score,render_ms,denoise_ms,postprocess_ms,total_ms"
 
 case_scores=()
@@ -265,12 +281,19 @@ for benchmark_case in $cases; do
 	times=()
 	total_paths=$((width * height * samples))
 	for ((n = 1; n <= repeat; n++)); do
+		start_ns=$(monotonic_ns)
 		run_output=$(./luz "${benchmark_args[@]}")
-		elapsed_ms=$(printf '%s\n' "$run_output" | elapsed_from_output) || {
+		end_ns=$(monotonic_ns)
+		render_elapsed_ms=$(printf '%s\n' "$run_output" | elapsed_from_output) || {
 			printf '%s\n' "$run_output" >&2
 			echo "Could not parse elapsed benchmark time for $benchmark_case run $n." >&2
 			exit 1
 		}
+		if [[ -n "$start_ns" && -n "$end_ns" ]]; then
+			elapsed_ms=$(awk -v start_ns="$start_ns" -v end_ns="$end_ns" 'BEGIN { printf "%.6f", (end_ns - start_ns) / 1000000.0 }')
+		else
+			elapsed_ms=$render_elapsed_ms
+		fi
 		times+=("$elapsed_ms")
 		samples_per_second=$(awk -v paths="$total_paths" -v ms="$elapsed_ms" 'BEGIN { printf "%.6f", paths / (ms / 1000.0) }')
 		score=$(awk -v samples_per_second="$samples_per_second" -v score_sample_unit="$score_sample_unit" 'BEGIN { printf "%.2f", samples_per_second * 60.0 / score_sample_unit }')

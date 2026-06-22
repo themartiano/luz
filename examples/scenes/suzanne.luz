@@ -21,7 +21,7 @@ color=srgb(0.62,0.62,0.58)
 
 [meshes]
 mesh suzanne {
-file=../objects/suzanne.obj
+file=../../assets/objects/suzanne.obj
 }
 
 [scene]

@@ -51,7 +51,7 @@ score uses the geometric mean of per-case scores, so `before.csv` and
 
 Raw benchmark CSVs include:
 
-- Elapsed time
+- Full process elapsed time, including scene loading
 - Render time
 - Denoise time
 - Post-process time
@@ -68,13 +68,15 @@ render-score speedup, and how much non-render work is in each case.
 The default matrix covers Cornell-style lighting, many objects, mesh BVH
 traversal, diffuse scattering, post-processing, atmosphere, mixed light types,
 emissive geometry, primitives/materials, volumes, OBJ meshes, and representative
-scene cases.
+scene cases. The Suzanne scene cases exercise `.luz` mesh loading with one OBJ
+use and many repeated uses of the same OBJ file.
 
 The Makefile currently requests these default cases:
 
 ```text
 default many-objects mesh-bvh diffuse postprocess atmosphere lights
 emissive-geometry primitives-materials volumes obj-mesh
+suzanne-single suzanne-instances
 stormtroopers-preview stormtroopers-adaptive-tuned stormtroopers-denoise-micro
 ```
 
