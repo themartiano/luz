@@ -186,6 +186,34 @@ namespace
 		return (bin);
 	}
 
+	std::size_t	packedBVHNodeReserve(std::size_t triangleCount)
+	{
+		if (triangleCount == 0)
+		{
+			return (0);
+		}
+
+		const std::size_t maxSize = std::numeric_limits<std::size_t>::max();
+		const std::size_t leafCount = (triangleCount + MESH_BVH_LEAF_SIZE - 1) / MESH_BVH_LEAF_SIZE;
+		std::size_t estimatedNodeCount = maxSize;
+		if (leafCount <= maxSize / 2)
+		{
+			estimatedNodeCount = (leafCount * 2) - 1;
+		}
+
+		const std::size_t slack = std::max<std::size_t>(1024, estimatedNodeCount / 4);
+		std::size_t reserve = maxSize;
+		if (estimatedNodeCount <= maxSize - slack)
+		{
+			reserve = estimatedNodeCount + slack;
+		}
+
+		const std::size_t fullBinaryUpperBound = triangleCount <= maxSize / 2
+			? triangleCount * 2
+			: maxSize;
+		return (std::min(reserve, fullBinaryUpperBound));
+	}
+
 	BinnedSplit	findBinnedSAHSplit(
 		const std::vector<AABB>& boxes,
 		const std::vector<Vector3>& centroids,
@@ -338,15 +366,18 @@ void	Mesh::_setPackedTriangles(std::vector<Triangle> triangles)
 	this->_packedBVHNodes.clear();
 	this->_triangleAreaPrefixSums.clear();
 	this->_triangles.clear();
-	this->_triangles.reserve(triangles.size());
-
-	for (Triangle& triangle : triangles)
-	{
-		if (triangle.area() > 0.0)
-		{
-			this->_triangles.push_back(std::move(triangle));
-		}
-	}
+	triangles.erase(
+		std::remove_if(
+			triangles.begin(),
+			triangles.end(),
+			[](const Triangle& triangle)
+			{
+				return (triangle.area() <= 0.0);
+			}
+		),
+		triangles.end()
+	);
+	this->_triangles = std::move(triangles);
 
 	this->_usesPackedTriangles = true;
 	this->_computePackedTriangleAreas();
@@ -399,8 +430,11 @@ void	Mesh::_buildPackedBVH(void)
 		this->_triangleCentroids.push_back(boxCentroid(boundingBox));
 	}
 
-	this->_packedBVHNodes.reserve(this->_triangles.size() * 2);
+	this->_packedBVHNodes.reserve(packedBVHNodeReserve(this->_triangles.size()));
 	this->_buildPackedBVHNode(0, this->_triangleIndices.size());
+	std::vector<AABB>().swap(this->_triangleBoundingBoxes);
+	std::vector<Vector3>().swap(this->_triangleCentroids);
+	this->_packedBVHNodes.shrink_to_fit();
 }
 
 std::size_t	Mesh::_buildPackedBVHNode(std::size_t start, std::size_t end)
